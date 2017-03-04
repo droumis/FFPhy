@@ -1,6 +1,8 @@
 warning('off', 'MATLAB:Figure:RecursionOnClose') %suppress this specific warning
 warning('off', 'MATLAB:MKDIR:DirectoryExists') %suppress this specific warning
 
+
+
 %DR load and plot ripple triggered LFP across regions
 
 %>>>>>>>>>EXCLUDE RIPPLES OUTSIDE OF EPOCH TIME RANGE -- TO DO
@@ -219,14 +221,14 @@ for iLFPtype = 1:length(LFPtypes); % For each LFP type (wideband EEG, ripple ban
                 if p == 1; %if the first trace
                     plot(Xwindowtimes{iLFPtype}{currrip},YripLFPdataMAT{iLFPtype}{currrip}(:,p), 'Color',regionclr(lfptraceLUTregion(p),:), 'LineWidth',1); hold on;
                     lfpoffset = 0;
-                else
+                else %compute offset from the absMax+absMin to place the current trace under the last trace
                     lfpoffset(p) = lfpoffset(p-1) + abs(min(YripLFPdataMAT{iLFPtype}{currrip}(:,p-1))) + abs(max(YripLFPdataMAT{iLFPtype}{currrip}(:,p))); %use e.g. abs(max(YripLFPdataMAT{LFP}{currrip}(:,p)))/3 to overlay traces more
                     plot(Xwindowtimes{iLFPtype}{currrip},YripLFPdataMAT{iLFPtype}{currrip}(:,p) - lfpoffset(p), 'Color',regionclr(lfptraceLUTregion(p),:), 'LineWidth',1); hold on;
                 end
             end
-            %% Plot Ripple times as patchs and other accessory plot stuff
+            %% Plot Ripple times as patchs and other accessory ploting stuff
             for iArea = 1:length(regions); %for each region
-                ripsinwinInds = (ripsStartTimes{iArea}>WindowStartEndTimes(currrip,1) & ripsStartTimes{iArea}<WindowStartEndTimes(currrip,2));
+                ripsinwinInds = (ripsStartTimes{iArea}>WindowStartEndTimes(currrip,1) & ripsStartTimes{iArea}<WindowStartEndTimes(currrip,2)); %if the start time is within the current window
                 ripsinwin{currrip}{iArea} = [ripsStartTimes{iArea}(ripsinwinInds) ripsEndTimes{iArea}(ripsinwinInds)];
                 if ~isempty(ripsinwin{currrip}{iArea}) %if there are any ripples from this region in this window
                     for m = 1:length(ripsinwin{currrip}{iArea}(:,1)) %for each ripple within the current window
@@ -255,6 +257,8 @@ for iLFPtype = 1:length(LFPtypes); % For each LFP type (wideband EEG, ripple ban
             set(gca, 'XTickLabel', [-windowsize:windowsize/5:windowsize])
             xlabel('seconds from rip start','FontSize',12,'FontWeight','bold','Color','k')
             title({[sprintf('%s d%de%d %sRip(%d) Triggered %s-LFP',animal, day, epoch, rippleregion, currrip, LFPtypes{iLFPtype})];[sprintf('timestamp: %16.f', centerripStartTime)]; [sprintf('peak nstds: %d', ripout{srcRegionind}{day}{epoch}.maxthresh(currrip))]},'FontSize',12,'FontWeight','bold')
+            
+            %% Pause and/or Save Figs
             if pausefigs
                 pause
             end
@@ -271,7 +275,8 @@ for iLFPtype = 1:length(LFPtypes); % For each LFP type (wideband EEG, ripple ban
         end
     end
 end
-%% ombine Ripple + EEG plots in same directory
+
+%% Combine Ripple + EEG plots in same directory and create merged plots to facilitate viewing
 
 if  createmergedplots && plotLFPtraces
     %copy figdirectory
