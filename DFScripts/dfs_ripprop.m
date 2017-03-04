@@ -1,4 +1,7 @@
-function out = dfa_calcriptrigspectrogram(index, excludeperiods, eeg, events, varargin)
+
+to do!! compute and plot the ripple propagation 
+
+
 % warning('off', 'MATLAB:Figure:RecursionOnClose') %suppress this specific warning
 % warning('off', 'MATLAB:MKDIR:DirectoryExists') %suppress this specific warning
 
@@ -205,6 +208,3 @@ for iLFPtype = 1:length(LFPtypes); % For each LFP type (wideband EEG, ripple ban
 %         if pausefigs; return; end
 %         if savefigs; disp('need to write this saving code'); end
 %     end
-
-end
-end
