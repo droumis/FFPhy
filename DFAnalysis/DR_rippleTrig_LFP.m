@@ -82,27 +82,28 @@ for i = 1:length(regions)
         ripnstd{i}{day}{epoch}(p,1) = ((max(powertraces{i}{day}{epoch}{p}) - ripout{i}{day}{epoch}.baseline)/ripout{i}{day}{epoch}.std); %get the peak nstds above baseline with curr ripple window for src region
     end
 end
-%get nstds correlation for src vs all regions
-for i = 1:length(regions)
-    ripnstdcorr(i,1) = corr(ripnstd{srcRegionind}{day}{epoch},ripnstd{i}{day}{epoch});
-end
+
+% %% get nstds correlation for src vs all regions... ONLY needed for plotscatters
+% for i = 1:length(regions)
+%     ripnstdcorr(i,1) = corr(ripnstd{srcRegionind}{day}{epoch},ripnstd{i}{day}{epoch});
+% end
 %% plot scatters of each nstd range
-if 0
-    for i = 1:length(regions)
-        figure(i);
-        s = floor(min(nstd{srcRegionind}{day}{epoch}));
-        while s <= ceil(max(nstd{srcRegionind}{day}{epoch}));
-            %         validstdripinds = ones(nstd{srcRegionind}{day}{epoch} > s & nstd{srcRegionind}{day}{epoch} < (s + nstdres))*s; %  return indices of src ripples with a nstd value within the defined range
-            %         validstdripinds{s}.nstdrange =  [s (s + nstdres)];
-            ripsincurrstd = (ripnstd{srcRegionind}{day}{epoch} > s & nstd{srcRegionind}{day}{epoch} < (s+ nstdres));
-            %             scatter(nstd{srcRegionind}{day}{epoch}(ripsincurrstd), nstd{i}{day}{epoch}(ripsincurrstd), 'MarkerEdgeColor','none','MarkerFaceColor',rand(1,3),'LineWidth',1.5); hold on; %ca1 vs mec, ca1 vs por nstd peak
-            scatter(nstd{2}{day}{epoch}(ripsincurrstd), nstd{3}{day}{epoch}(ripsincurrstd), 'MarkerEdgeColor','none','MarkerFaceColor',rand(1,3),'LineWidth',1.5); hold on; %mec vs por nstd peak
-            s = s + nstdres;
-        end
-        if pausefigs; pause; end
-        if savefigs; disp('need to write this saving code'); end
-    end
-end
+% if 0
+%     for i = 1:length(regions)
+%         figure(i);
+%         s = floor(min(nstd{srcRegionind}{day}{epoch}));
+%         while s <= ceil(max(nstd{srcRegionind}{day}{epoch}));
+%             %         validstdripinds = ones(nstd{srcRegionind}{day}{epoch} > s & nstd{srcRegionind}{day}{epoch} < (s + nstdres))*s; %  return indices of src ripples with a nstd value within the defined range
+%             %         validstdripinds{s}.nstdrange =  [s (s + nstdres)];
+%             ripsincurrstd = (ripnstd{srcRegionind}{day}{epoch} > s & nstd{srcRegionind}{day}{epoch} < (s+ nstdres));
+%             %             scatter(nstd{srcRegionind}{day}{epoch}(ripsincurrstd), nstd{i}{day}{epoch}(ripsincurrstd), 'MarkerEdgeColor','none','MarkerFaceColor',rand(1,3),'LineWidth',1.5); hold on; %ca1 vs mec, ca1 vs por nstd peak
+%             scatter(nstd{2}{day}{epoch}(ripsincurrstd), nstd{3}{day}{epoch}(ripsincurrstd), 'MarkerEdgeColor','none','MarkerFaceColor',rand(1,3),'LineWidth',1.5); hold on; %mec vs por nstd peak
+%             s = s + nstdres;
+%         end
+%         if pausefigs; pause; end
+%         if savefigs; disp('need to write this saving code'); end
+%     end
+% end
 
 %%
 
