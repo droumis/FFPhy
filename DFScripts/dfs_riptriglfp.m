@@ -2,7 +2,7 @@
 % clear all
 close all
 runFilterFramework = 1;
-saveFilterOutput = 1;% runFilterFramework;
+saveFilterOutput = 0;% runFilterFramework;
 loadFilterOutput = 0;
 % EpochMean = 1;
 resaveFilterOutput = 0;
@@ -15,7 +15,7 @@ outputDirectory = '/typhoon/droumis/analysis';
 %% ---------------- Data Filters --------------------------
 
 animals = {'JZ1'};
-days = [9];
+days = [2:3];
 filtfunction = 'riptriglfp';
 LFPtype1 = 'eeg';
 LFPtype2 = 'ripple';
@@ -31,7 +31,7 @@ exclusion_dur = 0.5;  % seconds within which consecutive events are eliminated /
 minvelocity = 0;
 maxvelocity = 4;
 
-filename = sprintf('%s_%s_%s_%s.mat', filtfunction, eventtype, epochEnvironment, cell2mat(animals));
+filename = sprintf('%s_%s_%s_%s.mat', filtfunction, eventtype, epochEnvironment, cell2mat(animals))
 %% ---------------- Run FIlter ---------------------------------------------------
 if runFilterFramework == 1;
     epochfilter =    sprintf('(isequal($type, ''%s'')) && (isequal($environment, ''%s''))',epochType, epochEnvironment); %'isequal($type, ''run'') && (isequal($environment, ''MultipleW''))'; %%'(isequal($type, ''sleep''))'; %%%&& isequal($descript, ''post-allruns''))';%   %%% %'isequal($type, ''run'') && isequal($environment, ''WTrackA'') && (($exposure>=1) && ($exposure<=10))';  %
