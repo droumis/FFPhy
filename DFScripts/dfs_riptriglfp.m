@@ -1,11 +1,11 @@
 
 % clear all
 close all
-runFilterFramework = 0;
-saveFilterOutput = runFilterFramework;
-loadFilterOutput = 1;
+runFilterFramework = 1;
+saveFilterOutput = 1;% runFilterFramework;
+loadFilterOutput = 0;
 % EpochMean = 1;
-resaveFilterOutput = 1;
+resaveFilterOutput = 0;
 % plotSpec_EpochMean = 1;
 % plotSpec_allEpochs = 0;
 outputDirectory = '/typhoon/droumis/analysis';
@@ -14,17 +14,19 @@ outputDirectory = '/typhoon/droumis/analysis';
 
 %% ---------------- Data Filters --------------------------
 
-animals = {'D13'};
-days = [1];
+animals = {'JZ1'};
+days = [9];
 filtfunction = 'riptriglfp';
-eventtype = 'rippleskons';
+LFPtype1 = 'eeg';
+LFPtype2 = 'ripple';
+eventtype = 'ca1rippleskons';
 % eventarea = 'ca1';
 epochEnvironment = 'wtrack';% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
 epochType = 'run';
 % tetAreas = ['ca1', 'mec', 'por']; %ca1, mec, por
 
 consensus_numtets = 1;   % minimum # of tets for consensus event detection
-minthresh = 2;        % STD. how big your ripples are
+minthresh = 3;        % STD. how big your ripples are
 exclusion_dur = 0.5;  % seconds within which consecutive events are eliminated / ignored
 minvelocity = 0;
 maxvelocity = 4;
@@ -34,6 +36,7 @@ filename = sprintf('%s_%s_%s_%s.mat', filtfunction, eventtype, epochEnvironment,
 if runFilterFramework == 1;
     epochfilter =    sprintf('(isequal($type, ''%s'')) && (isequal($environment, ''%s''))',epochType, epochEnvironment); %'isequal($type, ''run'') && (isequal($environment, ''MultipleW''))'; %%'(isequal($type, ''sleep''))'; %%%&& isequal($descript, ''post-allruns''))';%   %%% %'isequal($type, ''run'') && isequal($environment, ''WTrackA'') && (($exposure>=1) && ($exposure<=10))';  %
     iterator = 'multitetrodeanal'; %multitetrodeanal
+    %tetfilter: the ntrodeID's that pass this filter get stored into f.eegdata{day}{epoch}[ntrodeIDs]
     tetfilter = '(isequal($area,''ca1'') || isequal($area,''mec'') || isequal($area,''por''))'; % || isequal($area,''v2l'') || isequal($area,''sub''))';
     % timefilter{1} = {'get2dstate','($velocity<4)'};
     % timefilter{2} = {'kk_getriptimes','($nripples>=1)',[],'tetfilter',tetfilter,'minthresh',5};
@@ -42,14 +45,13 @@ if runFilterFramework == 1;
     %----------F = createfilter('animal', animals, 'days', dayfilter,'epochs', epochfilter, 'excludetime', timefilter, 'eegtetrodes',tetfilter,'iterator', iterator);--------
     F = createfilter('animal', animals, 'days', days,'epochs', epochfilter, 'excludetime', timefilter, 'eegtetrodes',tetfilter,'iterator', iterator);
     %----------f = setfilteriterator(f, funcname, loadvariables, options)--------
-    F = setfilterfunction(F, ['dfa_' filtfunction], {'eeg', eventtype},'eventtype',eventtype);
+    F = setfilterfunction(F, ['dfa_' filtfunction], {LFPtype1, LFPtype2, eventtype},'eventtype',eventtype);
     tic
     F = runfilter(F);
-    F.filterTimer = toc;
+    F.filterTimer = toc; F.filterTimer
     F.worldDateTime = clock;
     F.dataFilter = struct('animal', animals, 'days', days,'epochs', epochfilter, 'excludetime', timefilter, 'eegtetrodes',tetfilter,'iterator', iterator);
     
-    %% ---------------- Collect across tetrodes ---------------------------------------------------
 end
 %% ---------------- Save Filter Output ---------------------------------------------------
 if saveFilterOutput == 1;
