@@ -13,6 +13,7 @@ pausefigs = 1;
 % plotSpec_allEpochs = 0;
 outputDirectory = '/typhoon/droumis/analysis';
 %% ---------------- plotting params --------------------------
+AreaLabelRotate = 45;
 usecolormap = 'colorcube';
 win = [.5 .5]; %in seconds
 indwin = win*1500;
@@ -34,8 +35,10 @@ minthresh = 3;        % STD. how big your ripples are
 exclusion_dur = 0.5;  % seconds within which consecutive events are eliminated / ignored
 minvelocity = 0;
 maxvelocity = 4;
-
-filename = sprintf('%s_%s_%s_%s.mat', filtfunction, eventtype, epochEnvironment, cell2mat(animals))
+% filenameTitle = sprintf('%s\\_%s\\_%s\\_%s', filtfunction, eventtype, epochEnvironment, cell2mat(animals));
+filename = sprintf('%s_%s_%s_%s.mat', filtfunction, eventtype, epochEnvironment, cell2mat(animals));
+stitlename = strrep(filename,'_', ' ');
+stitlename  = strrep(stitlename,'.mat','');
 %% ---------------- Run FIlter ---------------------------------------------------
 if runFilterFramework == 1;
     epochfilter =    sprintf('(isequal($type, ''%s'')) && (isequal($environment, ''%s''))',epochType, epochEnvironment); %'isequal($type, ''run'') && (isequal($environment, ''MultipleW''))'; %%'(isequal($type, ''sleep''))'; %%%&& isequal($descript, ''post-allruns''))';%   %%% %'isequal($type, ''run'') && isequal($environment, ''WTrackA'') && (($exposure>=1) && ($exposure<=10))';  %
@@ -98,79 +101,103 @@ if plotLFPtraces %to do
                         win = F.output{iday}(iepoch).win;
                         indwin = win*1500;
                         ntrodesIndices = F.output{iday}(iepoch).index;
-                        %reorder the LFP traces by suparea|area|subarea tags
+                        %reorder the LFP traces by suparea|area|subarea tags (in that priority)
                         [~, tagIndMap] = ismember(ntrodesIndices,tetinfoAll.index, 'rows');
                         ntrodeTags = tetinfoAll.values(tagIndMap);
-                        numericAreas = cellfun(@(x) [str2num(sscanf(strcat(num2str(uint8(x.area))),'%s'))], ntrodeTags, 'UniformOutput', false);
-                        numericSupAreas = cellfun(@(x) [str2num(sscanf(strcat(num2str(uint8(x.suparea))),'%s'))], ntrodeTags, 'UniformOutput', false);
-                        numericSubAreas = cellfun(@(x) [str2num(sscanf(strcat(num2str(uint8(x.subarea))),'%s'))], ntrodeTags, 'UniformOutput', false);
-%                         ntrodeInd = ntrodesIndices(introde,:);
-                        for introdeInd = 1:length(ntrodesIndices(:,1));
-                            ntrodeInd = ntrodesIndices(introdeInd,:);
-                            ntrodeTags = tetinfo{ntrodeInd(1)}{ntrodeInd(2)}{ntrodeInd(3)};
-                            areatypes = ([{'suparea'}, {'area'}, {'subarea'}]);
-                            for iareatype = 1:length(areatypes)
-                               areatype = areatypes{iareatype};
-                               try
-                                   eval(['ntareaInfo{introdeInd}(1,iareatype) = ntrodeTags.' areatype]);
-                               catch
-                                   ntareaInfo{introdeInd}(1,iareatype) = '';
-                               end
-                            end
-%                             try; ntareaInfo{introdeInd}(1,1) = ntrodeTags.suparea; catch; ntareaInfo{introdeInd}(1,1) = ''; end; 
-%                             try; ntareaInfo{introdeInd}(1,2) = ntrodeTags.suparea; catch; ntareaInfo{introdeInd}(1,1) = ''; end; 
-%                             try; ntareaInfo{introdeInd}(1,3) = ntrodeTags.suparea; catch; ntareaInfo{introdeInd}(1,1) = ''; end; 
-%                             ntareaInfo{introdeInd}(1,2) = ntrodeTags.area;
-%                             ntareaInfo{introdeInd}(1,3) = ntrodeTags.subarea;
+                        try
+                            numsumSupAreas = cellfun(@(x) sum(uint8(x.suparea)), ntrodeTags, 'UniformOutput', false);
+                            numsumAreas = cellfun(@(x) sum(uint8(x.area)), ntrodeTags, 'UniformOutput', false);
+                            numsumSubAreas = cellfun(@(x) sum(uint8(x.subarea)), ntrodeTags, 'UniformOutput', false);
+                            strSupAreas = cellfun(@(x) x.suparea, ntrodeTags, 'UniformOutput', false);
+                            strAreas = cellfun(@(x) x.area, ntrodeTags, 'UniformOutput', false);
+                            strSubAreas = cellfun(@(x) x.subarea, ntrodeTags, 'UniformOutput', false);
+                        catch
+                            error('all ntrodes need to have a suparea, subarea, and area tag, even if blank')
                         end
-                        for irip = 1%:length(F.output{iday}(iepoch).data)
+                        numsumallareatags = cell2mat([numsumSupAreas numsumAreas numsumSubAreas]);
+                        [numsumallSort, numsumSortInds] = sortrows(numsumallareatags);%,[-1 -2 -3]); % -Col to 'descend'
+                        for irip = 1%:length(F.output{iday}(iepoch).eegdata)
                             if savefigs && ~pausefigs; %if you want to save figs but not pause them to take a look.. just keep them invisible. i think this makes it faster and returns keyboard/mouse control during saving
-                                ifig = figure('Visible','off','units','normalized','position',[.1 .1 .2 .8]);
+                                ifig = figure('Visible','off','units','normalized','position',[.1 .1 .6 .8]);
                             else
-                                ifig = figure('units','normalized','position',[.1 .1 .2 .8]);
+                                ifig = figure('units','normalized','position',[.1 .1 .6 .8]);
                             end
-                            colmat = flipud(colormap(usecolormap));
-                            colorslength = length(colmat(:,1));
-                            iripTimes = iepochLFPtimes(ripStartIndices(irip)-indwin: ripStartIndices((irip))+indwin);
-                            for introde = 1:length(F.output{iday}(iepoch).data{irip}(:,1))
-                                %get the area tags for this ntrode
-%                                 ntrodeInd = ntrodesIndices(introde,:);
-%                                 ntarea = tetinfo{ntrodeInd(1)}{ntrodeInd(2)}{ntrodeInd(3)}.area;
-%                                 try
-%                                     ntsubarea = tetinfo{ntrodeInd(1)}{ntrodeInd(2)}{ntrodeInd(3)}.subarea;
-%                                 catch
-%                                     ntsubarea = [];
-%                                 end
-%                                 try
-%                                     ntsuparea = tetinfo{ntrodeInd(1)}{ntrodeInd(2)}{ntrodeInd(3)}.suparea;
-%                                 catch
-%                                     ntsuparea = [];
-%                                 end
-                                if introde == 1;
-                                    introdeiripLFP = F.output{iday}(iepoch).data{irip}(introde,:);
-                                    icolor = colmat(mod(sum(uint8([ntarea ntsubarea ntsuparea])), colorslength), :); %auto generate a consistent color based on area and subarea tags and colormap
+                            clrmat = (colormap(usecolormap));
+                            colorslength = length(clrmat(:,1));
+                            iripWinTimes = iepochLFPtimes(ripStartIndices(irip)-indwin: ripStartIndices((irip))+indwin);
+%                             icolor = mod(allareatagsSorted(:,:), colorslength);
+%                             icolor = 1-(icolor-min(min(icolor)))./max(max(icolor)); %normalize
+                            icolors = clrmat(mod(prod(numsumallSort,2), colorslength), :);
+                            [uniqColors, uniqColorsInds, uniqColorsInds2] = unique(icolors, 'rows', 'stable');
+                            [uniqNumsum, uniqNumSumInds, uniqNumSumInds2] = unique(numsumallSort, 'rows', 'stable');
+                            titleColors = icolors(uniqColorsInds,:);
+                            titleSupAreas = strSupAreas(numsumSortInds(uniqColorsInds));
+                            titleAreas = strAreas(numsumSortInds(uniqColorsInds));
+                            titleSubAreas = strSubAreas(numsumSortInds(uniqColorsInds));
+                            iYlim = [];
+                            for iLFPtype = 1:length(LFPtypes)
+                                for introde = 1:length(F.output{iday}(iepoch).eegdata{irip}(:,1))
+                                    isupareatag = ntrodeTags{numsumSortInds(introde)}.suparea;
+                                    iareatag = ntrodeTags{numsumSortInds(introde)}.area;
+                                    isubareatag = ntrodeTags{numsumSortInds(introde)}.subarea;
+                                    iTags = {{isupareatag},{iareatag}, {isubareatag}};
+                                    %                                     iTags = {{strSupAreas(areatagsSortedInds(introde))},{strSupAreas(areatagsSortedInds(introde))}, {strSupAreas(areatagsSortedInds(introde))}};
+                                    iNTcolor = icolors(introde,:);
+                                    %                                     ripNTcolors(introde) = iNTcolor;
                                     figure(ifig)
-                                    plot(iripTimes, introdeiripLFP, 'Color', icolor, 'Linewidth', 1)
-                                    hold on;
-                                    traceVertOffset = 0;
-                                else
-                                    previousLFP = F.output{iday}(iepoch).data{irip}(introde-1,:);
-                                    introdeiripLFP = F.output{iday}(iepoch).data{irip}(introde,:);
-                                    icolor = colmat(mod(sum(uint8([ntarea ntsubarea ntsuparea])), colorslength), :);
-                                    traceVertOffset(introde) = traceVertOffset(introde-1) + abs(min(previousLFP)) + abs(max(introdeiripLFP)); 
-                                    figure(ifig)
-                                    plot(iripTimes, introdeiripLFP - traceVertOffset(introde), 'Color', icolor, 'LineWidth',1); 
-                                    hold on;
+                                    subplot(1,2,1)
+                                    introdeiripLFP = F.output{iday}(iepoch).eegdata{irip}(numsumSortInds(introde),:);
+                                    if introde == 1;
+                                        plot(iripWinTimes, introdeiripLFP, 'Color', iNTcolor, 'Linewidth', 1)
+                                        hold on;
+                                        traceVertOffset = 0;
+                                        previousLFP = introdeiripLFP;
+                                        iYlim(1,1) = max(introdeiripLFP); %first trace max
+                                    else
+                                        traceVertOffset(introde) = traceVertOffset(introde-1) + abs(min(previousLFP)) + abs(max(introdeiripLFP));
+                                        plot(iripWinTimes, introdeiripLFP - traceVertOffset(introde), 'Color', iNTcolor, 'LineWidth',1);
+                                        hold on;
+                                        previousLFP = introdeiripLFP;
+                                    end
+                                    ititle = title('wideband(1-400Hz)');
+                                    set(ititle,'FontSize',12,'FontWeight','bold','Color','k', 'FontName', 'Arial');
+                                    %overlay event window patches
+                                    ilmax = max(introdeiripLFP - traceVertOffset(introde));
+                                    ilmin = min(introdeiripLFP - traceVertOffset(introde));
+                                    iripstarttime = iepochLFPtimes(ripStartIndices(irip));
+                                    iripendtime = iepochLFPtimes(ripEndIndices(irip));
+                                    line([iripstarttime iripstarttime], [ilmin ilmax],'Color',[.8 .8 .8],'LineWidth',1.5);
+                                    %                                 line([traceVertOffset(introde) traceVertOffset(introde)], [],'Color',iNTcolor,'LineWidth',1.5);
+                                    Xpatch = [iripstarttime iripendtime iripendtime iripstarttime];
+                                    Ypatch = [ilmin ilmin ilmax ilmax];
+                                    patch(Xpatch, Ypatch, [.8 .8 .8], 'edgecolor','none'); %triggering-ripple patch
                                 end
-                                %overlay event window patches
-                                line([traceVertOffset(introde) traceVertOffset(introde)], [],'Color',regionclr(iArea,:),'LineWidth',1.5);
-                                
-                                
-%                 Xpatch = [ripsinwin{currrip}{iArea}(m,1) ripsinwin{currrip}{iArea}(m,2) ripsinwin{currrip}{iArea}(m,2) ripsinwin{currrip}{iArea}(m,1)];
-%                 %                 Ypatch = [Ylfpranges4region{i}(1) Ylfpranges4region{i}(1)+diff(Ylfpranges4region{i})/4 Ylfpranges4region{i}(2)-diff(Ylfpranges4region{i})/4 Ylfpranges4region{i}(2)]; %trapezoidal patch that decays toward rip end
-%                 Ypatch = [Ylfpranges4region{iArea}(1) Ylfpranges4region{iArea}(1) Ylfpranges4region{iArea}(2) Ylfpranges4region{iArea}(2)];
-%                 patch(Xpatch, Ypatch, patchclr(iArea,:), 'edgecolor','none'); %triggering-ripple patch
                             end
+                            iYlim(1,2) = min(introdeiripLFP - traceVertOffset(introde)); %last trace min
+                            for ititleTag = 1:length(titleColors(:,1))
+                                try %place in the middle of this area's traces
+                                    titleY = -traceVertOffset(uniqColorsInds(ititleTag)) - (traceVertOffset(uniqColorsInds(ititleTag+1)) - traceVertOffset(uniqColorsInds(ititleTag)))/2;
+                                catch %will catch when on the last title, at this point, place between the current vert offset and total minimum
+                                    titleY = -traceVertOffset(uniqColorsInds(ititleTag)) - (-iYlim(1,2) - traceVertOffset(uniqColorsInds(ititleTag)))/2;
+                                end
+                                itxt = text(iripWinTimes(1)-.15, titleY, ['{\color[rgb]' sprintf('{%d %d %d} %s %s}',titleColors(ititleTag,:), titleAreas{ititleTag}, num2str(titleSubAreas{ititleTag}))]);
+                                set(itxt, 'rotation', AreaLabelRotate, 'FontName', 'Arial', 'FontSize',12, 'FontWeight', 'Bold');
+                            end
+%                             supertitle([{filenameTitle};{['\fontsize{16}black {\color{magenta}magenta ' '\color[rgb]{0 .5 .5}teal \color{red}red} black again']}])
+                            iStitle = supertitle(stitlename);
+                            set(iStitle, 'FontSize',12,'FontWeight','bold','Color','k', 'FontName', 'Arial');
+                            set(gca,'children',flipud(get(gca,'children'))) %send the patch behind the LFP traces
+                            ylim([iYlim(1,2) iYlim(1,1)])
+                            xlim([iripWinTimes(1) iripWinTimes(end)])
+                            set(gca, 'YTick', []);
+                            set(gca,'XTick',[iripWinTimes(1):(iripWinTimes(end) - iripWinTimes(1))/10:iripWinTimes(end)], 'FontSize',10,'FontWeight','normal')
+                            set(gca, 'XTickLabel', round([iripWinTimes(1):(iripWinTimes(end) - iripWinTimes(1))/10:iripWinTimes(end)],2), 'XTickLabelRotation',45);
+%                             set(gca, 'XTickLabel', [-win(1):win(1)/5:win(2)])
+                            xlabel('time(s)','FontSize',12,'FontWeight','bold','Color','k', 'FontName', 'Arial')
+                            return
+%                             if pausefigs
+%                                 pause
+%                             end
                         end
                     end
                 end
