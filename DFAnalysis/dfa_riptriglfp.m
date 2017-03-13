@@ -52,10 +52,11 @@ end
         clear YripLFPdata
         for iNTrode = 1:length(index(:,3)); %for each ntrode
             % Gather lfp data for each ntrode within the current rip window
-            out.eeedata{currrip}(iNTrode,:) = eeg{index(iNTrode,1)}{index(iNTrode,2)}{index(iNTrode,3)}.data(eventStartIndices(currrip)-wininds(1):eventStartIndices(currrip)+wininds(2));
-            out.ripdata{currrip}(iNTrode,:) = ripple{index(iNTrode,1)}{index(iNTrode,2)}{index(iNTrode,3)}.data(eventStartIndices(currrip)-wininds(1):eventStartIndices(currrip)+wininds(2));
+            out.data{1}{currrip}(iNTrode,:) = eeg{index(iNTrode,1)}{index(iNTrode,2)}{index(iNTrode,3)}.data(eventStartIndices(currrip)-wininds(1):eventStartIndices(currrip)+wininds(2));
+            out.data{2}{currrip}(iNTrode,:) = ripple{index(iNTrode,1)}{index(iNTrode,2)}{index(iNTrode,3)}.data(eventStartIndices(currrip)-wininds(1):eventStartIndices(currrip)+wininds(2));
         end
     end
+    out.LFPtypes = [{'wideband'}, {'ripple'}];
     out.LFPtimes = LFPtimes;
     out.eventStartIndices = eventStartIndices;
     out.eventEndIndices = eventEndIndices;
