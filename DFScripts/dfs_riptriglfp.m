@@ -1,7 +1,7 @@
 
 % clear all
 close all
-runFilterFramework = 1;
+runFilterFramework = 0;
 saveFilterOutput = runFilterFramework;
 loadFilterOutput = 0;
 % EpochMean = 1;
@@ -13,8 +13,11 @@ pausefigs = 1;
 % plotSpec_allEpochs = 0;
 
 %% ---------------- plotting params --------------------------
-AreaLabelRotate = 45;
-usecolormap = 'colorcube';
+% colorsMEC = cbrewer('seq', 'Blues', 10, 'PCHIP');
+% colorsCTX = cbrewer('seq', 'Reds', 10, 'PCHIP');
+% allthecolors = {[0 0 0], colorsMEC, colorsCTX};
+% usecolormap = 'jet'; %colorcube %lines %jet winter
+colorSet = 'DR1';
 win = [.5 .5]; %in seconds
 indwin = win*1500;
 %% ---------------- Data Filters --------------------------
@@ -26,18 +29,19 @@ filtfunction = 'riptriglfp';
 % LFPtypes = [{'eeg'}, {'ripple'}];
 eventtype = 'rippleskons';
 % eventarea = 'ca1';
-epochEnvironment = 'openfield';% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
-epochType = 'run';
+epochEnvironment = 'sleep';% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
+epochType = 'sleep';
 eventSourceArea = 'mec';
 ripAreas = {'ca1', 'mec', 'por'};
-ntAreas = {'ca1', 'mec', 'por', 'sub', 'v2l', 'ref'};
+ntAreas = {'ca1', 'sub', 'mec', 'por', 'v2l', 'ref'};
+
 
 consensus_numtets = 1;   % minimum # of tets for consensus event detection
-minthresh = 3;        % STD. how big your ripples are
+minstdthresh = 5;        % STD. how big your ripples are
 exclusion_dur = 0.5;  % seconds within which consecutive events are eliminated / ignored
 minvelocity = 0;
 maxvelocity = 4;
-outputDirectory = '/typhoon/droumis/analysis';
+outputDirectory = '/opt/typhoon/droumis/analysis';
 %% ---------------- Paths and Title strings ---------------------------------------------------
 currfigdirectory = sprintf('%s/figures/%s/', outputDirectory, filtfunction);
 filenamesave = sprintf('%s%s_%s_%s', eventSourceArea, eventtype, epochEnvironment, cell2mat(animals));
@@ -52,7 +56,7 @@ if runFilterFramework == 1;
     % timefilter{1} = {'get2dstate','($velocity<4)'};
     % timefilter{2} = {'kk_getriptimes','($nripples>=1)',[],'tetfilter',tetfilter,'minthresh',5};
     timefilter{1} = {'getconstimes', '($cons == 1)', [eventSourceArea eventtype],1,'consensus_numtets',consensus_numtets,...
-        'minthresh',minthresh,'exclusion_dur',exclusion_dur,'minvelocity',minvelocity,'maxvelocity',maxvelocity};
+        'minstdthresh',minstdthresh,'exclusion_dur',exclusion_dur,'minvelocity',minvelocity,'maxvelocity',maxvelocity};
     %----------F = createfilter('animal', animals, 'days', dayfilter,'epochs', epochfilter, 'excludetime', timefilter, 'eegtetrodes',tetfilter,'iterator', iterator);--------
     F = createfilter('animal', animals, 'days', days,'epochs', epochfilter, 'excludetime', timefilter, 'eegtetrodes',tetfilter,'iterator', iterator);
     %----------f = setfilteriterator(f, funcname, loadvariables, options)--------
@@ -97,6 +101,8 @@ if plotLFPtraces %to do
                         eval([sprintf('eventKons.%s%s = %s%s;', ripAreas{iareakons}, eventtype, ripAreas{iareakons}, eventtype)])
                         eval([sprintf('clear %s%s', ripAreas{iareakons}, eventtype)])
                     end
+                    %add filtering via getconstimes to get ripples of
+                    %certain strength
                     for iepoch = 1:length(F(ianimal).output{iday})
                         if isempty(F(ianimal).output{iday}(iepoch).data)
                             continue %if this an day epoch is empty, skip to the next
@@ -113,17 +119,19 @@ if plotLFPtraces %to do
                         [~, tagIndMap] = ismember(ntrodesIndices,tetinfoAll.index, 'rows');
                         ntrodeTags = tetinfoAll.values(tagIndMap);
                         try
-                            numsumSupAreas = cellfun(@(x) sum(uint8(x.suparea)), ntrodeTags, 'UniformOutput', false);
-                            numsumAreas = cellfun(@(x) sum(uint8(x.area)), ntrodeTags, 'UniformOutput', false);
-                            numsumSubAreas = cellfun(@(x) sum(uint8(x.subarea)), ntrodeTags, 'UniformOutput', false);
+                            numsumSupAreas = cellfun(@(x) sum(uint16(x.suparea)), ntrodeTags, 'UniformOutput', false);
+                            numsumAreas = cellfun(@(x) sum(uint16(x.area)), ntrodeTags, 'UniformOutput', false);
+                            numsumSubAreas = cellfun(@(x) sum(uint16(x.subarea)), ntrodeTags, 'UniformOutput', false);
                             strSupAreas = cellfun(@(x) x.suparea, ntrodeTags, 'UniformOutput', false);
                             strAreas = cellfun(@(x) x.area, ntrodeTags, 'UniformOutput', false);
                             strSubAreas = cellfun(@(x) x.subarea, ntrodeTags, 'UniformOutput', false);
                         catch
                             error('all ntrodes need to have a suparea, subarea, and area tag, even if blank')
                         end
+                        icolors = colorPicker(colorSet, strAreas, strSubAreas);
                         numsumallareatags = cell2mat([numsumSupAreas numsumAreas numsumSubAreas]);
                         [numsumallSort, numsumSortInds] = sortrows(numsumallareatags);%,[-1 -2 -3]); % -Col to 'descend'
+                        icolors = icolors(numsumSortInds,:);
                         %% ---- loop across all ripples for this day epoch sourcearea ----
                         for irip = 1:length(F(ianimal).output{iday}(iepoch).data{1})
                             if savefigs && ~pausefigs; %if you want to save figs but not pause them to take a look.. just keep them invisible. i think this makes it faster and returns keyboard/mouse control during saving
@@ -132,18 +140,22 @@ if plotLFPtraces %to do
                                 ifig = figure('units','normalized','position',[.1 .1 .6 .8]);
                             end
                             %% ---- Colors ----
-                            clrmat = (colormap(usecolormap)); %flipud
-                            colorslength = length(clrmat(:,1));
+                            set(gcf,'color','white')
+%                             clrmat = unique(colormap(usecolormap), 'rows', 'stable'); %flipud
+%                             clrmat = clrmat(all(clrmat < 1,2),:); % only use dark/bold colors
+%                             colorslength = length(clrmat(:,1));
                             iripWinTimes = iepochLFPtimes(ripStartIndices(irip)-indwin: ripStartIndices((irip))+indwin);
                             %                             icolor = mod(allareatagsSorted(:,:), colorslength);
                             %                             icolor = 1-(icolor-min(min(icolor)))./max(max(icolor)); %normalize
-                            icolors = clrmat(mod(prod(numsumallSort,2), colorslength), :);
-                            [uniqColors, uniqColorsInds, uniqColorsInds2] = unique(icolors, 'rows', 'stable');
-                            [uniqNumsum, uniqNumSumInds, uniqNumSumInds2] = unique(numsumallSort, 'rows', 'stable');
-                            titleColors = icolors(uniqColorsInds,:);
-                            titleSupAreas = strSupAreas(numsumSortInds(uniqColorsInds));
-                            titleAreas = strAreas(numsumSortInds(uniqColorsInds));
-                            titleSubAreas = strSubAreas(numsumSortInds(uniqColorsInds));
+                            
+
+%                             icolors = clrmat(mod(prod(numsumallSort,2), colorslength)+1,:);   % the +1 is to assure all indices > 0 (bc matlab is 1-based ..)
+%                             [uniqColors, uniqColorsInds, uniqColorsInds2] = unique(icolors, 'rows', 'stable');
+%                             [uniqNumsum, uniqNumSumInds, uniqNumSumInds2] = unique(numsumallSort, 'rows', 'stable');
+%                             titleColors = icolors(uniqColorsInds,:);
+%                             titleSupAreas = strSupAreas(numsumSortInds(uniqColorsInds));
+%                             titleAreas = strAreas(numsumSortInds(uniqColorsInds));
+%                             titleSubAreas = strSubAreas(numsumSortInds(uniqColorsInds));
                             iYlim = [];
                             %% ---- PLOT THE POWERTRACE OF THE CONSCENSUS RIPPLES FILTERED LFP ----
 %                             eval([sprintf(' iconsensusTimes = eventKons.%s%s{%d}{%d}{1}.eegtimesvec_ref;', eventSourceArea, eventtype, iday, iepoch)])
@@ -159,7 +171,8 @@ if plotLFPtraces %to do
                                     isupareatag = ntrodeTags{numsumSortInds(introde)}.suparea;
                                     iareatag = ntrodeTags{numsumSortInds(introde)}.area;
                                     isubareatag = ntrodeTags{numsumSortInds(introde)}.subarea;
-                                    %                                     iTags = {{isupareatag},{iareatag}, {isubareatag}};
+%                                     clrpicker = find(strcmp(iareatag, ntAreas));
+%                                     allthecolors{clrpicker};
                                     iNTcolor = icolors(introde,:);
                                     subaxis(1,length(F(ianimal).output{iday}(iepoch).data),iLFPtype, 'Spacing', 0.02, 'Padding', 0.0, 'Margin', 0.09);
 %                                     subaxis(2,2,iLFPtype+2, 'Spacing', 0.02, 'Padding', 0.0, 'Margin', 0.09);
@@ -186,8 +199,11 @@ if plotLFPtraces %to do
                                         
                                         %                                     ripsStartTimes = eventKons{1}.ca1rippleskons{iday}{iepoch}{1}.starttime;
                                         %                                     ripsEndTimes = eventKons{1}.ca1rippleskons{iday}{iepoch}{1}.endtime;
-                                        ripsinwinInds = find((ripsStartTimes>iripWinTimes(1) | ripsEndTimes<iripWinTimes(end))); %if the rip start time or end time is within the current window
+                                        ripsinwinInds = find(ripsStartTimes>iripWinTimes(1) & ripsEndTimes<iripWinTimes(end)); %if the rip start time and end time is within the current window
                                         ripsinwinTimes = [ripsStartTimes(ripsinwinInds) ripsEndTimes(ripsinwinInds)];
+                                        
+                                        
+                                        
                                         %                                     if (introde == 1) && (iareatag == eventSourceArea);
                                         %                                         %PLOT THE POWERTRACE OF THE CONSCENSUS RIPPLES FILTERED LFP
                                         % %                                         srcarea find(strcmp(eventSourceArea, tetAreas));
@@ -204,13 +220,24 @@ if plotLFPtraces %to do
                                             Xpatch = [iripstarttime iripendtime iripendtime iripstarttime];
                                             Ypatch = [ilmin ilmin ilmax ilmax];
                                             patch(Xpatch, Ypatch, iNTcolor, 'FaceAlpha', .25, 'edgecolor','none'); %triggering-ripple patch
+                                            %% ---- plot the maxthresh scores for all visible ripples ----
+                                            if iLFPtype == length(F(ianimal).output{iday}(iepoch).LFPtypes) %if it's the rightmost subplot, plot the maxthresh scores for all visible ripples
+                                                imaxthresh = [];
+                                                eval([sprintf(' imaxthresh = eventKons.%s%s{%d}{%d}{1}.maxthresh(%d);', iareatag, eventtype, iday, iepoch, ripsinwinInds(iripinwin))])
+                                                iriplabel = text(double(iripendtime),double(ilmax-(ilmax-ilmin)/10),num2str(round(imaxthresh,1)));
+                                                set(iriplabel, 'Color', iNTcolor, 'FontName', 'Arial', 'FontSize',6, 'FontWeight', 'normal', 'horizontalAlignment', 'left', 'verticalAlignment', 'bottom');
+                                            end
                                         end
                                     end
-                                    NTlabel = text(iripWinTimes(1)-.01, -traceVertOffset(introde), num2str(introdeID));
+                                    NTlabel = text(iripWinTimes(1)-.01, -traceVertOffset(introde), num2str([introdeID]));
                                     set(NTlabel, 'Color', [.5 .5 .5], 'FontName', 'Arial', 'FontSize',8, 'FontWeight', 'normal', 'horizontalAlignment', 'right');
-                                    if iareatag == eventSourceArea;
-                                        sourceAreaColor = iNTcolor;
+                                    if iLFPtype == 1
+                                        NTlabel = text(iripWinTimes(1)-.07, -traceVertOffset(introde), num2str([iareatag, ' ', num2str(isubareatag)]));
+                                        set(NTlabel, 'Color', iNTcolor, 'FontName', 'Arial', 'FontSize',8, 'FontWeight', 'normal', 'horizontalAlignment', 'right');
                                     end
+                                    %                                     if iareatag == eventSourceArea;
+                                    %                                         sourceAreaColor = iNTcolor;
+                                    %                                     end
                                 end
                                 %% ---- Source ripple line, subplot title ----
 %                                 set(conTraceAx,'Color', sourceAreaColor) %set(subplot(2,2,1),'Color','Red')
@@ -232,18 +259,18 @@ if plotLFPtraces %to do
                                 %                             set(gca, 'XTickLabel', [-win(1):win(1)/5:win(2)])
                                 xlabel('time(s)','FontSize',12,'FontWeight','bold','Color','k', 'FontName', 'Arial')
                                 %% ---- area axes label ----
-                                if iLFPtype == 1
-                                    for ititleTag = 1:length(titleColors(:,1))
-                                        try %place in the middle of this area's traces
-                                            titleY = -traceVertOffset(uniqColorsInds(ititleTag)) - (traceVertOffset(uniqColorsInds(ititleTag+1)) - traceVertOffset(uniqColorsInds(ititleTag)))/2;
-                                        catch %will catch when on the last title, at this point, place between the current vert offset and total minimum
-                                            titleY = -traceVertOffset(uniqColorsInds(ititleTag)) - (-iYlim(1,2) - traceVertOffset(uniqColorsInds(ititleTag)))/2;
-                                        end
-                                        itxt = text(iripWinTimes(1)-.05, titleY, ['{\color[rgb]' sprintf('{%d %d %d} %s %s}',titleColors(ititleTag,:), titleAreas{ititleTag}, num2str(titleSubAreas{ititleTag}))]);
-                                        %                                         set(itxt, 'rotation', AreaLabelRotate, 'FontName', 'Arial', 'FontSize',12, 'FontWeight', 'Bold');
-                                        set(itxt, 'rotation', 0, 'FontName', 'Arial', 'FontSize',12, 'FontWeight', 'Bold', 'horizontalAlignment', 'right');
-                                    end
-                                end
+%                                 if iLFPtype == 1
+%                                     for ititleTag = 1:length(titleColors(:,1))
+%                                         try %place in the middle of this area's traces
+%                                             titleY = -traceVertOffset(uniqColorsInds(ititleTag)) - (traceVertOffset(uniqColorsInds(ititleTag+1)) - traceVertOffset(uniqColorsInds(ititleTag)))/2;
+%                                         catch %will catch when on the last title, at this point, place between the current vert offset and total minimum
+%                                             titleY = -traceVertOffset(uniqColorsInds(ititleTag)) - (-iYlim(1,2) - traceVertOffset(uniqColorsInds(ititleTag)))/2;
+%                                         end
+%                                         itxt = text(iripWinTimes(1)-.05, titleY, ['{\color[rgb]' sprintf('{%d %d %d} %s %s}',titleColors(ititleTag,:), titleAreas{ititleTag}, num2str(titleSubAreas{ititleTag}))]);
+%                                         %                                         set(itxt, 'rotation', AreaLabelRotate, 'FontName', 'Arial', 'FontSize',12, 'FontWeight', 'Bold');
+%                                         set(itxt, 'rotation', 0, 'FontName', 'Arial', 'FontSize',12, 'FontWeight', 'Bold', 'horizontalAlignment', 'right', 'verticalAlignment', 'bottom');
+%                                     end
+%                                 end
                             %% ---- super title ----
                             end
                             sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
@@ -267,8 +294,8 @@ if plotLFPtraces %to do
                                 currfigfile = sprintf('%s%s/%s',currfigdirectory, filenamesave, sprtitsave);
                                 print(currfigfile,'-dpng', '-r0')
                                 disp(sprintf('plot %s saved', sprtit))
-                                close all
                             end
+                            close all
                         end
                     end
                 end
