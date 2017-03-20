@@ -1,7 +1,7 @@
 
 % clear all
 close all
-runFilterFramework = 0;
+runFilterFramework = 1;
 saveFilterOutput = runFilterFramework;
 loadFilterOutput = 0;
 % EpochMean = 1;
@@ -26,12 +26,12 @@ animals = {'JZ1'};
 % animals = {'JZ1', 'D13'};
 days = [1];
 filtfunction = 'riptriglfp';
-% LFPtypes = [{'eeg'}, {'ripple'}];
+LFPtypes = {'eeg', 'theta'};
 eventtype = 'rippleskons';
 % eventarea = 'ca1';
-epochEnvironment = 'sleep';% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
-epochType = 'sleep';
-eventSourceArea = 'mec';
+epochEnvironment = 'wtrack';% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
+epochType = 'run';
+eventSourceArea = 'ca1';
 ripAreas = {'ca1', 'mec', 'por'};
 ntAreas = {'ca1', 'sub', 'mec', 'por', 'v2l', 'ref'};
 
@@ -44,7 +44,7 @@ maxvelocity = 4;
 outputDirectory = '/opt/typhoon/droumis/analysis';
 %% ---------------- Paths and Title strings ---------------------------------------------------
 currfigdirectory = sprintf('%s/figures/%s/', outputDirectory, filtfunction);
-filenamesave = sprintf('%s%s_%s_%s', eventSourceArea, eventtype, epochEnvironment, cell2mat(animals));
+filenamesave = sprintf('%s%s_%s_%s_%s', eventSourceArea, eventtype, epochEnvironment, cell2mat(animals), cell2mat(LFPtypes));
 filename = sprintf('%s_%s.mat', filtfunction, filenamesave);
 filenameTitle = strrep(filename,'_', '\_');
 %% ---------------- Run FIlter ---------------------------------------------------
@@ -60,7 +60,7 @@ if runFilterFramework == 1;
     %----------F = createfilter('animal', animals, 'days', dayfilter,'epochs', epochfilter, 'excludetime', timefilter, 'eegtetrodes',tetfilter,'iterator', iterator);--------
     F = createfilter('animal', animals, 'days', days,'epochs', epochfilter, 'excludetime', timefilter, 'eegtetrodes',tetfilter,'iterator', iterator);
     %----------f = setfilteriterator(f, funcname, loadvariables, options)--------
-    F = setfilterfunction(F, ['dfa_' filtfunction], {'eeg', 'ripple', [eventSourceArea eventtype]},'eventtype',[eventSourceArea eventtype]);
+    F = setfilterfunction(F, ['dfa_' filtfunction], {LFPtypes{1}, LFPtypes{2}, [eventSourceArea eventtype]},'eventtype',[eventSourceArea eventtype], 'LFPtypes', LFPtypes);
     tic
     F = runfilter(F);
     F(1).filterTimer = toc; F(1).filterTimer
@@ -177,7 +177,7 @@ if plotLFPtraces %to do
                                     subaxis(1,length(F(ianimal).output{iday}(iepoch).data),iLFPtype, 'Spacing', 0.02, 'Padding', 0.0, 'Margin', 0.09);
 %                                     subaxis(2,2,iLFPtype+2, 'Spacing', 0.02, 'Padding', 0.0, 'Margin', 0.09);
                                     %                                     subplot(1,length(F(ianimal).output{iday}(iepoch).data),iLFPtype)
-                                    introdeiripLFP = F(ianimal).output{iday}(iepoch).data{iLFPtype}{irip}(numsumSortInds(introde),:);
+                                    introdeiripLFP = double(F(ianimal).output{iday}(iepoch).data{iLFPtype}{irip}(numsumSortInds(introde),:));
                                     % ---- plot ntrode traces ----
                                     if introde == 1; %if it's the first ntrode
                                         plot(iripWinTimes, introdeiripLFP, 'Color', iNTcolor, 'Linewidth', 1)

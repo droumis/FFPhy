@@ -4,7 +4,7 @@ function out = dfa_riptriglfp(index, excludeperiods, eeg, ripple, events, vararg
 win = [0.5 0.5];
 appendindex = 1;
 eventtype = 'rippleskons';
-
+LFPtypes = {'wideband', 'ripple'};
 % process varargin and overwrite default values
 if (~isempty(varargin))
     assign(varargin{:});
@@ -56,7 +56,7 @@ end
             out.data{2}{currrip}(iNTrode,:) = ripple{index(iNTrode,1)}{index(iNTrode,2)}{index(iNTrode,3)}.data(eventStartIndices(currrip)-wininds(1):eventStartIndices(currrip)+wininds(2));
         end
     end
-    out.LFPtypes = [{'wideband'}, {'ripple'}];
+    out.LFPtypes = LFPtypes;
     out.LFPtimes = LFPtimes;
     out.eventStartIndices = eventStartIndices;
     out.eventEndIndices = eventEndIndices;
