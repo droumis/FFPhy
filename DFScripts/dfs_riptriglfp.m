@@ -26,22 +26,22 @@ animals = {'JZ1'};
 % animals = {'JZ1', 'D13'};
 days = [1];
 filtfunction = 'riptriglfp';
-LFPtypes = {'eeg', 'theta'};
+LFPtypes = {'eeg', 'ripple', 'theta', 'slowgamma', 'fastgamma'};
+LFPrangesHz = {'1-400', '140-250', '6-9', '20-50', '65 - 95'}; %need to make this a lookup from the filter mat
 eventtype = 'rippleskons';
 % eventarea = 'ca1';
-epochEnvironment = 'wtrack';% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
-epochType = 'run';
-eventSourceArea = 'ca1';
+epochEnvironment = 'sleep';% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
+epochType = 'sleep';
+eventSourceArea = 'mec';
 ripAreas = {'ca1', 'mec', 'por'};
 ntAreas = {'ca1', 'sub', 'mec', 'por', 'v2l', 'ref'};
-
 
 consensus_numtets = 1;   % minimum # of tets for consensus event detection
 minstdthresh = 5;        % STD. how big your ripples are
 exclusion_dur = 0.5;  % seconds within which consecutive events are eliminated / ignored
 minvelocity = 0;
 maxvelocity = 4;
-outputDirectory = '/opt/typhoon/droumis/analysis';
+outputDirectory = '/typhoon/droumis/analysis';
 %% ---------------- Paths and Title strings ---------------------------------------------------
 currfigdirectory = sprintf('%s/figures/%s/', outputDirectory, filtfunction);
 filenamesave = sprintf('%s%s_%s_%s_%s', eventSourceArea, eventtype, epochEnvironment, cell2mat(animals), cell2mat(LFPtypes));
@@ -49,18 +49,24 @@ filename = sprintf('%s_%s.mat', filtfunction, filenamesave);
 filenameTitle = strrep(filename,'_', '\_');
 %% ---------------- Run FIlter ---------------------------------------------------
 if runFilterFramework == 1;
-    epochfilter =    sprintf('(isequal($type, ''%s'')) && (isequal($environment, ''%s''))',epochType, epochEnvironment); %'isequal($type, ''run'') && (isequal($environment, ''MultipleW''))'; %%'(isequal($type, ''sleep''))'; %%%&& isequal($descript, ''post-allruns''))';%   %%% %'isequal($type, ''run'') && isequal($environment, ''WTrackA'') && (($exposure>=1) && ($exposure<=10))';  %
+    epochfilter =    sprintf('(isequal($type, ''%s'')) && (isequal($environment, ''%s''))',epochType, epochEnvironment);
     iterator = 'multitetrodeanal'; %multitetrodeanal
     %tetfilter: the ntrodeID's that pass this filter get stored into f.eegdata{day}{epoch}[ntrodeIDs]
-    tetfilter = sprintf('(isequal($area,''%s'') || isequal($area,''%s'') || isequal($area,''%s'') || isequal($area,''%s'') || isequal($area,''%s'') || isequal($area,''%s''))', ntAreas{1}, ntAreas{2}, ntAreas{3}, ntAreas{4}, ntAreas{5}, ntAreas{6}); % || isequal($area,''v2l'') || isequal($area,''sub''))';
+%     tetfilter = sprintf('(isequal($area,''%s'') || isequal($area,''%s'') || isequal($area,''%s'') || isequal($area,''%s'') || isequal($area,''%s'') || isequal($area,''%s''))', ntAreas{1}, ntAreas{2}, ntAreas{3}, ntAreas{4}, ntAreas{5}, ntAreas{6});
+    tetfilter = sprintf('(isequal($area,''%s'')) || ', ntAreas{:});
+    yuck = strfind(tetfilter, '||');
+    tetfilter = tetfilter(1:yuck(end)-1); %cut off the trailing '||'
     % timefilter{1} = {'get2dstate','($velocity<4)'};
     % timefilter{2} = {'kk_getriptimes','($nripples>=1)',[],'tetfilter',tetfilter,'minthresh',5};
     timefilter{1} = {'getconstimes', '($cons == 1)', [eventSourceArea eventtype],1,'consensus_numtets',consensus_numtets,...
         'minstdthresh',minstdthresh,'exclusion_dur',exclusion_dur,'minvelocity',minvelocity,'maxvelocity',maxvelocity};
+    %---------- save all filtering parameters in workspace into struct
+    iF.datafilter = whos;
     %----------F = createfilter('animal', animals, 'days', dayfilter,'epochs', epochfilter, 'excludetime', timefilter, 'eegtetrodes',tetfilter,'iterator', iterator);--------
     F = createfilter('animal', animals, 'days', days,'epochs', epochfilter, 'excludetime', timefilter, 'eegtetrodes',tetfilter,'iterator', iterator);
     %----------f = setfilteriterator(f, funcname, loadvariables, options)--------
-    F = setfilterfunction(F, ['dfa_' filtfunction], {LFPtypes{1}, LFPtypes{2}, [eventSourceArea eventtype]},'eventtype',[eventSourceArea eventtype], 'LFPtypes', LFPtypes);
+    eval(['F = setfilterfunction(F, [''dfa_'' filtfunction], {[eventSourceArea eventtype],' strjoin(arrayfun(@(x) sprintf('''%s'',', cell2mat(x)), LFPtypes,'UniformOutput',false)) '},''eventtype'', [eventSourceArea eventtype], ''LFPtypes'', LFPtypes);']);
+%     eval(['F = setfilterfunction(F, [''dfa_'' filtfunction], {[eventSourceArea eventtype],' strjoin(reshape(repmat(arrayfun(@(x) sprintf('''%s'',', cell2mat(x)), LFPtypes,'UniformOutput',false), 2, 1), 1,length(LFPtypes)*2)) '},''eventtype'', [eventSourceArea eventtype], ''LFPtypes'', LFPtypes);']);
     tic
     F = runfilter(F);
     F(1).filterTimer = toc; F(1).filterTimer
@@ -80,7 +86,8 @@ if loadFilterOutput == 1;
     load(sprintf('%s/filter_output/%s/%s',outputDirectory,filtfunction, filename))
 end
 
-if plotLFPtraces %to do
+%% plot
+if plotLFPtraces
     
     %% STEP 2: For each EEG + Ripple Type... select nTrodes and Lookup Rip time windows
     for iLFPtype = 1%:length(LFPtypes); % For each LFP type (wideband EEG, ripple band, etc), load all of the regions LFP files into eegstruct
@@ -135,9 +142,9 @@ if plotLFPtraces %to do
                         %% ---- loop across all ripples for this day epoch sourcearea ----
                         for irip = 1:length(F(ianimal).output{iday}(iepoch).data{1})
                             if savefigs && ~pausefigs; %if you want to save figs but not pause them to take a look.. just keep them invisible. i think this makes it faster and returns keyboard/mouse control during saving
-                                ifig = figure('Visible','off','units','normalized','position',[.1 .1 .6 .8]);
+                                ifig = figure('Visible','off','units','normalized','position',[.1 .1 .9 .8]);
                             else
-                                ifig = figure('units','normalized','position',[.1 .1 .6 .8]);
+                                ifig = figure('units','normalized','position',[.1 .1 .9 .8]);
                             end
                             %% ---- Colors ----
                             set(gcf,'color','white')
@@ -174,7 +181,7 @@ if plotLFPtraces %to do
 %                                     clrpicker = find(strcmp(iareatag, ntAreas));
 %                                     allthecolors{clrpicker};
                                     iNTcolor = icolors(introde,:);
-                                    subaxis(1,length(F(ianimal).output{iday}(iepoch).data),iLFPtype, 'Spacing', 0.02, 'Padding', 0.0, 'Margin', 0.09);
+                                    subaxis(1,length(F(ianimal).output{iday}(iepoch).data),iLFPtype, 'Spacing', 0.02, 'Padding', 0.0, 'MarginLeft', 0.04, 'MarginRight', 0.02, 'MarginTop', 0.09, 'MarginBottom', 0.09);
 %                                     subaxis(2,2,iLFPtype+2, 'Spacing', 0.02, 'Padding', 0.0, 'Margin', 0.09);
                                     %                                     subplot(1,length(F(ianimal).output{iday}(iepoch).data),iLFPtype)
                                     introdeiripLFP = double(F(ianimal).output{iday}(iepoch).data{iLFPtype}{irip}(numsumSortInds(introde),:));
@@ -221,7 +228,7 @@ if plotLFPtraces %to do
                                             Ypatch = [ilmin ilmin ilmax ilmax];
                                             patch(Xpatch, Ypatch, iNTcolor, 'FaceAlpha', .25, 'edgecolor','none'); %triggering-ripple patch
                                             %% ---- plot the maxthresh scores for all visible ripples ----
-                                            if iLFPtype == length(F(ianimal).output{iday}(iepoch).LFPtypes) %if it's the rightmost subplot, plot the maxthresh scores for all visible ripples
+                                            if ~isempty(strfind(eventtype, LFPtypes{iLFPtype})) %iLFPtype == length(F(ianimal).output{iday}(iepoch).LFPtypes) %if it's the rightmost subplot, plot the maxthresh scores for all visible ripples
                                                 imaxthresh = [];
                                                 eval([sprintf(' imaxthresh = eventKons.%s%s{%d}{%d}{1}.maxthresh(%d);', iareatag, eventtype, iday, iepoch, ripsinwinInds(iripinwin))])
                                                 iriplabel = text(double(iripendtime),double(ilmax-(ilmax-ilmin)/10),num2str(round(imaxthresh,1)));
@@ -248,7 +255,7 @@ if plotLFPtraces %to do
                                 Yline = [[iYlim(1,2) iYlim(1,1)]];
                                 line(Xline, Yline, 'Color', [0.8 0.8 0.8],'LineStyle','--', 'LineWidth', 1.5);
                                 
-                                ititle = title(sprintf('%s',F(ianimal).output{iday}(iepoch).LFPtypes{iLFPtype}));
+                                ititle = title(sprintf('%s %s Hz',F(ianimal).output{iday}(iepoch).LFPtypes{iLFPtype}, LFPrangesHz{iLFPtype}));
                                 set(ititle,'FontSize',12,'FontWeight','bold','Color','k', 'FontName', 'Arial');
                                 set(gca,'children',flipud(get(gca,'children'))) %send the patch behind the LFP traces
                                 ylim([iYlim(1,2) iYlim(1,1)])
@@ -274,7 +281,7 @@ if plotLFPtraces %to do
                             %% ---- super title ----
                             end
                             sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
-                            sprtit = sprintf('%s D%d E%d R%d', animalID, iday, iepoch, irip);
+                            sprtit = sprintf('%s D%d E%d %s%d', animalID, iday, iepoch, eventtype, irip);
                             iStitle = text(.5, .95, [{sprtit}; ['\color[rgb]{.8 .8 .8} \fontsize{8}', sprintf(' {%s}', filenameTitle)]], 'Parent', sprtitleax, 'Units', 'normalized');
 %                             iStitle = supertitle([{sprtit}; ['\color[rgb]{.8 .8 .8} \fontsize{8}', sprintf(' {%s}', filenameTitle)]]);
                             set(iStitle, 'FontSize',12,'FontWeight','bold','Color','k', 'FontName', 'Arial', 'horizontalAlignment', 'center');
