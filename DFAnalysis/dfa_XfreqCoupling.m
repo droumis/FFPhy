@@ -79,15 +79,13 @@ parfor iPfreq=1:length(PhaseFreqVector)
         disp(sprintf('Phase filtering %d - %d Hz (%d of %d)',Pf1, Pf2, iPfreq, length(PhaseFreqVector)))
 %     disp('.');
 end
-out.toc = toc; %save timer
-
 %% Iterate over states, first getting included periods then calculating XFC
 
 excludeperiods = cell(1,length(statespec));
 duration = nan(1,length(statespec));
 lenstatespec = length(statespec);
 for istate = 1:lenstatespec
-    XFCall{istate} = single(zeros(length(PhaseFreqVector),length(AmpFreqVector)));
+    XFC{istate} = single(zeros(length(PhaseFreqVector),length(AmpFreqVector)));
     % TIMEFILTER %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     timefilter = statespec{istate};
     for itimefilt = 1:length(timefilter)
@@ -114,7 +112,7 @@ for istate = 1:lenstatespec
     counter1=0;
     lenPhaseFreqVec = length(PhaseFreqVector);
     lenAmpFreqVec = length(AmpFreqVector);
-    for iPfreq=1:lenPhaseFreqVec
+    parfor iPfreq=1:lenPhaseFreqVec
 %         counter1=counter1+1;
         Pf1 = PhaseFreqVector(iPfreq);
         Pf2 = Pf1+PhaseFreq_BandWidth;
@@ -123,21 +121,22 @@ for istate = 1:lenstatespec
 %             counter2=counter2+1;
             Af1 = AmpFreqVector(iAfreq);
             Af2 = Af1+AmpFreq_BandWidth;
-            [XFC,MeanAmp]=ModIndex_v2(PhaseFreqTransformed_filtered(iPfreq, :), AmpFreqTransformed_filtered(iAfreq, :), position) ;
-            XFCall{istate}(iPfreq,iAfreq) = XFC;
+            [iXFC,MeanAmp]=ModIndex_v2(PhaseFreqTransformed_filtered(iPfreq, :), AmpFreqTransformed_filtered(iAfreq, :), position) ;
+            xyXFC(iPfreq,iAfreq) = iXFC;
 %             disp([num2str(day) ' ' num2str(ep) ' ' num2str(tet) ' state ' num2str(istate) ' XFC score: ' num2str(XFC)])
         end
         disp(sprintf('state %d of %d, phase %d of %d complete', istate,lenstatespec, iPfreq, lenPhaseFreqVec));
     end
+    XFC{istate} = xyXFC;
 end
-
+out.toc = toc; %save timer
 out.date = date;
 out.index = index ;
 out.phasetet = phasetet;
 out.statespec = statespec;
 out.statespec_descript = statespec_descript;
 out.duration = duration ;
-out.XFC = XFCall;
+out.XFC = XFC;
 out.frequency_amplitude = AmpFreqVector ;
 out.frequency_phase = PhaseFreqVector ;
 out.phasefreq_bandwidth = PhaseFreq_BandWidth ;
