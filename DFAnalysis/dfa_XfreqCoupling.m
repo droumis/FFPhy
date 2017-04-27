@@ -41,8 +41,9 @@ data_length = length(eeg_amp);
 if selection_phasetet > 0
     % load phase eeg
     % first identify reference retrode
-    regnum = selection_phasetet;
-    phasetet = task{day}{ep}.STA_reftet(1,regnum);
+%     regnum = selection_phasetet;
+%     phasetet = task{day}{ep}.STA_reftet(1,regnum);
+    phasetet = selection_phasetet;
     % load eeg data
     edata = loadeegstruct(animaldir,animalprefix,'eeg',day,ep,phasetet);
     eeg_phs = edata{day}{ep}{phasetet}.data;

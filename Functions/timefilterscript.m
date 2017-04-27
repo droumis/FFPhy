@@ -476,7 +476,7 @@ vel25 = {'kk_get2dstate', '(abs($velocity) > 25)'};
 vel30 = {'kk_get2dstate', '(abs($velocity) > 30)'};
 vel32 = {'kk_get2dstate', '(abs($velocity) > 32)'};
 vel40 = {'kk_get2dstate', '(abs($velocity) > 40)'};
-velany = {'kk_get2dstate', '(abs($velocity) >= -99)'};
+velany = {'kk_get2dstate', '(abs($velocity) >= -99)'};p
 
 % linear velocity
 linvel4 = {'getlinvelocity','(abs($velocity) > 4)'};

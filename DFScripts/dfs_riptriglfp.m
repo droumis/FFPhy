@@ -85,10 +85,8 @@ end
 if loadFilterOutput == 1;
     load(sprintf('%s/filter_output/%s/%s',outputDirectory,filtfunction, filename))
 end
-
 %% plot
 if plotLFPtraces
-    
     %% STEP 2: For each EEG + Ripple Type... select nTrodes and Lookup Rip time windows
     for iLFPtype = 1%:length(LFPtypes); % For each LFP type (wideband EEG, ripple band, etc), load all of the regions LFP files into eegstruct
         
