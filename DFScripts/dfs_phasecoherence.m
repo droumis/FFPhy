@@ -6,32 +6,38 @@
 %%% First create the processed data structure with dfs_riptriglfp.m
 
 close all
-saveFilterOutput = 0;
-loadFilterOutput = 0;
-calculateIXPC = 0;
 calculateITPC = 0;
 calculateISPC = 0;
-% useCombinedEpochs = calculateIXPC;
-saveResultsOutput = 0;
+calculateIXPC = calculateITPC || calculateISPC;
+loadFilterOutput = calculateIXPC;
+saveResultsOutput = calculateIXPC;
 loadResultsOutput = 0;
-% plotNTrodesAcrossDays = 0;
-plotITPC = 1;
-plotISPC = 0;
-savefigs = 0;
-pausefigs = 1;
-
+plotITPC = 0;
+plotISPC = 1;
+savefigs = 1;
+pausefigs = 0;
+calcfunction = 'ISPC'; %ISPC or ITPC
 
 %% ---------------- plotting params --------------------------
 colorSet = 'DR1';
-clims = [0 .7];
-position = [.1 .1 .9 .8]; %[.1 .1 .9 .8]
+clims = [0 1]; %[0 .7]
+% position = [.1 .1 .9 .8];
 SpacingHorizontal = 0.01;
 SpacingVertical = 0.02;
 % Spacing = 0.00;
-Padding = 0.0;
-MarginLeft = 0.04;
-MarginRight = 0.04;
-MarginTop = 0.09;
+% Padding = 0.0;
+% MarginLeft = 0.04;
+% MarginRight = 0.04;
+% MarginTop = 0.09;
+% MarginBottom =  0.08;
+position = [.1 .1 .4 .3];
+SpacingHorizontal = 0.00;
+SpacingVertical = 0.00;
+Spacing = 0.00;
+Padding = 0.00;
+MarginLeft = 0.05;
+MarginRight = 0.05;
+MarginTop = 0.14;
 MarginBottom =  0.08;
 usecolormap = 'jet';
 win = [.5 .5]; %in seconds
@@ -46,7 +52,7 @@ range_cycles = [ 4 10 ];
 win = [-.5 .5];
 srate = 1500;
 timeWin = win(1):1/srate:win(2);
-calcfunction = 'ITPC'; %ISPC or ITPC
+
 animals = {'JZ1'};
 % animals = {'JZ1', 'D13'};
 days = [1];
@@ -69,8 +75,8 @@ outputDirectory = '/typhoon/droumis/analysis';
 currfigdirectory = sprintf('%s/figures/%s/', outputDirectory, calcfunction);
 filenamesave = sprintf('%s%s_%s_%s_%s', eventSourceArea, eventtype, epochEnvironment, cell2mat(animals), cell2mat(LFPtypes));
 filename = sprintf('%s_%s.mat', filtfunction, filenamesave);
-filenameTitle = strrep(filename,'_', '\_');
 resultfilename = sprintf('%s_%s%s_%s_%s_D%s_%d-%dHz', calcfunction, eventSourceArea, eventtype, epochEnvironment, cell2mat(animals), strrep(num2str(days), '  ', '-'), min_freq,max_freq);
+filenameTitle = strrep(resultfilename,'_', ' ');
 %% ---------------- Load Filter Output ---------------------------------------------------
 if loadFilterOutput == 1;
     load(sprintf('%s/filter_output/%s/%s',outputDirectory,filtfunction, filename))
@@ -294,7 +300,7 @@ if plotITPC
                     'Parent', sprtitleax, 'Units', 'normalized');
 %             end
             set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', 'horizontalAlignment', 'center');
-            clrbartit = text(posx(1)+posx(3)/2, posx(2)-MarginBottom/2, 'ITPC', 'FontSize',10,'FontWeight','bold','Color','k', 'FontName', 'Arial','horizontalAlignment', 'center');
+            clrbartit = text(posx(1)+posx(3)/2, posx(2)-MarginBottom/2, calcfunction, 'FontSize',10,'FontWeight','bold','Color','k', 'FontName', 'Arial','horizontalAlignment', 'center');
             %% ---- pause, save figs ----
 %             return
             if pausefigs
@@ -320,5 +326,153 @@ end
 %% ---------------- plot ISPC---------------------------------------------------------------------------------------------
 %% ---------------- plot ISPC---------------------------------------------------------------------------------------------
 %% ---------------- plot ISPC---------------------------------------------------------------------------------------------
+if plotISPC
+    clear F %save space on memory
+    for ianimal = 1:length(ixpc.animals)
+        %% ---- loadtetinfostruct ----
+        animalinfo = animaldef(lower(animals{ianimal}));
+        animalID = animalinfo{1,3}; %use anim prefix for name
+        FFanimdir =  sprintf('%s',animalinfo{1,2});
+        load([FFanimdir, animalID, 'tetinfo']);
+        tetinfoAll = cellfetch(tetinfo, '', 'alltags', 1);
+        for iday = days
+            ntrodePairIndices = ixpc.index{ianimal}{iday};
+            tetpairs = unique(ntrodePairIndices(:,[3 6]),'rows','stable');
+            ntetPairs = size(tetpairs,1);
+            %% ---- reorder the LFP traces by suparea|area|subarea tags (in that priority) ----
+            ntrodePairIndicesLIN = [ntrodePairIndices(:,[1:3]); ntrodePairIndices(:,[4:6])];
+            ntets = size(unique(ntrodePairIndicesLIN, 'stable'),1);
+            [~, tagIndMap] = ismember(ntrodePairIndicesLIN,tetinfoAll.index, 'rows');
+            ntrodeTags = tetinfoAll.values(tagIndMap);
+            ntrodeTags = [ntrodeTags(1:length(ntrodeTags)/2) ntrodeTags(length(ntrodeTags)/2+1:end)];
+            try
+                numsumSupAreas = cellfun(@(x) sum(uint16(x.suparea)), ntrodeTags, 'UniformOutput', false);
+                numsumAreas = cellfun(@(x) sum(uint16(x.area)), ntrodeTags, 'UniformOutput', false);
+                numsumSubAreas = cellfun(@(x) sum(uint16(x.subarea)), ntrodeTags, 'UniformOutput', false);
+                strSupAreas = cellfun(@(x) x.suparea, ntrodeTags, 'UniformOutput', false);
+                strAreas = cellfun(@(x) x.area, ntrodeTags, 'UniformOutput', false);
+                strSubAreas = cellfun(@(x) x.subarea, ntrodeTags, 'UniformOutput', false);
+            catch
+                error('all ntrodes need to have a suparea, subarea, and area tag, even if blank')
+            end
+            icolors = [colorPicker(colorSet, strAreas(:,1), strSubAreas(:,1)) colorPicker(colorSet, strAreas(:,2), strSubAreas(:,2))];
+%             icolors = [icolors(1:length(icolors)/2,1:3) icolors(length(icolors)/2+1:end,1:3)];
+%             numsumtags = [numsumSupAreas numsumAreas numsumSubAreas];
+            numsumallareatags = cell2mat([numsumSupAreas(:,1) numsumAreas(:,1) numsumSubAreas(:,1) numsumSupAreas(:,2) numsumAreas(:,2) numsumSubAreas(:,2)]);
+%             catnumsumallareatags = [numsumallareatags(1:length(numsumallareatags)/2, 1:3) numsumallareatags(length(numsumallareatags)/2+1:end, 1:3)];
+            [numsumallSort, numsumSortInds] = sortrows(numsumallareatags);%,[-1 -2 -3]); % -Col to 'descend'
+            icolors = icolors(numsumSortInds,:);
 
+%             sfrows = ntets;
+%             sfcols = ntets;
+%             onemat = logical(tril(ones(ntets,ntets),-1))'; %get indices of non-duplicates (below comb triangle)
+%             linsfpos = find(onemat); %get linear index of ntrode combination indices
+            %% ---- loop across all tetpairs for this day ----
+            for intrPair = 1:ntetPairs;
+                if savefigs && ~pausefigs; %if you want to save figs but not pause them to take a look.. just keep them invisible. i think this makes it faster and returns keyboard/mouse control during saving
+                    ifig = figure('Visible','off','units','normalized','position',position);
+                else
+                    ifig = figure('units','normalized','position',position);
+                end
+                set(gcf,'color','white')
+                intfig = subaxis(1,1,1,'SpacingVertical', SpacingVertical, 'SpacingHorizontal', SpacingHorizontal, ...
+                'Padding', Padding, 'MarginLeft', MarginLeft, 'MarginRight', MarginRight, 'MarginTop', MarginTop, ...
+                'MarginBottom', MarginBottom);
+                introdeIDs = ntrodePairIndices(numsumSortInds(intrPair),[3 6]);
+                isupareatag1 = ntrodeTags{numsumSortInds(intrPair),1}.suparea;
+                iareatag1 = ntrodeTags{numsumSortInds(intrPair),1}.area;
+                isubareatag1 = ntrodeTags{numsumSortInds(intrPair),1}.subarea;
+                isupareatag2 = ntrodeTags{numsumSortInds(intrPair),2}.suparea;
+                iareatag2 = ntrodeTags{numsumSortInds(intrPair),2}.area;
+                isubareatag2 = ntrodeTags{numsumSortInds(intrPair),2}.subarea;
+                iNTcolor1 = icolors(intrPair,1:3);
+                iNTcolor2 = icolors(intrPair,4:6);
+%                 intfig = subaxis(sfrows,sfcols,linsfpos(intrPair), 'SpacingVertical', SpacingVertical, 'SpacingHorizontal', SpacingHorizontal, ...
+%                 'Padding', Padding, 'MarginLeft', MarginLeft, 'MarginRight', MarginRight, 'MarginTop', MarginTop, ...
+%                 'MarginBottom', MarginBottom);
+                %% ---- Main Plotting ----
+                contourf(timeWin,frex,squeeze(ixpc.output{ianimal}{iday}(numsumSortInds(intrPair),:,:))',num_frex,'linecolor','none');
+%                 patch([-.8, .8, .8, -.8], [-10 -10 80 80], iNTcolor, 'edgecolor','none')
+                hold on;
+                set(gca,'clim',clims,'ydir','normal','xlim',[-.5 .5])
+                set(gca, 'YScale', 'log')
+
+%                 if mod(intrPair, sfcols) ~= 1;
+%                     set(gca, 'YTick', []);
+%                 else
+                    set(gca, 'YTick',[round(linspace(min(frex),max(frex),6))],'FontSize',8, 'FontName', 'Arial');%
+%                 end
+%                 if intrPair <= (sfrows-1)*sfcols;
+%                     set(gca, 'XTick', []);
+%                 else
+                    set(gca, 'XTick',[win(1):win(2)/2:win(2)],'FontSize',8, 'FontName', 'Arial');%
+%                 end
+                %% ---- Source ripple line, subplot title ----
+                Xline = [0 0];
+                Yline = [min_freq max_freq];
+                line(Xline, Yline, 'Color', [0.8 0.8 0.8],'LineStyle','--', 'LineWidth', 1);
+
+%                 set([{ititle1}; {ititle2}],'FontSize',10,'Color', iNTcolor, 'FontName', 'Arial','FontWeight','bold'); %
+            
+            %% ---- super title and colorbar----
+            sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
+            xlab = 'Time (s)';
+            ylab = 'Frequency (Hz)';
+            supxlabel = text(.5, .02, xlab, 'FontSize',8,'FontWeight','bold','Color','k', 'FontName', 'Arial', 'Parent', sprtitleax,...
+                'Units', 'normalized', 'horizontalAlignment', 'center');
+            supylabel = text(.01, .5, ylab, 'FontSize',8,'FontWeight','bold','Color','k', 'FontName', 'Arial', 'rotation', 90, ...
+                'Parent', sprtitleax, 'Units', 'normalized', 'horizontalAlignment', 'center');
+            caxis(clims);
+            colormap(usecolormap)
+            clrbar = colorbar('location','eastoutside', 'FontSize',6,'FontName', 'Arial');%, 'FontWeight','bold');
+            posx1=get(gca,'position');
+            posx=get(clrbar,'Position');
+            posx(1)= 1-MarginRight+.01;
+            posx(2)= MarginBottom;
+            posx(3)= .01;
+            posx(4)= 1 - MarginTop - MarginBottom;
+            set(clrbar,'Position',posx)
+            set(gca,'position',posx1)
+            %             sprtit = sprintf('%s D%s E%s T%d', ianimalinfo{1}, strjoin(arrayfun(@(x) num2str(x),days','UniformOutput',false),'-'), strjoin(arrayfun(@(x) num2str(x),idayEpTet(:,2)','UniformOutput',false),'-'), idayEpTet(1,3));
+            sprtit = sprintf('%s %s %s D%d', calcfunction, epochEnvironment, animalID, iday);
+%             if plotNTrodesAcrossDays
+%                 sprTags = sprintf('%s %s', iarea, isubarea);
+%                 iclr = icolors(iIndInds(1),:);
+                ititle1 = sprintf('%d %s %s',introdeIDs(1), iareatag1, num2str(isubareatag1));
+                ititle2 = sprintf('%d %s %s',introdeIDs(2), iareatag2, num2str(isubareatag2));
+                iStitle = text(.5, .93, [{filenameTitle};...
+                    {['\fontsize{10} \color[rgb]' sprintf('{%d %d %d} %s ', iNTcolor1, ititle1)]};...
+                    {['\fontsize{10} \color[rgb]' sprintf('{%d %d %d} %s ', iNTcolor2, ititle2)]}]);
+%                     {['\fontsize{8} \color[rgb]{.5 .5 .5}', sprintf('{%s}', resultfilename)]}], 'Parent', sprtitleax, 'Units', 'normalized');
+                
+                set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', 'horizontalAlignment', 'center');
+%             else
+%                 iStitle = text(.5, .95, [{sprtit}; ['\color[rgb]{.8 .8 .8} \fontsize{8}', sprintf(' {%s}', filenameTitle)]], ...
+%                     'Parent', sprtitleax, 'Units', 'normalized');
+%             end
+            set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', 'horizontalAlignment', 'center');
+            clrbartit = text(posx(1)+posx(3)/2, posx(2)-MarginBottom/2, calcfunction, 'FontSize',8,'FontWeight','bold','Color','k', 'FontName', 'Arial','horizontalAlignment', 'center');
+            %% ---- pause, save figs ----
+%             return
+            if pausefigs
+                pause
+            end
+            if savefigs
+                if ~isdir(currfigdirectory);
+                    mkdir(currfigdirectory);
+                end
+                if ~isdir([currfigdirectory resultfilename]);
+                    mkdir([currfigdirectory resultfilename]);
+                end
+                sprtitsave = strrep(sprtit,' ', '_'); %put '_' character in place of whitespace for filename
+                set(gcf, 'PaperPositionMode', 'auto'); %saves the png in the dimensions defined for the fig
+                currfigfile = sprintf('%s%s/%s_nT%d-%d',currfigdirectory, resultfilename, sprtitsave, introdeIDs);
+                print(currfigfile,'-dpng', '-r0')
+                disp(sprintf('plot %s nT%d-%d saved (%d of %d)', sprtit, introdeIDs, intrPair, ntetPairs))
+            end
+            close all
+            end
+        end
+    end
+end
 

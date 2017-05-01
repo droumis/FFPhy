@@ -1,3 +1,0 @@
-Name	trial	choice	rt	accuracy	
-billy	1	2	450	1	
-bob	2	2	830	0	
