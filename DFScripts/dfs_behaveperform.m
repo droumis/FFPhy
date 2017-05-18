@@ -1,18 +1,15 @@
 
-%%% First create the processed data structure with dfs_riptriglfp.m
-
 close all
 
 loadBehaveStruct = 1;
 calculateStateSpace = 1;
 saveStateSpaceResults = 1;
-plotStateSpace = 1;
+plotStateSpace = 0;
 savefigs = 0;
-pausefigs = 1;
+pausefigs = 0;
 
-resaveBehaveStruct = 0;
-savePerformResults = 0;
-plotPerform = 0;
+% savePerformResults = 0;
+% plotPerform = 0;
 
 %% ---------------- plotting params --------------------------
 colorSet = 'DR1';
@@ -72,11 +69,12 @@ if loadBehaveStruct;
 end
 %% ---------------- calculate StateSpace Model---------------------------------------------------
 wTrackBehave = cellfetch(BehaveState.statechanges, 'wtrack', 'alltags', 1);
-allepsMat = []; eplengths = [];
+allepsMat = []; dayepinds = [];
 for iep = 1:length(wTrackBehave.index(:,1))
     allepsCell{iep} = BehaveState.statechanges{wTrackBehave.index(iep,1)}{wTrackBehave.index(iep,2)}.statechangeseq;
+    allepsCell{iep} = allepsCell{iep}(2:end,:); %get rid of the first state end change time as it doesn't have a an accurate start time
     allepsMat = [allepsMat; allepsCell{iep}];
-    eplengths(iep) = length(allepsCell{iep}(:,1));
+    dayepinds = [dayepinds; repmat(wTrackBehave.index(iep,:), length(allepsCell{iep}(:,1)), 1)];
 end
 allepsMatFields = BehaveState.statechanges{wTrackBehave.index(iep,1)}{wTrackBehave.index(iep,2)}.fields;
 chance = 0.5;
@@ -87,26 +85,27 @@ if calculateStateSpace
     %       The second column of probcorrect is the lower 5% confidence bound
     %       The third column of probcorrect is the upper 5% confidence bound
     %       DR04/30/17  Fourth col is certainty matrix
-    %       NOTE: first row should be exluded
-    tic
+    %       first row gets exluded
+%     tic
     [pcALL] = getestprobcorrect(allepsMat(:,7),chance,0,0);
-    alltoc = toc;
-    tic
+    if length(pcALL(2:end,1)) ~= length(allepsMat(:,1));
+        error('length of state space results do not match trial input length')
+    end
+%     alltoc = toc;
+%     tic
     [pcINB] = getestprobcorrect(allepsMat(allepsMat(:,8)==1,7),chance,0,0);
-    intoc = toc;
-    tic
+%     intoc = toc;
+%     tic
     [pcOUTB] = getestprobcorrect(allepsMat(allepsMat(:,9)==1,7),chance,0,0);
-    outtoc = toc;
-    clear probcorrect
-    statespace.allbound = pcALL;
-    statespace.inbound = pcINB;
-    statespace.outbound = pcOUTB;
-    pcFields = 'mode lower5 upper5 certainty';
-    statespace.pcFields = pcFields;
+%     outtoc = toc;
+    statespace.allbound = [pcALL(2:end,:) dayepinds];
+    statespace.inbound = [pcINB(2:end,:) dayepinds(allepsMat(:,8)==1,:)];
+    statespace.outbound = [pcOUTB(2:end,:) dayepinds(allepsMat(:,9)==1,:)];
+    statespace.pcFields = 'mode lower5 upper5 certainty day epoch';
     statespace.behavestruct = behavestruct;
     statespace.epochEnvironment = epochEnvironment;
     statespace.allepsMat = allepsMat;
-    statespace.allepsMatFields = allepsMatFields;
+    statespace.allepsMatFields = allepsMatFields; 
 end
 
 %% ---------------- save StateSpaceResults into BehaveState struct---------------------------------------------------
@@ -220,19 +219,14 @@ if plotStateSpace
         close all;
     end
 end
-%% ---------------- plot perform---------------------------------------------------
-if plotPerform
-            %     load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'task', day));
-        %     load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'linpos', day));
-        %     load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'ripplekonsca1', day));
-        %     load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'ripplekonsmec', day));
-        %     load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'ripplekonspor', day));
-end
-%% ---------------- save PerformResults---------------------------------------------------
-if savePerformResults
-end
-
-%% ---------------- reSave BehaveStruct---------------------------------------------------
-if resaveBehaveStruct == 1;
-    save(sprintf('%s%s%s.mat',FFanimdir, animalID, behavestruct));
-end
+% %% ---------------- plot perform---------------------------------------------------
+% if plotPerform
+%             %     load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'task', day));
+%         %     load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'linpos', day));
+%         %     load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'ripplekonsca1', day));
+%         %     load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'ripplekonsmec', day));
+%         %     load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'ripplekonspor', day));
+% end
+% %% ---------------- save PerformResults---------------------------------------------------
+% if savePerformResults
+% end

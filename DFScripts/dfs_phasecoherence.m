@@ -226,7 +226,7 @@ if plotITPC
             [numsumallSort, numsumSortInds] = sortrows(numsumallareatags);%,[-1 -2 -3]); % -Col to 'descend'
             icolors = icolors(numsumSortInds,:);
             if savefigs && ~pausefigs; %if you want to save figs but not pause them to take a look.. just keep them invisible. i think this makes it faster and returns keyboard/mouse control during saving
-                ifig = figure('Visible','off','units','normalized','position',[.1 .1 .9 .8]);
+                ifig = figure('Visible','off','units','normalized','position',position);
             else
                 ifig = figure('units','normalized','position',position);
             end
