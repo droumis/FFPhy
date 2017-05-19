@@ -39,7 +39,7 @@ days = [4]; %leave blank to take all days from HP animals and Ndl
 epochType = {'run', 'run'};
 epochEnvironment = {'wtrack', 'openfield'}; %wtrack
 
-ntAreas = {'ca1', 'mec'};
+ntAreas = {'ca1', 'mec', 'por', 'v2l', 'sub'};
 filtfunction = 'occNormFiring';
 eventtype = 'rippleskons';
 eventSourceArea = 'ca1';
@@ -70,7 +70,7 @@ if runFilterFramework == 1
     yuck = strfind(tetfilter, '||');
     tetfilter = tetfilter(1:yuck(end)-1); %cut off the trailing '||'
 %     timefilter{1} = {'dff_getlinstate', '(($state ~= -1) & (abs($linearvel) >= 3))', 6};
-     timefilter{1} = {'get2dstate', '(abs($velocity) >= 3)'};
+    timefilter{1} = {'get2dstate', '(abs($velocity) >= 3)'};
     %     timefilter{1} = {sprintf('get2dstate','($velocity>=%s)', minvel)};
     timefilter{2} = {'getconstimes', '($cons == 0)', [eventSourceArea eventtype],1,'consensus_numtets',consensus_numtets,...
         'minstdthresh',minstdthresh,'exclusion_dur',exclusion_dur,'minvelocity',minripvelocity,'maxvelocity',maxripvelocity};
@@ -176,9 +176,6 @@ if plotOccNormFields
 %                     currtrajOccFR = currtrajFR./currtrajOcc;
 %                     currtrajOccFR(isnan(currtrajOccFR)) = 0;
 %                     currtrajFR = (currtrajFR)./maxrate; % normalize 0-1 across epochs
-                    fronttraj = [];
-                    fronttraj(F(iAn).output{1}(icellFoutInds(iepoch)).xticks{itraj}, F(iAn).output{1}(icellFoutInds(iepoch)).yticks{itraj}) = currtrajFR; % currtrajOccFR
-                    fronttraj = fronttraj';
                     %plot all pos as light grey lines
                     % double the open field subplot size in x and y
                     sfA = sfA + 1;
@@ -190,6 +187,15 @@ if plotOccNormFields
                         sfC = sfC + 4;
                         sfD = sfD + 5;
                     end
+                    fronttraj = [];
+                    try
+                        fronttraj(F(iAn).output{1}(icellFoutInds(iepoch)).xticks{itraj}, F(iAn).output{1}(icellFoutInds(iepoch)).yticks{itraj}) = currtrajFR; % currtrajOccFR
+                    catch
+                        disp(sprintf('no data found for icell #%d', icellFoutInds(iepoch)))
+                        continue
+                    end
+                    fronttraj = fronttraj';
+                    
                     subaxis(numeps,4,[sfA sfB sfC sfD], 'Spacing', Spacing, 'SpacingVert', SpacingVert, 'SpacingHoriz', SpacingHoriz, 'Padding', Padding, 'MarginLeft', MarginLeft, 'MarginRight', MarginRight,...
                         'MarginTop', MarginTop, 'MarginBottom', MarginBottom);
                     if strcmp(taskEnv, 'openfield')
