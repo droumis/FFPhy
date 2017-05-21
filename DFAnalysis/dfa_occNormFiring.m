@@ -80,7 +80,7 @@ end
 
 
 
-spikesData = spikes{index(1)}{index(2)}{index(3)}{index(4)}.data';
+spikesData = spikes{index(1)}{index(2)}{index(3)}{index(4)}.data;
 posdata = pos{index(1)}{index(2)}.data;
 posfields = pos{index(1)}{index(2)}.fields;
 taskEnv = task{index(1)}{index(2)}.environment;

@@ -107,11 +107,20 @@ else
 end
 
 
+linpostime = linpos{index(1)}{index(2)}.statematrix.time;
+linposindex = knnsearch(linpostime, spikes(:,1));
+% [spikepos, posindex] = lookuptime3(spikes(:,1), pos{index(1)}{index(2)}.data(:,1),pos{index(1)}{index(2)}.data(:,2:4)');
+% findgoodpoints = find((spikepos(1,:)~=0)&(spikepos(2,:)~=0));
+% spikepos = spikepos(:,findgoodpoints);
+% posindex = posindex(findgoodpoints);
+% timepoints = timepoints(findgoodpoints);
+
 %posindexfield = isdatafield(spikesfields,'posindex');
-posindexfield = 7;
+% linposindex = 7;
 if ~isempty(spikes)
     tmpspikes = spikes;
-    spikes = spikes(:,[1 posindexfield]);
+    spikes = [spikes(:,1) linposindex];
+%     spikes = spikes(:,[1 linposindex]);
     % Find any posidxs that are outside the range of linpos (statevector)
     outliers = find(spikes(:,2) > length(statevector));
     spikes(outliers,:)=[];
@@ -190,12 +199,14 @@ for i = 1:length(trajdata)
     end
 
 end
-
+out.trajdatafields = ['locationbin occupancy numspikes occnormfiringrate sm-occnormfiringrate sm-occ sm-numspikes'];
 out.trajdata = trajdata;
 out.index = index;
 out.duration_included = duration_included;
 out.numspikes = numspikes;
-out.celltype = cellinfo{index(1)}{index(2)}{index(3)}{index(4)}.type;
+if isfield(cellinfo{index(1)}{index(2)}{index(3)}{index(4)},'type')
+    out.celltype = cellinfo{index(1)}{index(2)}{index(3)}{index(4)}.type;
+end
 warning('ON','MATLAB:divideByZero');
 
 
