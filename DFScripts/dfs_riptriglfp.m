@@ -1,17 +1,17 @@
 
 % clear all
 close all
-runFilterFramework = 1;
+runFilterFramework = 0;
 saveFilterOutput = runFilterFramework;
-loadFilterOutput = 0;
+loadFilterOutput = 1;
 % EpochMean = 1;
 resaveFilterOutput = 0;
 plotLFPtraces = 1;
-savefigs = 0;
-pausefigs = 1;
+savefigs = 1;
+pausefigs = 0;
 % plotSpec_EpochMean = 1;
 % plotSpec_allEpochs = 0;
-
+investInfo = animaldef(lower('Demetris'));
 %% ---------------- plotting params --------------------------
 % colorsMEC = cbrewer('seq', 'Blues', 10, 'PCHIP');
 % colorsCTX = cbrewer('seq', 'Reds', 10, 'PCHIP');
@@ -24,15 +24,15 @@ indwin = win*1500;
 
 animals = {'JZ1'};
 % animals = {'JZ1', 'D13'};
-days = [1];
+days = [4];
 filtfunction = 'riptriglfp';
-LFPtypes = {'eeg', 'ripple', 'theta', 'slowgamma', 'fastgamma'};
-LFPrangesHz = {'1-400', '140-250', '6-9', '20-50', '65 - 95'}; %need to make this a lookup from the filter mat
+LFPtypes = {'eeg', 'ripple'}; % 'theta', 'slowgamma', 'fastgamma'
+LFPrangesHz = {'1-400', '140-250'};%, '6-9', '20-50', '65 - 95'}; %need to make this a lookup from the filter mat
 eventtype = 'rippleskons';
 % eventarea = 'ca1';
 epochEnvironment = 'sleep';% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
 epochType = 'sleep';
-eventSourceArea = 'mec';
+eventSourceArea = 'ca1';
 ripAreas = {'ca1', 'mec', 'por'};
 ntAreas = {'ca1', 'sub', 'mec', 'por', 'v2l', 'ref'};
 
@@ -41,10 +41,11 @@ minstdthresh = 5;        % STD. how big your ripples are
 exclusion_dur = 0.5;  % seconds within which consecutive events are eliminated / ignored
 minvelocity = 0;
 maxvelocity = 4;
-outputDirectory = '/typhoon/droumis/analysis';
+% outputDirectory = '/typhoon/droumis/analysis';
 %% ---------------- Paths and Title strings ---------------------------------------------------
-currfigdirectory = sprintf('%s/figures/%s/', outputDirectory, filtfunction);
-filenamesave = sprintf('%s%s_%s_%s_%s', eventSourceArea, eventtype, epochEnvironment, cell2mat(animals), cell2mat(LFPtypes));
+filtOutputDirectory = sprintf('%s%s/', investInfo{2}, filtfunction);
+figdirectory = sprintf('%s%s/', investInfo{4}, filtfunction);
+filenamesave = sprintf('%s%s_%s_%s_%s_D%s', eventSourceArea, eventtype, epochEnvironment, cell2mat(animals), cell2mat(LFPtypes),strjoin(arrayfun(@(x) num2str(x),days,'UniformOutput',false),'-'));
 filename = sprintf('%s_%s.mat', filtfunction, filenamesave);
 filenameTitle = strrep(filename,'_', '\_');
 %% ---------------- Run FIlter ---------------------------------------------------
@@ -75,15 +76,17 @@ if runFilterFramework == 1;
 end
 %% ---------------- Save Filter Output ---------------------------------------------------
 if saveFilterOutput == 1;
-    if ~isdir(sprintf('%s/filter_output/%s/', outputDirectory, filtfunction));
-        mkdir(sprintf('%s/filter_output/%s/', outputDirectory, filtfunction));
+    if ~isdir(filtOutputDirectory);
+        mkdir(filtOutputDirectory);
     end
     %save the entire workspace for filter provenance
-    save(sprintf('%s/filter_output/%s/%s',outputDirectory, filtfunction, filename), 'F','-v7.3');
+    save(sprintf('%s/%s',filtOutputDirectory, filename), 'F','-v7.3');
+    disp(sprintf('filteroutput saved to %s/%s',filtOutputDirectory, filename))
 end
 %% ---------------- Load Filter Output ---------------------------------------------------
 if loadFilterOutput == 1;
-    load(sprintf('%s/filter_output/%s/%s',outputDirectory,filtfunction, filename))
+    load(sprintf('%s/%s',filtOutputDirectory, filename))
+    disp(sprintf('filteroutput loaded: %s/%s',filtOutputDirectory, filename))
 end
 %% plot
 if plotLFPtraces
@@ -288,15 +291,15 @@ if plotLFPtraces
                                 pause
                             end
                             if savefigs
-                                if ~isdir(currfigdirectory);
-                                    mkdir(currfigdirectory);
+                                if ~isdir(figdirectory);
+                                    mkdir(figdirectory);
                                 end
-                                if ~isdir([currfigdirectory filenamesave]);
-                                    mkdir([currfigdirectory filenamesave]);
+                                if ~isdir([figdirectory filenamesave]);
+                                    mkdir([figdirectory filenamesave]);
                                 end
                                 sprtitsave = strrep(sprtit,' ', '_'); %put '_' character in place of whitespace for filename
                                 set(gcf, 'PaperPositionMode', 'auto'); %saves the png in the dimensions defined for the fig
-                                currfigfile = sprintf('%s%s/%s',currfigdirectory, filenamesave, sprtitsave);
+                                currfigfile = sprintf('%s%s/%s',figdirectory, filenamesave, sprtitsave);
                                 print(currfigfile,'-dpng', '-r0')
                                 disp(sprintf('plot %s saved', sprtit))
                             end

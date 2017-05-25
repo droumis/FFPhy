@@ -256,12 +256,14 @@ for i = 1:size(epochs,1)
                end
             end
         end
-        
+        numeventsexcl_dur = [];
         % Filter out events that occur within exclusion_dur
         if exclusion_dur > 0
+            numeventsexcl_dur = 0;
             for rr=fliplr(2:size(ectimes,1))
                 timesinceprevevents = ectimes(rr,1) - ectimes(rr-1,2);
                 if timesinceprevevents < exclusion_dur
+                    numeventsexcl_dur = numeventsexcl_dur + 1;
                     ectimes(rr,:) = [ ];
                     %disp(sprintf('kk_geteventtimes: chain-excluded event: d %d e %d (%d ms)',epochs(i,1),epochs(i,2),round(timesinceprevevents*1000)))
                 end
@@ -283,6 +285,7 @@ for i = 1:size(epochs,1)
         % convert from list form back to vector form
         cons = list2vec(ectimes,times)';
         
+        out{epochs(i,1)}{epochs(i,2)}.numeventsexcl_dur = numeventsexcl_dur;
         out{epochs(i,1)}{epochs(i,2)} = ec;
         out{epochs(i,1)}{epochs(i,2)}.time = times;
         out{epochs(i,1)}{epochs(i,2)}.cons = cons;

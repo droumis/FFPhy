@@ -5,10 +5,10 @@
 close all
 runFilterFramework = 0;
 saveFilterOutput = runFilterFramework;
-loadFilterOutput = 1;
+loadFilterOutput = 0;
 plotOccNormFields = 1;
-savefigs=0;
-pausefigs = 1;
+savefigs=1;
+pausefigs = 0;
 investInfo = animaldef(lower('Demetris'));
 %% ---------------- plotting params --------------------------
 colorSet = 'DR1';
@@ -20,15 +20,8 @@ usecolormap = 'hot';
 trajname = {'outbound A', 'inbound A', 'outbound B', 'inbound B'};
 SpacingHoriz = 0.02;
 SpacingVert = 0.02;
-% Spacing = 0.00;
 Padding = 0.00;
-% MarginLeft = 0.04;
-% MarginRight = 0.04;
-% MarginTop = 0.09;
-% MarginBottom =  0.08;
 position = [.1 .1 .8 .5];
-% SpacingHorizontal = 0.00;
-% SpacingVertical = 0.00;
 Spacing = 0.00;
 Padding = 0.00;
 MarginLeft = 0.05;
@@ -60,7 +53,6 @@ filename = sprintf('%s_%s.mat', filtfunction, filenamesave);
 filenameTitle = strrep(filename,'_', '\_');
 %% ---------------- Run FIlter ---------------------------------------------------
 if runFilterFramework == 1
-    %     epochfilter = 'isequal($type, ''run'') && ~isequal($environment, ''lin'')';
     eptypeEnv = [epochType; epochEnvironment];
     epochfilter = sprintf('((isequal($type, ''%s'')) && (isequal($environment, ''%s''))) || ',eptypeEnv{:});
     yuck = strfind(epochfilter, '||');
@@ -121,9 +113,6 @@ if plotOccNormFields
         matInds = cell2mat({F.output{1}.index}');
         LINmatInds = cell2mat({lF.output{1}.index}');
         [daytets, daytetInds, daytetInds2 ] = unique(matInds(:,[1 3 4]), 'rows', 'stable');
-        %         indices = cellfetch(F(iAn).output, 'index');
-        %         indices =
-        %         indices = cell2mat(cellfun(@(x) x(:,[1 3]),indices.values, 'UniformOutput', false)); %scrub the cell id and epoch
         [~, tagIndMap] = ismember(matInds(:,[1 3]),tetinfoAll.index(:,[1 3]), 'rows');
         ntrodeTags = tetinfoAll.values(tagIndMap);
         try
@@ -137,6 +126,7 @@ if plotOccNormFields
             error('all ntrodes need to have a suparea, subarea, and area tag, even if blank')
         end
         icolors = colorPicker(colorSet, strAreas, strSubAreas);
+        %% ---------- for each cell, get all epochs--------------------------------
         for icell = 1:length(daytets); %for each allepoch-unique cell
             cellID = daytets(icell, 3);
             icellFoutInds = find(icell == daytetInds2);
@@ -152,7 +142,7 @@ if plotOccNormFields
             [~, iIndInds] = ismember(idayEpTet(:,[1 3]),matInds(:,[1 3]),'rows');
             iarea = char(cell2mat(strAreas(iIndInds(1)))); %grab the area tags
             isubarea = num2str(cell2mat(strSubAreas(iIndInds(1))));
-            
+            %% ---------- plot per cell --------------------------------
             if savefigs && ~pausefigs; %if you want to save figs but not pause them to take a look.. just keep them invisible. i think this makes it faster and returns keyboard/mouse control during saving
                 ifig = figure('Visible','off','units','normalized','position',position);
             else
@@ -164,100 +154,104 @@ if plotOccNormFields
             load(sprintf('%s%s%s.mat',FFanimdir, animalID, 'cellinfo'));
             sfA = 0;
             load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'task', day));
+            %% ---------- get unique epoch environment types  --------------------------------
             eptypes = [];
             for iepoch = 1:numeps;
                 epoch = epochInds(iepoch,2);
                 eptypes{iepoch,1} = task{day}{epoch}.environment;
             end
             [envtypes,IA,IC] = unique(eptypes, 'stable');
+            %% ---------- for each epoch env type, concat the data --------------------------------
             for ienv = 1:length(envtypes) %numeps;
                 ienvFInds = icellFoutInds(ienv == IC);
                 numtrajs = length(F(iAn).output{1}(ienvFInds(1)).smoothedspikerate);
                 ienvSpikeRates = []; posData.data = []; posData.fields = ''; ienvxticks = []; ienvyticks = [];
                 for iepienv = 1:length(ienvFInds)
-                    ienvSpikeRates = cat(1,ienvSpikeRates, F(iAn).output{1}(ienvFInds(iepienv)).smoothedspikerate);
+                    smSR = F(iAn).output{1}(ienvFInds(iepienv)).smoothedspikerate;
+                    for it = 1:length(smSR)
+                        smSR{it}(smSR{it} < 0) = nan;
+%                         smSR{it}(isnan(smSR{it})) = 0;
+                    end
+                    ienvSpikeRates = cat(1,ienvSpikeRates, smSR);
                     ienvxticks = cat(1,ienvxticks, F(iAn).output{1}(ienvFInds(iepienv)).xticks);
                     ienvyticks = cat(1,ienvyticks, F(iAn).output{1}(ienvFInds(iepienv)).yticks);
                     epoch = F(iAn).output{1}(ienvFInds(iepienv)).index(2);
                     posData.fields = pos{day}{epoch}.fields;
                     posData.data = cat(1,posData.data, pos{day}{epoch}.data); % vert cat pos data across epochs
                 end
-                % trim the sizes of each traj-epoch to the smallest of the epochs
-                [min_size_row, min_index_row] = min(cellfun('size', ienvSpikeRates, 1));
-                [min_size_col, min_index_col] = min(cellfun('size', ienvSpikeRates, 2));
+                %% ---------- trim the sizes of each traj-epoch to the smallest of the epochs --------------------------------
+                    % first, set any empty epoch trajs to size inf 
+                rowsizes = cell2mat(cellfun(@(x) size(x,1), ienvSpikeRates, 'un', 0));
+                colsizes = cell2mat(cellfun(@(x) size(x,2), ienvSpikeRates, 'un', 0));
+                rowsizes(rowsizes == 0) = inf;
+                colsizes(colsizes == 0) = inf;
+                [min_size_row, min_index_row] = nanmin(rowsizes,[],1);
+                [min_size_col, min_index_col] = nanmin(colsizes,[],1);
                 idayienv = [];
                 for itrep = 1:numtrajs
                     itrepSpRa = ienvSpikeRates(:,itrep);
                     %lineup trimmed matrices and average across epochs
+                    try
                     itreps(1,1,:) = cellfun(@(x) x(1:min_size_row(itrep),1:min_size_col(itrep)), itrepSpRa,'UniformOutput', false);
+                    catch %will error/continue on empty traj/epoch
+                        continue
+                    end
                     itrepsmat = cell2mat(itreps);
                     itrday = nanmean(itrepsmat,3);
                     idayienv.data{itrep} = itrday;
                     %                     itreps(1,1,:) = cellfun(@(x) x(1:min_size_row(itrep)), ienvxticks(min_index_row,itrep),'UniformOutput', false);
                     idayienv.xticks{itrep} = ienvxticks{min_index_row(itrep),itrep};
                     idayienv.yticks{itrep} = ienvyticks{min_index_col(itrep),itrep};
-                    idayienv.peakFR(itrep) = max(max(itrday));
-                    idayienv.meanFR(itrep) = mean(mean(itrday));
+                    %% ---------- get mean, peak for this day/cell/eptype --------------------------------
+                    idayienv.peakFR(itrep) = nanmax(nanmax(itrday));
+                    idayienv.meanFR(itrep) = nanmean(nanmean(itrday));
                 end
-%                 alltrajPeakFR = max(idayienv.peakFR);
-%                 alltrajMeanFR = mean(idayienv.meanFR);
-                %                 epoch = epochInds(ienv,2);
-                %                 taskEnv = task{day}{epoch}.environment;
                 taskEnv = envtypes{ienv};
-                %                 posData = pos{day}{epoch};
                 Xstring = 'x-sm';
                 Xcol = find(cell2mat(cellfun(@(x) strcmp(x,Xstring), strsplit(posData.fields, ' '), 'UniformOutput', false)));
                 xData = posData.data(:,Xcol);
                 Ystring = 'y-sm';
                 Ycol = find(cell2mat(cellfun(@(x) strcmp(x,Ystring), strsplit(posData.fields, ' '), 'UniformOutput', false)));
                 yData = posData.data(:,Ycol);
-                
                 xlimx = [min(xData) max(xData)];
                 ylimy = [min(yData) max(yData)];
-                %                 maxrate = max(cell2mat(cellfun(@(x) max(max(x)), F(iAn).output{1}(ienvFInds(ienv)).smoothedspikerate,'UniformOutput', false)));
+                %% --------- plot each trajectory --------------------------------
                 for itraj = 1:numtrajs;
                     currtrajFR = []; currtrajOcc = []; currtrajOccFR = [];
-                    %                     currtrajFR = F(iAn).output{1}(icellFoutInds(ienv)).smoothedspikerate{itraj};
                     currtrajFR = idayienv.data{itraj};
-                    %                     currtrajOcc = F(iAn).output{1}(icellFoutInds(ienv)).smoothedoccupancy{itraj};
                     currtrajFR(currtrajFR == -1) = 0;
                     currtrajFR(isnan(currtrajFR)) = 0;
-                    %                     currtrajFR = (currtrajFR)./maxrate; % normalize 0-1 across epochs
-                    %plot all pos as light grey lines
-                    % double the open field subplot size in x and y
                     sfA = sfA + 1;
                     sfB = sfA;
-                    %                     sfC = sfA;
-                    %                     sfD = sfA;
                     if strcmp(taskEnv, 'openfield')
+                        % double the open field subplot size in x and y
                         opensf = subaxis(2,6,[sfA sfA+1 sfA+6 sfA+7], 'Spacing', Spacing, 'SpacingVert', SpacingVert, 'SpacingHoriz', SpacingHoriz, 'Padding', Padding, 'MarginLeft', MarginLeft, 'MarginRight', MarginRight,...
                             'MarginTop', MarginTop, 'MarginBottom', MarginBottom);
-                                        alltrajPeakFRopen = max(idayienv.peakFR);
-                                        alltrajMeanFRopen = mean(idayienv.meanFR);
+                        alltrajPeakFRopen = max(idayienv.peakFR);
+                        alltrajMeanFRopen = mean(idayienv.meanFR);
                     elseif strcmp(taskEnv, 'wtrack')
                         wtracksf = subaxis(2,6,sfA, 'Spacing', Spacing, 'SpacingVert', SpacingVert, 'SpacingHoriz', SpacingHoriz, 'Padding', Padding, 'MarginLeft', MarginLeft, 'MarginRight', MarginRight,...
                             'MarginTop', MarginTop, 'MarginBottom', MarginBottom);
-                                        alltrajPeakFRwtrack = max(idayienv.peakFR);
+                        alltrajPeakFRwtrack = max(idayienv.peakFR);
                         alltrajMeanFRwtrack = mean(idayienv.meanFR);
                     end
-                    fronttraj = [];
+                    currtrajFRxy = []; %put the traj data into the x y pos
                     try
-                        fronttraj(idayienv.xticks{itraj}, idayienv.yticks{itraj}) = currtrajFR;
-                        %                         fronttraj(F(iAn).output{1}(icellFoutInds(ienv)).xticks{itraj}, F(iAn).output{1}(icellFoutInds(ienv)).yticks{itraj}) = currtrajFR; % currtrajOccFR
+                        currtrajFRxy(idayienv.xticks{itraj}, idayienv.yticks{itraj}) = currtrajFR;
                     catch
                         disp(sprintf('no data found for icell #%d', ienvFInds(1)))
                         continue
                     end
                     alltrajPeakFR = max(idayienv.peakFR);
-                    fronttraj = fronttraj'./alltrajPeakFR;
-                    
-                    plot(xData, yData,'Color', [.9 .9 .9], 'LineWidth', 2);
+                    currtrajFRxy = currtrajFRxy'./alltrajPeakFR; %normalize by peak FR per epoch type
+                    % plot all pos as light grey lines 
+                    plot(xData, yData,'Color', [.9 .9 .9], 'LineWidth', 2); 
                     hold on;
                     cmap = flipud(colormap(usecolormap));
                     colormap(cmap)
-                    mask1 = fronttraj > std2(fronttraj); %keep everything above 1 std opaque
+                    mask1 = currtrajFRxy > std2(currtrajFRxy); %keep everything above 1 std opaque
                     %plot occupancy normalized firing ratemap
-                    s = pcolor(fronttraj);
+                    s = pcolor(currtrajFRxy);
 %                     caxis([0 alltrajPeakFR]) %max(max((I)))-std2(I)]) % saturate top standard dev
                     s.AlphaData = mask1; % make all zero bins transparent
                     s.EdgeColor = 'none';
@@ -268,10 +262,6 @@ if plotOccNormFields
                     caxis([0 1])
                     xlim(xlimx)
                     ylim(ylimy)
-                    
-                    %                     set(gca,'xticklabel',[])
-                    %                     set(gca,'ytick',[])
-                    %                     set(gca,'yticklabel',[])
                     %                     subTit = title(sprintf('%d spikes %d seconds ',sum(sum(F(iAn).output{1}(ienvFInds(ienv)).spikes{itraj})), round(sum(sum(F(iAn).output{1}(icellFoutInds(ienv)).occupancy{itraj})))));
                     %                     set(subTit, 'Color', 'k', 'FontName', 'Arial', 'FontSize',6, 'FontWeight', 'normal');%, 'horizontalAlignment', 'left', 'verticalAlignment', 'bottom');
                     if itraj == 1 && strcmp(taskEnv, 'wtrack')
@@ -289,15 +279,20 @@ if plotOccNormFields
                     else
                         set(gca,'xtick',[], 'xticklabel',[],'ytick',[], 'yticklabel',[])
                     end
+                    % for w track, plot 2D and 1D subplots for each
+                    % trajectory
                     if strcmp(taskEnv, 'wtrack')
+                        try %will error on empty epoch/traj.. just continue through
                         wellStartEnd = F(iAn).output{1}(ienvFInds(1)).wellCoords{itraj};
                         text(wellStartEnd(1,1),wellStartEnd(1,2),'\wedge','FontSize',arrowsize,'FontWeight','bold', 'Color', [.4 .8 .5], 'horizontalAlignment', 'center')
                         text(wellStartEnd(2,1),wellStartEnd(2,2),'\vee','Fontsize',arrowsize,'FontWeight','bold', 'Color', [.8 .5 .8], 'horizontalAlignment', 'center')
                         text(wellStartEnd(1,1),wellStartEnd(1,2),'\wedge','FontSize',arrowsize,'FontWeight','bold', 'Color', [.4 .8 .5], 'horizontalAlignment', 'center')
                         text(wellStartEnd(2,1),wellStartEnd(2,2),'\vee','Fontsize',arrowsize,'FontWeight','bold', 'Color', [.8 .5 .8], 'horizontalAlignment', 'center')
+                        catch
+                            disp('no data for this ep traj cell')
+                        end
                         title(sprintf('%s', trajname{itraj}), 'Color', [.8 .8 .8], 'FontSize',10,'FontWeight','bold','FontName', 'Arial');
-                        % if this is a wtrack epoch, gather the linear
-                        % firing rates from the lF output struct and plot
+                        %  gather the linear firing rates from the lF output struct and plot
                         dayntcell = iInd(:,[1 3 4]);
                         LINmatdayntcell = LINmatInds(:,[1 3 4]);
                         LINIndMap = [];
@@ -348,18 +343,6 @@ if plotOccNormFields
                     end
                     
                 end
-            
-%             clrbar = colorbar('location','eastoutside', 'FontSize',6,'FontName', 'Arial');%, 'FontWeight','bold');
-%             h1=axes('position',get(h,'position'),'color','none','ylim',[0 100],'xtick',[])
-%             posx1=get(gca,'position');
-%             posx=get(clrbar,'Position');
-%             posx(1)= 1-MarginRight+.01;
-%             posx(2)= MarginBottom;
-%             posx(3)= .01;
-%             posx(4)= 1 - MarginTop - MarginBottom;
-%             set(clrbar,'Position',posx)
-%             set(gca,'position',posx1)
-%             clrbartit = text(posx(1)+posx(3)/2, posx(2)-MarginBottom/2, 'Hz', 'FontSize',10,'FontWeight','bold','Color','k', 'FontName', 'Arial','horizontalAlignment', 'center');    
             end
             %% ---- super title and colorbar----
             sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
@@ -373,7 +356,6 @@ if plotOccNormFields
 %             opensfpos = get(opensf,'position');
             posx1=get(gca,'position');
             clrbar = colorbar('location','eastoutside', 'FontSize',6,'FontName', 'Arial', 'ylim',[0 1], 'ytick', []);%, 'FontWeight','bold');   
-            
             posx=get(clrbar,'Position');
             posx(1)= 1-MarginRight+.01; 
             posx(2)= MarginBottom;
@@ -385,11 +367,9 @@ if plotOccNormFields
             openFR = axes('position',posx,'yaxislocation','right','color','none','ylim',[0 alltrajPeakFRopen],'FontSize',6,'FontName', 'Arial', 'xtick',[]);
             waxFR = axes('position',posx,'yaxislocation','left','color','none','ylim',[0 alltrajPeakFRwtrack],'FontSize',6,'FontName', 'Arial', 'xtick',[]);
             
-            sprtit = sprintf('%s %s %s D%d nT%d C%d', filtfunction, strjoin(epochEnvironment,'-'), animalID, day, ntrode, icell);
+            sprtit = sprintf('%s %s %s D%d nT%d C%d', filtfunction, strjoin(epochEnvironment,'-'), animalID, day, ntrode, cellID);
             iclr = icolors(iIndInds(1),:);
             sprTags = sprintf('%s %s', iarea, isubarea);
-            %             iStitle = text(.5, .95, [{sprtit}; ['\color[rgb]{.8 .8 .8} \fontsize{8}', sprintf(' {%s}', filenameTitle)]], ...
-            %                 'Parent', sprtitleax, 'Units', 'normalized');
 %             set(gca,'position',posx1)
             iStitle = text(.5, .93, [{sprtit};...
                 {['\fontsize{12} \color[rgb]' sprintf('{%d %d %d} %s ', iclr, sprTags)]};...
@@ -399,7 +379,6 @@ if plotOccNormFields
             clrbartit2 = text(posx(1)+posx(3)/2, posx(2)+posx(4), 'W     O', 'FontSize',8,'FontWeight','bold','Color',[.5 .5 .5], 'FontName', 'Arial','horizontalAlignment', 'center', 'Parent', sprtitleax,'Units', 'normalized');
             %% ---- pause, save figs ----
             if pausefigs
-                return
                 pause
             end
             if savefigs
