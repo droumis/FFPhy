@@ -27,7 +27,17 @@ else % ripplecons, ripplekons, etc
     eventtimes(:,2) = events{index(1,1)}{index(1,2)}{1}.endtime(:,1);
 end
 eventtimes = eventtimes(~isExcluded(eventtimes(:,1),excludeperiods),:);
-
+if isempty(eventtimes)
+    out.LFPtypes = LFPtypes;
+    out.LFPtimes = [];
+    out.eventStartIndices = [];
+    out.eventEndIndices = [];
+    out.win = win;
+    %     out.windowStartIndices = windowStartIndices;
+    %     out.windowEndIndices = windowEndIndices;
+    out.index = index;
+    return
+end
 % Define EEG
 e = eeg{index(1,1)}{index(1,2)}{index(1,3)}.data';
 num_samp = length(e);

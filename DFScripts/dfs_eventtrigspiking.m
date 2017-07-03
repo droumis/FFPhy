@@ -3,16 +3,16 @@
 
 %% ---------------- Dashboard --------------------------
 close all 
-runFilterFramework = 1;
+runFilterFramework = 0;
 saveFilterOutput = runFilterFramework;
 loadFilterOutput = 0;
-postprocessFilterOutput = 1;
+postprocessFilterOutput = 0;
 savePostprocessing = postprocessFilterOutput;
 loadPostprocessing = 0;
 plotfigs = 1;
 runAntiAlias = 0;
-savefigs= 0;
-pausefigs = 1;
+savefigs= 1;
+pausefigs = 0;
 investInfo = animaldef(lower('Demetris'));
 %% ---------------- plotting params --------------------------
 colorSet = 'DR1';

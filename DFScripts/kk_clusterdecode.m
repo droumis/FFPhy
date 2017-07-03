@@ -1,14 +1,6 @@
 function kk_clusterdecode(directoryname,fileprefix,dayeps,animalname,varargin)
 %
-% kk_linear2dayprocess(directoryname,fileprefix,days, options)
-%
-%  W-track specific day process (C, L, R)
-%       Relies on linpos from the original kk_lineardayprocess
-%
-%
-%Runs linearizeposition for all run epochs in each day and saves the data in
-%'linpos' in the directoryname folder.  See LINEARIZEPOSITION for the definitions 
-%of the options.
+
          
 animalinfo = animaldef(animalname);
    daydir = getdaydir(animalname);

@@ -14,8 +14,8 @@ close all
 runFilterFramework =0;
 saveFilterOutput = runFilterFramework;
 loadFilterOutput = 1;
-gatherXFC = 1;
-resaveEpochsMean = gatherXFC;
+gatherXepochs = 1;
+resaveEpochsMean = gatherXepochs;
 plotXFC = 1;
 savefigs = 1;
 pausefigs = 0;
@@ -137,7 +137,7 @@ if loadFilterOutput == 1;
     load(sprintf('%s/%s',filtOutputDirectory, filename))
 end
 %% ----------------  Gather ntrode data across epochs ---------------------------------------------------
-if gatherXFC
+if gatherXepochs
     %Collect data on individual tetrodes from across epochs
     for iAn = 1:length(animals)
         F{iAn}.tetout = [];
