@@ -4,18 +4,18 @@
 %be a single animal
 %% Dashboard
 close all
-runFilterFramework = 0;
+runFilterFramework = 1;
 ; saveFilterOutput = runFilterFramework;
 ; loadFilterOutput = 0;
-gatherResults = 0;
+gatherResults = 1;
 ; saveResults = 0;
 loadResults = 0;
 plotfigs = 1;
-; plotEnvironments = 0;
-; plotStates = 1;
+; plotEnvironments = 1;
+; plotStates = 0;
 % ; plotSpec_EpochMean = 0;
-; savefigs = 0;
-; pausefigs = 1;
+; savefigs = 1;
+; pausefigs = 0;
 %% ---------------- plotting params --------------------------
 
 %the total height and length of the figure dictates the sizing of the subplots
@@ -47,22 +47,24 @@ usecolormap = 'jet';
 filtfunction = 'riptrigspectrogram';
 behavestruct = 'BehaveState';
 animals = {'JZ1'};
-days = [1:6];
+days = [6];
 eventtype = 'rippleskons';
 eventSourceArea = 'ca1';
 % epochEnvironment = 'openfield'; %wtrack, wtrackrotated, openfield, sleep
-epochTypes = {'sleep', 'run', 'run'};
-epochEnvironments = {'sleep', 'wtrack', 'openfield'};% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
+epochTypes = {'run'}; %'sleep', 'run', 
+epochEnvironments = {'wtrack'};% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
 eventSourceArea = 'ca1'; %ca1, mec, por
-ripAreas = {'ca1', 'mec', 'por'};
-ntAreas = {'ca1', 'sub', 'mec', 'por', 'v2l', 'ref'};
-
+% ntAreas = {'ca1', 'sub', 'mec', 'por', 'v2l', 'ref'};
+ntAreas = {'mec', 'por', 'v2l'};
+fpass = [2 300];
+timeHalfbwProduct = 2;% higher numbers increase time res, reduce freq res
+numSlepianTapers = 3; % higher numbers reduce freq res (should be less than or equal to 2TW-1)
 params = {};
 params.Fs = 1500;
-params.fpass = [2 250];
+params.fpass = fpass;
 params.trialave = 0;
-params.tapers = [3 5];
-win = [0.5 0.5];
+params.tapers = [timeHalfbwProduct numSlepianTapers];
+win = [.5 .5];
 cwin = [0.1 0.01];
 
 consensus_numtets = 1;   % minimum # of tets for consensus event detection
@@ -75,7 +77,9 @@ investInfo = animaldef(lower('Demetris'));
 filtOutputDirectory = sprintf('%s%s/', investInfo{2}, filtfunction);
 ResultsOutDirectory = sprintf('%s%s/', investInfo{3}, filtfunction);
 figdirectory = sprintf('%s%s/', investInfo{4}, filtfunction);
-filenamesave = sprintf('%s%sSTD%d_%s_%s_D%s', eventSourceArea, eventtype, minstdthresh, strjoin(epochEnvironments,'-'), cell2mat(animals),strjoin(arrayfun(@(x) num2str(x),days,'un',0),'-'));
+filenamesave = sprintf('%s%sSTD%d_%s_%s_D%s_%dHB_%dTap', eventSourceArea, eventtype, minstdthresh, ...
+    strjoin(epochEnvironments,'-'), cell2mat(animals),strjoin(arrayfun(@(x) num2str(x),days,'un',0),'-'),...
+    timeHalfbwProduct, numSlepianTapers);
 filename = sprintf('%s_%s.mat', filtfunction, filenamesave);
 % filename = sprintf('riptrigspec_%s%s_%s_%sTets_%s.mat', eventSourceArea, eventtype, epochEnvironment, eventSourceArea, cell2mat(animals));
 filenameTitle = strrep(filename,'_', '\_');
@@ -125,17 +129,18 @@ if gatherResults == 1;
         FFanimdir =  sprintf('%s',animalinfo{1,2});
         matInds = cell2mat({F(iAn).output{1}.index}');
         [days, daysInds, daysInds2] = unique(matInds(:,[1]), 'rows', 'stable'); %get all matches across epochs and days
+        days = days';
         dayepsenvset = cell(1,(length(epochEnvironments)));
-        
         %% ---------- get dayepoch/environment mapping  --------------------------------
         for iday = 1:length(days(:,1))
             day = days(iday);
             load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'task', iday));
-            [eps, epsInds, epsInds2 ] = unique(matInds(matInds(:,1) == iday,[2]), 'rows', 'stable'); %get all matches across epochs and days
+%             [eps, epsInds, epsInds2 ] = unique(matInds(matInds(:,1) == iday,[2]), 'rows', 'stable'); %get all matches across epochs and days
             eptypes = [];
-            for iep = 1:length(eps(:,1))
-                ep = eps(iep);
-                eptypes{iep,1} = task{day}{ep}.environment;
+            
+            for iep = 1:length(task{iday}); %eps(:,1))
+%                 ep = eps(iep);
+                eptypes{iep,1} = task{iday}{iep}.environment;
             end
             [envtypes,~,ep2env] = unique(eptypes, 'stable');
             for ienv = 1:length(epochEnvironments)
@@ -144,7 +149,7 @@ if gatherResults == 1;
                     continue
                 end
                 epsienv = find(ep2env == envienv);
-                dayepsenvset{envienv} = [dayepsenvset{envienv}; [repmat(day,length(epsienv(:,1)),1) epsienv]];
+                dayepsenvset{ienv} = [dayepsenvset{ienv}; [repmat(day,length(epsienv(:,1)),1) epsienv]];
             end
         end
         
@@ -178,7 +183,7 @@ if gatherResults == 1;
         %get the animal state for every event
         for iday = 1:length(wdays(:,1))
             wday = wdays(iday);
-            [weps, ~, wepsInds2dayepsmap] = unique(dayepsenvset{wtrackInd}(wdaysInds2eps(:,1) == wday,2), 'rows', 'stable'); %get all matches across epochs and days
+            [weps, ~, wepsInds2dayepsmap] = unique(dayepsenvset{wtrackInd}(dayepsenvset{wtrackInd}(wdaysInds2eps(:,1)) == wday,2), 'rows', 'stable'); %get all matches across epochs and days
             %load linpos per day
             load(sprintf('%s%s%s%02d.mat',animalinfo{1,2}, animalID, 'linpos', wday));
             % get the data output indices of the [wday weps]
@@ -197,7 +202,7 @@ if gatherResults == 1;
                 LFPtimes = [starttime:1/samprate:starttime+(numdata-1)/samprate]';
                 eventStartTimes = F(iAn).output{1}(wenvNtInds(1)).triggers + starttime;
                 %cat the event spects across days,eps for each ntrode
-                wntrodes = matInds(wenvNtInds,3);
+                wntrodes =  matInds(wenvNtInds,3);
                 for iwntrode = 1:length(wntrodes)
                     wntrode = wntrodes(iwntrode);
                     wNTData{wntrode} = cat(3,wNTData{wntrode},F(iAn).output{1}(wenvNtInds(iwntrode)).S);
@@ -245,6 +250,7 @@ if gatherResults == 1;
         mistOutEventInd = find(eventstate.state(:,7) == 1);
         outBEventInd = [corrOutEventInd; mistOutEventInd];
         inBEventInd = setdiff([1:length(eventstate.state(:,1))], outBEventInd);
+        wNTData = wNTData(~cell2mat(cellfun(@(x) isempty(x), wNTData, 'un', 0))); %get rid of empty cells caused by skipping ntrodes
         wDataType{1} = cellfun(@(x) nanmean(x(:,:,:),3), wNTData, 'un', 0);
         wDataType{2} = cellfun(@(x) nanmean(x(:,:,corrOutEventInd),3), wNTData, 'un', 0);
         wDataType{3} = cellfun(@(x) nanmean(x(:,:,mistOutEventInd),3), wNTData, 'un', 0);
@@ -352,7 +358,8 @@ if plotfigs
                     imagesc(Fg(iAn).t,Fg(iAn).f,Fg(iAn).meanspecs{ienv}{numsumSortInds(introde)}',[-0.5,.5])
                     %                 set(gca,'YDir','normal')
                     
-                    set(gca,'clim',clims,'ydir','normal','xlim',[-.5 .5])
+%                     set(gca,'clim',clims,'ydir','normal','xlim',[-win(1) win(2)])
+                    set(gca,'ydir','normal','xlim',[-win(1) win(2)])
                     hold on;
                     %                 set(gca, 'YScale', 'log')
                     
@@ -382,7 +389,7 @@ if plotfigs
                     'Units', 'normalized', 'horizontalAlignment', 'center');
                 supylabel = text(.01, .5, ylab, 'FontSize',12,'FontWeight','bold','Color','k', 'FontName', 'Arial', 'rotation', 90, ...
                     'Parent', sprtitleax, 'Units', 'normalized', 'horizontalAlignment', 'center');
-                caxis(clims);
+%                 caxis(clims);
                 colormap(usecolormap)
                 clrbar = colorbar('location','eastoutside', 'FontSize',6,'FontName', 'Arial');%, 'FontWeight','bold');
                 posx1=get(gca,'position');
@@ -394,7 +401,7 @@ if plotfigs
                 set(clrbar,'Position',posx)
                 set(gca,'position',posx1)
                 %             sprtit = sprintf('%s D%s E%s T%d', ianimalinfo{1}, strjoin(arrayfun(@(x) num2str(x),days','UniformOutput',false),'-'), strjoin(arrayfun(@(x) num2str(x),idayEpTet(:,2)','UniformOutput',false),'-'), idayEpTet(1,3));
-                sprtit = sprintf('%s %s %s D%s %.1f-%.1fHz', filtfunction, epochEnvironments{ienv}, animalID, strrep(num2str(days), '  ', '-'), min(Fg(iAn).f),max(Fg(iAn).f));
+                sprtit = sprintf('%s %s %s D%s %.1f-%.1fHz %dHB %dTap', filtfunction, epochEnvironments{ienv}, animalID, strrep(num2str(days), '  ', '-'), min(Fg(iAn).f),max(Fg(iAn).f), timeHalfbwProduct, numSlepianTapers);
                 %             if plotNTrodesAcrossDays
                 %                 sprTags = sprintf('%s %s', iarea, isubarea);
                 %                 iclr = icolors(iIndInds(1),:);
@@ -477,7 +484,7 @@ if plotfigs
             sfrows = floor(sqrt(ntets));
             sfcols = ceil(sqrt(ntets));
             
-            for istate = 6;%1:length(Fg(iAn).wStateData)
+            for istate = 1:length(Fg(iAn).wStateData)
                 if savefigs && ~pausefigs; %if you want to save figs but not pause them to take a look.. just keep them invisible. i think this makes it faster and returns keyboard/mouse control during saving
                     ifig = figure('Visible','off','units','normalized','position',position);
                 else

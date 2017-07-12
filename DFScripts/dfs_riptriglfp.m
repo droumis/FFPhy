@@ -4,41 +4,41 @@ close all
 runFilterFramework = 1;
     ; saveFilterOutput = runFilterFramework;
     ; loadFilterOutput = 0;
-processnTrodeMean = 1;
+processnTrodeMean = 0;
 processAreaMean = 0;
-plotfigs = 1;
+plotfigs = 0;
     ; plotLFPtraces = 0;
-    ; plotnTrodeMeanLFPtraces = 1;
+    ; plotnTrodeMeanLFPtraces = 0;
     ; plotAreaMeanLFPtraces = 0;
-    ; savefigs = 1;
-    ;pausefigs = 0;
+    ; savefigs = 0;
+    ; pausefigs = 0;
 %% ---------------- plotting params --------------------------
 % colorsMEC = cbrewer('seq', 'Blues', 10, 'PCHIP');
 % colorsCTX = cbrewer('seq', 'Reds', 10, 'PCHIP');
 % allthecolors = {[0 0 0], colorsMEC, colorsCTX};
 % usecolormap = 'jet'; %colorcube %lines %jet winter
 colorSet = 'DR1';
-win = [.5 .5]; %in seconds
+win = [2 2]; %in seconds
 indwin = win*1500;
 %% ---------------- Data Filters --------------------------
 
 animals = {'JZ1'};
 % animals = {'JZ1', 'D13'};
-days = [4];
+days = [1:6];
 filtfunction = 'riptriglfp';
-LFPtypes = {'eeg', 'ripple', 'theta', 'slowgamma', 'fastgamma'}; %
-LFPrangesHz = {'1-400', '140-250', '6-9', '20-50', '65 - 140'}; %need to make this a lookup from the filter mat
+LFPtypes = {'eeg'};%, 'ripple', 'theta', 'slowgamma', 'fastgamma'}; %
+LFPrangesHz = {'1-400'};%, '140-250', '6-9', '20-50', '65 - 140'}; %need to make this a lookup from the filter mat
 eventtype = 'rippleskons';
 % eventarea = 'ca1';
-epochType = {'sleep', 'run', 'run'};
-epochEnvironment = {'sleep', 'wtrack', 'openfield'};% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
-eventSourceArea = 'mec';
+epochType = {'run'};
+epochEnvironment = {'wtrack'};% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
+eventSourceArea = 'ca1';
 ripAreas = {'ca1', 'mec', 'por'};
 ntAreas = {'ca1', 'sub', 'mec', 'por', 'v2l', 'ref'};
 
 consensus_numtets = 1;   % minimum # of tets for consensus event detection
-minstdthresh = 5;        % STD. how big your ripples are
-exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
+minstdthresh = 3;        % STD. how big your ripples are
+exclusion_dur = .5;  % seconds within which consecutive events are eliminated / ignored
 minvelocity = 0;
 maxvelocity = 4;
 %% ---------------- Paths and Title strings ---------------------------------------------------
@@ -70,7 +70,7 @@ if runFilterFramework == 1;
     %----------F = createfilter('animal', animals, 'days', dayfilter,'epochs', epochfilter, 'excludetime', timefilter, 'eegtetrodes',tetfilter,'iterator', iterator);--------
     F = createfilter('animal', animals, 'days', days,'epochs', epochfilter, 'excludetime', timefilter, 'eegtetrodes',tetfilter,'iterator', iterator);
     %----------f = setfilteriterator(f, funcname, loadvariables, options)--------
-    eval(['F = setfilterfunction(F, [''dfa_'' filtfunction], {[eventSourceArea eventtype],' strjoin(arrayfun(@(x) sprintf('''%s'',', cell2mat(x)), LFPtypes,'UniformOutput',false)) '},''eventtype'', [eventSourceArea eventtype], ''LFPtypes'', LFPtypes);']);
+    eval(['F = setfilterfunction(F, [''dfa_'' filtfunction], {[eventSourceArea eventtype],' strjoin(arrayfun(@(x) sprintf('''%s'',', cell2mat(x)), LFPtypes,'UniformOutput',false)) '},''eventtype'', [eventSourceArea eventtype], ''LFPtypes'', LFPtypes, ''win'', win);']);
     %     eval(['F = setfilterfunction(F, [''dfa_'' filtfunction], {[eventSourceArea eventtype],' strjoin(reshape(repmat(arrayfun(@(x) sprintf('''%s'',', cell2mat(x)), LFPtypes,'UniformOutput',false), 2, 1), 1,length(LFPtypes)*2)) '},''eventtype'', [eventSourceArea eventtype], ''LFPtypes'', LFPtypes);']);
     tic
     F = runfilter(F);
