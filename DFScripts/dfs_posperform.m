@@ -5,11 +5,17 @@ close all
 % calculateStateSpace = 1;  
 % saveStateSpaceResults = 1;
 plotPosPerform = 1;
-savefigs = 1;
-pausefigs = 0;
+savefigs = 0;
+pausefigs = 1;
+runAntiAlias = 1;
 
 % savePerformResults = 0;
 % plotPerform = 0;
+
+
+%     MarginRight = 0.04;
+%     MarginTop = 0.09;
+%     MarginBottom =  0.08;
 
 %% ---------------- plotting params --------------------------
 colorSet = 'DR1';
@@ -17,28 +23,28 @@ colorSet = 'DR1';
 % position = [.1 .1 .9 .8];
 SpacingHorizontal = 0.1;
 SpacingVertical = 0.0;
-position = [.1 .1 .9 .6];
+position = [.1 .1 .8 .6];
 SpacingHorizontal = 0.00;
 SpacingVertical = 0.05;
 Spacing = 0.01;
 Padding = 0.00;
 MarginLeft = 0.04;
-MarginRight = 0.01;
-MarginTop = 0.08;
-MarginBottom =  0.07;
+MarginRight = 0.04;
+MarginTop = 0.09;
+MarginBottom =  0.08;
 usecolormap = 'jet';
 win = [.5 .5]; %in seconds
 % indwin = win*1500;
 %% ---------------- Data Filters --------------------------
 animal = 'JZ1';
 % animals = {'JZ1', 'D13'};
-days = [1:9];
+days = [4]; %1:9
 behavestruct = 'BehaveState';
 plottype = 'posperform';
 eventtype = 'rippleskons';
 epochEnvironment = 'wtrack';% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
 eventSourceArea = 'ca1';
-ripAreas = {'ca1', 'mec', 'por'};
+ripAreas = {'ca1'}; %, 'mec', 'por'
 % ntAreas = {'ca1', 'sub', 'mec', 'por', 'v2l', 'ref'};
 consensus_numtets = 1;   % minimum # of tets for consensus event detection
 minstdthresh = 2;        % STD. how big your ripples are
@@ -73,9 +79,9 @@ if plotPosPerform
     for day = days;
         eps = unique(wTrackBehave.index(wTrackBehave.index(:,1)==day,2),'stable');
         if savefigs && ~pausefigs; %if you want to save figs but not pause them to take a look.. just keep them invisible. i think this makes it faster and returns keyboard/mouse control during saving
-            iFig = figure('Visible','off','units','normalized', 'position',position);
+            ifig = figure('Visible','off','units','normalized', 'position',position);
         else
-            iFig = figure('units','normalized', 'position',position);
+            ifig = figure('units','normalized', 'position',position);
             %             set(0,'DefaultFigureWindowStyle','docked') %dock the fig
             %             set(0,'DefaultFigureWindowStyle','normal')
         end
@@ -114,6 +120,7 @@ if plotPosPerform
                 %the colors are normalized max threshold std per area/epoch
                 set(isfig,'ColorOrder',cmap(maxstd_valsNormed,:))
                 line(repmat(irips(:,1),1,2)', repmat([-iarea*5;(-iarea-1)*5],1, size(irips,1)), 'LineWidth',2); hold on;
+                
             end
             %% plot lindist and overlay all the rip times and trial out corr/mistake patches
             
@@ -197,7 +204,21 @@ if plotPosPerform
             title(sprintf('epoch %d', ep),'FontSize',8,'FontWeight','bold','Color',[.5 .5 .5], 'FontName', 'Arial')
         end
         
-        sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', iFig);
+        sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
+%             
+
+                    clrbar = colorbar('location','eastoutside', 'FontSize',6,'FontName', 'Arial');%, 'FontWeight','bold');
+                    colormap(cmap)
+                    caxis([min(maxstd_vals) max(maxstd_vals)])
+            posx1=get(gca,'position');
+            posx=get(clrbar,'Position');
+            posx(1)= 1-MarginRight+.01;
+            posx(2)= MarginBottom;
+            posx(3)= .01;
+            posx(4)= 1 - MarginTop - MarginBottom;
+            set(clrbar,'Position',posx)
+            set(gca,'position',posx1)
+            
         suptitclr = [0 0 0];
         suptittxt = sprintf('%s Day%d', filenameTitle, day);
         iStitle = text(.5, .98, ['\fontsize{12} \color[rgb]' sprintf('{%d %d %d} %s ', suptitclr, suptittxt)]);
@@ -208,11 +229,17 @@ if plotPosPerform
             'Parent', sprtitleax, 'Units', 'normalized', 'horizontalAlignment', 'center');
         supylabel = text(.01, .5, ylab, 'FontSize',12,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
             'rotation', 90, 'Parent', sprtitleax, 'Units', 'normalized', 'horizontalAlignment', 'center');
-        for iarea = 1:length(ripAreas)
-                    arealab = text(.01, (1-(iarea/(length(ripAreas)+1)))*.1, ripAreas{iarea}, 'FontSize',8,'FontWeight','bold','Color',icolors(iarea,:), 'FontName', 'Arial', ...
-            'Parent', sprtitleax, 'Units', 'normalized', 'horizontalAlignment', 'center');
-        end
+%         for iarea = 1:length(ripAreas)
+%                     arealab = text(.01, (1-(iarea/(length(ripAreas)+1)))*.1, ripAreas{iarea}, 'FontSize',8,'FontWeight','bold','Color',icolors(iarea,:), 'FontName', 'Arial', ...
+%             'Parent', sprtitleax, 'Units', 'normalized', 'horizontalAlignment', 'center');
+%         end
+        clrbartit = text(posx(1)+posx(3)/2, posx(2)-MarginBottom/2, 'swr-std', 'FontSize',10,'FontWeight','bold','Color','k', 'FontName', 'Arial','horizontalAlignment', 'center');
+            
         %% ---- pause, save figs ----
+        if runAntiAlias
+            myaa; %will drastically improve jagginess but slow things down quite a bit. only use for print figure making
+            close(ifig)
+        end
         if pausefigs
             pause
         end

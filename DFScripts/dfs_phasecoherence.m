@@ -1,40 +1,37 @@
 
-% to do:
-% ITPC - plot open field
-% ISPC - preserve the indices
 
 %%% First create the processed data structure with dfs_riptriglfp.m
 
 close all
-calcEventState = 1;
-saveEventState = calcEventState;
-calculateITPC = 1;
+calcEventState = 0;
+saveEventState = 0;%calcEventState;
+calculateITPC = 0;
 calculateISPC = 0;
 calculateIXPC = calculateITPC || calculateISPC;
 loadFilterOutput = calculateIXPC || calcEventState;
 saveResultsOutput = calculateIXPC;
-runPermTest = calculateIXPC;
+runPermTest = 0; %calculateIXPC;
 loadResultsOutput = 0;
 plotITPC = 1;
 plotISPC = 0;
-savefigs = 1;
-pausefigs = 0;
-calcfunction = 'ITPC'; %ISPC or ITPC
+savefigs = 0;
+pausefigs = 1;
+calcfunction = 'ITPC'; %ITPC
 behavestruct = 'BehaveState';
-plotoutputtype = 'power'; % 'power'
+plotoutputtype = 'phase'; % 'power' or 'phase'
 %% ---------------- plotting params --------------------------
 colorSet = 'DR1';
-if strcmp(plotoutputtype, 'phase')
-    clims = [0 .7]; % mean ITPC goes from 0-1
-    usecolormap = 'jet'; %cbrewer('seq', 'Greens', 255, 'linear');
+% if strcmp(plotoutputtype, 'phase')
+%     clims = [0 .7]; % mean ITPC goes from 0-1
+%     usecolormap = 'jet'; %cbrewer('seq', 'Greens', 255, 'linear');
     %     usecolormap = buildcmap('kryww');
-else
-    clims = [-1 1]; %zscore power
-%     usecolormap = 'jet';
-        usecolormap = flipud(cbrewer('div', 'RdBu', 255, 'linear'));
-%         usecolormap = flipud(usecolormap);
+% else
+    clims = [-8 8]; %zscore power
+    %     usecolormap = 'jet';
+    usecolormap = flipud(cbrewer('div', 'RdBu', 255, 'linear')); %red high white neutral blue low
+    %         usecolormap = flipud(usecolormap);
     % %     calcfunction = 'power';
-end
+% end
 % clims = [0 1]; %[0 .7]
 % usecolormap = 'jet';
 
@@ -47,16 +44,21 @@ plottimeWin = plotwin(1):1/srate:plotwin(2);
 %baseline indices. length of 1/2 plot window, centered on first plot ind
 % i.e. 0.5 sec basewindow starting at .25 sec before the start of the
 % plotwindow
-% baselineind = ([(win(2)-plotwin(2))-basewin/2 (win(2)-plotwin(2))+basewin/2]).*srate; 
-basedur = abs(win(1))+abs(win(2));
-baselineind = ([1 (srate*basedur)+1]);
+baselineind = ([(win(2)-plotwin(2))-basewin/2 (win(2)-plotwin(2))+basewin/2]).*srate;
+% basedur = abs(win(1))+abs(win(2));
+% baselineind = ([1 (srate*basedur)+1]);
 % p-value
 pval = 0.05;
 % convert p-value to Z value
 zval = abs(norminv(pval));
 % number of permutations
-n_permutes = 500; %1000
-
+n_permutes = 1000; %1000 takes 24 hours
+OvsIind = 6;
+outboundInd = 4;
+inboundInd = 5;
+CvsMind = 7;
+correctOutInd = 2;
+mistakeOutInd = 3;
 %% ---------------- Data Filters --------------------------
 animals = {'JZ1'};
 % animals = {'JZ1', 'D13'};
@@ -182,7 +184,7 @@ if calcEventState
         end
         ixpc.eventstate = eventstate;
         ixpc.allNTDataCat{ianimal} = cat(3, iEpTetData{:});
-%         iEpTetData = iEpTetData;
+        %         iEpTetData = iEpTetData;
     end
     %% ---------------- Save eventState Output ---------------------------------------------------
     if saveEventState == 1;
@@ -200,8 +202,7 @@ end
 
 if calculateIXPC
     tic
-%     fie®rlds = {'phaseoutput','poweroutput'};
-%     ixpc = rmfield(ixpc,fields);
+    %     datafields = {'phaseoutput','poweroutput'};
     ixpc.phaseoutput = [];
     ixpc.poweroutput = [];
     ixpc.type = calcfunction;
@@ -211,70 +212,36 @@ if calculateIXPC
     ixpc.num_frex = num_frex;
     ixpc.win = win;
     ixpc.srate = srate;
-    % an even number of events will make nData even (since nsamps and nwave will always be...
-    % odd due to the mirrored window. An even nData + an odd nwave minus 1 will be even... and therefore the ...
-    % difference between this result and the next power of 2 will be even allowing an equal zero pad of odd number
-    % and making things a lot easier... so always check if there's an
-    % even number of events, and if not, remove the last one.
-    evenEventnum = 0; %mod(size(ixpc.eventstate.state,1),2);
     % split the events out into groups based on correct out / mistake out
-    corrOutEventInd = find(ixpc.eventstate.state(1:end-evenEventnum,6) == 1);
-    mistOutEventInd = find(ixpc.eventstate.state(1:end-evenEventnum,7) == 1);
+    corrOutEventInd = find(ixpc.eventstate.state(1:end,6) == 1);
+    mistOutEventInd = find(ixpc.eventstate.state(1:end,7) == 1);
     outBEventInd = [corrOutEventInd; mistOutEventInd];
-    inBEventInd = setdiff([1:length(ixpc.eventstate.state(1:end-evenEventnum,1))], outBEventInd)';
-    iEpTetIndsType = {[1:length(ixpc.eventstate.state(1:end-evenEventnum,1))], corrOutEventInd, mistOutEventInd, outBEventInd, inBEventInd};
-    %         iEpTetDataType{1} = iEpTetData;
-    %         iEpTetDataType{2} = iEpTetData(corrOutEventInd);
-    %         iEpTetDataType{3} = iEpTetData(mistOutEventInd);
-    %         iEpTetDataType{4} = iEpTetData(outBEventInd);
-    %         iEpTetDataType{5} = iEpTetData(inBEventInd);
+    inBEventInd = setdiff([1:length(ixpc.eventstate.state(1:end,1))], outBEventInd)';
+    iEpTetIndsType = {[1:length(ixpc.eventstate.state(1:end,1))], corrOutEventInd, mistOutEventInd, outBEventInd, inBEventInd};
     
     for ianimal = 1:length(F)
-        % get event trials for this condition
-        % cat stack the event snips into the 3rd dim
-        
         nevents = size(ixpc.allNTDataCat{ianimal},3);
         nWave = length(timeWin);
-        nNTrodes = 1; %size(intDataCat,1);
+        nNTrodes = 1;
         nsamps = size(ixpc.allNTDataCat{ianimal},2);
         nData = nsamps*nevents;
         nConv = nWave+nData-1; % length of the result of convolution.
         nConv2pow = 2^nextpow2(nConv);
-%         zpad2pow = (nConv2pow - nConv)/2;
         zpad2pow = nConv2pow - nConv;
-%         if mod(zpad2pow,1) ~= 0
-%             error('zpad2pow should be a whole number')
-%         end
-        for introde = 1:size(ixpc.allNTDataCat{ianimal},1)
-            intDataCat = squeeze(ixpc.allNTDataCat{ianimal}(introde,:,:)); %squeeze will make nsampes x nevents.. 
-            % FFT of data (doesn't change on frequency iteration)
-            % dataX = fft(reshape(iEpTetDataCat(introde,:,:), 1,nData),nConv,2);
-            % concat reshape all the events (peri-rip snips) for speed and
-            % to reduce edge artifacts, then take the fft.
-            % fft with the arg of nConv ensures that matlab will zero-pad
-            % the half-wavelet duration on either side of the data series
+        ntets = size(ixpc.allNTDataCat{ianimal},1);
+        for introde = 1:ntets
+            intDataCat = squeeze(ixpc.allNTDataCat{ianimal}(introde,:,:)); %squeeze will make nsampes x nevents..
+            % concat reshape all the events (peri-rip snips) for speed and to reduce edge artifacts, then take the fft.
+            % fft with the arg of nConv ensures that matlab will zero-pad the half-wavelet duration on either side of the data series
             %             dataY = fft(reshape(iEpTetDataCat,nNTrodes,nData),nConv,2);
-            dataY = fft(reshape(intDataCat,nNTrodes,nData),nConv2pow,2); %remember that reshape reshapes rowise so 
-            % make sure that the each timeseries event is a column
-            %             hz = linspace(0, 1500/2, floor(nConv/2)+1);
-            %             plot(hz,2*abs(dataY(16,1:length(hz))/nData));
-            
+            dataY = fft(reshape(intDataCat,nNTrodes,nData),nConv2pow,2); % reshape reshapes row-wise into a 1 x d vector
+%             dataY{introde} = fft(reshape(squeeze(ixpc.allNTDataCat{ianimal}(introde,:,:)),nNTrodes,nData),nConv2pow,2); % reshape reshapes row-wise into a 1 x d vector
             %         %% fix ispc
             %         if calculateISPC
             %             % initialize output time-frequency data
             %             %                 ixpc.output{ianimal}{iday} = zeros(nchoosek(size(iEpTetDataCat,1),2), nsamps, num_frex);
             %             ixpc.phaseoutput{ianimal}{idatatype} = zeros(nchoosek(size(iEpTetDataCat,1),2), nsamps, num_frex);
-            %         elseif calculateITPC
-            %             % initialize output time-frequency data
-            %             ixpc.phaseoutput{ianimal}{idatatype} = zeros(nNTrodes,nsamps, num_frex);
-            %             %                 ixpc.output{ianimal}{iday} = zeros(nNTrodes,nsamps, num_frex);
-            %             indices = [indices; F(ianimal).output{day}(eps(1)).index];
-            %         end
-            %%
-            %         phdata = zeros(num_frex,nNTrodes,nsamps,nevents); %this crashes
-            %         matlab because it exceeds maximum array size ... something like
-            %         35GB...lol.. instead... i should probably loop over ntrodes and
-            %         run the perm tests and everything then toss the trial data.
+            
             %% loop over frequencies
             for fi=1:num_frex
                 % create wavelet and get its FFT
@@ -282,70 +249,57 @@ if calculateIXPC
                 sine_wave = exp(2*1i*pi*frex(fi).*timeWin); %make a complex sine wave
                 bn = nWavecycles(fi)/(2*pi*frex(fi)); % std of the gaussian of the morlet wavelet. dependent on the freq and #cycles
                 gaus_win = exp(-timeWin.^2./(2*bn^2)); %the gaussian
-                %                 wavelet  = exp(2*1i*pi*frex(fi).*timeWin) .* exp(-timeWin.^2./(2*s^2));
                 wavelet = sine_wave .* gaus_win;
                 waveletFFT = fft(wavelet,nConv2pow);
+%                 waveletFFT{introde}{fi} = fft(exp(2*1i*pi*frex(fi).*timeWin) .* exp(-timeWin.^2./(2*nWavecycles(fi)/(2*pi*frex(fi))^2)),nConv2pow);
                 %normalize wavelet to a maximum of 1. this will ensure that the units of convolution are the same as in the original data.
                 waveletFFT = waveletFFT ./ max(waveletFFT);
+%                 waveletFFT{introde}{fi} = waveletFFT{introde}{fi} ./ max(waveletFFT{introde}{fi});
                 % run convolution (filtering) : Time-domain convolution in the frequency domain... because itz so much faster
                 astmp = bsxfun(@times,dataY,waveletFFT); %multiply the power spectrum of the data and the wavelet
+%                 astmp{introde}{fi} = bsxfun(@times,dataY{introde},waveletFFT); %multiply the power spectrum of the data and the wavelet
                 astmp = ifft(astmp,nConv2pow,2); % take the inverse transform
-                astmp = astmp(1,half_wave_size+1:end-half_wave_size-zpad2pow); %trim off the length of half the wavelet at the beginning and at the end
-                as(:,:,fi) = reshape(astmp,nsamps,nevents); %reshape it back to ntrodes by nsamples by nevents
-                phdata(:,:,fi) = angle(as(:,:,fi)); %get phase component of the analytic signal
-                %             %% ISPC -- NEED TO FIX
+                %trim off the length of half the wavelet at the beginning
+                %and at the end. also trim the zero padding at the tail
+                astmp = astmp(1,half_wave_size+1:end-half_wave_size-zpad2pow);
+                as{introde}(:,:,fi) = reshape(astmp,nsamps,nevents); %reshape it back to ntrodes by nsamples by nevents
+                phdata{introde}(:,:,fi) = angle(as{introde}(:,:,fi)); %get phase component of the analytic signal
+                %             %% ISPC -- NEED TO FIX :(
                 %             if calculateISPC % time series diff of all possible ntrode pairs.
                 %                 %the idea here is to treat rows as pairs instead of individual ntrodes, as in ITPC
-                %                 ispc = zeros(nchoosek(size(phdata{fi},1),2), nsamps, nevents);
-%                                 m = logical(tril(ones(size(phdata{fi}(:,:,1),1)),-1)); %get indices of non-duplicates (below comb triangle)
-%                                 [brow, bcol] = find(m); %get linear index of ntrode combination indices
-%                                 indices = [F(ianimal).output{day}(eps(1)).index(bcol,:) F(ianimal).output{day}(eps(1)).index(brow,:)]; %convert to ntrodeID
-                %                 for w = 1:size(phdata{fi},3); %loop through each event plane (ntrode x samples X event#)
-                %                     iprm = permute(phdata{fi}(:,:,w),[3 2 1]); %transpose
-                %                     B = bsxfun(@minus,phdata{fi}(:,:,w),iprm); %subtract across each NTrode-choose-two comb of phase time series
-                %                     B = reshape(B,[],size(phdata{fi}(:,:,w),2)); %reshape back into 2D
+                %                 ispc = zeros(nchoosek(size(phdata{introde}{fi},1),2), nsamps, nevents);
+                %                                 m = logical(tril(ones(size(phdata{introde}{fi}(:,:,1),1)),-1)); %get indices of non-duplicates (below comb triangle)
+                %                                 [brow, bcol] = find(m); %get linear index of ntrode combination indices
+                %                                 indices = [F(ianimal).output{day}(eps(1)).index(bcol,:) F(ianimal).output{day}(eps(1)).index(brow,:)]; %convert to ntrodeID
+                %                 for w = 1:size(phdata{introde}{fi},3); %loop through each event plane (ntrode x samples X event#)
+                %                     iprm = permute(phdata{introde}{fi}(:,:,w),[3 2 1]); %transpose
+                %                     B = bsxfun(@minus,phdata{introde}{fi}(:,:,w),iprm); %subtract across each NTrode-choose-two comb of phase time series
+                %                     B = reshape(B,[],size(phdata{introde}{fi}(:,:,w),2)); %reshape back into 2D
                 %                     B = B(m(:),:); %get rid of duplicates
                 %                     ispc(:,:,w) = B; %save result
                 %                 end
                 %                 clear phasedata
-                %                 phdata{fi} = ispc;
+                %                 phdata{introde}{fi} = ispc;
                 %             end
                 %             ixpc.index{ianimal}{fi} = indices;
                 disp(sprintf('nt%d freq %d of %d',introde,fi,num_frex));
-                %             ixpc.frex{ianimal}{fi} = frex;
-            
-            %% AVERAGE ACROSS TRIALS (ITPC) OR SITES (ISPC)
-%             for idatatype = 1:length(iEpTetIndsType)
-                %             ixpc.phaseoutput{ianimal}{idatatype}(:,:,fi) = abs(mean(exp(1i*phdata{fi}(:,:,iEpTetIndsType{idatatype})),3));
-                % for each defined set of event conditions, takes the ITPC and the average power
-%                 itpctmp = cellfun(@(x) abs(mean(exp(1i*phdata(:,x,fi)),2)), iEpTetIndsType, 'un', 0);
-%                 itpc(:,:,fi) = cat(2, itpctmp{:});
-%                 ixpc.phaseoutput{ianimal}{introde}(:,:,fi) = cat(2, itpctmp{:});
-                %                 phastmp{idatatype} = cellfun(@(x) abs(mean(exp(1i*x(:,:,iEpTetIndsType{idatatype})),3)), phdata, 'un', 0);
-                %% POWER morlet wavelet power Zscored 
-                % power is the squared magnitude from origin to the location in complex space zscore using the entire window..
-                % this is conservative as it includes the post-rip activity into the mean and std
-                %             ixpc.poweroutput{ianimal}{idatatype}(:,:,fi) = mean(abs(as{fi}(:,:,iEpTetIndsType{idatatype})).^2,3);
-%                 powrtmp = cellfun(@(x) mean(abs(as(:,x,fi)).^2,2), iEpTetIndsType, 'un', 0);
                 
-%                 baselinepowrtmp = cellfun(@(x) mean(abs(as(baselineind(1):baselineind(2),x,fi)).^2,2), iEpTetIndsType, 'un', 0);
-                % breakup the line above so that i can get the mean and the
-                % std of the baseline period for all trials, then baseline
-                % normalize each for condition.. also do this for phase
-%                 ixpc.poweroutput{ianimal}{introde}(:,:,fi) = cat(2,powrtmp{:});
             end
-            %% compute frequency-wise baseline-zscored ITPC and Power 
-            ixpc.basemeanpower{ianimal}{introde}(1,1,:) = mean(mean(abs(as(baselineind(1):baselineind(2),iEpTetIndsType{1},:)).^2,2),1);
-            ixpc.basestdpower{ianimal}{introde}(1,1,:) = std(reshape(abs(as(baselineind(1):baselineind(2),iEpTetIndsType{1},:)).^2,[],1,num_frex),1);
-%             ixpc.basemeanpower{ianimal}{introde}(1,:,:) = cat(2,basemeanpowrtmp{:}); % one mean baseline val per freq
-%             ixpc.basestdpower{ianimal}{introde}(1,:,:) = cat(2,basestdpowrtmp{:}); % one std baseline val per freq
-            powrtmp = cellfun(@(x) mean(abs(as(:,x,:)).^2,2), iEpTetIndsType, 'un', 0);
+            
+            
+            ixpc.frex{ianimal}{introde} = frex;
+            %% compute ITPC-Xtrial and Power-Xtrial with frequency-wise zscore
+            % power is the squared magnitude from origin to the location in complex space
+            % zscoring using the entire window..this is conservative as it includes the post-rip activity into the mean and std
+            ixpc.basemeanpower{ianimal}{introde}(1,1,:) = mean(mean(abs(as{introde}(baselineind(1):baselineind(2),iEpTetIndsType{1},:)).^2,2),1);
+            ixpc.basestdpower{ianimal}{introde}(1,1,:) = std(reshape(abs(as{introde}(baselineind(1):baselineind(2),iEpTetIndsType{1},:)).^2,[],1,num_frex),1);
+            powrtmp = cellfun(@(x) mean(abs(as{introde}(:,x,:)).^2,2), iEpTetIndsType, 'un', 0);
             ixpc.poweroutput{ianimal}{introde}(:,:,:) = cat(2,powrtmp{:});
             ixpc.basenormpoweroutput{ianimal}{introde} = bsxfun(@rdivide, bsxfun(@minus, ixpc.poweroutput{ianimal}{introde},ixpc.basemeanpower{ianimal}{introde}), ixpc.basestdpower{ianimal}{introde});
             
-            ixpc.basemeanphase{ianimal}{introde}(1,1,:) = mean(abs(mean(exp(1i*phdata(baselineind(1):baselineind(2),iEpTetIndsType{1},:)),2)),1);
-            ixpc.basestdphase{ianimal}{introde}(1,1,:) = std(reshape(abs(mean(exp(1i*phdata(baselineind(1):baselineind(2),iEpTetIndsType{1},:)),2)),[],1,num_frex),1);
-            itpctmp = cellfun(@(x) abs(mean(exp(1i*phdata(:,x,:)),2)), iEpTetIndsType, 'un', 0);
+            ixpc.basemeanphase{ianimal}{introde}(1,1,:) = mean(abs(mean(exp(1i*phdata{introde}(baselineind(1):baselineind(2),iEpTetIndsType{1},:)),2)),1);
+            ixpc.basestdphase{ianimal}{introde}(1,1,:) = std(reshape(abs(mean(exp(1i*phdata{introde}(baselineind(1):baselineind(2),iEpTetIndsType{1},:)),2)),[],1,num_frex),1);
+            itpctmp = cellfun(@(x) abs(mean(exp(1i*phdata{introde}(:,x,:)),2)), iEpTetIndsType, 'un', 0);
             ixpc.phaseoutput{ianimal}{introde}(:,:,:) = cat(2, itpctmp{:});
             ixpc.basenormphaseoutput{ianimal}{introde} = bsxfun(@rdivide, bsxfun(@minus, ixpc.phaseoutput{ianimal}{introde},ixpc.basemeanphase{ianimal}{introde}), ixpc.basestdphase{ianimal}{introde});
             %% compute differential tf maps
@@ -357,116 +311,72 @@ if calculateIXPC
             ixpc.basenormpoweroutput{ianimal}{introde}(:,6,:) = ixpc.basenormpoweroutput{ianimal}{introde}(:,4,:) - ixpc.basenormpoweroutput{ianimal}{introde}(:,5,:);
             ixpc.basenormphaseoutput{ianimal}{introde}(:,7,:) = ixpc.basenormphaseoutput{ianimal}{introde}(:,2,:) - ixpc.basenormphaseoutput{ianimal}{introde}(:,3,:);
             ixpc.basenormpoweroutput{ianimal}{introde}(:,7,:) = ixpc.basenormpoweroutput{ianimal}{introde}(:,2,:) - ixpc.basenormpoweroutput{ianimal}{introde}(:,3,:);
-            
-            ixpc.datatypes{ianimal} = iEpTetDataTypeFields;
+%         end
+%         for introde = 1:ntets
             %% permutation testing... this will take TIME and a shit ton of RAM.. go get covfefe
             if runPermTest
-                ixpc = ITPCpermtest(ixpc, phdata, as, ianimal, introde, 6, iEpTetIndsType{4}, iEpTetIndsType{5}, n_permutes);
-                ixpc = ITPCpermtest(ixpc, phdata, as, ianimal, introde, 7, iEpTetIndsType{2}, iEpTetIndsType{3}, n_permutes);
-%                 ixpc.phasemean_h0{ianimal}{introde}{6} = [];ixpc.phasestd_h0{ianimal}{introde}{6} = [];ixpc.phasezmap{ianimal}{introde}{6} = [];
-%                 ixpc.powermean_h0{ianimal}{introde}{6} = [];ixpc.powerstd_h0{ianimal}{introde}{6} = [];ixpc.powerzmap{ianimal}{introde}{6} = [];
-%                 clear permdataInds permdata iprm permsetfull Apermset Bpermset phasepermOutput powerpermOutput
-%                 disp('========== running perm test outbound-inbound=============')
-%                 %% outbound vs inbound
-%                 % create the shuffled distribution for each pixel
-%                 disp(sprintf('nt%d outb-inb perm x %d',introde, n_permutes))
-%                 permdataInds = [iEpTetIndsType{4}; iEpTetIndsType{5}];
-%                 [~, permsetfull] = sort(rand(n_permutes,length(permdataInds)),2); % make permuted indices mat without loop
-%                 % For every vec array of specifying permuted indices into the time-freq maps for this condition, compute the
-%                 % cross-condition ITPC and mean power
-%                 
-%                 testo = arrayfun(@(x) bsxfun(@minus, abs(mean(exp(1i*phdata(:,permdataInds(permsetfull(x,1:length(iEpTetIndsType{4}))),:)),2)), ...
-%                     abs(mean(exp(1i*phdata(:,permdataInds(permsetfull(x,length(iEpTetIndsType{4})+1:end)),:)),2))), [1:n_permutes], 'un', 0);
-%                 phasepermCat = cat(2,testo{:});
-%                 %zscore
-%                 
-%                 presto = arrayfun(@(x) bsxfun(@minus, mean(abs(as(:,permdataInds(permsetfull(x,1:length(iEpTetIndsType{4}))),:)).^2,2), ...
-%                     mean(abs(as(:,permdataInds(permsetfull(x,length(iEpTetIndsType{4})+1:end)),:)).^2,2)), [1:n_permutes], 'un', 0);
-%                 powerpermCat = cat(2,presto{:});
-%                 % compute pixel-wise mean and standard deviation maps for perm null
-%                 ixpc.phasemean_h0{ianimal}{introde}{6}(:,1,:) = mean(phasepermCat,2);
-%                 ixpc.phasestd_h0{ianimal}{introde}{6}(:,1,:)  = std(phasepermCat,[],2);
-%                 % pixel-wise Z-score the data against the perm null distribution
-%                 ixpc.phasezmask{ianimal}{introde}{6}(:,1,:) = bsxfun(@rdivide, bsxfun(@minus, ixpc.phaseoutput{ianimal}{introde}(:,6,:), ixpc.phasemean_h0{ianimal}{introde}{6}), ...
-%                     ixpc.phasestd_h0{ianimal}{introde}{6});
-%                 % same for power
-%                 ixpc.powermean_h0{ianimal}{introde}{6}(:,1,:) = mean(powerpermCat,2);
-%                 ixpc.powerstd_h0{ianimal}{introde}{6}(:,1,:)  = std(powerpermCat,[],2);
-%                 ixpc.powerzmask{ianimal}{introde}{6}(:,1,:) = bsxfun(@rdivide, bsxfun(@minus, ixpc.poweroutput{ianimal}{introde}(:,6,:), ixpc.powermean_h0{ianimal}{introde}{6}),...
-%                     ixpc.powerstd_h0{ianimal}{introde}{6});
-                
-% %                 tic
-%                 for iprm = 1:n_permutes;
-%                 
-%                     permsetfull = randperm(size(permdataInds,1));
-%                     Apermset = permsetfull(1:length(iEpTetIndsType{4}));
-%                     Bpermset = permsetfull(length(Apermset)+1:end);
-%                     phasepermOutput(:,iprm,:) = abs(mean(exp(1i*phdata(:,permdataInds(Apermset),:)),2)) - ...
-%                         abs(mean(exp(1i*phdata(:,permdataInds(Bpermset),:)),2));
-%                     powerpermOutput(:,iprm,:) = mean(abs(as(:,permdataInds(Apermset),:)).^2,2) - mean(abs(as(:,permdataInds(Bpermset),:)).^2,2);
-%                 end
-%                 toc
-
-%                 %% correct outbound vs mistake outbound
-%                 disp('========== running perm test correctOut-mistakeOut=============')
-%                 % create the shuffled distribution for each pixel
-%                 clear permdata iprm permsetfull Apermset Bpermset phasepermOutput powerpermOutput
-%                 permdataInds = [iEpTetIndsType{2}; iEpTetIndsType{3}];
-%                 for iprm = 1:n_permutes;
-%                     disp(sprintf('nt%d outb-inb perm %d of %d', introde, iprm, n_permutes))
-%                     permsetfull = randperm(size(permdataInds,1));
-%                     Apermset = permsetfull(1:floor(length(permsetfull)/2));
-%                     Bpermset = permsetfull(end-floor((length(permsetfull)-1)/2):end);
-%                     phasepermOutput(:,iprm,:) = abs(mean(exp(1i*phdata(:,permdataInds(Apermset),:)),2)) - ...
-%                         abs(mean(exp(1i*phdata(:,permdataInds(Bpermset),:)),2));
-%                     powerpermOutput(:,iprm,:) = mean(abs(as(:,permdataInds(Apermset),:)).^2,2) - ...
-%                         mean(abs(as(:,permdataInds(Bpermset),:)).^2,2);
-%                 end
-%                 % compute mean and standard deviation maps
-%                 ixpc.phasemean_h0{introde}{7}(:,1,:) = squeeze(mean(phasepermOutput(:,:,:),2));
-%                 ixpc.phasestd_h0{introde}{7}(:,1,:)  = squeeze(std(phasepermOutput(:,:,:),[],2));
-%                 % Z-score the data
-%                 ixpc.phasezmap{introde}{7}(:,1,:) = (ixpc.phaseoutput{ianimal}{introde}(:,7,:)-ixpc.phasemean_h0{introde}{7}) ./ ixpc.phasestd_h0{introde}{7};
-% 
-%                 % compute mean and standard deviation maps
-%                 ixpc.powermean_h0{introde}{7}(:,1,:) = squeeze(mean(powerpermOutput(:,:,:),2));
-%                 ixpc.powerstd_h0{introde}{7}(:,1,:)  = squeeze(std(powerpermOutput(:,:,:),[],2));
-%                 % Z-score the data
-%                 ixpc.powerzmap{introde}{7}(:,1,:) = (ixpc.poweroutput{ianimal}{introde}(:,7,:)-ixpc.powermean_h0{introde}{7}) ./ ixpc.powerstd_h0{introde}{7};
-%                 
-%                 %% get perm min max distribution for pixel-based multiple comparison calculation
-%                 ixpc.MCmax_clust_size{ianimal}{introde} = [];ixpc.MCphase_minmax{ianimal}{introde} = []; ixpc.MCpower_minmax{ianimal}{introde} = [];
-%                  % get extreme values (smallest and largest)
-%                 ixpc.MCphase_minmax{ianimal}{introde} = sort([min(min(phasepermCat,[],3),[],1) max(max(phasepermCat,[],3),[],1)]);
-%                 ixpc.MCpower_minmax{ianimal}{introde} = sort([min(min(powerpermCat,[],3),[],1) max(max(powerpermCat,[],3),[],1)]);
-%                 
-%                 zpermmaps = bsxfun(@rdivide,bsxfun(@minus, phasepermOutput, ixpc.phasemean_h0{introde}{6}(:,1,:)),...
-%                     ixpc.powerstd_h0{introde}{6}(:,1,:));
-%                 zpermmaps(abs(zpermmaps)<zval) = 0;
-%                 for iprm = 1:n_permutes;
-% %                     % take each permutation map, and transform to Z
-% %                     ipermmap = phasepermOutput(:,iprm,:);
-% %                     izpermmap = (ipermmap-ixpc.phasemean_h0{introde}{6}(:,1,:))./ixpc.powerstd_h0{introde}{6}(:,1,:);
-% %                     % threshold image at p-value
-% %                     izpermmap(abs(izpermmap)<zval) = 0;
-%                     % find clusters (need image processing toolbox for this!)
-%                     izpermmap = squeeze(zpermmaps(:,iprm,:));
-%                     izpermislands = bwconncomp(izpermmap);
-%                     if ~isempty(cell2mat(cellfun(@numel,izpermislands.PixelIdxList))); %numel(izpermislands.PixelIdxList)>0
-%                         % count sizes of clusters
-% %                         tempclustsizes = cellfun(@length,izpermislands.PixelIdxList);
-%                         % store size of biggest cluster
-%                         maxclustsize = max(cell2mat(cellfun(@numel,izpermislands.PixelIdxList)));
-% %                         [biggest,idx] = max(numPixels);
-% %                         BW(CC.PixelIdxList{idx})
-% %                         ixpc.MCmax_clust_size{ianimal}{introde} = [ixpc.MCmax_clust_size{ianimal}{introde}; max(tempclustsizes)];
-%                          ixpc.MCmax_clust_size{ianimal}{introde} = [ixpc.MCmax_clust_size{ianimal}{introde}; maxclustsize];
-%                     end
-% %                     temp = sort( reshape(phasepermOutput(:,iprm,:),1,[]));
-% %                     ixcp.MCmin_max{ianimal}{introde}(iprm,:) = [min(min(phasepermOutput(:,iprm,:))) max(max(phasepermOutput(:,iprm,:)))];
-%                 end
+                disp(sprintf('========== running perm tests ============= nt%d perm x %d',introde, n_permutes))
+                % outbound vs inbound 
+                ixpc.powerzmask{ianimal}{introde}{OvsIind} = []; ixpc.phasezmask{ianimal}{introde}{OvsIind} = [];
+                ixpc.MCpower_minmax{ianimal}{introde}{OvsIind} = []; ixpc.MCphase_minmax{ianimal}{introde}{OvsIind} = [];
+                [ixpc.powerzmask{ianimal}{introde}{OvsIind}, ixpc.phasezmask{ianimal}{introde}{OvsIind},...
+                    ixpc.MCpower_minmax{ianimal}{introde}{OvsIind},ixpc.MCphase_minmax{ianimal}{introde}{OvsIind}]...
+                = ITPCpermtest(ixpc.poweroutput{ianimal}{introde}(:,OvsIind,:), ixpc.phaseoutput{ianimal}{introde}(:,OvsIind,:), phdata{introde}, as{introde}, iEpTetIndsType{outboundInd}, iEpTetIndsType{inboundInd}, n_permutes);
+                % correct-outbound vs mistake-outbound
+                ixpc.powerzmask{ianimal}{introde}{CvsMind} = []; ixpc.phasezmask{ianimal}{introde}{CvsMind} = [];
+                ixpc.MCpower_minmax{ianimal}{introde}{CvsMind} = []; ixpc.MCphase_minmax{ianimal}{introde}{CvsMind} = [];
+                [ixpc.powerzmask{ianimal}{introde}{CvsMind}, ixpc.phasezmask{ianimal}{introde}{CvsMind},...
+                    ixpc.MCpower_minmax{ianimal}{introde}{CvsMind},ixpc.MCphase_minmax{ianimal}{introde}{CvsMind}]...
+                = ITPCpermtest(ixpc.poweroutput{ianimal}{introde}(:,CvsMind,:), ixpc.phaseoutput{ianimal}{introde}(:,CvsMind,:), phdata{introde}, as{introde}, iEpTetIndsType{correctOutInd}, iEpTetIndsType{mistakeOutInd}, n_permutes);
+                % ixpc = ITPCpermtest(ixpc, phdata{introde}, as{introde}, ianimal, introde, 7, iEpTetIndsType{2}, iEpTetIndsType{3}, n_permutes);
+                %% cluster-based multiple comp scratch
+                %                 for iprm = 1:n_permutes;
+                % %                     % take each permutation map, and transform to Z
+                % %                     ipermmap = phasepermOutput(:,iprm,:);
+                % %                     izpermmap = (ipermmap-ixpc.phasemean_h0{introde}{6}(:,1,:))./ixpc.powerstd_h0{introde}{6}(:,1,:);
+                % %                     % threshold image at p-value
+                % %                     izpermmap(abs(izpermmap)<zval) = 0;
+                %                     % find clusters (need image processing toolbox for this!)
+                %                     izpermmap = squeeze(zpermmaps(:,iprm,:));
+                %                     izpermislands = bwconncomp(izpermmap);
+                %                     if ~isempty(cell2mat(cellfun(@numel,izpermislands.PixelIdxList))); %numel(izpermislands.PixelIdxList)>0
+                %                         % count sizes of clusters
+                % %                         tempclustsizes = cellfun(@length,izpermislands.PixelIdxList);
+                %                         % store size of biggest cluster
+                %                         maxclustsize = max(cell2mat(cellfun(@numel,izpermislands.PixelIdxList)));
+                % %                         [biggest,idx] = max(numPixels);
+                % %                         BW(CC.PixelIdxList{idx})
+                % %                         ixpc.MCmax_clust_size{ianimal}{introde} = [ixpc.MCmax_clust_size{ianimal}{introde}; max(tempclustsizes)];
+                %                          ixpc.MCmax_clust_size{ianimal}{introde} = [ixpc.MCmax_clust_size{ianimal}{introde}; maxclustsize];
+                %                     end
+                %                 end
             end
         end
+        ixpc.datatypes{ianimal} = [];
+        ixpc.datatypes{ianimal} = iEpTetDataTypeFields;
+        
+% %         
+%         demec = [2 3 7 4 6 14 1 8 9 10];
+% %         sumec = [1 8 9 10];
+%         por = [13 15 12];
+%         hc = [16:30];
+%         areascat = {demec, por, hc};
+%         for iar = 1:length(areascat)
+%             %phase
+%             areaphaseoutputtmp = arrayfun(@(x) ixpc.basenormphaseoutput{ianimal}{x}(:,6,:), areascat{iar}, 'un', 0);
+%             ixpc.areaphasemean{ianimal}{iar} = mean(cat(2,areaphaseoutputtmp{:}), 2);
+%             
+%             areaphasezmasktmp = arrayfun(@(x) ixpc.phasezmask{ianimal}{x}{6}, areascat{iar}, 'un', 0);
+%             ixpc.areaphasezmaskmean{ianimal}{iar} = mean(cat(2,areaphasezmasktmp{:}), 2);
+%             % power
+%             areapoweroutputtmp = arrayfun(@(x) ixpc.basenormpoweroutput{ianimal}{x}(:,6,:), areascat{iar}, 'un', 0);
+%             ixpc.areapowermean{ianimal}{iar} = mean(cat(2,areapoweroutputtmp{:}), 2);
+%             
+%             areapowerzmasktmp = arrayfun(@(x) ixpc.powerzmask{ianimal}{x}{6}, areascat{iar}, 'un', 0);
+%             ixpc.areapowerzmaskmean{ianimal}{iar} = mean(cat(2,areapowerzmasktmp{:}), 2);
+% 
+%         end
+%         ixpc.areas{ianimal} = {'mec', 'por', 'hc'};
     end
     toc
 end
@@ -553,43 +463,65 @@ if plotITPC
                 %                 elseif iDT == 7
                 %                     eval(sprintf('ixpc2plottmp = squeeze(ixpc.%soutput{ianimal}{2}(numsumSortInds(introde),:,:))'' - squeeze(ixpc.%soutput{ianimal}{3}(numsumSortInds(introde),:,:))'';', plotoutputtype, plotoutputtype));
                 %                 else
-%                 eval(sprintf('ixpc2plottmp = squeeze(ixpc.%soutput{ianimal}{iDT}(numsumSortInds(introde),:,:))'';', plotoutputtype));
-%                 eval(sprintf('ixpc2plotFULL = squeeze(ixpc.%soutput{ianimal}{numsumSortInds(introde)}(:,iDT,:))'';', plotoutputtype));
-        
-%                     eval(sprintf('basemeanFULL = squeeze(ixpc.basemean%s{ianimal}{numsumSortInds(introde)}(:,1,:))'';', plotoutputtype));
-%                     eval(sprintf('basestdFULL = squeeze(ixpc.basestd%s{ianimal}{numsumSortInds(introde)}(:,1,:))'';', plotoutputtype));
-%                     ixpc2plotFULL = (bsxfun(@rdivide, bsxfun(@minus, ixpc2plotFULL, basemeanFULL'), basemeanFULL'));
-%                 end
-%                 midpoint = (size(ixpc2plotFULL,2)-1)/2; %get middle index of window
-%                 ixpc2plot = ixpc2plotFULL(:,midpoint + plotwin(1)*srate : midpoint + plotwin(2)*srate); %get plot window
-%                 [~,bn] = contourf(intfig,plottimeWin,frex(1:end-1),ixpc2plot,100,'linecolor','none'); %
-                eval(sprintf('BaseNormixpc2plotFULL = squeeze(ixpc.basenorm%soutput{ianimal}{numsumSortInds(introde)}(:,iDT,:))'';', plotoutputtype));
-                midpoint = (size(BaseNormixpc2plotFULL,2)-1)/2; %get middle index of window
-                BaseNormixpc2plot = BaseNormixpc2plotFULL(:,midpoint + plotwin(1)*srate : midpoint + plotwin(2)*srate); %get plot window
-                [~,bn] = contourf(intfig,plottimeWin,frex(1:end-1),BaseNormixpc2plot,100,'linecolor','none'); %
+                %                                 eval(sprintf('ixpc2plottmp = squeeze(ixpc.%soutput{ianimal}{iDT}(numsumSortInds(introde),:,:))'';', plotoutputtype));
+                
+                
+                %                     eval(sprintf('basemeanFULL = squeeze(ixpc.basemean%s{ianimal}{numsumSortInds(introde)}(:,1,:))'';', plotoutputtype));
+                %                     eval(sprintf('basestdFULL = squeeze(ixpc.basestd%s{ianimal}{numsumSortInds(introde)}(:,1,:))'';', plotoutputtype));
+                %                     ixpc2plotFULL = (bsxfun(@rdivide, bsxfun(@minus, ixpc2plotFULL, basemeanFULL'), basemeanFULL'));
+                %                 end
+                if 0
+%                     eval(sprintf('ixpc2plotFULL = squeeze(ixpc.area%smean{ianimal}{introde})'';', plotoutputtype));
+                    eval(sprintf('ixpc2plotFULL = squeeze(ixpc.area%szmaskmean{ianimal}{introde})'';', plotoutputtype));
+                    midpoint = (size(ixpc2plotFULL,2)-1)/2; %get middle index of window
+                    ixpc2plot = ixpc2plotFULL(:,midpoint + plotwin(1)*srate : midpoint + plotwin(2)*srate); %get plot window
+                    [~,bn] = contourf(intfig,plottimeWin,frex(1:end-1),ixpc2plot,100,'linecolor','none'); %
+                    hold on;
+%                     eval(sprintf('zmaskFULL = squeeze(ixpc.area%szmaskmean{ianimal}{introde})'';', plotoutputtype));
+% %                     zmaskFULL = squeeze(ixpc.areaphasezmaskmean{ianimal}{introde})';
+%                     midpoint = (size(ixpc2plotFULL,2)-1)/2; %get middle index of window
+%                     zmask2plot = zmaskFULL(:,midpoint + plotwin(1)*srate : midpoint + plotwin(2)*srate); %get plot window
+                    zmask = ixpc2plot;
+                    zmask(abs(ixpc2plot)<zval) = 0;
+                    [~,h] = contour(intfig,plottimeWin,frex(1:end-1),logical(zmask),1);
+                    h.LineColor = [.85 .85 .85];
+                else
+                    
+%                     eval(sprintf('ixpc2plotFULL = squeeze(ixpc.%soutput{ianimal}{numsumSortInds(introde)}(:,iDT,:))'';', plotoutputtype));
+%                     midpoint = (size(ixpc2plotFULL,2)-1)/2; %get middle index of window
+%                     ixpc2plot = ixpc2plotFULL(:,midpoint + plotwin(1)*srate : midpoint + plotwin(2)*srate); %get plot window
+%                     [~,bn] = contourf(intfig,plottimeWin,frex(1:end-1),ixpc2plot,100,'linecolor','none'); %
+                                    eval(sprintf('BaseNormixpc2plotFULL = squeeze(ixpc.basenorm%soutput{ianimal}{numsumSortInds(introde)}(:,iDT,:))'';', plotoutputtype));
+                                    midpoint = (size(BaseNormixpc2plotFULL,2)-1)/2; %get middle index of window
+                                    BaseNormixpc2plot = BaseNormixpc2plotFULL(:,midpoint + plotwin(1)*srate : midpoint + plotwin(2)*srate); %get plot window
+                                    [~,bn] = contourf(intfig,plottimeWin,frex(1:end-1),BaseNormixpc2plot,100,'linecolor','none'); %
+                end
                 hold on;
-%           
-
+                %
+                
                 if iDT == 6 || iDT == 7
                     eval(sprintf('ixpc2plotFULL = squeeze(ixpc.%soutput{ianimal}{numsumSortInds(introde)}(:,iDT,:))'';', plotoutputtype));
                     eval(sprintf('Zmaskixpc2plotFULL = squeeze(ixpc.%szmask{ianimal}{numsumSortInds(introde)}{iDT})'';', plotoutputtype));
                     eval(sprintf('MCminmax = abs(ixpc.MC%s_minmax{ianimal}{numsumSortInds(introde)}{iDT})'';',plotoutputtype));
                     ixpc2plot = ixpc2plotFULL(:,midpoint + plotwin(1)*srate : midpoint + plotwin(2)*srate); %get plot window
                     Zmaskixpc2plot = Zmaskixpc2plotFULL(:,midpoint + plotwin(1)*srate : midpoint + plotwin(2)*srate); %get plot window
-
+                    
                     zmask = Zmaskixpc2plot;
                     zmask(abs(Zmaskixpc2plot)<zval) = 0;
                     
                     [~,h] = contour(intfig,plottimeWin,frex(1:end-1),logical(zmask),1);
                     h.LineColor = [.85 .85 .85];
-%                     alphable = findobj(h, '-property', 'FaceAlpha');
-%                     set(alphable, 'FaceAlpha', .5);
+                    %                     alphable = findobj(h, '-property', 'FaceAlpha');
+                    %                     set(alphable, 'FaceAlpha', .5);
                     hold on;
                     MCthresh = MCminmax(ceil(length(MCminmax)*(1-pval)));
                     MCthreshmap = ixpc2plot;
                     MCthreshmap(abs(ixpc2plot)<MCthresh) = 0;
                     [~,mc] = contour(intfig,plottimeWin,frex(1:end-1),logical(MCthreshmap),1);
                     mc.LineColor = [.6 .6 .6];
+                    caxis([-2 2]);
+                else
+                    caxis([-3 3]);
                 end
                 % figure
                 %                 imagesc(ixpc2plot);
@@ -598,24 +530,24 @@ if plotITPC
                 %                 if strcmp(plotoutputtype, 'phase')
                 set(gca,'ydir','normal','xlim',[plotwin(1) plotwin(2)], 'ylim',[frex(1) frex(end-1)])
                 %                     caxis([-10 10])
-                caxis(clims);
-%                 caxis([-1 1]);
-%                 colorbar
-%                 caxis('auto') 
+                
+                %                 caxis([-1 1]);
+                %                 colorbar
+                %                 caxis('auto')
                 %                 else
                 %                     set(gca,'ydir','normal','xlim',[-.5 .5])
                 %                     calcfunction = 'power';
                 %                 end
                 %                 set(gca, 'YScale', 'log')
                 colormap(usecolormap)
-
+                
                 
                 if mod(introde, sfcols) ~= 1;
-                    %                     set(gca, 'yscale','log','YTick', []);
-                    %                     set(gca, 'yscale','log','ytick',ceil(logspace(log10(min(frex)),log10(max(frex)),6)))
+                                        set(gca, 'yscale','log','ytick',[])	
+%                                         set(gca, 'yscale','log','ytick',ceil(logspace(log10(min(frex)),log10(max(frex)),6)))
                     set(gca, 'FontSize',8, 'FontName', 'Arial');%
                 else
-                    %                     set(gca, 'yscale','log','ytick',ceil(logspace(log10(min(frex)),log10(max(frex)),6)))
+                                        set(gca, 'yscale','log','ytick',ceil(logspace(log10(min(frex)),log10(max(frex)),6)))
                     %                     set(gca, 'YTick',[round(linspace(min(frex),max(frex),6))])
                     set(gca, 'FontSize',8, 'FontName', 'Arial');%
                 end
@@ -630,57 +562,57 @@ if plotITPC
                 line(Xline, Yline, 'Color', [0.8 0.8 0.8],'LineStyle','--', 'LineWidth', 1);
                 ititle = title(sprintf('nT%d %s %s',introdeID, iareatag, num2str(isubareatag)));
                 set(ititle,'FontSize',10,'Color', iNTcolor, 'FontName', 'Arial','FontWeight','bold');
-             end
-                      %% crap
-%                 zmaskinds = find(abs(Zmaskixpc2plot)<zval);
-%                 zmaskscaled = ones(size(Zmaskixpc2plot,1), size(Zmaskixpc2plot,2));
-%                 zmaskscaled(zmaskinds) = .1;
-%                 bn = pcolor(BaseNormixpc2plot);
-%                     bn.AlphaData = zmaskscaled; % make all zero bins transparent
-%                     bn.AlphaDataMapping = 'scaled';
-%                     bn.EdgeColor = 'none';
-%                     bn.FaceAlpha = 'interp';
-%                     bn.FaceColor = 'interp';
-%                 
-%                 hold on;
-%                 
-% %                 zmaskscaled;
-% %                 Bimage = get(bn, 'CData');
-%                 set(bn, 'AlphaData', zmaskscaled)%, 'AlphaDataMapping', 'none')
-%                 
-% %                 if strcmp(plotoutputtype, 'phase')
-%                     ixpc2plot = ixpc2plottmp2;
-%                 elseif strcmp(plotoutputtype, 'power') % ONLY DO THIS IF NOT A DIFFERENTIAL CONDITION! the diff 1/f will normalize itself
-%                     %                 ixpc2plottmp2 = zscore(ixpc2plottmp, [], 1);
-%                     %                 baseline = mean(ixpc2plottmp(:,1:midpoint+plotwin(1)*srate),2); %get baseline (start to middle index)
-%                     baselinemean = mean(ixpc2plotFULL,2);
-%                     baselinestd = std(ixpc2plotFULL,[],2);
-%                     %                 baselinemean = mean(ixpc2plottmp2,2);
-%                     %                 baselinestd = std(ixpc2plottmp2,[],2);
-%                     %                 ixpc2plot = 100 * bsxfun(@rdivide, bsxfun(@minus,ixpc2plottmp2,baselinemean), baselinemean); % normalize to percent change from baseline
-%                     ixpc2plot = bsxfun(@rdivide, bsxfun(@minus,ixpc2plot,baselinemean), baselinestd); % normalize to percent change from baseline
-%                 else
-%                     error('must be power or phase')
-%                 end
-%                intfig = figure
-
-%                 if iDT == 6
-% %                     % plot the distribution of values outside the MC null distribution
-% %                     [n1, x1] = hist(reshape(ixpc.MCpower_minmax{ianimal}{numsumSortInds(introde)},numel(ixpc.MCpower_minmax{ianimal}{numsumSortInds(introde)}), 1),100);
-% %                     [n2, x2] = hist(reshape(ixpc.poweroutput{ianimal}{numsumSortInds(introde)}(:,6,:),numel(ixpc.poweroutput{ianimal}{numsumSortInds(introde)}(:,6,:)), 1),100);
-% %                     figure; plot(x1,n1./max(n1),'r-')
-% %                     hold on; plot(x2,n2./max(n2),'b-'); hold off
-%                     a = sort(abs(reshape(ixpc.MCpower_minmax{ianimal}{numsumSortInds(introde)},numel(ixpc.MCpower_minmax{ianimal}{numsumSortInds(introde)}), 1)));
-%                     pvalthresh = a(ceil(length(a)*(1-pval)));
-% %                     imap = squeeze(ixpc.poweroutput{ianimal}{numsumSortInds(introde)}(:,6,:));
-%                     pthreshimap = ixpc2plot;
-%                     pthreshimap(abs(ixpc2plot)<pvalthresh) = 0;
-%                     contourf(intfig,plottimeWin,frex(1:end-1),pthreshimap,100,'linecolor','none'); %
-%                     contourf(intfig,plottimeWin,frex(1:end-1),ixpc2plot,100,'linecolor','none'); %
-%                     hold on;
-%                     contour(intfig,plottimeWin,frex(1:end-1),logical(pthreshimap),1,'k');
-%                     colorbar
-%                 end
+            end
+            %% crap
+            %                 zmaskinds = find(abs(Zmaskixpc2plot)<zval);
+            %                 zmaskscaled = ones(size(Zmaskixpc2plot,1), size(Zmaskixpc2plot,2));
+            %                 zmaskscaled(zmaskinds) = .1;
+            %                 bn = pcolor(BaseNormixpc2plot);
+            %                     bn.AlphaData = zmaskscaled; % make all zero bins transparent
+            %                     bn.AlphaDataMapping = 'scaled';
+            %                     bn.EdgeColor = 'none';
+            %                     bn.FaceAlpha = 'interp';
+            %                     bn.FaceColor = 'interp';
+            %
+            %                 hold on;
+            %
+            % %                 zmaskscaled;
+            % %                 Bimage = get(bn, 'CData');
+            %                 set(bn, 'AlphaData', zmaskscaled)%, 'AlphaDataMapping', 'none')
+            %
+            % %                 if strcmp(plotoutputtype, 'phase')
+            %                     ixpc2plot = ixpc2plottmp2;
+            %                 elseif strcmp(plotoutputtype, 'power') % ONLY DO THIS IF NOT A DIFFERENTIAL CONDITION! the diff 1/f will normalize itself
+            %                     %                 ixpc2plottmp2 = zscore(ixpc2plottmp, [], 1);
+            %                     %                 baseline = mean(ixpc2plottmp(:,1:midpoint+plotwin(1)*srate),2); %get baseline (start to middle index)
+            %                     baselinemean = mean(ixpc2plotFULL,2);
+            %                     baselinestd = std(ixpc2plotFULL,[],2);
+            %                     %                 baselinemean = mean(ixpc2plottmp2,2);
+            %                     %                 baselinestd = std(ixpc2plottmp2,[],2);
+            %                     %                 ixpc2plot = 100 * bsxfun(@rdivide, bsxfun(@minus,ixpc2plottmp2,baselinemean), baselinemean); % normalize to percent change from baseline
+            %                     ixpc2plot = bsxfun(@rdivide, bsxfun(@minus,ixpc2plot,baselinemean), baselinestd); % normalize to percent change from baseline
+            %                 else
+            %                     error('must be power or phase')
+            %                 end
+            %                intfig = figure
+            
+            %                 if iDT == 6
+            % %                     % plot the distribution of values outside the MC null distribution
+            % %                     [n1, x1] = hist(reshape(ixpc.MCpower_minmax{ianimal}{numsumSortInds(introde)},numel(ixpc.MCpower_minmax{ianimal}{numsumSortInds(introde)}), 1),100);
+            % %                     [n2, x2] = hist(reshape(ixpc.poweroutput{ianimal}{numsumSortInds(introde)}(:,6,:),numel(ixpc.poweroutput{ianimal}{numsumSortInds(introde)}(:,6,:)), 1),100);
+            % %                     figure; plot(x1,n1./max(n1),'r-')
+            % %                     hold on; plot(x2,n2./max(n2),'b-'); hold off
+            %                     a = sort(abs(reshape(ixpc.MCpower_minmax{ianimal}{numsumSortInds(introde)},numel(ixpc.MCpower_minmax{ianimal}{numsumSortInds(introde)}), 1)));
+            %                     pvalthresh = a(ceil(length(a)*(1-pval)));
+            % %                     imap = squeeze(ixpc.poweroutput{ianimal}{numsumSortInds(introde)}(:,6,:));
+            %                     pthreshimap = ixpc2plot;
+            %                     pthreshimap(abs(ixpc2plot)<pvalthresh) = 0;
+            %                     contourf(intfig,plottimeWin,frex(1:end-1),pthreshimap,100,'linecolor','none'); %
+            %                     contourf(intfig,plottimeWin,frex(1:end-1),ixpc2plot,100,'linecolor','none'); %
+            %                     hold on;
+            %                     contour(intfig,plottimeWin,frex(1:end-1),logical(pthreshimap),1,'k');
+            %                     colorbar
+            %                 end
             
             %% ---- super title and colorbar----
             sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig1);
@@ -690,8 +622,12 @@ if plotITPC
                 'Units', 'normalized', 'horizontalAlignment', 'center');
             supylabel = text(.01, .5, ylab, 'FontSize',12,'FontWeight','bold','Color','k', 'FontName', 'Arial', 'rotation', 90, ...
                 'Parent', sprtitleax, 'Units', 'normalized', 'horizontalAlignment', 'center');
-            caxis(clims);
-%                         caxis([-1 1])
+            if iDT == 6 || iDT == 7
+                caxis([-2 2]);
+            else
+                caxis([-2 2]);
+            end
+            %                         caxis([-1 1])
             colormap(usecolormap)
             clrbar = colorbar('location','eastoutside', 'FontSize',6,'FontName', 'Arial');%, 'FontWeight','bold');
             posx1=get(gca,'position');
