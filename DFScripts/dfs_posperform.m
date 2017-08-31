@@ -5,9 +5,9 @@ close all
 % calculateStateSpace = 1;  
 % saveStateSpaceResults = 1;
 plotPosPerform = 1;
-savefigs = 0;
-pausefigs = 1;
-runAntiAlias = 1;
+savefigs = 1;
+pausefigs = 0;
+runAntiAlias = 0;
 
 % savePerformResults = 0;
 % plotPerform = 0;
@@ -36,9 +36,9 @@ usecolormap = 'jet';
 win = [.5 .5]; %in seconds
 % indwin = win*1500;
 %% ---------------- Data Filters --------------------------
-animal = 'JZ1';
+animal = 'D10';
 % animals = {'JZ1', 'D13'};
-days = [4]; %1:9
+days = [1:12]; %1:10
 behavestruct = 'BehaveState';
 plottype = 'posperform';
 eventtype = 'rippleskons';
@@ -87,7 +87,7 @@ if plotPosPerform
         end
         set(gcf,'color','white');
         %         load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'task', day));
-        load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'linpos', day));
+            load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'linpos', day));
         %         load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'ca1rippleskons', day));
         %         load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'mecrippleskons', day));
         %         load(sprintf('%s%s%s%02d.mat',FFanimdir, animalID, 'porrippleskons', day));
@@ -177,7 +177,7 @@ if plotPosPerform
             % create new, empty axes with box but without ticks
             b = axes('Position',get(a,'Position'),'box','on','xtick',[],'ytick',[]);
             % set original axes as active
-            axes(a)
+            axes(a) %not sure why but this is negating the invisibility when saving figs
             % link axes in case of zooming
             linkaxes([a b])
             a = get(gca,'XTickLabel');

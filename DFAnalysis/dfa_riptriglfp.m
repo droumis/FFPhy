@@ -23,8 +23,14 @@ if strcmp(eventtype,'ripples')
     %     eventtimes = events{index(1)}{index(2)}{index(3)}.endtime;
 else % ripplecons, ripplekons, etc
     eventtimes = [];
+    try
     eventtimes(:,1) = events{index(1,1)}{index(1,2)}{1}.starttime(:,1);
     eventtimes(:,2) = events{index(1,1)}{index(1,2)}{1}.endtime(:,1);
+    catch
+        disp(sprintf('no events detected for day%d ep%d', index(1,1),index(1,2)))
+        out = [];
+        return
+    end
 end
 eventtimes = eventtimes(~isExcluded(eventtimes(:,1),excludeperiods),:);
 if isempty(eventtimes)

@@ -6,11 +6,11 @@ runFilterFramework = 1;
     ; loadFilterOutput = 0;
 processnTrodeMean = 0;
 processAreaMean = 0;
-plotfigs = 0;
-    ; plotLFPtraces = 0;
+plotfigs = 1;
+    ; plotLFPtraces = 1;
     ; plotnTrodeMeanLFPtraces = 0;
     ; plotAreaMeanLFPtraces = 0;
-    ; savefigs = 0;
+    ; savefigs = 1;
     ; pausefigs = 0;
 %% ---------------- plotting params --------------------------
 % colorsMEC = cbrewer('seq', 'Blues', 10, 'PCHIP');
@@ -19,25 +19,39 @@ plotfigs = 0;
 % usecolormap = 'jet'; %colorcube %lines %jet winter
 colorSet = 'DR1';
 win = [2 2]; %in seconds
-indwin = win*1500;
-%% ---------------- Data Filters --------------------------
+% indwin = win*1500;
+plotwin = [.5 .5]; %in seconds
+plotHilbertPower = 0;
 
-animals = {'JZ1'};
-% animals = {'JZ1', 'D13'};
-days = [1:6];
+% indwin = plotwin*1500;
+%% ---------------- Data Filters --------------------------
+animals = {'D12'};
+days = [1];
+% animals = {'D13'};
+% days = [1:10];
+% animals = {'JZ1'};
+% days = [1:9];
+%  animals = {'JZ2'};
+%  days = [1:5];
+% animals = {'JZ3'};
+% days = [1 2 5:10];
+% animals = {'JZ4'};
+% days = [1:10];
 filtfunction = 'riptriglfp';
-LFPtypes = {'eeg'};%, 'ripple', 'theta', 'slowgamma', 'fastgamma'}; %
-LFPrangesHz = {'1-400'};%, '140-250', '6-9', '20-50', '65 - 140'}; %need to make this a lookup from the filter mat
+LFPtypes = {'eeg', 'ripple', 'theta', 'lowgamma', 'fastgamma'}; %
+LFPrangesHz = {'1-400', '140-250', '6-9', '20-50', '65 - 140'}; %need to make this a lookup from the filter mat
 eventtype = 'rippleskons';
+% eventtype = 'noisekons';
 % eventarea = 'ca1';
 epochType = {'run'};
 epochEnvironment = {'wtrack'};% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
 eventSourceArea = 'ca1';
 ripAreas = {'ca1', 'mec', 'por'};
-ntAreas = {'ca1', 'sub', 'mec', 'por', 'v2l', 'ref'};
+ntAreas = {'ca1','mec', 'por', 'v2l', 'ref'};  %'sub', 
+plotenv = {'wtrack'};
 
 consensus_numtets = 1;   % minimum # of tets for consensus event detection
-minstdthresh = 3;        % STD. how big your ripples are
+minstdthresh = 5;        % STD. how big your ripples are
 exclusion_dur = .5;  % seconds within which consecutive events are eliminated / ignored
 minvelocity = 0;
 maxvelocity = 4;
@@ -65,6 +79,7 @@ if runFilterFramework == 1;
     % timefilter{2} = {'kk_getriptimes','($nripples>=1)',[],'tetfilter',tetfilter,'minthresh',5};
     timefilter{1} = {'getconstimes', '($cons == 1)', [eventSourceArea eventtype],1,'consensus_numtets',consensus_numtets,...
         'minstdthresh',minstdthresh,'exclusion_dur',exclusion_dur,'minvelocity',minvelocity,'maxvelocity',maxvelocity};
+    timefilter{2} = {'excludenoiseevents', 
     %---------- save all filtering parameters in workspace into struct
     %     iF.datafilter = whos;
     %----------F = createfilter('animal', animals, 'days', dayfilter,'epochs', epochfilter, 'excludetime', timefilter, 'eegtetrodes',tetfilter,'iterator', iterator);--------
@@ -97,7 +112,7 @@ if plotfigs
     %% plot LFP traces per ntrode, per ripple
     if plotLFPtraces
         %% STEP 2: For each EEG + Ripple Type... select nTrodes and Lookup Rip time windows
-        for iLFPtype = 1:length(LFPtypes); % For each LFP type (wideband EEG, ripple band, etc), load all of the regions LFP files into eegstruct
+%         for iLFPtype = 1:length(LFPtypes); % For each LFP type (wideband EEG, ripple band, etc), load all of the regions LFP files into eegstruct
             for ianimal = 1:length(F)
                     %% ---- loadtetinfostruct ----
                     animalinfo = animaldef(lower(animals{ianimal}));
@@ -105,27 +120,31 @@ if plotfigs
                     FFanimdir =  sprintf('%s',animalinfo{1,2});
                     load([FFanimdir, animalID, 'tetinfo']);
                     tetinfoAll = cellfetch(tetinfo, '', 'alltags', 1);
-                    for iday = 1:length(F(ianimal).output)
+                    days = find(cell2mat(cellfun(@(x) ~isempty(x), F.output, 'un', 0)));
+                    for iday = 1:length(days);
+                        day = days(iday);
                         %% ---- load the ripplekons file for each area for this day ----
                         for iareakons = 1:length(ripAreas);
-                            load(sprintf('%s%s%s%s%02d.mat', FFanimdir, animalID, ripAreas{iareakons}, eventtype, iday));
+                            load(sprintf('%s%s%s%s%02d.mat', FFanimdir, animalID, ripAreas{iareakons}, eventtype, day));
                             eval([sprintf('eventKons.%s%s = %s%s;', ripAreas{iareakons}, eventtype, ripAreas{iareakons}, eventtype)])
                             eval([sprintf('clear %s%s', ripAreas{iareakons}, eventtype)])
                         end
                         %add filtering via getconstimes to get ripples of
                         %certain strength
-                        for iepoch = 1:length(F(ianimal).output{iday})
-                            if isempty(F(ianimal).output{iday}(iepoch).data)
+                        epochs = find(cell2mat(cellfun(@(x) ~isempty(x), {F(ianimal).output{day}(:).data}, 'un', 0)));
+                        for iepoch = 1:length(epochs)
+                            epoch = epochs(iepoch);
+                            if isempty(F(ianimal).output{day}(epoch).data)
                                 continue %if this an day epoch is empty, skip to the next
                             end
                             %% ---- get data info for rips within this day epoch ----
-                            iepochLFPtimes = []; ripStartIndices = []; ripEndIndices = []; ntrodesIndices = []; win = [];
-                            iepochLFPtimes = F(ianimal).output{iday}(iepoch).LFPtimes;
-                            ripStartIndices = F(ianimal).output{iday}(iepoch).eventStartIndices;
-                            ripEndIndices = F(ianimal).output{iday}(iepoch).eventEndIndices;
-                            win = F(ianimal).output{iday}(iepoch).win;
-                            indwin = win*1500;
-                            ntrodesIndices = F(ianimal).output{iday}(iepoch).index;
+                            iepochLFPtimes = []; ripStartIndices = []; ripEndIndices = []; ntrodesIndices = []; %plotwin = [];
+                            iepochLFPtimes = F(ianimal).output{day}(epoch).LFPtimes;
+                            ripStartIndices = F(ianimal).output{day}(epoch).eventStartIndices;
+                            ripEndIndices = F(ianimal).output{day}(epoch).eventEndIndices;
+%                             plotwin = F(ianimal).output{day}(epoch).win;
+                            indwin = plotwin*1500;
+                            ntrodesIndices = F(ianimal).output{day}(epoch).index;
                             %% ---- reorder the LFP traces by suparea|area|subarea tags (in that priority) ----
                             [~, tagIndMap] = ismember(ntrodesIndices,tetinfoAll.index, 'rows');
                             ntrodeTags = tetinfoAll.values(tagIndMap);
@@ -144,7 +163,7 @@ if plotfigs
                             [numsumallSort, numsumSortInds] = sortrows(numsumallareatags);%,[-1 -2 -3]); % -Col to 'descend'
                             icolors = icolors(numsumSortInds,:);
                             %% ---- loop across all ripples for this day epoch sourcearea ----
-                            for irip = 1:length(F(ianimal).output{iday}(iepoch).data{1})
+                            for irip = 1:length(F(ianimal).output{day}(epoch).data{1})
                                 if savefigs && ~pausefigs; %if you want to save figs but not pause them to take a look.. just keep them invisible. i think this makes it faster and returns keyboard/mouse control during saving
                                     ifig = figure('Visible','off','units','normalized','position',[.1 .1 .9 .8]);
                                 else
@@ -176,19 +195,21 @@ if plotfigs
                                 %                             plot(iripWinTimes, iconsensusTrace, 'Color', icolors(end,:), 'Linewidth', 2)
                                 %                             hold on;
                                 %% ---- loop over each LFP type ----
-                                for iLFPtype = 1:length(F(ianimal).output{iday}(iepoch).LFPtypes)
-                                    for introde = 1:length(F(ianimal).output{iday}(iepoch).data{iLFPtype}{irip}(:,1))
-                                        introdeID = F(ianimal).output{iday}(iepoch).index(numsumSortInds(introde), 3);
+                                for iLFPtype = 1:length(F(ianimal).output{day}(epoch).LFPtypes)
+                                    for introde = 1:length(F(ianimal).output{day}(epoch).data{iLFPtype}{irip}(:,1))
+                                        introdeID = F(ianimal).output{day}(epoch).index(numsumSortInds(introde), 3);
                                         isupareatag = ntrodeTags{numsumSortInds(introde)}.suparea;
                                         iareatag = ntrodeTags{numsumSortInds(introde)}.area;
                                         isubareatag = ntrodeTags{numsumSortInds(introde)}.subarea;
                                         %                                     clrpicker = find(strcmp(iareatag, ntAreas));
                                         %                                     allthecolors{clrpicker};
                                         iNTcolor = icolors(introde,:);
-                                        subaxis(1,length(F(ianimal).output{iday}(iepoch).data),iLFPtype, 'Spacing', 0.02, 'Padding', 0.0, 'MarginLeft', 0.04, 'MarginRight', 0.02, 'MarginTop', 0.09, 'MarginBottom', 0.09);
+                                        subaxis(1,length(F(ianimal).output{day}(epoch).data),iLFPtype, 'Spacing', 0.02, 'Padding', 0.0, 'MarginLeft', 0.04, 'MarginRight', 0.02, 'MarginTop', 0.09, 'MarginBottom', 0.09);
                                         %                                     subaxis(2,2,iLFPtype+2, 'Spacing', 0.02, 'Padding', 0.0, 'Margin', 0.09);
                                         %                                     subplot(1,length(F(ianimal).output{iday}(iepoch).data),iLFPtype)
-                                        introdeiripLFP = double(F(ianimal).output{iday}(iepoch).data{iLFPtype}{irip}(numsumSortInds(introde),:));
+                                        introdeiripLFP = double(F(ianimal).output{day}(epoch).data{iLFPtype}{irip}(numsumSortInds(introde),:));
+                                        middleind = ceil(length(introdeiripLFP)/2);
+                                        introdeiripLFP = introdeiripLFP(middleind-(plotwin(1)*1500):middleind+(plotwin(2)*1500));
                                         % ---- plot ntrode traces ----
                                         if introde == 1; %if it's the first ntrode
                                             plot(iripWinTimes, introdeiripLFP, 'Color', iNTcolor, 'Linewidth', 1)
@@ -205,8 +226,8 @@ if plotfigs
                                         %% ---- set ripple patches for this ntrode ----
                                         if any(strcmp(iareatag,ripAreas));
                                             %get index of matching region iareakons
-                                            eval([sprintf(' ripsStartTimes = eventKons.%s%s{%d}{%d}{1}.starttime;', iareatag, eventtype, iday, iepoch)])
-                                            eval([sprintf(' ripsEndTimes = eventKons.%s%s{%d}{%d}{1}.endtime;', iareatag, eventtype, iday, iepoch)])
+                                            eval([sprintf(' ripsStartTimes = eventKons.%s%s{%d}{%d}{1}.starttime;', iareatag, eventtype, day, epoch)])
+                                            eval([sprintf(' ripsEndTimes = eventKons.%s%s{%d}{%d}{1}.endtime;', iareatag, eventtype, day, epoch)])
                                             
                                             %                                     ripsStartTimes = eventKons{1}.ca1rippleskons{iday}{iepoch}{1}.starttime;
                                             %                                     ripsEndTimes = eventKons{1}.ca1rippleskons{iday}{iepoch}{1}.endtime;
@@ -234,7 +255,7 @@ if plotfigs
                                                 %% ---- plot the maxthresh scores for all visible ripples ----
                                                 if ~isempty(strfind(eventtype, LFPtypes{iLFPtype})) %iLFPtype == length(F(ianimal).output{iday}(iepoch).LFPtypes) %if it's the rightmost subplot, plot the maxthresh scores for all visible ripples
                                                     imaxthresh = [];
-                                                    eval([sprintf(' imaxthresh = eventKons.%s%s{%d}{%d}{1}.maxthresh(%d);', iareatag, eventtype, iday, iepoch, ripsinwinInds(iripinwin))])
+                                                    eval([sprintf(' imaxthresh = eventKons.%s%s{%d}{%d}{1}.maxthresh(%d);', iareatag, eventtype, day, epoch, ripsinwinInds(iripinwin))])
                                                     iriplabel = text(double(iripendtime),double(ilmax-(ilmax-ilmin)/10),num2str(round(imaxthresh,1)));
                                                     set(iriplabel, 'Color', iNTcolor, 'FontName', 'Arial', 'FontSize',6, 'FontWeight', 'normal', 'horizontalAlignment', 'left', 'verticalAlignment', 'bottom');
                                                 end
@@ -259,7 +280,7 @@ if plotfigs
                                     Yline = [[iYlim(1,2) iYlim(1,1)]];
                                     line(Xline, Yline, 'Color', [0.8 0.8 0.8],'LineStyle','--', 'LineWidth', 1.5);
                                     
-                                    ititle = title(sprintf('%s %s Hz',F(ianimal).output{iday}(iepoch).LFPtypes{iLFPtype}, LFPrangesHz{iLFPtype}));
+                                    ititle = title(sprintf('%s %s Hz',F(ianimal).output{day}(epoch).LFPtypes{iLFPtype}, LFPrangesHz{iLFPtype}));
                                     set(ititle,'FontSize',12,'FontWeight','bold','Color','k', 'FontName', 'Arial');
                                     set(gca,'children',flipud(get(gca,'children'))) %send the patch behind the LFP traces
                                     ylim([iYlim(1,2) iYlim(1,1)])
@@ -285,7 +306,7 @@ if plotfigs
                                     %% ---- super title ----
                                 end
                                 sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
-                                sprtit = sprintf('%s D%d E%d %s%d', animalID, iday, iepoch, eventtype, irip);
+                                sprtit = sprintf('%s D%d E%d %s%d', animalID, day, epoch, eventtype, irip);
                                 iStitle = text(.5, .95, [{sprtit}; ['\color[rgb]{.8 .8 .8} \fontsize{8}', sprintf(' {%s}', filenameTitle)]], 'Parent', sprtitleax, 'Units', 'normalized');
                                 %                             iStitle = supertitle([{sprtit}; ['\color[rgb]{.8 .8 .8} \fontsize{8}', sprintf(' {%s}', filenameTitle)]]);
                                 set(iStitle, 'FontSize',12,'FontWeight','bold','Color','k', 'FontName', 'Arial', 'horizontalAlignment', 'center');
@@ -311,7 +332,7 @@ if plotfigs
                         end
                     end
                 end
-        end
+%         end
     end
     %% plot lfp traces per ntrode, all ripples
     if plotnTrodeMeanLFPtraces
@@ -323,49 +344,55 @@ if plotfigs
             load([FFanimdir, animalID, 'tetinfo']);
             tetinfoAll = cellfetch(tetinfo, '', 'alltags', 1);
             days = find(~cellfun(@isempty, F.output));
-            for iday = days; % 1:length(F(ianimal).output)
+            for day = days; % 1:length(F(ianimal).output)
                 %% ---------- combine all rip trig traces across epochs for each env type --------------------------------
-                load([FFanimdir, animalID, 'task', sprintf('%02d.mat', iday)]);
-                epochs = find(~arrayfun(@isempty, F.output{iday}));
+                load([FFanimdir, animalID, 'task', sprintf('%02d.mat', day)]);
+                epochs = find(~arrayfun(@isempty, F.output{day}));
                 %% ---------- get unique epoch environment types  --------------------------------
                 eptypes = [];
-                for iepoch = epochs;
-                    eptypes{iepoch,1} = task{iday}{iepoch}.environment;
+                for epoch = epochs;
+                    eptypes{epoch,1} = task{day}{epoch}.environment;
                 end
                 [envtypes,IndA,IndC] = unique(eptypes, 'stable');
+                
                 for iepochEnv = 1:size(envtypes,1); %for each envtype. cat3 all rip trig traces across epochs
+                    if isempty(strfind(envtypes{iepochEnv}, plotenv))
+                        continue
+                    end
                     ienvTypeInds = find(iepochEnv == IndC);
-                    numLFPtypes = length(F(ianimal).output{1, iday}(ienvTypeInds(1)).LFPtypes);
+                    numLFPtypes = length(F(ianimal).output{1, day}(ienvTypeInds(1)).LFPtypes);
                     if processnTrodeMean
                         for iLFPtype = 1:numLFPtypes;
-                            epienvrips = arrayfun(@(x) x.data{iLFPtype}, F(ianimal).output{1, iday}(ienvTypeInds),'un', 0);
+                            epienvrips = arrayfun(@(x) x.data{iLFPtype}, F(ianimal).output{1, day}(ienvTypeInds),'un', 0);
                             ienvTallrips = [epienvrips{:}];
                             ienvTallripsCat = double(cat(3,ienvTallrips{:}));
-                            %for each event, calculate the hilbert transform for each ntrode.
-                            % make sure the time domain is the first dimension... as this is the only way the hilbert works with a matrix input
-                            ienvTallHilbCat = nan(size(ienvTallripsCat));
-                            for ievent = 1:size(ienvTallripsCat,3)
-                                tmplfp = squeeze(ienvTallripsCat(:,:,ievent))';
-                                tmphilb = abs(hilbert(tmplfp));
-                                ienvTallHilbCat(:,:,ievent) = tmphilb';
+                            if plotHilbertPower
+                                %for each event, calculate the hilbert transform for each ntrode.
+                                % make sure the time domain is the first dimension... as this is the only way the hilbert works with a matrix input
+                                ienvTallHilbCat = nan(size(ienvTallripsCat));
+                                for ievent = 1:size(ienvTallripsCat,3)
+                                    tmplfp = squeeze(ienvTallripsCat(:,:,ievent))';
+                                    tmphilb = abs(hilbert(tmplfp));
+                                    ienvTallHilbCat(:,:,ievent) = tmphilb';
+                                end
+                                %                             temppow  = nanmean(ienvTallHilbCat.^2,3);
+                                %                             pow = 10*log10(temppow./nanmean(temppow(:,1:750),2));
+                                %                             pow = 10*log10(inv(diag(nanmean(temppow(:,1:750),2)))*temppow);
+                                
+                                ienvTallripsMean{iLFPtype} = nanmean(ienvTallHilbCat,3);
+                                ienvTallripsStd{iLFPtype} = std(ienvTallHilbCat,0,3,'omitnan');
+                            else
+                                ienvTallripsMean{iLFPtype} = nanmean(ienvTallripsCat,3);
+                                ienvTallripsStd{iLFPtype} = std(ienvTallripsCat,0,3,'omitnan');
                             end
-                            %                             temppow  = nanmean(ienvTallHilbCat.^2,3);
-                            %                             pow = 10*log10(temppow./nanmean(temppow(:,1:750),2));
-                            %                             pow = 10*log10(inv(diag(nanmean(temppow(:,1:750),2)))*temppow);
-                            
-                            ienvTallripsMean{iLFPtype} = nanmean(ienvTallHilbCat,3);
-                            
-                            ienvTallripsStd{iLFPtype} = std(ienvTallHilbCat,0,3,'omitnan');
-                            %                         ienvTallripsMean{iLFPtype} = nanmean(ienvTallripsCat,3);
-                            %                         ienvTallripsStd{iLFPtype} = std(ienvTallripsCat,0,3,'omitnan');
                             %                     ienvTallripsSem{iLFPtype} = std(ienvTallripsCat,0,3,'omitnan') / sqrt(size(ienvTallripsCat,3));
                             %                 imagesc(ienvTallripsMean{iLFPtype})
                             %                 imagesc(ienvTallripsStd{iLFPtype})
                         end
                     end
-                    win = F(ianimal).output{1, iday}(ienvTypeInds(1)).win;
-                    iepochLFPtimes = [-win:1/1500:win]; % lfp time for average plots is just the window length
-                    ntrodesIndices = F(ianimal).output{iday}(ienvTypeInds(1)).index;
+%                     plotwin = F(ianimal).output{1, day}(ienvTypeInds(1)).win;
+                    iepochLFPtimes = [-plotwin:1/1500:plotwin]; % lfp time for average plots is just the window length
+                    ntrodesIndices = F(ianimal).output{day}(ienvTypeInds(1)).index;
                     %% ---- reorder the LFP traces by suparea|area|subarea tags (in that priority) ----
                     [~, tagIndMap] = ismember(ntrodesIndices,tetinfoAll.index, 'rows');
                     ntrodeTags = tetinfoAll.values(tagIndMap);
@@ -398,13 +425,15 @@ if plotfigs
                         %% ---- loop over each LFP type ----
                         for iLFPtype = 1:numLFPtypes;
                             for introde = 1:size(ienvTallripsMean{iLFPtype},1)
-                                introdeID = F(ianimal).output{iday}(ienvTypeInds(1)).index(numsumSortInds(introde), 3);
+                                introdeID = F(ianimal).output{day}(ienvTypeInds(1)).index(numsumSortInds(introde), 3);
                                 isupareatag = ntrodeTags{numsumSortInds(introde)}.suparea;
                                 iareatag = ntrodeTags{numsumSortInds(introde)}.area;
                                 isubareatag = ntrodeTags{numsumSortInds(introde)}.subarea;
                                 iNTcolor = icolors(introde,:);
                                 subaxis(1,numLFPtypes,iLFPtype, 'Spacing', 0.02, 'Padding', 0.0, 'MarginLeft', 0.04, 'MarginRight', 0.02, 'MarginTop', 0.09, 'MarginBottom', 0.09);
                                 introdeiripLFP = ienvTallripsMean{iLFPtype}(numsumSortInds(introde),:);
+                                middleind = ceil(length(introdeiripLFP)/2);
+                                introdeiripLFP = introdeiripLFP(middleind-(plotwin(1)*1500):middleind+(plotwin(2)*1500));
                                 introdeiripLFPStd = ienvTallripsStd{iLFPtype}(numsumSortInds(introde),:);
                                 %                             introdeiripLFP = double(F(ianimal).output{iday}(iepoch).data{iLFPtype}{irip}(numsumSortInds(introde),:));
                                 % ---- plot ntrode traces ----
@@ -424,7 +453,7 @@ if plotfigs
                                 end
                                 %                             shadedErrorBar(iripWinTimes,introdeiripLFP,introdeiripLFPStd,{'Color', iNTcolor, 'Linewidth', 1},1);
                                 lh = plot(iripWinTimes, introdeiripLFP, 'Linewidth', 1.2);
-                                lh.Color = [iNTcolor, .7];
+                                lh.Color = [iNTcolor];
                                 
                                 hold on;                          %
                                 
@@ -444,7 +473,7 @@ if plotfigs
                             Yline = [[iYlim(1,2) iYlim(1,1)]];
                             line(Xline, Yline, 'Color', [0.8 0.8 0.8],'LineStyle','--', 'LineWidth', 1.5);
                             
-                            ititle = title(sprintf('%s %s Hz',F(ianimal).output{iday}(iepoch).LFPtypes{iLFPtype}, LFPrangesHz{iLFPtype}));
+                            ititle = title(sprintf('%s %s Hz',F(ianimal).output{day}(epoch).LFPtypes{iLFPtype}, LFPrangesHz{iLFPtype}));
                             set(ititle,'FontSize',12,'FontWeight','bold','Color','k', 'FontName', 'Arial');
                             set(gca,'children',flipud(get(gca,'children'))) %send the patch behind the LFP traces
                             ylim([iYlim(1,2) iYlim(1,1)])
@@ -458,7 +487,7 @@ if plotfigs
                             %% ---- super title ----
                         end
                         sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
-                        sprtit = sprintf('%s D%d %s %s STD>%d', animalID, iday, eventtype, envtypes{iepochEnv}, minstdthresh);
+                        sprtit = sprintf('%s D%d %s %s STD>%d', animalID, day, eventtype, envtypes{iepochEnv}, minstdthresh);
                         iStitle = text(.5, .95, [{sprtit}; ['\color[rgb]{.8 .8 .8} \fontsize{8}', sprintf(' {%s}', filenameTitle)]], 'Parent', sprtitleax, 'Units', 'normalized');
                         %                             iStitle = supertitle([{sprtit}; ['\color[rgb]{.8 .8 .8} \fontsize{8}', sprintf(' {%s}', filenameTitle)]]);
                         set(iStitle, 'FontSize',12,'FontWeight','bold','Color','k', 'FontName', 'Arial', 'horizontalAlignment', 'center');
@@ -470,12 +499,20 @@ if plotfigs
                             if ~isdir(figdirectory);
                                 mkdir(figdirectory);
                             end
-                            if ~isdir([figdirectory filenamesave '/ntrode_mean/hilbert']);
-                                mkdir([figdirectory filenamesave '/ntrode_mean/hilbert']);
+                            if plotHilbertPower
+                                if ~isdir([figdirectory filenamesave '/ntrode_mean/hilbert']);
+                                    mkdir([figdirectory filenamesave '/ntrode_mean/hilbert']);
+                                end
+                            elseif ~isdir([figdirectory filenamesave '/ntrode_mean/']);
+                                mkdir([figdirectory filenamesave '/ntrode_mean/']);
                             end
                             sprtitsave = strrep(sprtit,' ', '_'); %put '_' character in place of whitespace for filename
                             set(gcf, 'PaperPositionMode', 'auto'); %saves the png in the dimensions defined for the fig
-                            currfigfile = sprintf('%s%s/ntrode_mean/hilbert/%s',figdirectory, filenamesave, sprtitsave);
+                            if plotHilbertPower
+                                currfigfile = sprintf('%s%s/ntrode_mean/hilbert/%s',figdirectory, filenamesave, sprtitsave);
+                            else
+                                currfigfile = sprintf('%s%s/ntrode_mean/%s',figdirectory, filenamesave, sprtitsave);
+                            end
                             print(currfigfile,'-dpng', '-r0')
                             disp(sprintf('plot %s saved', sprtit))
                         end
@@ -495,21 +532,21 @@ if plotfigs
             load([FFanimdir, animalID, 'tetinfo']);
             tetinfoAll = cellfetch(tetinfo, '', 'alltags', 1);
             days = find(~cellfun(@isempty, F.output));
-            for iday = days; % 1:length(F(ianimal).output)
+            for day = days; % 1:length(F(ianimal).output)
                 %% ---------- combine all rip trig traces across epochs for each env type --------------------------------
-                load([FFanimdir, animalID, 'task', sprintf('%02d.mat', iday)]);
-                epochs = find(~arrayfun(@isempty, F.output{iday}));
+                load([FFanimdir, animalID, 'task', sprintf('%02d.mat', day)]);
+                epochs = find(~arrayfun(@isempty, F.output{day}));
                 %% ---------- get unique epoch environment types  --------------------------------
                 eptypes = [];
-                for iepoch = epochs;
-                    eptypes{iepoch,1} = task{iday}{iepoch}.environment;
+                for epoch = epochs;
+                    eptypes{epoch,1} = task{day}{epoch}.environment;
                 end
                 [envtypes,IndA,IndC] = unique(eptypes, 'stable');
                 for iepochEnv = 1:size(envtypes,1); %for each envtype. cat3 all rip trig traces across epochs
                     ienvTypeInds = find(iepochEnv == IndC);
-                    numLFPtypes = length(F(ianimal).output{1, iday}(ienvTypeInds(1)).LFPtypes);
+                    numLFPtypes = length(F(ianimal).output{1, day}(ienvTypeInds(1)).LFPtypes);
                     
-                    ntrodesIndices = F(ianimal).output{iday}(ienvTypeInds(1)).index;
+                    ntrodesIndices = F(ianimal).output{day}(ienvTypeInds(1)).index;
                     %% ---- reorder the LFP traces by suparea|area|subarea tags (in that priority) ----
                     [~, tagIndMap] = ismember(ntrodesIndices,tetinfoAll.index, 'rows');
                     ntrodeTags = tetinfoAll.values(tagIndMap);
@@ -532,7 +569,7 @@ if plotfigs
                     if processAreaMean; %toggle to compute
                         ienvTallripsMean = [];
                         for iLFPtype = 1:numLFPtypes;
-                            epienvrips = arrayfun(@(x) x.data{iLFPtype}, F(ianimal).output{1, iday}(ienvTypeInds),'un', 0);
+                            epienvrips = arrayfun(@(x) x.data{iLFPtype}, F(ianimal).output{1, day}(ienvTypeInds),'un', 0);
                             ienvTallrips = [epienvrips{:}];
                             ienvTallripsCat = double(cat(3,ienvTallrips{:}));
                             for isA = 1:max(sAindC); %for each unique area
@@ -544,8 +581,8 @@ if plotfigs
                         end
                     end
                     
-                    win = F(ianimal).output{1, iday}(ienvTypeInds(1)).win;
-                    iepochLFPtimes = [-win:1/1500:win]; % lfp time for average plots is just the window length
+%                     plotwin = F(ianimal).output{1, day}(ienvTypeInds(1)).win;
+                    iepochLFPtimes = [-plotwin:1/1500:plotwin]; % lfp time for average plots is just the window length
                     %% ---- PLOT ----
                     for irip = 1;%:length(F(ianimal).output{iday}(iepoch).data{1})
                         if savefigs && ~pausefigs; %if you want to save figs but not pause them to take a look.. just keep them invisible. i think this makes it faster and returns keyboard/mouse control during saving
@@ -609,7 +646,7 @@ if plotfigs
                             Yline = [[iYlim(1,2) iYlim(1,1)]];
                             line(Xline, Yline, 'Color', [0.8 0.8 0.8],'LineStyle','--', 'LineWidth', 1.5);
                             
-                            ititle = title(sprintf('%s %s Hz',F(ianimal).output{iday}(iepoch).LFPtypes{iLFPtype}, LFPrangesHz{iLFPtype}));
+                            ititle = title(sprintf('%s %s Hz',F(ianimal).output{day}(epoch).LFPtypes{iLFPtype}, LFPrangesHz{iLFPtype}));
                             set(ititle,'FontSize',12,'FontWeight','bold','Color','k', 'FontName', 'Arial');
                             set(gca,'children',flipud(get(gca,'children'))) %send the patch behind the LFP traces
                             ylim([iYlim(1,2) iYlim(1,1)])
@@ -624,7 +661,7 @@ if plotfigs
                         end
                         sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
                         %                     sprtit = sprintf('%s D%d E%d %s %s', animalID, iday, iepoch, eventtype, envtypes{iepochEnv});
-                        sprtit = sprintf('%s D%d %s %s STD>%d', animalID, iday, eventtype, envtypes{iepochEnv}, minstdthresh);
+                        sprtit = sprintf('%s D%d %s %s STD>%d', animalID, day, eventtype, envtypes{iepochEnv}, minstdthresh);
                         iStitle = text(.5, .95, [{sprtit}; ['\color[rgb]{.8 .8 .8} \fontsize{8}', sprintf(' {%s}', filenameTitle)]], 'Parent', sprtitleax, 'Units', 'normalized');
                         %                             iStitle = supertitle([{sprtit}; ['\color[rgb]{.8 .8 .8} \fontsize{8}', sprintf(' {%s}', filenameTitle)]]);
                         set(iStitle, 'FontSize',12,'FontWeight','bold','Color','k', 'FontName', 'Arial', 'horizontalAlignment', 'center');

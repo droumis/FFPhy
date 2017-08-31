@@ -4,8 +4,8 @@ close all
 loadBehaveStruct = 1;
 calculateStateSpace = 1;
 saveStateSpaceResults = 1;
-plotStateSpace = 0;
-savefigs = 0;
+plotStateSpace = 1;
+savefigs = 1;
 pausefigs = 0;
 
 % savePerformResults = 0;
@@ -36,9 +36,9 @@ usecolormap = 'jet';
 win = [.5 .5]; %in seconds
 % indwin = win*1500;
 %% ---------------- Data Filters --------------------------
-animal = 'JZ1';
+animal = 'D13';
 % animals = {'JZ1', 'D13'};
-days = [1];
+% days = [1];
 behavestruct = 'BehaveState';
 eventtype = 'rippleskons';
 epochEnvironment = 'wtrack';% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
@@ -69,11 +69,12 @@ if loadBehaveStruct;
 end
 %% ---------------- calculate StateSpace Model---------------------------------------------------
 wTrackBehave = cellfetch(BehaveState.statechanges, 'wtrack', 'alltags', 1);
-allepsMat = []; dayepinds = [];
+allepsMat = []; dayepinds = []; eplengths = [];
 for iep = 1:length(wTrackBehave.index(:,1))
     allepsCell{iep} = BehaveState.statechanges{wTrackBehave.index(iep,1)}{wTrackBehave.index(iep,2)}.statechangeseq;
     allepsCell{iep} = allepsCell{iep}(2:end,:); %get rid of the first state end change time as it doesn't have a an accurate start time
     allepsMat = [allepsMat; allepsCell{iep}];
+    eplengths = [eplengths; length(allepsCell{iep}(:,1))];
     dayepinds = [dayepinds; repmat(wTrackBehave.index(iep,:), length(allepsCell{iep}(:,1)), 1)];
 end
 allepsMatFields = BehaveState.statechanges{wTrackBehave.index(iep,1)}{wTrackBehave.index(iep,2)}.fields;
@@ -106,6 +107,7 @@ if calculateStateSpace
     statespace.epochEnvironment = epochEnvironment;
     statespace.allepsMat = allepsMat;
     statespace.allepsMatFields = allepsMatFields; 
+    statespace.eplengths = eplengths';
 end
 
 %% ---------------- save StateSpaceResults into BehaveState struct---------------------------------------------------
@@ -170,7 +172,7 @@ if plotStateSpace
         set(gcf,'color','white');
         subplot(2,1,1);
         hold on;
-        line([cumsum(eplengths); cumsum(eplengths)], [0 1], 'Color', [.9 .9 .9], 'LineStyle', '-', 'LineWidth', 1)
+        line([cumsum(statespace.eplengths); cumsum(statespace.eplengths)], [0 1], 'Color', [.9 .9 .9], 'LineStyle', '-', 'LineWidth', 1)
         plot(tALL, pc(2:end,modecol),'b-', 'LineWidth', 2); %plot behavior SS score
         errfillAll = fill([tALL fliplr(tALL)],[pc(2:end,lower5col); flipud(pc(2:end,upper5col))],[0 0 1],'linestyle','none');
         set(errfillAll, 'FaceAlpha', .2)
@@ -187,7 +189,7 @@ if plotStateSpace
         
         subplot(2,1,2)
         hold on;
-        line([cumsum(eplengths); cumsum(eplengths)], [0 1], 'Color', [.9 .9 .9], 'LineStyle', '-', 'LineWidth', 1)
+        line([cumsum(statespace.eplengths); cumsum(statespace.eplengths)], [0 1], 'Color', [.9 .9 .9], 'LineStyle', '-', 'LineWidth', 1)
         plot(tALL,1 - pc(2:end,certaintycol),'k', 'LineWidth', 2)
         line([ 1 tALL(end)],[0.90 0.90], 'LineStyle', '-');
         line([ 1 tALL(end)],[0.99 0.99], 'LineStyle', '--');
