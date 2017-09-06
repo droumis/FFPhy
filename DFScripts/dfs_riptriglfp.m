@@ -4,11 +4,11 @@ close all
 runFilterFramework = 1;
     ; saveFilterOutput = runFilterFramework;
     ; loadFilterOutput = 0;
-processnTrodeMean = 0;
+processnTrodeMean = 1;
 processAreaMean = 0;
 plotfigs = 1;
     ; plotLFPtraces = 1;
-    ; plotnTrodeMeanLFPtraces = 0;
+    ; plotnTrodeMeanLFPtraces = 1;
     ; plotAreaMeanLFPtraces = 0;
     ; savefigs = 1;
     ; pausefigs = 0;
@@ -25,8 +25,8 @@ plotHilbertPower = 0;
 
 % indwin = plotwin*1500;
 %% ---------------- Data Filters --------------------------
-animals = {'D12'};
-days = [1];
+% animals = {'D12'};
+% days = [1:7]; % 1:7
 % animals = {'D13'};
 % days = [1:10];
 % animals = {'JZ1'};
@@ -34,9 +34,9 @@ days = [1];
 %  animals = {'JZ2'};
 %  days = [1:5];
 % animals = {'JZ3'};
-% days = [1 2 5:10];
-% animals = {'JZ4'};
-% days = [1:10];
+% days = [5]; %[1 2 5:10]
+animals = {'JZ4'};
+days = [1];%1:10
 filtfunction = 'riptriglfp';
 LFPtypes = {'eeg', 'ripple', 'theta', 'lowgamma', 'fastgamma'}; %
 LFPrangesHz = {'1-400', '140-250', '6-9', '20-50', '65 - 140'}; %need to make this a lookup from the filter mat
@@ -47,12 +47,12 @@ epochType = {'run'};
 epochEnvironment = {'wtrack'};% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
 eventSourceArea = 'ca1';
 ripAreas = {'ca1', 'mec', 'por'};
-ntAreas = {'ca1','mec', 'por', 'v2l', 'ref'};  %'sub', 
+ntAreas = {'ca1','sub','mec', 'por', 'v2l', 'ref'};  %'sub', 
 plotenv = {'wtrack'};
 
 consensus_numtets = 1;   % minimum # of tets for consensus event detection
-minstdthresh = 5;        % STD. how big your ripples are
-exclusion_dur = .5;  % seconds within which consecutive events are eliminated / ignored
+minstdthresh = 3;        % STD. how big your ripples are
+exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
 minvelocity = 0;
 maxvelocity = 4;
 %% ---------------- Paths and Title strings ---------------------------------------------------
@@ -79,7 +79,9 @@ if runFilterFramework == 1;
     % timefilter{2} = {'kk_getriptimes','($nripples>=1)',[],'tetfilter',tetfilter,'minthresh',5};
     timefilter{1} = {'getconstimes', '($cons == 1)', [eventSourceArea eventtype],1,'consensus_numtets',consensus_numtets,...
         'minstdthresh',minstdthresh,'exclusion_dur',exclusion_dur,'minvelocity',minvelocity,'maxvelocity',maxvelocity};
-    timefilter{2} = {'excludenoiseevents', 
+%     if strcmp(animals{1}, 'D12')
+        timefilter{2} = {'excludenoiseevents', '($noise == 0)', [eventSourceArea,'noisekons'], 1, };
+%     end
     %---------- save all filtering parameters in workspace into struct
     %     iF.datafilter = whos;
     %----------F = createfilter('animal', animals, 'days', dayfilter,'epochs', epochfilter, 'excludetime', timefilter, 'eegtetrodes',tetfilter,'iterator', iterator);--------
@@ -363,7 +365,11 @@ if plotfigs
                     numLFPtypes = length(F(ianimal).output{1, day}(ienvTypeInds(1)).LFPtypes);
                     if processnTrodeMean
                         for iLFPtype = 1:numLFPtypes;
+                            try
                             epienvrips = arrayfun(@(x) x.data{iLFPtype}, F(ianimal).output{1, day}(ienvTypeInds),'un', 0);
+                            catch
+                                continue
+                            end
                             ienvTallrips = [epienvrips{:}];
                             ienvTallripsCat = double(cat(3,ienvTallrips{:}));
                             if plotHilbertPower

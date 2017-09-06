@@ -5,6 +5,7 @@ win = [0.5 0.5];
 appendindex = 1;
 eventtype = 'rippleskons';
 LFPtypes = [];
+out.data = [];
 % process varargin and overwrite default values
 if (~isempty(varargin))
     assign(varargin{:});
@@ -12,6 +13,7 @@ if (~isempty(varargin))
         eval([LFPtypes{ilfptype} '= varargin{ilfptype};']);
     end
 end
+win = abs(win); %ive made the mistake of making the preceding-event-window negative.. so make sure it's not
 if isempty(LFPtypes)
     disp('no lfp types given, using default: ''eeg'', ''ripple''')
     LFPtypes = {'eeg', 'ripple'};
@@ -24,15 +26,18 @@ if strcmp(eventtype,'ripples')
 else % ripplecons, ripplekons, etc
     eventtimes = [];
     try
-    eventtimes(:,1) = events{index(1,1)}{index(1,2)}{1}.starttime(:,1);
-    eventtimes(:,2) = events{index(1,1)}{index(1,2)}{1}.endtime(:,1);
+    eventtimes = events{index(1,1)}{index(1,2)}{1}.starttime;
+    eventtimes = [eventtimes events{index(1,1)}{index(1,2)}{1}.endtime];
     catch
         disp(sprintf('no events detected for day%d ep%d', index(1,1),index(1,2)))
         out = [];
         return
     end
 end
+ecbefore = size(eventtimes,1);
 eventtimes = eventtimes(~isExcluded(eventtimes(:,1),excludeperiods),:);
+ecafter = size(eventtimes,1);
+disp(sprintf('%d of %d events discarded because of excluded periods in timefilter: d%d e%d', ecbefore-ecafter, ecbefore, index(1,1),index(1,2)))
 if isempty(eventtimes)
     out.LFPtypes = LFPtypes;
     out.LFPtimes = [];
@@ -56,12 +61,15 @@ endtime = (num_samp/samprate) + starttime;
 % disp(sprintf('endtime_eeg: %.04f calculated_endtime: %.04f', endtime_eeg/60, endtime/60));
 
 %Remove triggering events that are too close to the beginning or end
-while eventtimes(1)<(starttime+win(1))
-    eventtimes(1) = [];
+
+while eventtimes(1,1)<(starttime+win(1))
+    eventtimes(1,:) = [];
 end
-while eventtimes(end)>(endtime-win(2))
-    eventtimes(end) = [];
+
+while eventtimes(end,2)>(endtime-win(2))
+    eventtimes(end,:) = [];
 end
+
 LFPtimes=(starttime:1/samprate:endtime)'; % prob should be using the adjusted timestamps instead, no?
 eventStartIndices = lookup(eventtimes(:,1),LFPtimes);
 eventEndIndices = lookup(eventtimes(:,2),LFPtimes);
@@ -87,6 +95,7 @@ out.LFPtimes = LFPtimes;
 out.eventStartIndices = eventStartIndices;
 out.eventEndIndices = eventEndIndices;
 out.win = win;
+out.excludeperiods = excludeperiods;
 %     out.windowStartIndices = windowStartIndices;
 %     out.windowEndIndices = windowEndIndices;
 out.index = index;

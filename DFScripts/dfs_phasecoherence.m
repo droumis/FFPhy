@@ -1,21 +1,27 @@
 
 
-%%% First create the processed data structure with dfs_riptriglfp.m
 
+%% Dashboard
+%%% First create the processed data structure similar to dfs_riptriglfp.m
 close all
-calcEventState = 0;
-saveEventState = 0;%calcEventState;
+runFilterFramework = 0;
+; saveFilterOutput = runFilterFramework;
+; loadFilterOutput = 0;
+
+%%% Then run phasecoherence on the LFP traces
+calcEventState = 1;
+saveEventState = 1;%calcEventState;
 calculateITPC = 0;
 calculateISPC = 0;
 calculateIXPC = calculateITPC || calculateISPC;
-loadFilterOutput = calculateIXPC || calcEventState;
+loadFilterOutput = 0;%calculateIXPC || calcEventState;
 saveResultsOutput = calculateIXPC;
 runPermTest = 0; %calculateIXPC;
 loadResultsOutput = 0;
-plotITPC = 1;
+plotITPC = 0;
 plotISPC = 0;
 savefigs = 0;
-pausefigs = 1;
+pausefigs = 0;
 calcfunction = 'ITPC'; %ITPC
 behavestruct = 'BehaveState';
 plotoutputtype = 'phase'; % 'power' or 'phase'
@@ -24,13 +30,13 @@ colorSet = 'DR1';
 % if strcmp(plotoutputtype, 'phase')
 %     clims = [0 .7]; % mean ITPC goes from 0-1
 %     usecolormap = 'jet'; %cbrewer('seq', 'Greens', 255, 'linear');
-    %     usecolormap = buildcmap('kryww');
+%     usecolormap = buildcmap('kryww');
 % else
-    clims = [-8 8]; %zscore power
-    %     usecolormap = 'jet';
-    usecolormap = flipud(cbrewer('div', 'RdBu', 255, 'linear')); %red high white neutral blue low
-    %         usecolormap = flipud(usecolormap);
-    % %     calcfunction = 'power';
+clims = [-8 8]; %zscore power
+%     usecolormap = 'jet';
+usecolormap = flipud(cbrewer('div', 'RdBu', 255, 'linear')); %red high white neutral blue low
+%         usecolormap = flipud(usecolormap);
+% %     calcfunction = 'power';
 % end
 % clims = [0 1]; %[0 .7]
 % usecolormap = 'jet';
@@ -52,32 +58,13 @@ pval = 0.05;
 % convert p-value to Z value
 zval = abs(norminv(pval));
 % number of permutations
-n_permutes = 1000; %1000 takes 24 hours
+n_permutes = 50; %1000 takes 24 hours for JZ1 wtrack days 1:6
 OvsIind = 6;
 outboundInd = 4;
 inboundInd = 5;
 CvsMind = 7;
 correctOutInd = 2;
 mistakeOutInd = 3;
-%% ---------------- Data Filters --------------------------
-animals = {'JZ1'};
-% animals = {'JZ1', 'D13'};
-days = [1:6];
-filtfunction = 'riptriglfp';
-LFPtypes = {'eeg'};%, 'ripple'};%, 'theta', 'slowgamma', 'fastgamma'};
-% LFPrangesHz = {'1-400', '140-250', '6-9', '20-50', '65 - 95'}; %need to make this a lookup from the filter mat
-eventtype = 'rippleskons';
-epochEnvironment = {'wtrack'};% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
-% epochType = 'run';
-eventSourceArea = 'ca1';
-% ripAreas = {'ca1', 'mec', 'por'};
-% ntAreas = {'ca1', 'sub', 'mec', 'por', 'v2l', 'ref'};
-% consensus_numtets = 1;   % minimum # of tets for consensus event detection
-minstdthresh = 3;        % STD. how big your ripples are
-% exclusion_dur = 0.5;  % seconds within which consecutive events are eliminated / ignored
-% minvelocity = 0;
-% maxvelocity = 4;
-% outputDirectory = '/typhoon/droumis/analysis';
 %% ----------------- wavelet parameters ------------------------------------
 min_freq =  2;
 max_freq = 30;
@@ -101,19 +88,76 @@ nWavecycles = linspace(range_cycles(1),range_cycles(end),num_frex); %number of w
 % ylabel('frequency')
 % xlabel('# cycles')
 half_wave_size = (length(timeWin)-1)/2;
+%% ---------------- Data Filters --------------------------
+animals = {'D12', 'JZ1', 'JZ2'};
+days = [];
+filtfunction = 'riptriglfp';
+LFPtypes = {'eeg'};%, 'ripple', 'theta', 'lowgamma', 'fastgamma'}; %
+LFPrangesHz = {'1-400', '140-250', '6-9', '20-50', '65 - 140'}; %need to make this a lookup from the filter mat
+eventtype = 'rippleskons';
+epochType = {'run'};
+epochEnvironment = {'wtrack'};% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
+eventSourceArea = 'ca1';
+ripAreas = {'ca1'};
+ntAreas = {'ca1','sub','mec', 'por', 'v2l', 'ref'};
+
+consensus_numtets = 1;   % minimum # of tets for consensus event detection
+minstdthresh = 3;        % STD. how big your ripples are
+exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
+minvelocity = 0;
+maxvelocity = 4;
+
 %% ---------------- Paths and Title strings ---------------------------------------------------
 investInfo = animaldef(lower('Demetris'));
+filtOutputDirectory = sprintf('%s%s/', investInfo{2}, filtfunction);
 figdirectory = sprintf('%s%s/', investInfo{4}, plotoutputtype);
 % filenamesave = sprintf('%s%s_%s_%s_%s', eventSourceArea, eventtype, epochEnvironment, cell2mat(animals), cell2mat(LFPtypes));
-filenamesave = sprintf('%s%sSTD%d_%s_%s_%s_D%s', eventSourceArea, eventtype, minstdthresh, strjoin(epochEnvironment,'-'),...
-    cell2mat(animals), cell2mat(LFPtypes),strjoin(arrayfun(@(x) num2str(x),days,'UniformOutput',false),'-'));
+filenamesave = sprintf('%s%sSTD%d_%s_%s_%s', eventSourceArea, eventtype, minstdthresh, strjoin(epochEnvironment,'-'),...
+    strjoin(animals,'-'), strjoin(LFPtypes, '-'));%strjoin(arrayfun(@(x) num2str(x,'%-2d'),days,'UniformOutput',false),'-'));
 filename = sprintf('%s_%s.mat', filtfunction, filenamesave);
-resultfilename = sprintf('%s_%s%s_%s_%s_D%s', calcfunction, eventSourceArea, eventtype, strjoin(epochEnvironment,'-'), cell2mat(animals), strrep(num2str(days), '  ', '-'));
+resultfilename = sprintf('%s_%s%s_%s_%s_D%s', calcfunction, eventSourceArea, eventtype, strjoin(epochEnvironment,'-'), cell2mat(animals), strrep(num2str(days, '%-2d'),' ', '-'));
 filenameTitle = strrep(resultfilename,'_', ' ');
 iEpTetDataTypeFields = {'all', 'corrOut', 'mistOut', 'outB', 'inB','outB-inB', 'corrOut-mistOut'};
+
+%% ---------------- Run FIlter ---------------------------------------------------
+if runFilterFramework == 1;
+    eptypeEnv = [epochType; epochEnvironment];
+    epochfilter = sprintf('((isequal($type, ''%s'')) && (isequal($environment, ''%s''))) || ',eptypeEnv{:});
+    yuck = strfind(epochfilter, '||');
+    epochfilter = epochfilter(1:yuck(end)-1);  %cut off the trailing '||'
+    iterator = 'multitetrodeanal'; %multitetrodeanal
+    %tetfilter: the ntrodeID's that pass this filter get stored into f.eegdata{day}{epoch}[ntrodeIDs]
+    tetfilter = sprintf('(isequal($area,''%s'')) || ', ntAreas{:});
+    yuck = strfind(tetfilter, '||');
+    tetfilter = tetfilter(1:yuck(end)-1); %cut off the trailing '||'
+    timefilter{1} = {'getconstimes', '($cons == 1)', [eventSourceArea eventtype],1,'consensus_numtets',consensus_numtets,...
+        'minstdthresh',minstdthresh,'exclusion_dur',exclusion_dur,'minvelocity',minvelocity,'maxvelocity',maxvelocity};
+    %     timefilter{2} = {'excludenoiseevents', '($noise == 0)', [eventSourceArea,'noisekons'], 1, };
+    
+    %----------F = createfilter('animal', animals, 'days', dayfilter,'epochs', epochfilter, 'excludetime', timefilter, 'eegtetrodes',tetfilter,'iterator', iterator);--------
+    F = createfilter('animal', animals, 'days', days,'epochs', epochfilter, 'excludetime', timefilter, 'eegtetrodes',tetfilter,'iterator', iterator);
+    %----------f = setfilteriterator(f, funcname, loadvariables, options)--------
+    eval(['F = setfilterfunction(F, [''dfa_'' filtfunction], {[eventSourceArea eventtype],' strjoin(arrayfun(@(x) sprintf('''%s'',', cell2mat(x)), LFPtypes,'UniformOutput',false)) '},''eventtype'', [eventSourceArea eventtype], ''LFPtypes'', LFPtypes, ''win'', win);']);
+    %     eval(['F = setfilterfunction(F, [''dfa_'' filtfunction], {[eventSourceArea eventtype],' strjoin(reshape(repmat(arrayfun(@(x) sprintf('''%s'',', cell2mat(x)), LFPtypes,'UniformOutput',false), 2, 1), 1,length(LFPtypes)*2)) '},''eventtype'', [eventSourceArea eventtype], ''LFPtypes'', LFPtypes);']);
+    tic
+    F = runfilter(F);
+    F(1).filterTimer = toc; F(1).filterTimer
+    F(1).worldDateTime = clock;
+    F(1).dataFilter = struct('animal', animals, 'days', days,'epochs', epochfilter, 'excludetime', timefilter, 'eegtetrodes',tetfilter,'iterator', iterator, 'filename', filename);
+end
+%% ---------------- Save Filter Output ---------------------------------------------------
+if saveFilterOutput == 1;
+    if ~isdir(filtOutputDirectory);
+        mkdir(filtOutputDirectory);
+    end
+    %save the entire workspace for filter provenance
+    save(sprintf('%s/%s',filtOutputDirectory, filename), 'F','-v7.3');
+    disp(sprintf('filteroutput saved to %s/%s',filtOutputDirectory, filename))
+end
 %% ---------------- Load Filter Output ---------------------------------------------------
 if loadFilterOutput == 1;
-    load(sprintf('%s%s/%s',investInfo{2},filtfunction, filename))
+    load(sprintf('%s/%s',filtOutputDirectory, filename))
+    disp(sprintf('filteroutput loaded: %s/%s',filtOutputDirectory, filename))
 end
 %% ---------------- Load Results Output ---------------------------------------------------
 if loadResultsOutput == 1;
@@ -136,8 +180,9 @@ if calcEventState
         eventstate.fields = [];
         ixpc.index{ianimal} = [];
         %get the animal state for every event
-        for iday = 1:length(days)
-            day = days(iday);
+        andays = find(~cellfun(@isempty,F(ianimal).output)); %get nonempty eps
+        for iday = 1:length(andays)
+            day = andays(iday);
             eps = find(~cellfun(@isempty,{F(ianimal).output{day}.index})); %get nonempty eps
             ixpc.index{ianimal} = [ixpc.index{ianimal}; F(ianimal).output{day}(eps(1)).index];
             %load linpos per day
@@ -145,8 +190,8 @@ if calcEventState
             for iep = eps;
                 iEpTetData = cat(2,iEpTetData,F(ianimal).output{day}(iep).data{1,1}); %cat the event snips across eps, days
                 % get trajectory, segment, and linddist
-                eventStartIndices = F.output{day}(iep).eventStartIndices;
-                LFPtimes = F.output{day}(iep).LFPtimes;
+                eventStartIndices = F(ianimal).output{day}(iep).eventStartIndices;
+                LFPtimes = F(ianimal).output{day}(iep).LFPtimes;
                 eventStartTimes = LFPtimes(eventStartIndices);
                 statematrix = linpos{day}{iep}.statematrix;
                 statemat.data = [statematrix.time statematrix.traj statematrix.segmentIndex statematrix.lindist];
@@ -154,20 +199,23 @@ if calcEventState
                 stateindex = knnsearch(statemat.data(:,1), eventStartTimes);
                 eventTrajs = statemat.data(stateindex,:);
                 
-                %get performance state
-                trialIO = BehaveState.statechanges{day}{iep}.statechangeseq;
-                trialIOfields = BehaveState.statechanges{day}{iep}.fields;
-                corrcol = find(cell2mat(cellfun(@(x) strcmp(x,'correct'), strsplit(trialIOfields, ' '), 'UniformOutput', false)));
-                timeportoutcol = find(cell2mat(cellfun(@(x) strcmp(x,'timeportout'), strsplit(trialIOfields, ' '), 'UniformOutput', false)));
-                outBcol = find(cell2mat(cellfun(@(x) strcmp(x,'outbound'), strsplit(trialIOfields, ' '), 'UniformOutput', false)));
-                inBcol = find(cell2mat(cellfun(@(x) strcmp(x,'inbound'), strsplit(trialIOfields, ' '), 'UniformOutput', false)));
-                lastTimecol = find(cell2mat(cellfun(@(x) strcmp(x,'lasttime'), strsplit(trialIOfields, ' '), 'UniformOutput', false)));
-                currTimecol = find(cell2mat(cellfun(@(x) strcmp(x,'currenttime'), strsplit(trialIOfields, ' '), 'UniformOutput', false)));
-                outBCorr = trialIO((trialIO(:,outBcol)==1 & trialIO(:,corrcol)==1),[lastTimecol currTimecol corrcol timeportoutcol]);
-                outBMist = trialIO((trialIO(:,outBcol)==1 & trialIO(:,corrcol)==0),[lastTimecol currTimecol corrcol timeportoutcol]);
-                corrvec = list2vec(outBCorr(:,[1:2]),LFPtimes);
-                mistvec = list2vec(outBMist(:,[1:2]),LFPtimes);
-                
+                %                 %given a time vector (LFPtimes) and BehaveState struct,
+                %                 %return corresponding vectors for 'correct' and 'mistake' performance state for given day, ep
+                                [corrvec, mistvec] = getPerformanceState(BehaveState, [day iep], LFPtimes);
+                %                 %get performance state
+                %                 trialIO = BehaveState.statechanges{day}{iep}.statechangeseq;
+                %                 trialIOfields = BehaveState.statechanges{day}{iep}.fields;
+                %                 corrcol = find(cell2mat(cellfun(@(x) strcmp(x,'correct'), strsplit(trialIOfields, ' '), 'UniformOutput', false)));
+                %                 timeportoutcol = find(cell2mat(cellfun(@(x) strcmp(x,'timeportout'), strsplit(trialIOfields, ' '), 'UniformOutput', false)));
+                %                 outBcol = find(cell2mat(cellfun(@(x) strcmp(x,'outbound'), strsplit(trialIOfields, ' '), 'UniformOutput', false)));
+                %                 inBcol = find(cell2mat(cellfun(@(x) strcmp(x,'inbound'), strsplit(trialIOfields, ' '), 'UniformOutput', false)));
+                %                 lastTimecol = find(cell2mat(cellfun(@(x) strcmp(x,'lasttime'), strsplit(trialIOfields, ' '), 'UniformOutput', false)));
+                %                 currTimecol = find(cell2mat(cellfun(@(x) strcmp(x,'currenttime'), strsplit(trialIOfields, ' '), 'UniformOutput', false)));
+                %                 outBCorr = trialIO((trialIO(:,outBcol)==1 & trialIO(:,corrcol)==1),[lastTimecol currTimecol corrcol timeportoutcol]);
+                %                 outBMist = trialIO((trialIO(:,outBcol)==1 & trialIO(:,corrcol)==0),[lastTimecol currTimecol corrcol timeportoutcol]);
+                %                 corrvec = list2vec(outBCorr(:,[1:2]),LFPtimes);
+                %                 mistvec = list2vec(outBMist(:,[1:2]),LFPtimes);
+                %
                 eventindex = knnsearch(LFPtimes, eventStartTimes);
                 tmpeventstate = [];
                 tmpeventstate = [LFPtimes(eventindex) eventTrajs corrvec(eventindex) mistvec(eventindex)];
@@ -177,7 +225,12 @@ if calcEventState
             end
         end
         if max(abs(diff(eventstate.state(:,1:2),[],2))) > 0.033;
-            error('max event-time offset between pos and lfp times is more than 33ms (1 cam frame)')
+            disp(sprintf('%d max event-time offset between pos and lfp times is more than 33ms (1 cam frame).. removing offset events', max(abs(diff(eventstate.state(:,1:2),[],2)))))
+            removeevents = find(abs(diff(eventstate.state(:,1:2),[],2)) > 0.033);
+            removevec = ones(length(eventstate.state(:,1)),1);
+            removevec(removeevents) = 0;
+            eventstate.state = eventstate.state(logical(removevec),:);
+            iEpTetData = iEpTetData(logical(removevec));
         end
         if length(eventstate.state(:,1)) ~= length(iEpTetData)
             error('mismatch between number of state info and lfp sanples')
@@ -235,7 +288,7 @@ if calculateIXPC
             % fft with the arg of nConv ensures that matlab will zero-pad the half-wavelet duration on either side of the data series
             %             dataY = fft(reshape(iEpTetDataCat,nNTrodes,nData),nConv,2);
             dataY = fft(reshape(intDataCat,nNTrodes,nData),nConv2pow,2); % reshape reshapes row-wise into a 1 x d vector
-%             dataY{introde} = fft(reshape(squeeze(ixpc.allNTDataCat{ianimal}(introde,:,:)),nNTrodes,nData),nConv2pow,2); % reshape reshapes row-wise into a 1 x d vector
+            %             dataY{introde} = fft(reshape(squeeze(ixpc.allNTDataCat{ianimal}(introde,:,:)),nNTrodes,nData),nConv2pow,2); % reshape reshapes row-wise into a 1 x d vector
             %         %% fix ispc
             %         if calculateISPC
             %             % initialize output time-frequency data
@@ -251,13 +304,13 @@ if calculateIXPC
                 gaus_win = exp(-timeWin.^2./(2*bn^2)); %the gaussian
                 wavelet = sine_wave .* gaus_win;
                 waveletFFT = fft(wavelet,nConv2pow);
-%                 waveletFFT{introde}{fi} = fft(exp(2*1i*pi*frex(fi).*timeWin) .* exp(-timeWin.^2./(2*nWavecycles(fi)/(2*pi*frex(fi))^2)),nConv2pow);
+                %                 waveletFFT{introde}{fi} = fft(exp(2*1i*pi*frex(fi).*timeWin) .* exp(-timeWin.^2./(2*nWavecycles(fi)/(2*pi*frex(fi))^2)),nConv2pow);
                 %normalize wavelet to a maximum of 1. this will ensure that the units of convolution are the same as in the original data.
                 waveletFFT = waveletFFT ./ max(waveletFFT);
-%                 waveletFFT{introde}{fi} = waveletFFT{introde}{fi} ./ max(waveletFFT{introde}{fi});
+                %                 waveletFFT{introde}{fi} = waveletFFT{introde}{fi} ./ max(waveletFFT{introde}{fi});
                 % run convolution (filtering) : Time-domain convolution in the frequency domain... because itz so much faster
                 astmp = bsxfun(@times,dataY,waveletFFT); %multiply the power spectrum of the data and the wavelet
-%                 astmp{introde}{fi} = bsxfun(@times,dataY{introde},waveletFFT); %multiply the power spectrum of the data and the wavelet
+                %                 astmp{introde}{fi} = bsxfun(@times,dataY{introde},waveletFFT); %multiply the power spectrum of the data and the wavelet
                 astmp = ifft(astmp,nConv2pow,2); % take the inverse transform
                 %trim off the length of half the wavelet at the beginning
                 %and at the end. also trim the zero padding at the tail
@@ -311,23 +364,23 @@ if calculateIXPC
             ixpc.basenormpoweroutput{ianimal}{introde}(:,6,:) = ixpc.basenormpoweroutput{ianimal}{introde}(:,4,:) - ixpc.basenormpoweroutput{ianimal}{introde}(:,5,:);
             ixpc.basenormphaseoutput{ianimal}{introde}(:,7,:) = ixpc.basenormphaseoutput{ianimal}{introde}(:,2,:) - ixpc.basenormphaseoutput{ianimal}{introde}(:,3,:);
             ixpc.basenormpoweroutput{ianimal}{introde}(:,7,:) = ixpc.basenormpoweroutput{ianimal}{introde}(:,2,:) - ixpc.basenormpoweroutput{ianimal}{introde}(:,3,:);
-%         end
-%         for introde = 1:ntets
+            %         end
+            %         for introde = 1:ntets
             %% permutation testing... this will take TIME and a shit ton of RAM.. go get covfefe
             if runPermTest
                 disp(sprintf('========== running perm tests ============= nt%d perm x %d',introde, n_permutes))
-                % outbound vs inbound 
+                % outbound vs inbound
                 ixpc.powerzmask{ianimal}{introde}{OvsIind} = []; ixpc.phasezmask{ianimal}{introde}{OvsIind} = [];
                 ixpc.MCpower_minmax{ianimal}{introde}{OvsIind} = []; ixpc.MCphase_minmax{ianimal}{introde}{OvsIind} = [];
                 [ixpc.powerzmask{ianimal}{introde}{OvsIind}, ixpc.phasezmask{ianimal}{introde}{OvsIind},...
                     ixpc.MCpower_minmax{ianimal}{introde}{OvsIind},ixpc.MCphase_minmax{ianimal}{introde}{OvsIind}]...
-                = ITPCpermtest(ixpc.poweroutput{ianimal}{introde}(:,OvsIind,:), ixpc.phaseoutput{ianimal}{introde}(:,OvsIind,:), phdata{introde}, as{introde}, iEpTetIndsType{outboundInd}, iEpTetIndsType{inboundInd}, n_permutes);
+                    = ITPCpermtest(ixpc.poweroutput{ianimal}{introde}(:,OvsIind,:), ixpc.phaseoutput{ianimal}{introde}(:,OvsIind,:), phdata{introde}, as{introde}, iEpTetIndsType{outboundInd}, iEpTetIndsType{inboundInd}, n_permutes);
                 % correct-outbound vs mistake-outbound
                 ixpc.powerzmask{ianimal}{introde}{CvsMind} = []; ixpc.phasezmask{ianimal}{introde}{CvsMind} = [];
                 ixpc.MCpower_minmax{ianimal}{introde}{CvsMind} = []; ixpc.MCphase_minmax{ianimal}{introde}{CvsMind} = [];
                 [ixpc.powerzmask{ianimal}{introde}{CvsMind}, ixpc.phasezmask{ianimal}{introde}{CvsMind},...
                     ixpc.MCpower_minmax{ianimal}{introde}{CvsMind},ixpc.MCphase_minmax{ianimal}{introde}{CvsMind}]...
-                = ITPCpermtest(ixpc.poweroutput{ianimal}{introde}(:,CvsMind,:), ixpc.phaseoutput{ianimal}{introde}(:,CvsMind,:), phdata{introde}, as{introde}, iEpTetIndsType{correctOutInd}, iEpTetIndsType{mistakeOutInd}, n_permutes);
+                    = ITPCpermtest(ixpc.poweroutput{ianimal}{introde}(:,CvsMind,:), ixpc.phaseoutput{ianimal}{introde}(:,CvsMind,:), phdata{introde}, as{introde}, iEpTetIndsType{correctOutInd}, iEpTetIndsType{mistakeOutInd}, n_permutes);
                 % ixpc = ITPCpermtest(ixpc, phdata{introde}, as{introde}, ianimal, introde, 7, iEpTetIndsType{2}, iEpTetIndsType{3}, n_permutes);
                 %% cluster-based multiple comp scratch
                 %                 for iprm = 1:n_permutes;
@@ -355,28 +408,28 @@ if calculateIXPC
         ixpc.datatypes{ianimal} = [];
         ixpc.datatypes{ianimal} = iEpTetDataTypeFields;
         
-% %         
-%         demec = [2 3 7 4 6 14 1 8 9 10];
-% %         sumec = [1 8 9 10];
-%         por = [13 15 12];
-%         hc = [16:30];
-%         areascat = {demec, por, hc};
-%         for iar = 1:length(areascat)
-%             %phase
-%             areaphaseoutputtmp = arrayfun(@(x) ixpc.basenormphaseoutput{ianimal}{x}(:,6,:), areascat{iar}, 'un', 0);
-%             ixpc.areaphasemean{ianimal}{iar} = mean(cat(2,areaphaseoutputtmp{:}), 2);
-%             
-%             areaphasezmasktmp = arrayfun(@(x) ixpc.phasezmask{ianimal}{x}{6}, areascat{iar}, 'un', 0);
-%             ixpc.areaphasezmaskmean{ianimal}{iar} = mean(cat(2,areaphasezmasktmp{:}), 2);
-%             % power
-%             areapoweroutputtmp = arrayfun(@(x) ixpc.basenormpoweroutput{ianimal}{x}(:,6,:), areascat{iar}, 'un', 0);
-%             ixpc.areapowermean{ianimal}{iar} = mean(cat(2,areapoweroutputtmp{:}), 2);
-%             
-%             areapowerzmasktmp = arrayfun(@(x) ixpc.powerzmask{ianimal}{x}{6}, areascat{iar}, 'un', 0);
-%             ixpc.areapowerzmaskmean{ianimal}{iar} = mean(cat(2,areapowerzmasktmp{:}), 2);
-% 
-%         end
-%         ixpc.areas{ianimal} = {'mec', 'por', 'hc'};
+        % %
+        %         demec = [2 3 7 4 6 14 1 8 9 10];
+        % %         sumec = [1 8 9 10];
+        %         por = [13 15 12];
+        %         hc = [16:30];
+        %         areascat = {demec, por, hc};
+        %         for iar = 1:length(areascat)
+        %             %phase
+        %             areaphaseoutputtmp = arrayfun(@(x) ixpc.basenormphaseoutput{ianimal}{x}(:,6,:), areascat{iar}, 'un', 0);
+        %             ixpc.areaphasemean{ianimal}{iar} = mean(cat(2,areaphaseoutputtmp{:}), 2);
+        %
+        %             areaphasezmasktmp = arrayfun(@(x) ixpc.phasezmask{ianimal}{x}{6}, areascat{iar}, 'un', 0);
+        %             ixpc.areaphasezmaskmean{ianimal}{iar} = mean(cat(2,areaphasezmasktmp{:}), 2);
+        %             % power
+        %             areapoweroutputtmp = arrayfun(@(x) ixpc.basenormpoweroutput{ianimal}{x}(:,6,:), areascat{iar}, 'un', 0);
+        %             ixpc.areapowermean{ianimal}{iar} = mean(cat(2,areapoweroutputtmp{:}), 2);
+        %
+        %             areapowerzmasktmp = arrayfun(@(x) ixpc.powerzmask{ianimal}{x}{6}, areascat{iar}, 'un', 0);
+        %             ixpc.areapowerzmaskmean{ianimal}{iar} = mean(cat(2,areapowerzmasktmp{:}), 2);
+        %
+        %         end
+        %         ixpc.areas{ianimal} = {'mec', 'por', 'hc'};
     end
     toc
 end
@@ -471,30 +524,30 @@ if plotITPC
                 %                     ixpc2plotFULL = (bsxfun(@rdivide, bsxfun(@minus, ixpc2plotFULL, basemeanFULL'), basemeanFULL'));
                 %                 end
                 if 0
-%                     eval(sprintf('ixpc2plotFULL = squeeze(ixpc.area%smean{ianimal}{introde})'';', plotoutputtype));
+                    %                     eval(sprintf('ixpc2plotFULL = squeeze(ixpc.area%smean{ianimal}{introde})'';', plotoutputtype));
                     eval(sprintf('ixpc2plotFULL = squeeze(ixpc.area%szmaskmean{ianimal}{introde})'';', plotoutputtype));
                     midpoint = (size(ixpc2plotFULL,2)-1)/2; %get middle index of window
                     ixpc2plot = ixpc2plotFULL(:,midpoint + plotwin(1)*srate : midpoint + plotwin(2)*srate); %get plot window
                     [~,bn] = contourf(intfig,plottimeWin,frex(1:end-1),ixpc2plot,100,'linecolor','none'); %
                     hold on;
-%                     eval(sprintf('zmaskFULL = squeeze(ixpc.area%szmaskmean{ianimal}{introde})'';', plotoutputtype));
-% %                     zmaskFULL = squeeze(ixpc.areaphasezmaskmean{ianimal}{introde})';
-%                     midpoint = (size(ixpc2plotFULL,2)-1)/2; %get middle index of window
-%                     zmask2plot = zmaskFULL(:,midpoint + plotwin(1)*srate : midpoint + plotwin(2)*srate); %get plot window
+                    %                     eval(sprintf('zmaskFULL = squeeze(ixpc.area%szmaskmean{ianimal}{introde})'';', plotoutputtype));
+                    % %                     zmaskFULL = squeeze(ixpc.areaphasezmaskmean{ianimal}{introde})';
+                    %                     midpoint = (size(ixpc2plotFULL,2)-1)/2; %get middle index of window
+                    %                     zmask2plot = zmaskFULL(:,midpoint + plotwin(1)*srate : midpoint + plotwin(2)*srate); %get plot window
                     zmask = ixpc2plot;
                     zmask(abs(ixpc2plot)<zval) = 0;
                     [~,h] = contour(intfig,plottimeWin,frex(1:end-1),logical(zmask),1);
                     h.LineColor = [.85 .85 .85];
                 else
                     
-%                     eval(sprintf('ixpc2plotFULL = squeeze(ixpc.%soutput{ianimal}{numsumSortInds(introde)}(:,iDT,:))'';', plotoutputtype));
-%                     midpoint = (size(ixpc2plotFULL,2)-1)/2; %get middle index of window
-%                     ixpc2plot = ixpc2plotFULL(:,midpoint + plotwin(1)*srate : midpoint + plotwin(2)*srate); %get plot window
-%                     [~,bn] = contourf(intfig,plottimeWin,frex(1:end-1),ixpc2plot,100,'linecolor','none'); %
-                                    eval(sprintf('BaseNormixpc2plotFULL = squeeze(ixpc.basenorm%soutput{ianimal}{numsumSortInds(introde)}(:,iDT,:))'';', plotoutputtype));
-                                    midpoint = (size(BaseNormixpc2plotFULL,2)-1)/2; %get middle index of window
-                                    BaseNormixpc2plot = BaseNormixpc2plotFULL(:,midpoint + plotwin(1)*srate : midpoint + plotwin(2)*srate); %get plot window
-                                    [~,bn] = contourf(intfig,plottimeWin,frex(1:end-1),BaseNormixpc2plot,100,'linecolor','none'); %
+                    %                     eval(sprintf('ixpc2plotFULL = squeeze(ixpc.%soutput{ianimal}{numsumSortInds(introde)}(:,iDT,:))'';', plotoutputtype));
+                    %                     midpoint = (size(ixpc2plotFULL,2)-1)/2; %get middle index of window
+                    %                     ixpc2plot = ixpc2plotFULL(:,midpoint + plotwin(1)*srate : midpoint + plotwin(2)*srate); %get plot window
+                    %                     [~,bn] = contourf(intfig,plottimeWin,frex(1:end-1),ixpc2plot,100,'linecolor','none'); %
+                    eval(sprintf('BaseNormixpc2plotFULL = squeeze(ixpc.basenorm%soutput{ianimal}{numsumSortInds(introde)}(:,iDT,:))'';', plotoutputtype));
+                    midpoint = (size(BaseNormixpc2plotFULL,2)-1)/2; %get middle index of window
+                    BaseNormixpc2plot = BaseNormixpc2plotFULL(:,midpoint + plotwin(1)*srate : midpoint + plotwin(2)*srate); %get plot window
+                    [~,bn] = contourf(intfig,plottimeWin,frex(1:end-1),BaseNormixpc2plot,100,'linecolor','none'); %
                 end
                 hold on;
                 %
@@ -543,11 +596,11 @@ if plotITPC
                 
                 
                 if mod(introde, sfcols) ~= 1;
-                                        set(gca, 'yscale','log','ytick',[])	
-%                                         set(gca, 'yscale','log','ytick',ceil(logspace(log10(min(frex)),log10(max(frex)),6)))
+                    set(gca, 'yscale','log','ytick',[])
+                    %                                         set(gca, 'yscale','log','ytick',ceil(logspace(log10(min(frex)),log10(max(frex)),6)))
                     set(gca, 'FontSize',8, 'FontName', 'Arial');%
                 else
-                                        set(gca, 'yscale','log','ytick',ceil(logspace(log10(min(frex)),log10(max(frex)),6)))
+                    set(gca, 'yscale','log','ytick',ceil(logspace(log10(min(frex)),log10(max(frex)),6)))
                     %                     set(gca, 'YTick',[round(linspace(min(frex),max(frex),6))])
                     set(gca, 'FontSize',8, 'FontName', 'Arial');%
                 end
@@ -644,7 +697,7 @@ if plotITPC
             %             elseif iDT == 7
             %                 sprtit = sprintf('%s %s %s %s D%s %d-%dHz_rCyc%d-%d', plotoutputtype,'outBCorr-outBMist', strjoin(epochEnvironment,'-'), animalID, strrep(num2str(days), '  ', '-'), min_freq,max_freq, range_cycles);
             %             else
-            sprtit = sprintf('%s %s %s %s D%s %d-%dHz_rCyc%d-%d', plotoutputtype,ixpc.datatypes{ianimal}{iDT}, strjoin(epochEnvironment,'-'), animalID, strrep(num2str(days), '  ', '-'), min_freq,max_freq, range_cycles);
+            sprtit = sprintf('%s %s %s %s D%s %d-%dHz_rCyc%d-%d', plotoutputtype,ixpc.datatypes{ianimal}{iDT}, strjoin(epochEnvironment,'-'), animalID, strrep(num2str(days,'%-2d'), ' ', '-'), min_freq,max_freq, range_cycles);
             %             end
             %             if plotNTrodesAcrossDays
             %                 sprTags = sprintf('%s %s', iarea, isubarea);
