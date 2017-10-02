@@ -18,40 +18,43 @@ plotfigs = 1;
 % allthecolors = {[0 0 0], colorsMEC, colorsCTX};
 % usecolormap = 'jet'; %colorcube %lines %jet winter
 colorSet = 'DR1';
-win = [2 2]; %in seconds
+win = [1 1]; %in seconds
 % indwin = win*1500;
 plotwin = [.5 .5]; %in seconds
 plotHilbertPower = 0;
 
 % indwin = plotwin*1500;
 %% ---------------- Data Filters --------------------------
+% animals = {'D10'};
+% days = [1:12]; % 1:12 
+% days = [1:12]; % 1:12
 % animals = {'D12'};
 % days = [1:7]; % 1:7
 % animals = {'D13'};
 % days = [1:10];
-% animals = {'JZ1'};
-% days = [1:9];
+animals = {'JZ1'};
+days = [1:14]; %1:14 1:9
 %  animals = {'JZ2'};
 %  days = [1:5];
 % animals = {'JZ3'};
-% days = [5]; %[1 2 5:10]
-animals = {'JZ4'};
-days = [1];%1:10
+% days = [1 2 5:10]; %[1 2 5:10]
+% animals = {'JZ4'};
+% days = [1:10];%1:10
 filtfunction = 'riptriglfp';
 LFPtypes = {'eeg', 'ripple', 'theta', 'lowgamma', 'fastgamma'}; %
 LFPrangesHz = {'1-400', '140-250', '6-9', '20-50', '65 - 140'}; %need to make this a lookup from the filter mat
 eventtype = 'rippleskons';
 % eventtype = 'noisekons';
 % eventarea = 'ca1';
-epochType = {'run'};
-epochEnvironment = {'wtrack'};% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
+epochType = {'sleep'};
+epochEnvironment = {'sleep'};% 'wtrack'; %wtrack, wtrackrotated, openfield, sleep
 eventSourceArea = 'ca1';
 ripAreas = {'ca1', 'mec', 'por'};
 ntAreas = {'ca1','sub','mec', 'por', 'v2l', 'ref'};  %'sub', 
-plotenv = {'wtrack'};
+plotenv = {'sleep'};
 
 consensus_numtets = 1;   % minimum # of tets for consensus event detection
-minstdthresh = 3;        % STD. how big your ripples are
+minstdthresh = 7;        % STD. how big your ripples are
 exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
 minvelocity = 0;
 maxvelocity = 4;
@@ -398,7 +401,15 @@ if plotfigs
                     end
 %                     plotwin = F(ianimal).output{1, day}(ienvTypeInds(1)).win;
                     iepochLFPtimes = [-plotwin:1/1500:plotwin]; % lfp time for average plots is just the window length
-                    ntrodesIndices = F(ianimal).output{day}(ienvTypeInds(1)).index;
+                    ntrodesIndices = [];
+                    useep = 1;
+                    while isempty(ntrodesIndices)
+                        ntrodesIndices = F(ianimal).output{day}(ienvTypeInds(useep)).index;
+                        useep = useep + 1;
+                        if useep > length(ienvTypeInds)
+                            continue
+                        end
+                    end
                     %% ---- reorder the LFP traces by suparea|area|subarea tags (in that priority) ----
                     [~, tagIndMap] = ismember(ntrodesIndices,tetinfoAll.index, 'rows');
                     ntrodeTags = tetinfoAll.values(tagIndMap);

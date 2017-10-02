@@ -11,9 +11,9 @@
 
 % clear all
 close all
-runFilterFramework =0;
+runFilterFramework =1;
 saveFilterOutput = runFilterFramework;
-loadFilterOutput = 1;
+loadFilterOutput = 0;
 gatherXepochs = 1;
 resaveEpochsMean = gatherXepochs;
 plotXFC = 1;
@@ -31,8 +31,8 @@ MarginTop = 0.12;
 MarginBottom =  0.07;
 usecolormap = 'jet';
 %% ---------------- Data Filters --------------------------
-consensus_numtets = 3;   % minimum # of tets for consensus event detection
-minstdthresh = 2;        % STD. how big your ripples are
+consensus_numtets = 1;   % minimum # of tets for consensus event detection
+minstdthresh = 3;        % STD. how big your ripples are
 exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
 minvelocity = 0;
 maxvelocity = 4;
@@ -41,11 +41,11 @@ eventSourceArea = 'ca1';
 
 % target_det =   [];
 % stareftet_only = 0;
-PhaseFreqVector=0:0.5:50;
-AmpFreqVector=10:5:250;
+PhaseFreqVector=0:1:20;
+AmpFreqVector=10:5:300;
 PhaseFreq_BandWidth=2;
 AmpFreq_BandWidth=5;
-selection_phasetet = 20;%  0: Phase tet is same tetrode %  1, 2, 3, 4 : other options refer to STAreftet (cc, CA2, CA3, DG)
+selection_phasetet = 0;%  0: Phase tet is same tetrode %  1, 2, 3, 4 : other options refer to STAreftet (cc, CA2, CA3, DG)
 norip =  {'getconstimes', '($cons == 0)', [eventSourceArea eventtype],1,'consensus_numtets',consensus_numtets,...
     'minstdthresh',minstdthresh,'exclusion_dur',exclusion_dur,'maxvelocity',maxvelocity,'minvelocity',minvelocity};
 rip =  {'getconstimes', '($cons == 1)', [eventSourceArea eventtype],1,'consensus_numtets',consensus_numtets,...
@@ -54,6 +54,7 @@ vel4 = {'kk_get2dstate', '(abs($velocity) > 4)'};
 vel20 = {'kk_get2dstate', '(abs($velocity) > 20)'};
 velunder20 = {'kk_get2dstate', '((abs($velocity) < 20))'};
 immobile2 = {'kk_get2dstate', '($immobility == 1)','immobility_velocity',4,'immobility_buffer',1}; % notice 1 s buffer
+sleep = {'kk_getsleep', '(($sleep == 1))',0};
 clear statespec
 %open timefilterscript.m for options
 % statespec_descript = 'state1: vel4 // state2: immobile2 '; %format: state<n>: <statenlabel> // ...
@@ -64,15 +65,15 @@ clear statespec
 % statespec{1} = { immobile2, rip};
 % statespec{2} = { immobile2 } ;
 
-statespec_descript = 'state1: rip  // state2: norip '; %format: state<n>: <statenlabel> // ...
-statespec{1} = { immobile2, rip};
-statespec{2} = { immobile2, norip};
-
+% statespec_descript = 'state1: rip  // state2: norip '; %format: state<n>: <statenlabel> // ...
+% statespec{1} = { immobile2, rip};
+% statespec{2} = { immobile2, norip};
 
 %     statespec{1} = { vel20 };
 %     statespec{2} = { vel4, velunder20, norip };
 %     statespec_descript = 'state1: sleepc NREM // state2: sleepc, REM  ';
-%     statespec{1} = { sleepc, noREM } ;
+    statespec_descript = 'state1: sleep rip';
+    statespec{1} = {sleep, rip};
 %     statespec{2} = { sleepc, REM } ;
 % end
 ntAreas = {'ca1', 'sub', 'mec', 'por', 'v2l', 'ref'};
