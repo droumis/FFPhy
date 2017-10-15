@@ -4,11 +4,13 @@
 
 function rgbColor = colorPicker(colorSet, areatags, subareatags)
 colorlist = setColors(colorSet);
-rgbColor = [];
-for int = 1:length(areatags);
-    iareatag = areatags{int};
-    isubareatag = subareatags{int};
-    rgbColor =  [rgbColor; colorlist{find(strcmp(num2str(iareatag),colorlist(:,1)) & strcmp(num2str(isubareatag),colorlist(:,2))),3}];
+rgbColor = cell(size(areatags,1), size(areatags,2));
+for intrpair = 1:size(areatags,2)
+    for int = 1:size(areatags,1);
+        iareatag = areatags{int,intrpair};
+        isubareatag = subareatags{int,intrpair};
+        rgbColor{int,intrpair} =  colorlist{find(strcmp(iareatag,colorlist(:,1)) & strcmp(num2str(isubareatag),colorlist(:,2))),3};
+    end
 end
 end
 
