@@ -38,7 +38,7 @@ win = [.5 .5]; %in seconds
 %% ---------------- Data Filters --------------------------
 animal = 'D10';
 % animals = {'JZ1', 'D13'};
-days = [1:12]; %1:10
+days = [1]; %1:10
 behavestruct = 'BehaveState';
 plottype = 'posperform';
 eventtype = 'rippleskons';
