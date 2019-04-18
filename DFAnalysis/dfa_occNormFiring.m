@@ -1,4 +1,5 @@
-function [out] = dfa_occNormFiring(index, excludeperiods, spikes,linpos, pos, task, varargin)
+function [out] = dfa_occNormFiring(index, excludeperiods, spikes,linpos, pos, ...
+    task, varargin)
 %
 %Calculates the 2d occupancy normalized firing rate for the cell and
 %organizes the output into the different trajectories.
@@ -22,21 +23,21 @@ if (~isempty(varargin))
 end
 
 warning('OFF','MATLAB:divideByZero');
-    out.spikes = [];
-    out.spikerate = [];
-    out.smoothedspikerate = [];
-    out.occupancy = [];
-    out.smoothedoccupancy = [];
-    out.xticks = [];
-    out.yticks = [];
-    out.seqX = [];
-    out.allseqX = [];
-    out.allseqY = [];
-    out.seqY = [];
-    out.allseqX1 = [];
-    out.allseqY1 = [];
-    out.wellCoords = [];
-    out.index = index;
+out.spikes = [];
+out.spikerate = [];
+out.smoothedspikerate = [];
+out.occupancy = [];
+out.smoothedoccupancy = [];
+out.xticks = [];
+out.yticks = [];
+out.seqX = [];
+out.allseqX = [];
+out.allseqY = [];
+out.seqY = [];
+out.allseqX1 = [];
+out.allseqY1 = [];
+out.wellCoords = [];
+out.index = index;
 try spikesfields = spikes{index(1)}{index(2)}{index(3)}{index(4)}.fields;
 catch
     return
@@ -47,8 +48,15 @@ posdata = pos{index(1)}{index(2)}.data;
 posfields = pos{index(1)}{index(2)}.fields;
 taskEnv = task{index(1)}{index(2)}.environment;
 
+if isempty(spikesData)
+    fprintf('spikes empty \n');
+    return
+end    
+    
+
 timestring = 'time';
-timecol = find(cell2mat(cellfun(@(x) strcmp(x,timestring), strsplit(posfields, ' '), 'UniformOutput', false)));
+timecol = find(cell2mat(cellfun(@(x) strcmp(x,timestring), strsplit(posfields,...
+    ' '), 'UniformOutput', false)));
 postime = posdata(:,timecol);
 
 if strcmp(taskEnv, 'wtrack')
@@ -70,10 +78,10 @@ statevector(find(isExcluded(posdata(:,1), excludeperiods))) = -1; % Based on exc
 
 posindexfield = knnsearch(postime, spikesData(:,1));
 
-xstring = 'x-sm';
+xstring = 'x-loess';
 xcol = find(cell2mat(cellfun(@(x) strcmp(x,xstring), strsplit(posfields, ' '), 'UniformOutput', false)));
 posxdata = posdata(posindexfield,xcol);
-ystring = 'y-sm';
+ystring = 'y-loess';
 ycol = find(cell2mat(cellfun(@(x) strcmp(x,ystring), strsplit(posfields, ' '), 'UniformOutput', false)));
 posydata = posdata(posindexfield,ycol);
 

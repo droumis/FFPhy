@@ -6,15 +6,15 @@ close all
 runFilterFramework = 1;
 saveFilterOutput = runFilterFramework;
 loadFilterOutput = 0;
-plotOccNormFields = 1;
-savefigs= 1;
-pausefigs = 0;
+plotOccNormFields = 0;
+savefigs= 0;
+pausefigs = 1;
 investInfo = animaldef(lower('Demetris'));
 %% ---------------- plotting params --------------------------
 colorSet = 'DR1';
 fonttype = 'Arial';
 titlesize = 16;
-axissize = 16;
+axissize = 16;edit 
 arrowsize = 12;
 usecolormap = 'hot';
 trajname = {'outbound A', 'inbound A', 'outbound B', 'inbound B'};
@@ -30,7 +30,7 @@ MarginTop = 0.15;
 MarginBottom =  0.1;
 %% ---------------- Data Filters --------------------------
 animals = {'JZ1'};
-days = [5];
+days = 1:9;
 epochType = {'run', 'run'};
 epochEnvironment = {'wtrack', 'openfield'}; %wtrack
 
@@ -48,16 +48,20 @@ runLin = 1;
 %% ---------------- Paths and Title strings ---------------------------------------------------
 filtOutputDirectory = sprintf('%s%s/', investInfo{2}, filtfunction);
 figdirectory = sprintf('%s%s/', investInfo{4}, filtfunction);
-filenamesave = sprintf('%s_D%s', strjoin(epochEnvironment,'-'), strjoin(arrayfun(@(x) num2str(x),days,'UniformOutput',false),'-')); %add more naming stuff
+filenamesave = sprintf('%s_D%s', strjoin(epochEnvironment,'-'),...
+    strjoin(arrayfun(@(x) num2str(x),days,'UniformOutput',false),'-'));
 filename = sprintf('%s_%s.mat', filtfunction, filenamesave);
 filenameTitle = strrep(filename,'_', '\_');
 %% ---------------- Run FIlter ---------------------------------------------------
 if runFilterFramework == 1
     eptypeEnv = [epochType; epochEnvironment];
-    epochfilter = sprintf('((isequal($type, ''%s'')) && (isequal($environment, ''%s''))) || ',eptypeEnv{:});
+    epochfilter = sprintf(...
+        '((isequal($type, ''%s'')) && (isequal($environment, ''%s''))) || ',...
+        eptypeEnv{:});
     yuck = strfind(epochfilter, '||');
     epochfilter = epochfilter(1:yuck(end)-1);  %cut off the trailing '||'
-    cellfilter = '($numspikes > 10)';
+%     cellfilter = '($numspikes > 10)';
+    cellfilter = '($numspikes > 10) && (all(cellfun(''isempty'', (cellfun(@(x) strfind(x, ''mua''), $tags, ''un'', 0)))))';
     %     cellfilter = sprintf('((isequal($area,''%s'')) && ($clustermetrics.num_events > 100)) || ', ntAreas{:});
     %     yuck = strfind(cellfilter, '||');
     %     cellfilter = cellfilter(1:yuck(end)-1); %cut off the trailing '||'
@@ -66,10 +70,10 @@ if runFilterFramework == 1
     yuck = strfind(tetfilter, '||');
     tetfilter = tetfilter(1:yuck(end)-1); %cut off the trailing '||'
     %     timefilter{1} = {'dff_getlinstate', '(($state ~= -1) & (abs($linearvel) >= 3))', 6};
-    timefilter{1} = {'get2dstate', '(abs($velocity) >= 3)'};
+    timefilter{1} = {'get2dstate', '(abs($velocity) >= 4)'};
     %     timefilter{1} = {sprintf('get2dstate','($velocity>=%s)', minvel)};
-    timefilter{2} = {'getconstimes', '($cons == 0)', [eventSourceArea eventtype],1,'consensus_numtets',consensus_numtets,...
-        'minstdthresh',minstdthresh,'exclusion_dur',exclusion_dur,'minvelocity',minripvelocity,'maxvelocity',maxripvelocity};
+    %     timefilter{2} = {'getconstimes', '($cons == 0)', [eventSourceArea eventtype],1,'consensus_numtets',consensus_numtets,...
+    %         'minstdthresh',minstdthresh,'exclusion_dur',exclusion_dur,'minvelocity',minripvelocity,'maxvelocity',maxripvelocity};
     iterator = 'singlecellanal';
     iF.datafilter = whos; %save all filtering parameters in workspace into struct
     if run2D
@@ -90,7 +94,9 @@ if saveFilterOutput == 1;
         mkdir(filtOutputDirectory);
     end
     %save the entire workspace 6for filter provenance
-    save(sprintf('%s/%s',filtOutputDirectory, filename), 'F', 'lF', '-v7.3');
+    % try to avoid using v7.3 so that the results could potentially 
+    % be read into python, which currently cannot deal with >v7.3
+    save(sprintf('%s/%s',filtOutputDirectory, filename), 'F', 'lF');%, '-v7.3');
     disp(sprintf('filteroutput saved to %s/%s',filtOutputDirectory, filename))
 end
 %% ---------------- Load Filter Output ---------------------------------------------------
@@ -165,7 +171,8 @@ if plotOccNormFields
             for ienv = 1:length(envtypes) %numeps;
                 ienvFInds = icellFoutInds(ienv == IC);
                 numtrajs = length(F(iAn).output{1}(ienvFInds(1)).smoothedspikerate);
-                ienvSpikeRates = []; posData.data = []; posData.fields = ''; ienvxticks = []; ienvyticks = [];
+                ienvSpikeRates = []; posData.data = []; posData.fields = '';
+                ienvxticks = []; ienvyticks = [];
                 for iepienv = 1:length(ienvFInds)
                     smSR = F(iAn).output{1}(ienvFInds(iepienv)).smoothedspikerate;
                     for it = 1:length(smSR)
@@ -192,7 +199,8 @@ if plotOccNormFields
                     itrepSpRa = ienvSpikeRates(:,itrep);
                     %lineup trimmed matrices and average across epochs
                     try
-                    itreps(1,1,:) = cellfun(@(x) x(1:min_size_row(itrep),1:min_size_col(itrep)), itrepSpRa,'UniformOutput', false);
+                    itreps(1,1,:) = cellfun(@(x) x(1:min_size_row(itrep),1:min_size_col(itrep)),...
+                        itrepSpRa,'UniformOutput', false);
                     catch %will error/continue on empty traj/epoch
                         continue
                     end
@@ -207,10 +215,10 @@ if plotOccNormFields
                     idayienv.meanFR(itrep) = nanmean(nanmean(itrday));
                 end
                 taskEnv = envtypes{ienv};
-                Xstring = 'x-sm';
+                Xstring = 'x-loess';
                 Xcol = find(cell2mat(cellfun(@(x) strcmp(x,Xstring), strsplit(posData.fields, ' '), 'UniformOutput', false)));
                 xData = posData.data(:,Xcol);
-                Ystring = 'y-sm';
+                Ystring = 'y-loess';
                 Ycol = find(cell2mat(cellfun(@(x) strcmp(x,Ystring), strsplit(posData.fields, ' '), 'UniformOutput', false)));
                 yData = posData.data(:,Ycol);
                 xlimx = [min(xData) max(xData)];
@@ -271,12 +279,15 @@ if plotOccNormFields
                     if itraj == 1 && strcmp(taskEnv, 'wtrack')
                         sylab = [{['\color[rgb]{.5 .5 .5} \fontsize{12}', '2D-W FR all epoch']};...
                             {['\color[rgb]{.5 .5 .5} \fontsize{8}', 'cm']}]; % ...
-                        subylab = text(-.2, .5,sylab, 'FontSize',12,'FontWeight','bold','FontName', 'Arial', 'rotation', 90,...
+                        subylab = text(-.2, .5,sylab, 'FontSize',12,'FontWeight','bold','FontName',...
+                            'Arial', 'rotation', 90,...
                             'Units', 'normalized', 'horizontalAlignment', 'center');
                         set(gca,'xtick',[], 'xticklabel',[])
-                        set(gca,'YColor', [.5 .5 .5], 'FontSize',6,'FontWeight','bold','FontName', 'Arial')
+                        set(gca,'YColor', [.5 .5 .5], 'FontSize',6,'FontWeight','bold','FontName',...
+                            'Arial')
                     elseif itraj == 1 && strcmp(taskEnv, 'openfield')
-                        set(gca,'XColor', [.5 .5 .5], 'FontSize',6,'FontWeight','bold','FontName', 'Arial')
+                        set(gca,'XColor', [.5 .5 .5], 'FontSize',6,'FontWeight','bold','FontName',...
+                            'Arial')
                         set(gca,'ytick',[], 'yticklabel',[])
                         xlabel('cm','FontSize',8,'FontWeight','bold','FontName', 'Arial')
                         title(sprintf('%s FR all epochs', taskEnv), 'Color', [.5 .5 .5], 'FontSize',12,'FontWeight','bold','FontName', 'Arial');                        
@@ -374,7 +385,7 @@ if plotOccNormFields
             catch
             end
             sprtit = sprintf('%s %s %s D%d nT%d C%d', filtfunction, strjoin(epochEnvironment,'-'), animalID, day, ntrode, cellID);
-            iclr = icolors(iIndInds(1),:);
+            iclr = icolors{iIndInds(1),:};
             sprTags = sprintf('%s %s', iarea, isubarea);
 %             set(gca,'position',posx1)
             iStitle = text(.5, .93, [{sprtit};...

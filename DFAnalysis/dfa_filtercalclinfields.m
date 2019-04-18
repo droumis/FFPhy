@@ -54,7 +54,8 @@ for option = 1:2:length(varargin)-1
             case 'phasedist'
                 phasedist = varargin{option+1};
 	    otherwise
-                error(['Option ',varargin{option},' unknown.']);
+%                 error(['Option ',varargin{option},' unknown.']);
+            continue
 	end   
     else
         error('Options must be strings, followed by the variable');

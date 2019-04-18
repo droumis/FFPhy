@@ -1,10 +1,5 @@
 
 
-
-
-
-
-
 tetinfo = loaddatastruct(directory,fileprefix,'tetinfo',day);
 dummy = evaluatefilter(tetinfo,tetfilter);
 selected_tets = unique(dummy((dummy(:,1) == day),3))';
@@ -41,13 +36,15 @@ axes(ha(2))
       row = 0;
       for tet = selected_tets
           row = row + 1;
-          usespikes = spktimes_e{tet}(spktimes_e{tet} > posteriortimevec(ripstartind(i))-rippad/round(1/dt) & spktimes_e{tet} < posteriortimevec(ripstartind(i))+rippad/round(1/dt));
+          usespikes = spktimes_e{tet}(spktimes_e{tet} > posteriortimevec(ripstartind(i))-rippad/round(1/dt) & ...
+              spktimes_e{tet} < posteriortimevec(ripstartind(i))+rippad/round(1/dt));
           plot([usespikes; usespikes], repmat([row; row-1], size(usespikes)), 'Color', CM(tet,:), 'lineWidth', .1); hold on; %[.2 .5 .6][0 .4 .6]
       end
       xlim([posteriortimevec(ripstartind(i)-rippad) posteriortimevec(ripstartind(i)+rippad)])
       %       pause
       yl = ylim;
-      patch([posteriortimevec(ripstartind(i)) posteriortimevec(ripendind(i)) posteriortimevec(ripendind(i)) posteriortimevec(ripstartind(i))], [yl(2) yl(2) yl(1) yl(1)], [1 1 1 1], 'edgecolor','none','FaceColor','k', 'FaceAlpha',.1);
+      patch([posteriortimevec(ripstartind(i)) posteriortimevec(ripendind(i)) posteriortimevec(ripendind(i)) ...
+          posteriortimevec(ripstartind(i))], [yl(2) yl(2) yl(1) yl(1)], [1 1 1 1], 'edgecolor','none','FaceColor','k', 'FaceAlpha',.1);
 %       set(gca, 'YTick', [1:yl(2)])
       set(gca, 'YTick', [0])
       set(gca, 'YTicklabel', ' ')

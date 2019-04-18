@@ -105,19 +105,20 @@ if saveFilterOutput == 1;
     end
     %save the entire workspace for filter provenance
     save(sprintf('%s/%s',filtOutputDirectory, filename), 'F','-v7.3');
-    disp(sprintf('filteroutput saved to %s/%s',filtOutputDirectory, filename))
+    fprintf('filteroutput saved to %s/%s\n',filtOutputDirectory, filename)
 end
 %% ---------------- Load Filter Output ---------------------------------------------------
 if loadFilterOutput == 1;
     load(sprintf('%s/%s',filtOutputDirectory, filename))
-    disp(sprintf('filteroutput loaded: %s/%s',filtOutputDirectory, filename))
+    fprintf('filteroutput loaded: %s/%s\n',filtOutputDirectory, filename)
 end
 %% plot
 if plotfigs
     %% plot LFP traces per ntrode, per ripple
     if plotLFPtraces
         %% STEP 2: For each EEG + Ripple Type... select nTrodes and Lookup Rip time windows
-%         for iLFPtype = 1:length(LFPtypes); % For each LFP type (wideband EEG, ripple band, etc), load all of the regions LFP files into eegstruct
+        % For each LFP type (wideband EEG, ripple band, etc), load all of the regions LFP files into eegstruct
+%         for iLFPtype = 1:length(LFPtypes); 
             for ianimal = 1:length(F)
                     %% ---- loadtetinfostruct ----
                     animalinfo = animaldef(lower(animals{ianimal}));
@@ -169,7 +170,9 @@ if plotfigs
                             icolors = icolors(numsumSortInds,:);
                             %% ---- loop across all ripples for this day epoch sourcearea ----
                             for irip = 1:length(F(ianimal).output{day}(epoch).data{1})
-                                if savefigs && ~pausefigs; %if you want to save figs but not pause them to take a look.. just keep them invisible. i think this makes it faster and returns keyboard/mouse control during saving
+                                %if you want to save figs but not pause them to take a look.. just keep them invisible. 
+                                % i think this makes it faster and returns keyboard/mouse control during saving
+                                if savefigs && ~pausefigs; 
                                     ifig = figure('Visible','off','units','normalized','position',[.1 .1 .9 .8]);
                                 else
                                     ifig = figure('units','normalized','position',[.1 .1 .9 .8]);

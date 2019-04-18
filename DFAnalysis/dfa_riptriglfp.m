@@ -29,7 +29,7 @@ else % ripplecons, ripplekons, etc
     eventtimes = events{index(1,1)}{index(1,2)}{1}.starttime;
     eventtimes = [eventtimes events{index(1,1)}{index(1,2)}{1}.endtime];
     catch
-        disp(sprintf('no events detected for day%d ep%d', index(1,1),index(1,2)))
+        fprintf('no events detected for day%d ep%d\n', index(1,1),index(1,2))
         out = [];
         return
     end
@@ -37,7 +37,8 @@ end
 ecbefore = size(eventtimes,1);
 eventtimes = eventtimes(~isExcluded(eventtimes(:,1),excludeperiods),:);
 ecafter = size(eventtimes,1);
-disp(sprintf('%d of %d events discarded because of excluded periods in timefilter: d%d e%d', ecbefore-ecafter, ecbefore, index(1,1),index(1,2)))
+fprintf('%d of %d events discarded because of excluded periods in timefilter: d%d e%d\n',...
+    ecbefore-ecafter, ecbefore, index(1,1),index(1,2))
 if isempty(eventtimes)
     out.LFPtypes = LFPtypes;
     out.LFPtimes = [];
@@ -81,10 +82,11 @@ eventEndIndices = lookup(eventtimes(:,2),LFPtimes);
 %% STEP 3: Gather the ripple window data from all the regions
 for currrip=1:length(eventStartIndices) %for each ripple from source region
     clear YripLFPdata
-    for iNTrode = 1:length(index(:,3)); %for each ntrode
+    for iNTrode = 1:length(index(:,3)) %for each ntrode
         % Gather lfp data for each ntrode within the current rip window
-        for ilfptype = 1:length(LFPtypes);
-            eval(['out.data{ilfptype}{currrip}(iNTrode,:) =' LFPtypes{ilfptype} '{index(iNTrode,1)}{index(iNTrode,2)}{index(iNTrode,3)}.data(eventStartIndices(currrip)-wininds(1):eventStartIndices(currrip)+wininds(2));']);
+        for ilfptype = 1:length(LFPtypes)
+            eval(['out.data{ilfptype}{currrip}(iNTrode,:) =' LFPtypes{ilfptype}...
+                '{index(iNTrode,1)}{index(iNTrode,2)}{index(iNTrode,3)}.data(eventStartIndices(currrip)-wininds(1):eventStartIndices(currrip)+wininds(2));']);
 %             out.data{1}{currrip}(iNTrode,:) = eeg{index(iNTrode,1)}{index(iNTrode,2)}{index(iNTrode,3)}.data(eventStartIndices(currrip)-wininds(1):eventStartIndices(currrip)+wininds(2));
 %             out.data{2}{currrip}(iNTrode,:) = ripple{index(iNTrode,1)}{index(iNTrode,2)}{index(iNTrode,3)}.data(eventStartIndices(currrip)-wininds(1):eventStartIndices(currrip)+wininds(2));
         end
