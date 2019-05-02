@@ -107,7 +107,7 @@ if calculateStateSpace
     statespace.epochEnvironment = epochEnvironment;
     statespace.allepsMat = allepsMat;
     statespace.allepsMatFields = allepsMatFields; 
-    statespace.eplengths = eplengths';
+    statespaloce.eplengths = eplengths';
 end
 
 %% ---------------- save StateSpaceResults into BehaveState struct---------------------------------------------------

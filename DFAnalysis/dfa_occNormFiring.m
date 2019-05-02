@@ -70,19 +70,24 @@ statevector = statematrix.traj;
 
 % front padding the posdata vect to match statevec
 if length(statevector(:,1)) ~= length(posdata(:,1));
-    posdata = [zeros((length(statevector(:,1))-length(posdata(:,1))), length(posdata(1,:))); posdata];
+    posdata = [zeros((length(statevector(:,1))-length(posdata(:,1))), ...
+        length(posdata(1,:))); posdata];
 end
 
 % Use Exclude Periods for TimeFilter version in addition to statevector=-1
-statevector(find(isExcluded(posdata(:,1), excludeperiods))) = -1; % Based on exclude time,
+% Based on exclude time,
+statevector(find(isExcluded(posdata(:,1), excludeperiods))) = -1;
+
 
 posindexfield = knnsearch(postime, spikesData(:,1));
 
 xstring = 'x-loess';
-xcol = find(cell2mat(cellfun(@(x) strcmp(x,xstring), strsplit(posfields, ' '), 'UniformOutput', false)));
+xcol = find(cell2mat(cellfun(@(x) strcmp(x,xstring), strsplit(posfields, ' '), ...
+    'UniformOutput', false)));
 posxdata = posdata(posindexfield,xcol);
 ystring = 'y-loess';
-ycol = find(cell2mat(cellfun(@(x) strcmp(x,ystring), strsplit(posfields, ' '), 'UniformOutput', false)));
+ycol = find(cell2mat(cellfun(@(x) strcmp(x,ystring), strsplit(posfields, ' '), ...
+    'UniformOutput', false)));
 posydata = posdata(posindexfield,ycol);
 
 if ~isempty(spikesData)
@@ -163,6 +168,10 @@ for i = 1:length(trajdata)
             
             out.occupancy{i} = timestep*out.occupancy{i};
             out.smoothedoccupancy{i} = timestep*out.smoothedoccupancy{i};
+            
+            if any(out.smoothedoccupancy{i} < 0)
+                pause
+            end
             
             %zero = find(smoothedoccupancy == 0);
             zero = find(out.smoothedoccupancy{i} <= threshocc);

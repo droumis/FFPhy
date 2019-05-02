@@ -3,13 +3,13 @@
 
 %% ---------------- Dashboard --------------------------
 close all 
-runFilterFramework = 0;
+runFilterFramework = 1;
 saveFilterOutput = runFilterFramework;
 loadFilterOutput = 0;
 postprocessFilterOutput = 0;
 savePostprocessing = postprocessFilterOutput;
 loadPostprocessing = 0;
-plotfigs = 1;
+plotfigs = 0;
 runAntiAlias = 0;
 savefigs= 1;
 pausefigs = 0;

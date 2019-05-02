@@ -1,4 +1,4 @@
-function [out] = dfa_geteventtrigspiking(index, excludeperiods, spikes, ...
+function [out] = dfa_riptrigspiking(index, excludeperiods, spikes, ...
     eventscons, pos, task, varargin)
 
 % MS adapted 2016 from dfakk_geteventtriggeredspiking
@@ -113,22 +113,23 @@ elseif index(4) > length(spikes{index(1)}{index(2)}{index(3)}) || ...
 end
 if emptyoutput_flag
     out.index = index;
-    out.type = '';
+%     out.type = '';
     out.epoch_type = '';
     out.epoch_environment = '';
     out.time = [];
     out.frtime = [];
     out.psth = [];
-    out.frpsth = [];
+    out.frhist = [];
     out.instantFR = [];
     out.nospikes = [];
     out.noevents = [];
     out.eventtags = [];
     out.posteventmatrix = [];
-    out.sleepc_nospikes = nan;
-    out.sleepc_totalduration = nan;
-    out.sleepc_time_immobile = nan;
-    out.sleepc_velocity_thresh = nan;      
+    out.eventduration = [];
+%     out.sleepc_nospikes = nan;
+%     out.sleepc_totalduration = nan;
+%     out.sleepc_time_immobile = nan;
+%     out.sleepc_velocity_thresh = nan;      
     return   
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

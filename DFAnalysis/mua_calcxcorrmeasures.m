@@ -1,7 +1,8 @@
-function out = calcxcorrmeasures(ind, excludetimes, spikes, linpos, varargin)
+function out = mua_calcxcorrmeasures(ind, excludetimes, spikes, linpos, varargin)
 %function out = calcxcorrmeasures(index, excludetimes, spikes, varargin)
-% Calculates the excess correlation and RMS time lag for the specified cell
-% pairs using only spikes not excluded by the excludetimes
+% Calculates the excess correlation and RMS time lag for the specified
+% tetrode pairs using only spikes not excluded by the excludetimes
+% 
 % 
 %
 % Options:
@@ -57,8 +58,9 @@ out.lf2 = [];
 
 % for each cell we calculate the cross correlation 
 try
-    t1 = spikes{ind(1)}{ind(2)}{ind(3)}{ind(4)}.data;
-    t2 = spikes{ind(1)}{ind(2)}{ind(5)}{ind(6)}.data;
+    % combine spikes from all clusters on each tetrode
+    t1 = sort(cell2mat(cellfun(@(x) x.data,spikes{ind(1)}{ind(2)}{ind(3)}, 'un',0)'));
+    t2 = sort(cell2mat(cellfun(@(x) x.data,spikes{ind(1)}{ind(2)}{ind(4)}, 'un',0)'));
 catch
     % if either of those produced an error, we return NaNs 
     return;

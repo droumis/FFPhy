@@ -4,13 +4,13 @@ close all
 runFilterFramework = 1;
     ; saveFilterOutput = runFilterFramework;
     ; loadFilterOutput = 0;
-processnTrodeMean = 1;
+processnTrodeMean = 0;
 processAreaMean = 0;
-plotfigs = 1;
-    ; plotLFPtraces = 1;
-    ; plotnTrodeMeanLFPtraces = 1;
+plotfigs = 0;
+    ; plotLFPtraces = 0;
+    ; plotnTrodeMeanLFPtraces = 0;
     ; plotAreaMeanLFPtraces = 0;
-    ; savefigs = 1;
+    ; savefigs = 0;
     ; pausefigs = 0;
 %% ---------------- plotting params --------------------------
 % colorsMEC = cbrewer('seq', 'Blues', 10, 'PCHIP');
@@ -33,7 +33,7 @@ plotHilbertPower = 0;
 % animals = {'D13'};
 % days = [1:10];
 animals = {'JZ1'};
-days = [1:14]; %1:14 1:9
+days = [1]; %1:14 1:9
 %  animals = {'JZ2'};
 %  days = [1:5];
 % animals = {'JZ3'};

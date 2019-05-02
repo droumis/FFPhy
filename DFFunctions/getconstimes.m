@@ -209,6 +209,7 @@ for i = 1:size(epochs,1)
         end
         
         if isempty(ectimes)
+            fprintf('wut\n')
             out{epochs(i,1)}{epochs(i,2)}.time = times;
             out{epochs(i,1)}{epochs(i,2)}.cons = zeros(size(times));
             disp(sprintf('d%de%d no consensus times!',epochs(i,1),epochs(i,2)))
@@ -222,12 +223,13 @@ for i = 1:size(epochs,1)
             disp(sprintf('excluded last event, day %d epoch %d',epochs(i,1),epochs(i,2)))
         end
             
-        % If exclusion2 is specified (i.e. want exclude ripplescons from gammafcons events),
-            % To do this properly in conjunction with exclusion of chained
-            % events, we follow this order:
-                   % 1. Flag ectimes rows that have any overlap with the output of exclusion 2   (i.e. exclude gammaf events that overlap with ripples)
-                   % 2. Below, enforce exclusion_dur, eliminating ectimes events that follow too soon after a previous one
-                   % 3. Lastly, delete the  ectimes events flagged in step 1
+        % If exclusion2 is specified (i.e. want exclude ripplescons from 
+        % gammafcons events), 
+        % To do this properly in conjunction with exclusion of chained
+        % events, we follow this order:
+               % 1. Flag ectimes rows that have any overlap with the output of exclusion 2   (i.e. exclude gammaf events that overlap with ripples)
+               % 2. Below, enforce exclusion_dur, eliminating ectimes events that follow too soon after a previous one
+               % 3. Lastly, delete the  ectimes events flagged in step 1
         if ~isempty(exclusion2_eventconsname)
             % First obtain exclusion2 output via a recursive call
             ex2 = kk_getconstimes(animaldir,animalprefix,epochs(i,:),exclusion2_eventconsname,exclusion2_tetfilter,...
