@@ -2,9 +2,9 @@ function out = mua_calcxcorrmeasures(ind, excludetimes, spikes, linpos, varargin
 %function out = calcxcorrmeasures(index, excludetimes, spikes, varargin)
 % Calculates the excess correlation and RMS time lag for the specified
 % tetrode pairs using only spikes not excluded by the excludetimes
-% 
-% 
-%
+
+% also compute excess correlation per event
+
 % Options:
 %   'bin', n 	binsize in sec. Default 0.002 (2 ms)
 %   'tmax', n	maximum time for cross correlation. Default 1 sec.
@@ -161,6 +161,9 @@ if (calclinfields)
     % calculate the linear fields 
     out.lf1 = filtercalclinfields(ind(1:4), excludetimes, spikes, linpos, 'phasedist', 1);
     out.lf2 = filtercalclinfields([ind(1:2) ind(5:6)], excludetimes, spikes, linpos, 'phasedist', 1);
+end
+
+
 end
 
 

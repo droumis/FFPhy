@@ -1,0 +1,258 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>ripcorrVriptrigVoccNorm_20190304</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-05-04"><meta name="DC.source" content="ripcorrVriptrigVoccNorm_20190304.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">====================================</a></li><li><a href="#3">====================================</a></li><li><a href="#4">====================================</a></li><li><a href="#5">---------------- Paths ---------------------------------------------------</a></li><li><a href="#6">---------------- Run FIlter -----------------------------------------------</a></li><li><a href="#7">---------------- Save Filter Output ----------------------------------------</a></li></ul></div><pre class="codeinput"><span class="comment">%{
+</span><span class="comment">- fix results saving to make it one per animal
+</span><span class="comment">- remake ripcorr, riptrig, behave, ratemap and save per animal
+</span><span class="comment">- make jz2, d12 riptrig spiking
+</span><span class="comment">- remake riptrig spiking and include all epochs
+</span><span class="comment">- compute corrcoef per swr in new analysis function
+</span><span class="comment">-
+</span><span class="comment">- load ripcorr, riptrig, behave, ratemap
+</span><span class="comment">- combine results per day, subplots tight, perform with conf bounds
+</span><span class="comment">- next: compute per rip measure
+</span><span class="comment">- next: compute autocorr w score
+</span><span class="comment">%}
+</span><span class="comment">% requires 'tetrodepairs', Fp.tetpairfilter,</span>
+<span class="comment">% Fp = load_filter_params('mua_calcxcorrmeasures');</span>
+</pre><h2>====================================<a name="2"></a></h2><p>requires not tetpairs, and 'tetrodes', 'cells', Fp.cellfilter, also requires a bunch 0f varargins to the filterfunction: , 'TF',Fp.TF,'window',Fp.window, ...         'binsize',Fp.binsize,'frbinsize',Fp.frbinsize,'minthresh', ...         Fp.minstdthresh,'maxvelocity',Fp.maxvelocity,'minvelocity', ...         Fp.minvelocity, 'consensus_numtets',Fp.consensus_numtets,'welldist', ...         Fp.welldist); Fp = load_filter_params('riptrigspiking_withMU'); running that again is going to take too long.. load the joint data and svae out by animal me = animaldef('demetris'); riptrig_filename = 'D10-D13-JZ1-JZ3-JZ4_dfa_riptrigspikings_wtrack.mat'; riptrig_result = load(sprintf('%s/dfa_riptrigspiking/%s', me{2}, riptrig_filename)); save_filter_output(riptrig_result.F, paths.filtOutputDirectory, paths.filenamesave, 'per_animal', 1)</p><h2>====================================<a name="3"></a></h2><pre class="codeinput">Fp = load_filter_params({<span class="string">'all_epoch_types'</span>, <span class="string">'nonref_ntrodes'</span>, <span class="keyword">...</span>
+    <span class="string">'&gt;100spikes_cells'</span>,<span class="string">'ratemaps'</span>});
+</pre><h2>====================================<a name="4"></a></h2><p>Fp = load_filter_params('mua_calcxcorrmeasures');</p><pre class="codeinput">Fp.animals = {<span class="string">'JZ4'</span>};
+<span class="comment">% Fp.days = [8];</span>
+
+runFilterFramework = 1;
+saveFilterOutput = 1;
+loadFilterOutput = 0;
+</pre><h2>---------------- Paths ---------------------------------------------------<a name="5"></a></h2><pre class="codeinput">paths = make_paths(Fp);
+</pre><h2>---------------- Run FIlter -----------------------------------------------<a name="6"></a></h2><pre class="codeinput"><span class="keyword">if</span> runFilterFramework == 1
+<span class="comment">%     F = createfilter('animal', Fp.animals, 'epochs', ...</span>
+<span class="comment">%         Fp.epochfilter, 'tetrodes', Fp.tetfilter, 'cells', Fp.cellfilter, ...</span>
+<span class="comment">%         'iterator', Fp.iterator, 'excludetimefilter', Fp.timefilter);</span>
+<span class="comment">%     F = setfilterfunction(F, Fp.filtfunction, Fp.datatypes);</span>
+    F = runfilter(F);
+    <span class="keyword">for</span> a = 1:length(F)
+        F(a).filterparams = Fp;
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><pre class="codeoutput error">Undefined function or variable 'F'.
+Error in ripcorrVriptrigVoccNorm_20190304 (line 53)
+    F = runfilter(F);</pre><h2>---------------- Save Filter Output ----------------------------------------<a name="7"></a></h2><pre class="codeinput"><span class="keyword">if</span> saveFilterOutput == 1;
+    save_filter_output(F, paths.filtOutputDirectory, paths.filenamesave, <span class="string">'per_animal'</span>, 1)
+<span class="keyword">end</span>
+<span class="comment">%</span>
+<span class="comment">% loadresults = 1;</span>
+<span class="comment">% combine_results = 0;</span>
+<span class="comment">% compute_across_results = 0;</span>
+<span class="comment">% plotfigs = 0;</span>
+<span class="comment">%</span>
+<span class="comment">% me = animaldef('demetris');</span>
+<span class="comment">% animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'};</span>
+<span class="comment">%</span>
+<span class="comment">% if loadresults</span>
+<span class="comment">%     for an = 1:length(animals);</span>
+<span class="comment">%         % need to save the results out per animal to make this cleaner..</span>
+<span class="comment">%         % need to save the perform out one combined across days</span>
+<span class="comment">%         ripcorr_filename = 'D10-D13-JZ1-JZ3-JZ4_mua_calcxcorrmeasuress_wtrack';</span>
+<span class="comment">%         perform_filename =</span>
+<span class="comment">%         riptrig_filename = 'D10-D13-JZ1-JZ3-JZ4_dfa_riptrigspikings_wtrack.mat';</span>
+<span class="comment">%         ratemap_filename =</span>
+<span class="comment">%</span>
+<span class="comment">%         riptrig_result{an} = load(sprintf('%s/dfa_riptrigspiking/%s', me{2}, filename));</span>
+<span class="comment">%         ripcorr_result{an} = load(sprintf('%s/mua_calcxcorrmeasures/%s', me{2}, filename));</span>
+<span class="comment">%     end</span>
+<span class="comment">% end</span>
+<span class="comment">%</span>
+<span class="comment">% if combine_results</span>
+<span class="comment">%     % combine the results for each day</span>
+<span class="comment">%     % should i make a new combined result or 1 for each result type ?</span>
+<span class="comment">% end</span>
+<span class="comment">%</span>
+<span class="comment">% if compute_across_results</span>
+<span class="comment">%     % compute corr coef between rip corr and performance/change</span>
+<span class="comment">% end</span>
+<span class="comment">%</span>
+<span class="comment">% if plotfigs</span>
+<span class="comment">%     %% animal loop</span>
+<span class="comment">%     % for each animal, create a graph for the corr of the rip corr measure Vs ...</span>
+<span class="comment">%     % performance, per day</span>
+<span class="comment">%     % could also compute other across-days scores for rip trig, ratemaps,</span>
+<span class="comment">%     % autocorr, etc</span>
+<span class="comment">%</span>
+<span class="comment">%     %% figure (nt-pair) loop</span>
+<span class="comment">% end</span>
+<span class="comment">%</span>
+<span class="comment">%</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+
+
+%{
+- fix results saving to make it one per animal
+- remake ripcorr, riptrig, behave, ratemap and save per animal
+- make jz2, d12 riptrig spiking
+- remake riptrig spiking and include all epochs
+- compute corrcoef per swr in new analysis function
+- 
+- load ripcorr, riptrig, behave, ratemap
+- combine results per day, subplots tight, perform with conf bounds
+- next: compute per rip measure
+- next: compute autocorr w score
+%}
+% requires 'tetrodepairs', Fp.tetpairfilter, 
+% Fp = load_filter_params('mua_calcxcorrmeasures');
+
+%% ====================================
+% requires not tetpairs, and 'tetrodes', 'cells', Fp.cellfilter, 
+% also requires a bunch 0f varargins to the filterfunction:
+% , 'TF',Fp.TF,'window',Fp.window, ...
+%         'binsize',Fp.binsize,'frbinsize',Fp.frbinsize,'minthresh', ...
+%         Fp.minstdthresh,'maxvelocity',Fp.maxvelocity,'minvelocity', ...
+%         Fp.minvelocity, 'consensus_numtets',Fp.consensus_numtets,'welldist', ...
+%         Fp.welldist);
+% Fp = load_filter_params('riptrigspiking_withMU');
+% running that again is going to take too long.. load the joint data and
+% svae out by animal
+% me = animaldef('demetris');
+% riptrig_filename = 'D10-D13-JZ1-JZ3-JZ4_dfa_riptrigspikings_wtrack.mat';
+% riptrig_result = load(sprintf('%s/dfa_riptrigspiking/%s', me{2}, riptrig_filename));
+% save_filter_output(riptrig_result.F, paths.filtOutputDirectory, paths.filenamesave, 'per_animal', 1)
+%% ====================================
+Fp = load_filter_params({'all_epoch_types', 'nonref_ntrodes', ...
+    '>100spikes_cells','ratemaps'});
+%% ====================================
+% Fp = load_filter_params('mua_calcxcorrmeasures');
+Fp.animals = {'JZ4'};
+% Fp.days = [8];
+
+runFilterFramework = 1;
+saveFilterOutput = 1;
+loadFilterOutput = 0;
+
+%% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH Paths REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+paths = make_paths(Fp);
+%% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH Run FIlter REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+if runFilterFramework == 1
+%     F = createfilter('animal', Fp.animals, 'epochs', ...
+%         Fp.epochfilter, 'tetrodes', Fp.tetfilter, 'cells', Fp.cellfilter, ...
+%         'iterator', Fp.iterator, 'excludetimefilter', Fp.timefilter);
+%     F = setfilterfunction(F, Fp.filtfunction, Fp.datatypes);
+    F = runfilter(F);
+    for a = 1:length(F)
+        F(a).filterparams = Fp;
+    end
+end
+%% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH Save Filter Output REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+if saveFilterOutput == 1;
+    save_filter_output(F, paths.filtOutputDirectory, paths.filenamesave, 'per_animal', 1)
+end
+% 
+% loadresults = 1;
+% combine_results = 0;
+% compute_across_results = 0;
+% plotfigs = 0;
+% 
+% me = animaldef('demetris');
+% animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'};
+% 
+% if loadresults
+%     for an = 1:length(animals);
+%         % need to save the results out per animal to make this cleaner.. 
+%         % need to save the perform out one combined across days
+%         ripcorr_filename = 'D10-D13-JZ1-JZ3-JZ4_mua_calcxcorrmeasuress_wtrack';
+%         perform_filename = 
+%         riptrig_filename = 'D10-D13-JZ1-JZ3-JZ4_dfa_riptrigspikings_wtrack.mat';
+%         ratemap_filename = 
+% 
+%         riptrig_result{an} = load(sprintf('%s/dfa_riptrigspiking/%s', me{2}, filename));
+%         ripcorr_result{an} = load(sprintf('%s/mua_calcxcorrmeasures/%s', me{2}, filename));
+%     end
+% end
+% 
+% if combine_results
+%     % combine the results for each day
+%     % should i make a new combined result or 1 for each result type ?
+% end
+% 
+% if compute_across_results
+%     % compute corr coef between rip corr and performance/change
+% end
+% 
+% if plotfigs
+%     %% animal loop
+%     % for each animal, create a graph for the corr of the rip corr measure Vs ...
+%     % performance, per day
+%     % could also compute other across-days scores for rip trig, ratemaps,
+%     % autocorr, etc
+%     
+%     %% figure (nt-pair) loop
+% end
+% 
+% 
+
+##### SOURCE END #####
+--></body></html>

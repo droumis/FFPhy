@@ -61,7 +61,7 @@ postime = posdata(:,timecol);
 
 if strcmp(taskEnv, 'wtrack')
     statematrix = linpos{index(1)}{index(2)}.statematrix;
-elseif strcmp(taskEnv, 'openfield')
+else %if strcmp(taskEnv, 'openfield')
     statematrix.time = postime;
     statematrix.traj = ones(length(postime),1);
 end

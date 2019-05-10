@@ -46,7 +46,9 @@ if runFilterFramework == 1
         Fp.minvelocity, 'consensus_numtets',Fp.consensus_numtets,'welldist', ...
         Fp.welldist);
     F = runfilter(F);
-    F.datafilter_params = Fp;
+    for a = 1:length(F)
+        F(a).datafilter_params = Fp;
+    end
 end
 
 % ---------------- Save Filter Output ----------------------------------------

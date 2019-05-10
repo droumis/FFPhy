@@ -29,6 +29,7 @@ for s = param_set
             MarginTop = 0.15;
             MarginBottom =  0.1;
         case 'riptrigspiking'
+            position = [1 1 1 .4];
             colorSet = 'DR1';
             subtitlecolor = [.6 .6 .6];
             MarkerFaceColor = [.7 .7 .7];
@@ -46,7 +47,6 @@ for s = param_set
             SpacingHoriz = 0.02;
             SpacingVert = 0.0;
             Padding = 0.00;
-            position = [1.1 1.1 .3 .5];
             Spacing = 0.00;
             Padding = 0.00;
             MarginLeft = 0.05;
@@ -59,6 +59,11 @@ for s = param_set
             smoothing_length = 10;   % std of gaussian (in ms) used to smooth rip psth
             smoothing_width = round(smoothing_length*.001/binsize);   % smoothing width in number of bins
             kernel = gaussian(smoothing_width,smoothing_width*8);
+        case 'ripcorrVperform_wriptrig'
+            position = [.05 .05 .95 .95];
+        case 'ripcorr_Xdays'
+            position = [.05 .05 .5 .5];
+            cmap = colormap(lines);
     end
 end
 

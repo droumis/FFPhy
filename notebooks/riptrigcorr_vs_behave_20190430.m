@@ -2,7 +2,7 @@
 
 
 Fp = load_filter_params('mua_calcxcorrmeasures');
-Fp.animals = {'D10', 'D13', 'JZ1', 'JZ4'};
+Fp.animals = {'D10', 'D13', 'JZ1', 'JZ3', 'JZ4'};
 Fp.days = 1:7;
 
 %%
@@ -302,17 +302,19 @@ ylabel('spike count')
 %% for each pair (3 4), compute cc of pair ripcorr (5) vs behave cols (8,9)
 % put the cc into a new mat with the pair ID's 
 
-% don't use jz4.. looks like the ntrode tags havent been update yet.. only
-% few pairs
+
 
 for ani = 1:length(ripcorranimals);
     outbv{ani} = [];
     pairs = unique(ripcorr_result_mat{ani}(:,[3 4]), 'rows');
     for ipair = 1:length(pairs(:,1))
-        pinds = ismember(ripcorr_result_mat{ani}(:,[3 4]), pairs(ipair,:), 'rows');
-        [bv,bp] = corrcoef(ripcorr_result_mat{ani}(pinds, 5), ripcorr_result_mat{ani}(pinds, 8), ...
+        pinds = ismember(ripcorr_result_mat{ani}(:,[3 4]),...
+            pairs(ipair,:), 'rows');
+        [bv,bp] = corrcoef(ripcorr_result_mat{ani}(pinds, 5),...
+            ripcorr_result_mat{ani}(pinds, 8), ...
             'rows', 'pairwise');
-        [dbv,dbp] = corrcoef(ripcorr_result_mat{ani}(pinds, 5), ripcorr_result_mat{ani}(pinds, 9), ...
+        [dbv,dbp] = corrcoef(ripcorr_result_mat{ani}(pinds, 5),...
+            ripcorr_result_mat{ani}(pinds, 9), ...
             'rows', 'pairwise');
         outbv{ani} = [outbv{ani}; pairs(ipair,:) bv(1,2) bp(1,2) dbv(1,2) ...
             dbp(1,2)];

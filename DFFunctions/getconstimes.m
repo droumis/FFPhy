@@ -213,7 +213,7 @@ for i = 1:size(epochs,1)
             out{epochs(i,1)}{epochs(i,2)}.time = times;
             out{epochs(i,1)}{epochs(i,2)}.cons = zeros(size(times));
             disp(sprintf('d%de%d no consensus times!',epochs(i,1),epochs(i,2)))
-            clear times;
+%             clear times;
             continue
         end
         
