@@ -1,17 +1,18 @@
 
 % load riptrig data, cellinfo
 me = animaldef('demetris');
-animals = {'D10', 'D13', 'JZ1'};
+animals = {'D10', 'D13', 'JZ1', 'JZ3'};
 env = 'wtrack';
 loaddata = 0;
 
-get_perf_perrip = 0;
+get_perf_perrip = 1;
 paircorr_perform_corr = 1;
+save_results = 1;
 
 plotfigs = 0;
 plotperpair = 0;
 savefigs = 0;
-pausefigs = 1;
+pausefigs = 0;
 plotperday = 0;
 
 paths = make_paths('paircorrVperformance', 'wtrack');
@@ -27,11 +28,28 @@ if loaddata
         paircorr{an} = tmp.F.output{1};
         % get [day ep tet clA clB] indices for the data output struct array
         data_indices{an} = cell2mat({paircorr{an}.index}');
+        % filter for only wtrack days (no rotated wtrack)
+        days = unique(data_indices{an}(:,1));
+        task = loaddatastruct(andef{2},andef{3},'task');
+        for d = 1:length(days)
+            isrotated = cellfun(@(x) strcmp(x.environment,'wtrackrotated'), ...
+                task{days(d)},'un',1);
+            if any(isrotated)
+                days(d) = -1;
+            end
+        end
+        days = days(days>0);
+        usedatainds = ismember(data_indices{an}(:,1),days);
+        paircorr{an} = paircorr{an}(usedatainds);
+        data_indices{an} = data_indices{an}(usedatainds,:);
+
         %load eventcons
         ripcons{an} = loaddatastruct(andef{2},andef{3},'ca1rippleskons');
     end
 end
 
+% i can definately move this part to the analysis function, since it's per
+% epoch
 if get_perf_perrip
     % for each an, day - from ripcorr get the rip times from any of the pairs on this day, all epochs
     % from bstate, get an day's statespace allbound time, mode, and diffmode (need to add this col)
@@ -44,9 +62,10 @@ if get_perf_perrip
     for an = 1:length(animals)
         an_pairs = unique(data_indices{an}(:,[3 4]),'rows');
         days = unique(data_indices{an}(:,1));
+        andef = animaldef(animals{an});
         for d = 1:length(days)
             day = days(d);
-            epochs = unique(data_indices{an}(data_indices{an}(:,1)==days(d),2));
+            epochs = unique(data_indices{an}(data_indices{an}(:,1)==day,2));
             for e = 1:length(epochs)
                 epoch = epochs(e);
                 iep_datainds = find(ismember(data_indices{an}(:,[1 2]), [d epoch], 'rows'));
@@ -131,6 +150,7 @@ if paircorr_perform_corr
             ntA=an_pairs(p,1);
             ntB=an_pairs(p,2);
             ipair_inds = find(ismember(data_indices{an}(:,[3 4]),[ntA ntB], 'rows'));
+%             ipair_inds = ipair_inds
             ipair_data = pcorrbs{an}(ipair_inds);
             %             inds_mat = cell2mat({ipair_data.index}');
             % vertcat the results across day eps for this pair
@@ -171,7 +191,9 @@ if paircorr_perform_corr
             Fout(an).output(p).xc_diff_r = dR(2,1);
             Fout(an).output(p).xc_diff_p = dP(2,1);
         end
-        save_filter_output(Fout, paths.filtOutputDirectory, paths.filenamesave)
+        if save_results
+            save_filter_output(Fout, paths.filtOutputDirectory, paths.filenamesave)
+        end
     end
 end
 %% continue with the plotting stuff below in a new script so i can load the 

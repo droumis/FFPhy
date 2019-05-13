@@ -64,6 +64,11 @@ for s = param_set
         case 'ripcorr_Xdays'
             position = [.05 .05 .5 .5];
             cmap = colormap(lines);
+        case 'paircorrVperformance'
+            position = [.05 .05 .95 .95];
+            alpha = .001;
+        case 'paircorrVperformance_hm'
+            position = [.05 .05 .5 .5];
     end
 end
 
