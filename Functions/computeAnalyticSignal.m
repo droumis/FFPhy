@@ -1,14 +1,14 @@
 
-function computeAnalyticSignal(allNTDataCat, wp, animal, resultfilename, varargin)
+function out = computeAnalyticSignal(allNTDataCat, wp, animal, resultfilename, varargin)
 
 saveAnalyticSignal = 1;
 if ~isempty(varargin)
     assign(varargin{:});
 end
 waveletFFT = zeros(wp.nConv2pow, wp.numfrex);
-parfor fi=1:wp.numfrex % can use parfor
+for fi=1:wp.numfrex % can use parfor
     % create wavelet and get its FFT
-    % creating the morlet wavelet by combingin the complex sine wave and the gaussian
+    % creating the morlet wavelet by combining the complex sine wave and the gaussian
     sine_wave = exp(2*1i*pi*wp.frex(fi).*wp.timeWin); %make a complex sine wave
     bn = wp.nWavecycles(fi)/(2*pi*wp.frex(fi)); % std of the gaussian of the morlet wavelet. dependent on the freq and #cycles
     gaus_win = exp(-wp.timeWin.^2./(2*bn^2)); %the gaussian
@@ -28,7 +28,7 @@ dirstr = sprintf('%s%s/', FFanimdir, dtypedir);
 if ~isdir(dirstr);
     mkdir(dirstr);
 end
-parfor nt = 1:wp.nNTrodes
+for nt = 1:wp.nNTrodes %use parfor
     dataY = zeros(wp.nConv2pow, wp.nTimeSeries);
     astmp = zeros(wp.nConv2pow, wp.numfrex);
     astmp2 = zeros(wp.numfrex, wp.nConv2pow);
@@ -63,6 +63,11 @@ parfor nt = 1:wp.nNTrodes
 %         PHsavestr = sprintf('%s/nt%02d_waveSet-%s_PH.mat',dirstr, nt, wp.waveSet);
 %         save(PHsavestr, 'ph', '-v7.3');
 %         disp(sprintf('SAVED PHASE RESULTS ++++++++++ %s',PHsavestr))
+    else
+        out(nt).as = as;
+        out(nt).ph = ph;
+        out(nt).wp = wp;
+        out(nt).nNum = nt;
     end
 end
 

@@ -1,9 +1,11 @@
 
 close all
 
-loadBehaveStruct = 1;
-calculateStateSpace = 1;
-saveStateSpaceResults = 1;
+loadBehaveStruct = 0;
+calculateStateSpace = 0;
+filterpureWdays = 0;
+saveStateSpaceResults = 0;
+
 plotStateSpace = 1;
 savefigs = 1;
 pausefigs = 0;
@@ -36,8 +38,7 @@ usecolormap = 'jet';
 win = [.5 .5]; %in seconds
 % indwin = win*1500;
 %% ---------------- Data Filters --------------------------
-animal = 'D13';
-% animals = {'JZ1', 'D13'};
+animal = 'JZ3';
 % days = [1];
 behavestruct = 'BehaveState';
 eventtype = 'rippleskons';
@@ -69,6 +70,27 @@ if loadBehaveStruct;
 end
 %% ---------------- calculate StateSpace Model---------------------------------------------------
 wTrackBehave = cellfetch(BehaveState.statechanges, 'wtrack', 'alltags', 1);
+if filterpureWdays
+    andef = animaldef(animal)
+    task = loaddatastruct(andef{2},andef{3},'task');
+    days = 1:length(task);
+    for d = 1:length(days)
+        isrotated = cellfun(@(x) strcmp(x.environment,'wtrackrotated'), ...
+            task{days(d)},'un',1);
+        if any(isrotated)
+            days(d) = -1;
+        end
+    end
+    days = days(days>0);
+    for i =1:length(wTrackBehave)
+        inds = cell2mat({wTrackBehave.index}');
+        nouseinds = find(~ismember(inds(:,1),days));
+        wTrackBehave.index(nouseinds,:) = [];
+        wTrackBehave.values(nouseinds,:) = [];
+    end
+end
+
+
 allepsMat = []; dayepinds = []; eplengths = [];
 for iep = 1:length(wTrackBehave.index(:,1))
     allepsCell{iep} = BehaveState.statechanges{wTrackBehave.index(iep,1)}{wTrackBehave.index(iep,2)}.statechangeseq;
@@ -128,11 +150,13 @@ end
 
 %% ---------------- plot statespace---------------------------------------------------
 if plotStateSpace
+    Pp = load_plotting_params('statespacePerformance');
     try
         statespace = BehaveState.statespace;
     catch
 %         if the statespace wasnt yet saved into the behavstate studt then jst use the one generated in this session
     end
+
     for iseq = 1:3; % 1 Allbound; 2 Inbound; 3 Outbound
         switch iseq
             case 1
@@ -164,15 +188,21 @@ if plotStateSpace
         certaintycol = find(cell2mat(cellfun(@(x) strcmp(x,'certainty'), strsplit(statespace.pcFields, ' '), 'UniformOutput', false)));
         %plot statespace results
         tALL=1:size(pc,1)-1;
-        if savefigs && ~pausefigs; %if you want to save figs but not pause them to take a look.. just keep them invisible. i think this makes it faster and returns keyboard/mouse control during saving
-            ssFig = figure('Visible','off','units','normalized');
+        if savefigs && ~pausefigs;
+            close all
+            ifig = figure('Visible','off','units','normalized','position', ...
+                Pp.position);
         else
-            ssFig = figure('units','normalized');
+            ifig = figure('units','normalized','position',Pp.position);
         end
-        set(gcf,'color','white');
+        set(gcf,'color','white')
         subplot(2,1,1);
         hold on;
-        line([cumsum(statespace.eplengths); cumsum(statespace.eplengths)], [0 1], 'Color', [.9 .9 .9], 'LineStyle', '-', 'LineWidth', 1)
+        daybounds = find(diff(statespace.allbound(:,5)));
+        epbounds = find(abs(diff(statespace.allbound(:,6))));
+        
+        line([epbounds'; epbounds'], [0 1], 'Color', [.5 .5 .5], 'LineStyle', '-', 'LineWidth', 1)
+        line([daybounds'; daybounds'], [0 1], 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 2)
         plot(tALL, pc(2:end,modecol),'b-', 'LineWidth', 2); %plot behavior SS score
         errfillAll = fill([tALL fliplr(tALL)],[pc(2:end,lower5col); flipud(pc(2:end,upper5col))],[0 0 1],'linestyle','none');
         set(errfillAll, 'FaceAlpha', .2)
@@ -182,6 +212,7 @@ if plotStateSpace
         hold on; [x, y] = find(behavperform == 0);
         h = plot(x,y-0.05,'+'); set(h, 'MarkerFaceColor', 'none');
         set(h, 'MarkerEdgeColor', [.5 .5 .5]);
+        text(0, 1.1, 'rewarded', 'Color',[.2 .7 .2], 'FontSize', 10)
         axis([1 tALL(end)  0 1.05]);
         line([1 tALL(end)], [chance  chance], 'Color', [.5 .5 .5], 'LineStyle', '--');
         xlabel('Trial Number')
@@ -189,7 +220,11 @@ if plotStateSpace
         
         subplot(2,1,2)
         hold on;
-        line([cumsum(statespace.eplengths); cumsum(statespace.eplengths)], [0 1], 'Color', [.9 .9 .9], 'LineStyle', '-', 'LineWidth', 1)
+        text(0, 1.1, 'Day', 'Color',[0 0 0], 'FontSize', 10)
+        text(daybounds(2), 1.1, 'Epoch', 'Color',[.5 .5 .5], 'FontSize', 10)
+        line([epbounds'; epbounds'], [0 1], 'Color', [.5 .5 .5], 'LineStyle', '-', 'LineWidth', 1)
+        line([daybounds'; daybounds'], [0 1], 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 2)
+%         line([cumsum(statespace.eplengths); cumsum(statespace.eplengths)], [0 1], 'Color', [.9 .9 .9], 'LineStyle', '-', 'LineWidth', 1)
         plot(tALL,1 - pc(2:end,certaintycol),'k', 'LineWidth', 2)
         line([ 1 tALL(end)],[0.90 0.90], 'LineStyle', '-');
         line([ 1 tALL(end)],[0.99 0.99], 'LineStyle', '--');
@@ -199,7 +234,7 @@ if plotStateSpace
         xlabel('Trial Number')
         ylabel('Certainty')
         
-        sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ssFig);
+        sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
         suptitclr = [0 0 0];
         suptittxt = sprintf('%s %s', filenameTitle, trialType);
         iStitle = text(.5, .95, ['\fontsize{10} \color[rgb]' sprintf('{%d %d %d} %s ', suptitclr, suptittxt)]);

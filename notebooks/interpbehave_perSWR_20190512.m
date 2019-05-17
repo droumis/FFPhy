@@ -1,13 +1,20 @@
 
+% the data to run this is made by dfa_perripspikingcorr
+% as called in notebooks/perSWR_corr_20190507.m
+
+% this notebook gathers the paircorr data per nt pair, across days, finds
+% performance state for each rip time, and computes corr 
+
+
 % load riptrig data, cellinfo
 me = animaldef('demetris');
-animals = {'D10', 'D13', 'JZ1', 'JZ3'};
+animals = {'D12'};
 env = 'wtrack';
-loaddata = 0;
+loaddata = 1;
 
-get_perf_perrip = 1;
-paircorr_perform_corr = 1;
-save_results = 1;
+get_perf_perrip = 0;
+paircorr_perform_corr = 0;
+save_results = 0;
 
 plotfigs = 0;
 plotperpair = 0;

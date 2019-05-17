@@ -3,11 +3,11 @@
 loaddata = 0;
 plotfigs = 1;
 plot_heatmaps = 0;
-pausefigs = 1;
-savefigs = 0;
+pausefigs = 0;
+savefigs = 1;
 env = 'wtrack';
 
-animals = {'D10', 'D13', 'JZ1', 'JZ3'};
+animals = {'JZ3'};
 me = animaldef('demetris');
 
 %% Loaddata add the r and p to the animal level
@@ -96,8 +96,13 @@ if plotfigs
                     lh = area(smoothedpsth, plmin);
                     lh.LineWidth = 0.0001;
                     lh.FaceColor = [0 0 0];
-                    ylim([plmin max(smoothedpsth)])
-                    xlim([1 length(smoothedpsth)])
+                    try
+                        ylim([plmin max(smoothedpsth)])
+                        xlim([1 length(smoothedpsth)])
+                    catch
+                        fprintf('no spikes\n')
+                        continue
+                    end
                     set(gca,'XTick',[]);
                     set(gca,'YTick',[]);
 %                     clear ylim;
@@ -298,17 +303,17 @@ if plot_heatmaps
         Data2D = accumarray([data{an}.results(:,1), data{an}.results(:,2)], ...
             data{an}.results(:,6),[max(nta) max(ntb)],[],nan);
         s = sort(Data2D(:), 'ascend');
-        heatmap_custom(Data2D, 1:max(ys), 1:max(xs), '%0.3f', 'TickAngle', 0,...
+        heatmap_custom(Data2D, 1:max(ntb), 1:max(nta), '%0.3f', 'TickAngle', 0,...
             'ShowAllTicks', true,'Colormap', 'cool', 'Colorbar', true, ...
             'UseLogColormap', false, 'NaNColor', [0 0 0], 'MinColorValue', s(1),...
-            'MaxColorValue', s(25), 'GridLines', ':', 'FontSize', 4, 'TextColor', 'k');
+            'MaxColorValue', s(40), 'GridLines', ':', 'FontSize', 4, 'TextColor', 'k');
         ylabel('nta')
         xlabel('ntb')
         a = get(gca,'XTickLabel');
         set(gca,'XTickLabel',a,'FontName','arial','fontsize',18)
         %% ---- super title and colorbar----
         sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
-        sprtit = sprintf('%s MEC %s ripcorrVperfDIFF maxP e%.0f',animal,env,log(s(20)));
+        sprtit = sprintf('%s MEC %s ripcorrVperfDIFF maxP e%.0f',animal,env,log(s(40)));
         iStitle = text(.5, .95, {sprtit}, 'Parent', sprtitleax, 'Units', ...
             'normalized');
         set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...

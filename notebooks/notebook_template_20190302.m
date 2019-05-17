@@ -1,8 +1,9 @@
 
 
-Fp = load_filter_params('mua_calcxcorrmeasures');
-Fp.animals = {'D10', 'D13', 'JZ1', 'JZ3', 'JZ4'};
-Fp.days = [1:7];
+Fp = load_filter_params({'wtrack','ripples','nonref_ntrodes',...
+    '>100spikes_cells','riptrigspiking'});
+Fp.animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ3', 'JZ4'};
+% Fp.days = [1:7];
 
 runFilterFramework = 1;
 loadFilterOutput = 0;
@@ -12,7 +13,7 @@ plotstuff = 0;
 paths = make_paths(Fp);
 %% ---------------- Run FIlter -----------------------------------------------
 if runFilterFramework == 1    
-    F = createfilter('animal',Fp.animals,'days',Fp.days,'epochs', ... 
+    F = createfilter('animal',Fp.animals,'epochs', ... 
         Fp.epochfilter, 'cells',Fp.cellfilter, 'excludetime', Fp.timefilter, ...
         'iterator', Fp.iterator);
     F = setfilterfunction(F, Fp.filtfunction, {'spikes', ...

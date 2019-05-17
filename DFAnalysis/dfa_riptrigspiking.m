@@ -100,6 +100,7 @@ else
 end
 
 % empty output checking, 2 scenarios: %%%%%%%%%%%%%%%%%%%%%%%%
+try
 if sum(includetimes)==0 || isempty(ec) || isempty(ec.eventname)
     disp(sprintf('dfa: no includetimes d%de%d received from kk_getconstimes',day,epoch));
   % also, on some odd old animals (dudley..) cellinfo has some entries while
@@ -110,6 +111,10 @@ elseif index(4) > length(spikes{index(1)}{index(2)}{index(3)}) || ...
        isempty(spikes{index(1)}{index(2)}{index(3)}{index(4)})
     disp('cellinfo has an entry that spikes does not -- ignoring..')
     emptyoutput_flag = 1;
+end
+catch
+    fprintf('wut \n');
+    pause
 end
 if emptyoutput_flag
     out.index = index;

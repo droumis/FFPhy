@@ -59,6 +59,9 @@ for s = param_set
             smoothing_length = 10;   % std of gaussian (in ms) used to smooth rip psth
             smoothing_width = round(smoothing_length*.001/binsize);   % smoothing width in number of bins
             kernel = gaussian(smoothing_width,smoothing_width*8);
+        case 'all_nts_days_riptrigspiking'
+            position = [.05 .05 .95 .95];
+            
         case 'ripcorrVperform_wriptrig'
             position = [.05 .05 .95 .95];
         case 'ripcorr_Xdays'
@@ -69,6 +72,10 @@ for s = param_set
             alpha = .001;
         case 'paircorrVperformance_hm'
             position = [.05 .05 .5 .5];
+        case 'statespacePerformance'
+            position = [.05 .05 .5 .5];
+        case 'riptrigFRxdays'
+            position = [.05 .05 .3 .6];
     end
 end
 

@@ -145,7 +145,8 @@ if calculateAnalyticSignal
         ixpc.dataByDay = []; ixpc.dataByDay{ian} = [];
         ixpc.animals{ian} = F(ian).animal{1};
         ixpc.andays{ian} = find(~cellfun(@isempty,F(ian).output)); %get nonempty eps
-        [ixpc.index{ian}, allNTDataCat, ixpc.dataByDay{ian}] = gatherRipSnips(ixpc.andays{ian}, F(ian).output);
+        [ixpc.index{ian}, allNTDataCat, ixpc.dataByDay{ian}] = gatherRipSnips(...
+            ixpc.andays{ian}, F(ian).output);
 %         [ixpc.IndTypes{ian}, ixpc.datatypes{ian}, ixpc.datatypesMat{ian}] = getIndsByType(indsSet,eState, ian, 'dataByDay', ixpc.dataByDay{ian});
         ixpc.wp = getWaveParams(waveSet, allNTDataCat);
         computeAnalyticSignal(allNTDataCat, ixpc.wp,ixpc.animals{ian}, resultfilename, 'saveAnalyticSignal', saveAnalyticSignal);

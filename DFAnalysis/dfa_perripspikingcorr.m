@@ -116,8 +116,8 @@ try
     ntB_spiketimes = sort(cell2mat(cellfun(@(x) x.data, ...
         spikes{day}{ep}{ntB}, 'un',0)'));
 catch
-    error('couldnt load spikes %s d%de%d ntA:%d ntB:%d \n', an, day, ep);
-    out = make_blank();
+    warning('couldnt load spikes %s d%de%d ntA:%d ntB:%d \n', an, day, ep);
+    out = make_blank(index);
     return
 end
 % iterate through each event and calculate corrcoef of spike trains
@@ -194,7 +194,7 @@ out.excludeperiods = excludeperiods;
 out.xc_time = xc.time;
 end
 
-function out = make_blank(varargin)
+function out = make_blank(idx, varargin)
 out.ntA_spike_raster = [];
 out.ntB_spike_raster = [];
 out.ntA_10msFR_raster = [];
@@ -211,7 +211,7 @@ out.ntAB_excesscorr = [];
 out.ntAB_rms = [];
 
 out.time = [];
-out.index = index;
+out.index = idx;
 out.win = [];
 
 out.excludeperiods = [];

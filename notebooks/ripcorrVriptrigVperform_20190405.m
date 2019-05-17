@@ -15,7 +15,6 @@ savefigs = 1;
 pausefigs = 0;
 
 % load data for each animal and get info about indices and which are mu
-
 if loaddata
     for an =1:length(animals);
         f = 'dfa_riptrigspiking';
