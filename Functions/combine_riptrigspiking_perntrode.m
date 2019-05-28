@@ -1,5 +1,5 @@
-%% takes the stack of results per an,day,ep,nt,cl and returns an,nt with cl
-% combined and epochs vertstacked
+%% takes the stack of results per an,day,ep,nt,cl and returns an,nt with 
+% mu cl combined per ntrode
 
 function out = combine_riptrigspiking_perntrode(data, varargin)
 
@@ -29,6 +29,14 @@ for ian = 1:numel(animals)
         nt_mu_data_inds = find(ismember(data_keys,nt_mu_keys,'rows'));
         % MU should be already combined into 1 cluster per ntrode
         out{ian}(int).mudata = idata(nt_mu_data_inds);
+        % need to incorporate eplengths and psth time into the data level
+        % since they are common to all ntrodes for this animal
+        % this is how i was doing it previously elsewhere.. just need to
+        % adapt it..
+%         psth{ian}(int).eplengths{days(idy)} = cellfun(@(x) ...
+%             length(x(:,1)), per_ep_mu_stack,'un',1);
+%         psth{ian}(int).psth_time = idata(nt_ep_mu_inds(k)).time;
+        
         if any(su_keys(:,3)==ntrode)
             nt_su_keys = su_keys(su_keys(:,3)==ntrode,:);
             nt_su_data_inds = find(ismember(data_keys,nt_su_keys,'rows'));

@@ -12,8 +12,7 @@ Fp.animals = {'D10'}; % don't use D!2 day 7 until the sorting is done
 
 runFilterFramework = 1;
 saveFilterOutput = 1;
-% loadFilterOutput = 0;
-% plotstuff = 0;
+loadFilterOutput = 0;
 
 %% ---------------- Paths ---------------------------------------------------
 paths = make_paths(Fp.filtfunction, Fp.epochEnvironment);

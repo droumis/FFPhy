@@ -10,6 +10,11 @@ if ~isa(param_set,'cell')
 end
 for s = param_set
     switch s{1}
+        case 'riptriglfp_acrossdays'
+            position = [.1 .1 .8 .3];
+        case 'riptriglfp_acrossdays_allntrodes'
+            position = [.1 .1 .8 .8];
+            
         case 'occnormfiring'
             colorSet = 'DR1';
             fonttype = 'Arial';

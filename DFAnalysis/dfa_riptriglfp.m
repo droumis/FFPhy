@@ -85,10 +85,15 @@ for currrip=1:length(eventStartIndices) %for each ripple from source region
     for iNTrode = 1:length(index(:,3)) %for each ntrode
         % Gather lfp data for each ntrode within the current rip window
         for ilfptype = 1:length(LFPtypes)
-            eval(['out.data{ilfptype}{currrip}(iNTrode,:) =' LFPtypes{ilfptype}...
-                '{index(iNTrode,1)}{index(iNTrode,2)}{index(iNTrode,3)}.data(eventStartIndices(currrip)-wininds(1):eventStartIndices(currrip)+wininds(2));']);
+            try
+                eval(['out.data{ilfptype}{currrip}(iNTrode,:) =' LFPtypes{ilfptype}...
+                    '{index(iNTrode,1)}{index(iNTrode,2)}{index(iNTrode,3)}.data(eventStartIndices(currrip)-wininds(1):eventStartIndices(currrip)+wininds(2));']);
 %             out.data{1}{currrip}(iNTrode,:) = eeg{index(iNTrode,1)}{index(iNTrode,2)}{index(iNTrode,3)}.data(eventStartIndices(currrip)-wininds(1):eventStartIndices(currrip)+wininds(2));
 %             out.data{2}{currrip}(iNTrode,:) = ripple{index(iNTrode,1)}{index(iNTrode,2)}{index(iNTrode,3)}.data(eventStartIndices(currrip)-wininds(1):eventStartIndices(currrip)+wininds(2));
+            catch
+                fprintf('bluuurp JZ3 day 4\n');
+                continue
+            end
         end
     end
 end

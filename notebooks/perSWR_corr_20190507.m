@@ -33,11 +33,11 @@ if runFilterFramework == 1
     F = runfilter(F);
 end
 %% ---------------- Save Filter Output ----------------------------------------
-if saveFilterOutput == 1;
+if saveFilterOutput == 1
     save_filter_output(F, paths.filtOutputDirectory, paths.filenamesave)
 end
 %% ---------------- Load Filter Output ----------------------------------------
-if loadFilterOutput == 1;
+if loadFilterOutput == 1
     for ian = 1:length(Fp.animals)
         F(ian) = load_filter_output(paths.filtOutputDirectory, ...
             paths.filenamesave, 'filetail', sprintf('_%s.mat',Fp.animals{ian}));
