@@ -54,7 +54,7 @@
 % reset analysis, cross-freq-coupling, etc
 
 % fuck ok this needs to be fixed since previously i was
-% stacking per day, across epochs.. and now i'm not.. 
+% stacking per day, across epochs.. and now i'm not..
 % should i just start doing what mike cohen does? using
 % a single cube of data for all the riptrigmu (rip x
 % time x ntrode) ?? i think this is a good idea.. it's
@@ -67,7 +67,7 @@
 % would also make life a lot easier when converting
 % back and forth with python.. to what extent do i need
 % to standardize? i should have a single struct with
-% the .data field.. then any other fields as a tag or as an index 
+% the .data field.. then any other fields as a tag or as an index
 % vector the length a matching dim of the corresponding
 % data dimension.. i.e. ripplenum should be
 % something like size (1089 x 1 x 1) whereas ntrode should be
@@ -80,144 +80,180 @@
 % result data.. i like this a lot as an
 % analysis/plotting standard format to get the analysis
 % results into.. of would be kind of weird
-% to do for 2d or gridded data like place fields, 
+% to do for 2d or gridded data like place fields,
 % remember that i need to focus on getting riptriggered multiunit
 % firing rate rasters..
 % thought about this again... i can't just use
 % multiunit firing because i want to estimate phase
 % reset.. which is dependent on frequency, which is
-% dependent on smoothing/bandwidth parameters 
+% dependent on smoothing/bandwidth parameters
 
-% but i still really want to use spikes... 
-% maybe just go forward with multiunit spikes right now.. 
+% but i still really want to use spikes...
+% maybe just go forward with multiunit spikes right now..
 % and what? no i need to fix rip triggreed lfp.
 
 % PLOT UNREFERENCE AND REF LFP
 
-animals = {'D10'};
-filtfunction = 'dfa_riptriglfp';
-env = 'wtrack';
+Fp.animals = {'D12', 'JZ1'}; 
+Fp.filtfunction = 'dfa_riptriglfp';
+epochEnvironment = 'sleep';
+Fp.add_params = {epochEnvironment, 'ripples', '<1cm/s'};
 me = animaldef('demetris');
 
-loaddata = 1;
-combine_per_ntrode = 0;
-plotfigs = 0;
+run_ff = 0;
+savedata = 0;
+load_data = 0;
+stack_data = 1;
+plotfigs = 1;
 pausefigs = 0;
-savefigs = 0;
+savefigs = 1;
+Fp = load_filter_params(Fp, 'add_params', Fp.add_params);
+%% run filter/func
+if run_ff == 1
+    F = createfilter('animal', Fp.animals, 'epochs', Fp.epochfilter, 'eegtetrodes', ...
+        Fp.tetfilter, 'excludetime', Fp.timefilter, 'iterator', Fp.iterator);
+    F = setfilterfunction(F, Fp.filtfunction, Fp.datatypes, Fp.options{:});
+    F = runfilter(F);
+    for d = 1:length(F)
+        F(d).datafilter_params = Fp;
+    end
+end
+%% save data
+if savedata == 1
+    save_data(F, Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, 'filetail',...
+        ['_', Fp.epochEnvironment, '_', 'refUnref'])
+end
 %% load data
-paths = make_paths(filtfunction, env);
-if loaddata
-    data = load_filter_output(paths.filtOutputDirectory, paths.filenamesave, ...
-        animals);
+if load_data
+    F = load_filter_output(Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, ...
+        Fp.animals, 'filetail', ['_', Fp.epochEnvironment, '_', 'refUnref']);
 end
 %% combine per ntrode
-if combine_per_ntrode
-%     psth = combine_riptrigspiking_perntrode(data);
-    datastack = stack_riptriglfp(data);
+if stack_data
+    datastack = stack_riptriglfp(F);
 end
-
 %% plot
 if plotfigs
-    Pp = load_plotting_params('all_nts_days_riptrigspiking');
-    for ian = 1:numel(animals)
-        animal = animals{ian};
-        fprintf('%s\n',animal);
-        %% ---- init fig----
-        if savefigs && ~pausefigs
-            close all
-            ifig = figure('Visible','off','units','normalized','position', ...
-                Pp.position);
-        else
-            ifig = figure(2);%'units','normalized','position',Pp.position);
-        end
-        set(gcf,'color','white')
-        allnts = [data{ian}.ntrode];
-        ntrodes = allnts;
-        idx = cell2mat({data{ian}(1).mudata.index}');
-        days = unique(idx(:,1), 'stable');
-        numntrodes = numel(ntrodes);
-        numdays = numel(days);
-        ha = tight_subplot(numntrodes, numdays,[.01 .005],[.05 .05],[.05 .05]);
-        for int = 1:numntrodes
-            nt = ntrodes(int);
-            ntind = find(allnts==nt);
-            for idy = 1:numdays
-                axes(ha(idy+((int-1)*numdays)));
-                if ~isempty(data{ian}(ntind).mudata)
-                    
-                    day_mu_psth = cell2mat(data{ian}(ntind).mudata(days(idy)));
-                    [sx, sy] = find(day_mu_psth');
-                    f1 = scatter(sx,sy,2, 'filled');
-                    
-                    f1.MarkerFaceAlpha = 0.1;
-                    
-                    f1.MarkerFaceColor = [0 0 0];
-                    axis tight
-                    set(gca,'XTick',[]);
-                    set(gca,'YTick',[]);
-                    if idy == 1
-                        ylabel(sprintf('%d',nt))
-                    end
-                    if int == numntrodes
-                        xlabel(sprintf('%d',days(idy)))
-                        set(gca,'XTick', [1 size(day_mu_psth,2)-1]);
-                        if idy == 1
-                            set(gca,'XTickLabel', round(data{ian}(ntind).mudata(1).time([1, end]),1));
-                        end
-                    end
-                    % ripple line
-                    centerline = round(size(day_mu_psth,2)/2);
-                    lh = line([centerline centerline], [1 size(day_mu_psth,1)]);
-                    lh.LineWidth = 1;
-                    lh.Color = [.8 0 0 .8];
-                    % epoch lines
-                    le = line([1 size(day_mu_psth,2)], ...
-                        repmat(data{ian}(ntind).eplengths{days(idy)}(1),2,1), 'Color', [0 0 0]);
+    Pp = load_plotting_params('riptriglfp_waterfall');
+    for ian = 1:numel(Fp.animals)
+        animal = Fp.animals{ian};
+        anidx = find(strcmp({datastack.animal}, animal));
+        ntrodes = datastack(anidx).ntrodes;
+        for t = 1:length(datastack(anidx).lfptypes)
+            %         time = datastack(ian).time;
+            %% ---- init fig----
+            if savefigs && ~pausefigs
+                close all
+                ifig = figure('Visible','off','units','normalized','position', ...
+                    Pp.position);
+            else
+                ifig = figure('units','normalized','position',Pp.position);
+            end
+            set(gcf,'color','white')
+            %%
+            ha = tight_subplot(2, ceil(max(ntrodes)/2), [.05 .005],[.05 .1],[.05 .05]);
+            for nti = 1:length(ntrodes)
+                ntrode = ntrodes(nti);
+%                 subaxis(2, length(ntrodes)/2, nti);
+                axes(ha(ntrode));
+                d = datastack(anidx).data{t}(:,:,nti);
+                %trim and nan zscore
+                mididx = ceil(size(d,2)/2); % right now assumes center is rip start
+                srate = 1500;
+                d = double(d(:,mididx-(Pp.pwin(1)*srate):mididx+(Pp.pwin(2)*srate)));
+                ptime = Fp.time(mididx-(Pp.pwin(1)*srate):mididx+(Pp.pwin(2)*srate));
+                m = nanmean(d,2);
+                s = nanstd(d, [], 2);
+                z = (d-m)./s;
+                % plot
+                imagesc(ptime, 1:size(z,1), z)
+                % day/epoch lines
+                dayind = find(diff(datastack(anidx).dayeps(:,1))>0);
+                epbounds = cumsum(datastack(anidx).numrips_perep);
+                daybounds = epbounds(dayind);
+                line([-Pp.pwin(1) Pp.pwin(2)], [epbounds'; epbounds'], 'color', [.9 .9 .9])
+                line([-Pp.pwin(1) Pp.pwin(2)], [daybounds'; daybounds'], 'color', [0 0 0])
+                line([0 0], [1 size(z,1)], 'color', [0 0 0], 'linestyle', '--')
+                title(sprintf('%d', ntrode))
+                if nti ~= length(ntrodes)/2+1
+                    set(gca, 'ytick', []);
+                    set(gca, 'xtick', []);
                 end
             end
-        end
-        
-        %% ---- super title and colorbar----
-        sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
-        %         if justSU
-        sprtit = sprintf('%s %s riptrigmu_unrefed', env, animal); % just change the stitle manually for diff conditions
-        %         else
-        %             sprtit = sprintf('%s %s riptrigmusu', env, animal);
-        %         end
-        iStitle = text(.5, .99, {sprtit}, 'Parent', sprtitleax, 'Units', ...
-            'normalized');
-        set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
-            'horizontalAlignment', 'center','FontSize', 16);
-        
-        spylabel = text(.01, .5, sprintf('ntrode'), 'Parent', sprtitleax, 'Units', ...
-            'normalized', 'Rotation', 90);
-        set(spylabel,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
-            'horizontalAlignment', 'center', 'FontSize', 16);
-        
-        spxlabel = text(.5, .01, sprintf('day'), 'Parent', sprtitleax, 'Units', ...
-            'normalized');
-        set(spxlabel,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
-            'horizontalAlignment', 'center', 'FontSize', 16);
-        %% ---- pause, save figs ----
-        if pausefigs
-            pause
-        end
-        if savefigs
-            save_figure(paths.figdirectory, paths.filenamesave, sprtit)
-            close all
+            %% super
+            sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
+            sprtit = sprintf('%s %s %s %s', animal, datastack(anidx).lfptypes{t}, ...
+                Fp.paths.filenamesave(5:end), Fp.epochEnvironment);
+            iStitle = text(.5, .98, {sprtit}, 'Parent', sprtitleax, 'Units', 'normalized');
+            set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
+                'horizontalAlignment', 'center','FontSize', 12);
+            spylabel = text(.02, .5, sprintf('ripnum'), 'Parent', sprtitleax, 'Units', ...
+                'normalized', 'Rotation', 90);
+            set(spylabel,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
+                'horizontalAlignment', 'center', 'FontSize', 12);
+            
+            spxlabel = text(.5, .02, sprintf('time'), 'Parent', sprtitleax, 'Units', ...
+                'normalized');
+            set(spxlabel,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
+                'horizontalAlignment', 'center', 'FontSize', 12);
+            %% ---- pause, save figs ----
+            if pausefigs
+                pause
+            end
+            if savefigs
+                save_figure(Fp.paths.figdirectory, Fp.paths.filenamesave, sprtit)
+                close all
+            end
         end
     end
 end
 
 
-
-
-
-
-
-
-
-
-
-
-
+%%
+% for t = 1:length(datastack(ian).data)+1
+%                 subaxis(1,length(datastack(ian).data)+1, t);
+%                 if t <3
+%                     d = datastack(ian).data{t}(:,:,ntrode);
+%                      %trim and nan zscore
+%                     mididx = ceil(size(d,2)/2); % right now assumes center is rip start
+%                     srate = 1500;
+%                     d = double(d(:,mididx-(Pp.pwin(1)*srate):mididx+(Pp.pwin(2)*srate)));
+%                     ptime = time(mididx-(Pp.pwin(1)*srate):mididx+(Pp.pwin(2)*srate));
+%                     m = nanmean(d,2);
+%                     s = nanstd(d, [], 2);
+%                     z = (d-m)./s;
+%                     % plot
+%                     imagesc(ptime, 1:size(z,1), z)
+%                     % day/epoch lines
+%                     dayind = find(diff(datastack(ian).dayeps(:,1))>0);
+%                     epbounds = cumsum(datastack(ian).numrips_perep);
+%                     daybounds = epbounds(dayind);
+%                     line([-Pp.pwin(1) Pp.pwin(2)], [epbounds'; epbounds'], 'color', [.9 .9 .9])
+%                     line([-Pp.pwin(1) Pp.pwin(2)], [daybounds'; daybounds'], 'color', [0 0 0])
+%                     line([0 0], [1 size(z,1)], 'color', [0 0 0], 'linestyle', '--')
+%                     title(datastack(ian).lfptypes{t})
+%                 else
+%                     refntrode = 14;
+%                     d = datastack(ian).data{2}(:,:,ntrode);
+%                     r = datastack(ian).data{2}(:,:,refntrode);
+%                     d = d+r;
+%                      %trim and nan zscore
+%                     mididx = ceil(size(d,2)/2); % right now assumes center is rip start
+%                     srate = 1500;
+%                     d = double(d(:,mididx-(Pp.pwin(1)*srate):mididx+(Pp.pwin(2)*srate)));
+%                     ptime = time(mididx-(Pp.pwin(1)*srate):mididx+(Pp.pwin(2)*srate));
+%                     m = nanmean(d,2);
+%                     s = nanstd(d, [], 2);
+%                     z = (d-m)./s;
+%                     % plot
+%                     imagesc(ptime, 1:size(z,1), z)
+%                     % day/epoch lines
+%                     dayind = find(diff(datastack(ian).dayeps(:,1))>0);
+%                     epbounds = cumsum(datastack(ian).numrips_perep);
+%                     daybounds = epbounds(dayind);
+%                     line([-Pp.pwin(1) Pp.pwin(2)], [epbounds'; epbounds'], 'color', [.9 .9 .9])
+%                     line([-Pp.pwin(1) Pp.pwin(2)], [daybounds'; daybounds'], 'color', [0 0 0])
+%                     line([0 0], [1 size(z,1)], 'color', [0 0 0], 'linestyle', '--')
+%                     title('ref+unref')
+%
+%                 end

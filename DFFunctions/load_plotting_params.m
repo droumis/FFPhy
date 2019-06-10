@@ -10,6 +10,36 @@ if ~isa(param_set,'cell')
 end
 for s = param_set
     switch s{1}
+        case 'ripcleaning'
+            position = [.05 .05 .75 .75];
+            pre_excl_win = 30; %seconds
+            post_excl_win = 2; %seconds
+            ax_srate = 30; %Hz
+            cm_thresh = 10; %cm
+            sig = 400;
+            patchtxtsz = 8;
+        case 'riptrigall'
+            position = [.05 .05 .75 .75];
+            patchtxtsz = 8;
+            stdthresh = 2;
+            t = 10;
+            tscale = [1000 1000 t t t t t];
+            nrow = 8;
+            SpacingHoriz = 0.02;
+            SpacingVert = 0.04;
+            Padding = 0.00;
+            Spacing = 0.00;
+            Padding = 0.00;
+            MarginLeft = 0.05;
+            MarginRight = 0.05;
+            MarginTop = 0.1;
+            MarginBottom =  0.1;
+        case 'riptriglfp_perLFPtype_allntrodes'
+            position = [.1 .1 .9 .9];
+            pwin = [1 1];
+        case 'riptriglfp_allLFPtype_perntrode'
+            position = [.1 .1 .9 .4];
+            pwin = [1 1];
         case 'riptriglfp_acrossdays'
             position = [.1 .1 .8 .3];
         case 'riptriglfp_acrossdays_allntrodes'

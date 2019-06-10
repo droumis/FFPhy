@@ -113,8 +113,8 @@ elseif index(4) > length(spikes{index(1)}{index(2)}{index(3)}) || ...
     emptyoutput_flag = 1;
 end
 catch
-    fprintf('wut \n');
-    pause
+    fprintf('no events. skipping\n');
+    emptyoutput_flag = 1;
 end
 if emptyoutput_flag
     out.index = index;
@@ -177,6 +177,7 @@ if ~isempty(welldist)
      if ~isnan(o{day}{epoch}.time)
          nonwellperiods = vec2list(~o{day}{epoch}.nearwell,o{day}{epoch}.time);
          eventtimes = eventtimes(logical(isExcluded(eventtimes,nonwellperiods)));
+         eventstartend = eventstartend(logical(isExcluded(eventstartend(:,1),nonwellperiods)), :);
      end
 end
 
@@ -274,6 +275,7 @@ else
     out.epoch_environment = '';
 end
 out.time = time;
+out.eventstartend = ;
 out.frtime = frtime;
 % out.psth = sparse(psth);
 out.psth = psth;

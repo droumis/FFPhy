@@ -2,7 +2,7 @@
 
 % get ripple locked ripple triggered LFP phase for each ntrode
 
-animals = {'D10'};
+animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'};
 
 filtfunction = 'riptriglfp';
 env = 'wtrack';

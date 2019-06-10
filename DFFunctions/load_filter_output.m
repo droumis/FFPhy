@@ -1,17 +1,21 @@
 function data = load_filter_output(filtOutputDirectory, filename, animals, varargin)
-% load filter framework output per animal
-% useful to make paths with make_paths, then:
-% load_filter_output(paths.filtOutputDirectory, paths.filenamesave, animals)
-% specify additional filename string with varargin 'filetai'
+% d = load_filter_output(Fp.paths.filtOutputDirectory, Fp.paths.filename, Fp.animals);
+% load filter framework results
 
-filetail = '.mat';
+% specify additional filename string with varargin 'filetail'
+
+% Author: Demetris Roumis June 2019
+
+filetail = '';
 if ~isempty(varargin)
     assign(varargin{:})
 end
 
 for an = 1:length(animals)
-    animal = ['_' animals{an}];
-    data{an} = load(sprintf('%s/%s%s%s',filtOutputDirectory, filename, animal, filetail));
-    fprintf('loaded: %s/%s%s%s \n',filtOutputDirectory, filename, animal, ...
-        filetail)
+    tmp = load(sprintf('%s/%s%s_%s.mat',filtOutputDirectory, filename, filetail, ...
+        animals{an}));    
+    fprintf('loaded: %s/%s%s_%s.mat \n',filtOutputDirectory, filename, filetail, ...
+        animals{an})
+    data{an} = tmp.F;
 end
+data = [data{:}]'; % merge the cell array of structs to match filter output form

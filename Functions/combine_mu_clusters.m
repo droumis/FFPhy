@@ -1,5 +1,5 @@
 %% takes the stack of results per an,day,ep,nt,cl and returns similar but 
-% MU clusters combined
+% MU clusters per ntrode combined
 
 function Fout = combine_mu_clusters(F)
     animals = cellfun(@(x) x{3}, {F.animal}, 'un', 0);

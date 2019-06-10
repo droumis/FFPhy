@@ -1,8 +1,12 @@
-function save_filter_output(F, filtOutputDirectory, filename, varargin)
+function save_data(F, filtOutputDirectory, filename, varargin)
 
+filetail = '';
 per_animal = 1;
 if ~isempty(varargin)
     assign(varargin{:});
+end
+if ~isempty(filetail)
+    filename = [filename, filetail];
 end
 try
     animals = cellfun(@(x) x{3}, {F.animal}, 'un', 0);
@@ -19,11 +23,9 @@ end
 end
 
 function save_F(F, filtOutputDirectory, filename, filetail)
-if ~isdir(filtOutputDirectory);
+if ~isdir(filtOutputDirectory)
     mkdir(filtOutputDirectory);
 end
-save(sprintf('%s/%s_%s.mat',filtOutputDirectory, filename, filetail), 'F', ...
-    '-v7.3');
-fprintf('filteroutput saved to %s/%s_%s \n', filtOutputDirectory, filename, ...
-    filetail)
+save(sprintf('%s/%s_%s.mat',filtOutputDirectory, filename, filetail), 'F', '-v7.3');
+fprintf('saved to %s/%s_%s \n', filtOutputDirectory, filename, filetail)
 end
