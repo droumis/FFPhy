@@ -17,12 +17,15 @@ get_filter_vecs = 0;
 plotfigs = 1;
 plot_allntrodes = 0;
 plot_all_lfptypes = 0;
-plot_avg_traces = 1;
+plot_avg_traces = 0;
+plot_avg_traces_perep = 1;
 savefigs = 1;
 pausefigs = 0;
 
-animals = {'D10'};
+animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ2', 'JZ4'};
 add_params = {'wtrack'};
+
+
 Fp.animals = animals;
 Fp.add_params = add_params;
 Fp.filtfunction = 'dfa_riptriglfp';
@@ -143,7 +146,6 @@ if plotfigs
                 scratchstack = lfpstack(anidx).data{t};
                 scratchstack(~exclude_rips,:,:) = [];
                 
-                
                 for nti = 1:length(ntrodes)
                     ntrode = ntrodes(nti);
                     %                 subaxis(2, length(ntrodes)/2, nti);
@@ -225,9 +227,9 @@ if plotfigs
                     scratchstack = lfpstack(anidx).data{t};
                     scratchstack(~exclude_rips,:,:) = [];
                     d = scratchstack(:,:,nti);
-%                     a = squeeze(d)';
-%                     z = 10*log10(abs(hilbert(a))');
-%                     imagesc(z)
+                    %                     a = squeeze(d)';
+                    %                     z = 10*log10(abs(hilbert(a))');
+                    %                     imagesc(z)
                     
                     % trim and nan zscore
                     mididx = ceil(size(d,2)/2); % right now assumes center is rip start
@@ -240,7 +242,7 @@ if plotfigs
                     imagesc(ptime, 1:size(z,1), z)
                     colormap(parula)
                     % day/epoch lines
-%                     lfpstack(anidx).dayeps(:,1)
+                    %                     lfpstack(anidx).dayeps(:,1)
                     exdayep = dayep(~exclude_rips,:);
                     daybounds = find(diff(exdayep(:,1)));
                     epbounds = find(abs(diff(exdayep(:,2))));
@@ -296,20 +298,22 @@ if plotfigs
                 end
                 set(gcf,'color','white')
                 for t = 1:length(lfpstack(anidx).lfptypes)
-                    subplot(3,length(lfpstack(anidx).lfptypes), [t t+length(lfpstack(anidx).lfptypes)])
-                    %                 ha = tight_subplot(2, ceil(max(ntrodes)/2), [.05 .005],[.05 .1],[.05 .05]);
-                    exclude_rips = any(lfpstack(anidx).filtervecs,2);
-                    scratchstack = lfpstack(anidx).data{t};
-                    scratchstack(~exclude_rips,:,:) = [];
+                    subplot(4,length(lfpstack(anidx).lfptypes), ...
+                        [t t+length(lfpstack(anidx).lfptypes) t+length(lfpstack(anidx).lfptypes)*2])
+                    use_filts = [1 3];
+                    
+                    exclude_rips = any(lfpstack(anidx).filtervecs(:,use_filts),2);
+                    scratchstack = double(lfpstack(anidx).data{t});
+                    scratchstack(exclude_rips,:,:) = 0;
                     d = scratchstack(:,:,nt);
-%                     a = squeeze(d)';
-%                     z = 10*log10(abs(hilbert(a))');
-%                     imagesc(z)
+                    %                     a = squeeze(d)';
+                    %                     z = 10*log10(abs(hilbert(a))');
+                    %                     imagesc(z)
                     
                     % trim and nan zscore
                     mididx = ceil(size(d,2)/2); % right now assumes center is rip start
                     srate = 1500;
-                    d = double(d(:,mididx-(Pp.pwin(1)*srate):mididx+(Pp.pwin(2)*srate)));
+                    %                     d = double(d(:,mididx-(Pp.pwin(1)*srate):mididx+(Pp.pwin(2)*srate)));
                     ptime = Fp.time(mididx-(Pp.pwin(1)*srate):mididx+(Pp.pwin(2)*srate));
                     m = nanmean(d,2);
                     s = nanstd(d, [], 2);
@@ -317,7 +321,7 @@ if plotfigs
                     imagesc(ptime, 1:size(z,1), z)
                     colormap(parula)
                     % day/epoch lines
-%                     lfpstack(anidx).dayeps(:,1)
+                    %                     lfpstack(anidx).dayeps(:,1)
                     exdayep = dayep(~exclude_rips,:);
                     daybounds = find(diff(exdayep(:,1)));
                     epbounds = find(abs(diff(exdayep(:,2))));
@@ -325,10 +329,13 @@ if plotfigs
                     line([-Pp.pwin(1) Pp.pwin(2)], [daybounds'; daybounds'], 'color', [0 0 0])
                     line([0 0], [1 size(z,1)], 'color', [0 0 0], 'linestyle', '--')
                     title(sprintf('%s', lfpstack(anidx).lfptypes{t}))
+                    % average trace at bottom
+                    subplot(4,length(lfpstack(anidx).lfptypes), ...
+                        t+(length(lfpstack(anidx).lfptypes)*3))
+                    plot(ptime, zscore(nanmean(squeeze(lfpstack(anidx).data{t}(:,:,nt)))));
+                    hold on
+                    plot(ptime, zscore(nanmean(d)))
                     
-                    
-                    subplot(3,length(lfpstack(anidx).lfptypes), t+(length(lfpstack(anidx).lfptypes)*2))
-                    plot(ptime, nanmean(d))
                 end
                 
                 %% super
@@ -359,6 +366,135 @@ if plotfigs
             end
         end
     end
+    if plot_avg_traces_perep
+        Pp = load_plotting_params('riptriglfp_perntrode_perep_traces');
+        for ian = 1:numel(Fp.animals)
+            animal = Fp.animals{ian};
+            anidx = find(strcmp({lfpstack.animal}, animal));
+            ntrodes = lfpstack(anidx).ntrodes;
+            dayep = [lfpstack(anidx).day lfpstack(anidx).epoch];
+            use_filts = [1 3];
+            exclude_rips = any(lfpstack(anidx).filtervecs(:,use_filts),2);
+            for nt = 1:length(ntrodes)
+                ntrode = ntrodes(nt);
+                %% ---- init fig----
+                if savefigs && ~pausefigs
+                    close all
+                    ifig = figure('Visible','off','units','normalized','position', ...
+                        Pp.position);
+                else
+                    ifig = figure('units','normalized','position',Pp.position);
+                end
+                set(gcf,'color','white')
+                
+                subaxis(numdays,2,1:2:numdays*2, 'SpacingVert', Pp.SpVt, 'SpacingHoriz', ...
+                    Pp.SpHz, 'MarginLeft', Pp.MgLt, 'MarginRight', Pp.MgRt, 'MarginTop', ...
+                    Pp.MgTp, 'MarginBottom', Pp.MgBm);
+                
+%                 subplot(numdays,2,1:2:numdays*2)                
+                exdayep = dayep(~exclude_rips,:);
+                de = unique(exdayep, 'rows');
+                numeps = length(de(:,1));
+                days = unique(de(:,1));
+                numdays = length(days);
+                daybounds = find(diff(exdayep(:,1)));
+                epbounds = find(abs(diff(exdayep(:,2))));
+                
+                t = 1;
+
+                use_filts = [1 3];
+                exclude_rips = any(lfpstack(anidx).filtervecs(:,use_filts),2);
+                ntd = squeeze(double(lfpstack(anidx).data{t}(:,:,nt)));
+                excld = ntd;
+                excld(exclude_rips,:) = [];
+
+                % trim and nan zscore
+                mididx = ceil(size(excld,2)/2); % right now assumes center is rip start
+                srate = 1500;
+                ptime = Fp.time(mididx-(Pp.pwin(1)*srate):mididx+(Pp.pwin(2)*srate));
+                m = nanmean(excld ,2);
+                s = nanstd(excld , [], 2);
+                z = (excld -m)./s;
+%                 z = zscore(d);
+                imagesc(ptime, 1:size(z,1), z)
+                colormap(parula)
+                set(gca, 'FontSize', Pp.tickSz);
+                xlabel('time s', 'FontSize',Pp.FontS,'FontWeight',Pp.FontW,'FontName', ...
+                    Pp.FontNm)
+                ylabel('ripnum (bounds: days-black eps-white)','FontSize',Pp.FontS, ...
+                    'FontWeight',Pp.FontW,'FontName', Pp.FontNm)
+
+                % day/epoch lines
+                line([-Pp.pwin(1) Pp.pwin(2)], [epbounds'; epbounds'], 'color', [.9 .9 .9])
+                line([-Pp.pwin(1) Pp.pwin(2)], [daybounds'; daybounds'], 'color', [0 0 0])
+                line([0 0], [1 size(z,1)], 'color', [0 0 0], 'linestyle', '--')
+
+                title('zscores unref LFP','FontSize',Pp.FontS,'FontWeight',Pp.FontW, ...
+                    'FontName', Pp.FontNm)
+                
+                % per ep average traces to the right
+                df = 2:2:numdays*2;
+%                 epbounds(:,2) = [1; epbounds(1:end-2)];
+%                 a = cumsum(any(diff(exdayep),2));
+                for d = 1:length(days)
+%                     subplot(numdays,2,df(d))
+                    subaxis(numdays,2,df(d));
+                
+                    eps = unique(exdayep(exdayep(:,1) == days(d),2));
+                    for e = 1:length(eps)
+                        ed = ntd(ismember(exdayep, [days(d) eps(e)], 'rows'),:);
+                        m = nanmean(ed,2);
+                        s = nanstd(ed, [], 2);
+                        z = (ed-m)./s;
+                        p = plot(ptime, nanmean(z));
+%                         p.Color = [0 0 0];
+                        p.LineWidth = .1;
+                        set(gca, 'FontSize', 8);
+                        hold on
+                    end
+                    
+                    dd = ntd(exdayep(:,1) == days(d),:);
+                    m = nanmean(dd,2);
+                    s = nanstd(dd, [], 2);
+                    z = (dd-m)./s;
+                    p = plot(ptime, nanmean(z));
+                    p.Color = [0 0 0];
+                    p.LineWidth = 1;
+                    xticks([])
+                    yticks([])
+                    ylim([-1 1])
+                    hold off
+                    if d == 1
+                        title('per day ep zscored mean unref LFP', 'FontSize',Pp.FontS, ...
+                            'FontWeight',Pp.FontW,'FontName', Pp.FontNm)
+                    end
+                    ylabel(sprintf('day%d', days(d)), 'FontSize', Pp.FontS, 'FontWeight',...
+                        Pp.FontW, 'FontName', Pp.FontNm);   
+                end
+                xticks('auto')
+                yticks('auto')
+                xlabel('time s', 'FontSize', Pp.FontS,'FontWeight',Pp.FontW,'FontName', ...
+                    Pp.FontNm)
+
+                %% super
+                sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
+                sprtit = sprintf('heatraster riptriglfp pernteptraces %s nt%d %s', animal, ntrode, ...
+                    Fp.epochEnvironment);
+                iStitle = text(.5, .98, {sprtit}, 'Parent', sprtitleax, 'Units', 'normalized');
+                set(iStitle, 'horizontalAlignment', 'center', 'FontSize', Pp.FontS, ...
+                    'FontWeight',Pp.FontW,'FontName', Pp.FontNm, 'FontSize', Pp.SupFontS);
+                %% ---- pause, save figs ----
+                if pausefigs
+                    pause
+                end
+                if savefigs
+                    save_figure(Fp.paths.figdirectory, sprintf('%s_eptraces',Fp.paths.filenamesave), sprtit)
+                    close all
+                end
+            end
+        end
+    end
+    
     
 end
 

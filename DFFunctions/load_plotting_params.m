@@ -5,11 +5,46 @@ function plot_params = load_plotting_params(param_set)
 % i.e.:: load_plotting_params({'occnormfiring', 'riptrigspiking'})
 % succesors will take priority when var names clash
 
+% helpful: 
+% 'FontSize',Pp.FontS,'FontWeight',Pp.FontW,'FontName', Pp.FontNm
+
 if ~isa(param_set,'cell')
     param_set = {param_set};
 end
 for s = param_set
     switch s{1}
+        case 'defaults'
+            position = [.1 .1 .4 .4];
+            pwin = [1 1];
+            %             Sp = 0.00; % spacing
+            SpHz = 0.005; %spacing horizontal
+            SpVt = 0.05; % spacing vertical
+            %             Pad = 0.00; % padding
+            MgLt = 0.08; % margin left
+            MgRt = 0.01; % margin right
+            MgTp = 0.1; % margin top
+            MgBm =  0.05; % margin bottom
+            FontS = 8;
+            FontW = 'bold';
+            FontNm = 'Arial';
+            SupFontS = 12;
+            tickSz = 8; % tick labels font size
+        case 'riptriglfp_perntrode_perep_traces'
+            position = [.1 .1 .4 .4];
+            pwin = [1 1];
+%             Sp = 0.00; % spacing
+            SpHz = 0.06; %spacing horizontal
+            SpVt = 0.02; % spacing vertical
+%             Pad = 0.00; % padding
+            MgLt = 0.1; % margin left
+            MgRt = 0.05; % margin right
+            MgTp = 0.1; % margin top
+            MgBm =  0.1; % margin bottom
+            FontS = 8;
+            FontW = 'bold';
+            FontNm = 'Arial';
+            SupFontS = 12;
+            tickSz = 8; % tick labels font size
         case 'ripcleaning'
             position = [.05 .05 .75 .75];
             pre_excl_win = 30; %seconds
