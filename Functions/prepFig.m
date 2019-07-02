@@ -6,7 +6,7 @@ if ~isempty(varargin)
     assign(varargin{:});
 end
 %if you want to save figs but not pause them to take a look.. just keep them invisible. i think this makes it faster and returns keyboard/mouse control during saving
-if savefigs && ~pausefigs; 
+if savefigs && ~pausefigs
     ifig1 = figure('Visible','off','units','normalized','position',fig.position);
 else
     ifig1 = figure('units','normalized','position',fig.position);

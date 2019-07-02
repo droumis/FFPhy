@@ -13,18 +13,16 @@ stack_lfp = 0;
 load_events = 0;
 get_filter_vecs = 0;
 
-
 plotfigs = 1;
 plot_allntrodes = 0;
 plot_all_lfptypes = 0;
-plot_avg_traces = 0;
-plot_avg_traces_perep = 1;
+plot_avg_traces = 1;
+plot_avg_traces_perep = 0;
 savefigs = 1;
 pausefigs = 0;
 
-animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ2', 'JZ4'};
+animals = {'D10'};
 add_params = {'wtrack'};
-
 
 Fp.animals = animals;
 Fp.add_params = add_params;
@@ -226,7 +224,7 @@ if plotfigs
                     exclude_rips = any(lfpstack(anidx).filtervecs,2);
                     scratchstack = lfpstack(anidx).data{t};
                     scratchstack(~exclude_rips,:,:) = [];
-                    d = scratchstack(:,:,nti);
+                    d = scratchstack(:,:,nt);
                     %                     a = squeeze(d)';
                     %                     z = 10*log10(abs(hilbert(a))');
                     %                     imagesc(z)
@@ -304,7 +302,7 @@ if plotfigs
                     
                     exclude_rips = any(lfpstack(anidx).filtervecs(:,use_filts),2);
                     scratchstack = double(lfpstack(anidx).data{t});
-                    scratchstack(exclude_rips,:,:) = 0;
+                    scratchstack(exclude_rips,:,:) = [];
                     d = scratchstack(:,:,nt);
                     %                     a = squeeze(d)';
                     %                     z = 10*log10(abs(hilbert(a))');

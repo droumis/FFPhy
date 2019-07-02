@@ -1,13 +1,10 @@
 function [out] = loadAS(animal, nt, waveSet, astype)
 
-animalinfo = animaldef(lower(animal));
-animalID = animalinfo{1,3}; %use anim prefix for name
-FFanimdir =  sprintf('%s',animalinfo{1,2});
-dtypedir = 'analyticSignal';
-dirstr = sprintf('%s%s/', FFanimdir, dtypedir);
-
+pathdef = animaldef(lower('Demetris'));
+dirstr = sprintf('%s/analyticSignal/%s', pathdef{2}, animal);
+ASsavestr = sprintf('%s/nt%02d_waveSet-%s_AS.mat',dirstr, nt, waveSet);
 loadstr = sprintf('%s/nt%02d_waveSet-%s_%s.mat',dirstr, nt, waveSet, astype);
 out = load(loadstr);
-disp(sprintf('loading ++++++++++ %s',loadstr)) 
+fprintf('loading ++++++++++ %s \n',loadstr) 
 
 end

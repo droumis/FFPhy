@@ -1,87 +1,58 @@
+%{
 
-% need to fix the referencing for D12, JZ1, JZ4.. 
+Figure 1:
+% Sen Chen replication.. but not just novelty, also during learning.
 
-% I need to confirm that there aren't SU spikes on the new ref channels. 
-% Once i confirm a good new ref, I need to remake the referenced lfp
-% then rerun riptrig lfp
-% then plot heatrasters
+% "Theta Amplitude in MEC During awake ca1 SWR's"
+- show example of riptrig CA1, MEC LFP and SU spiking
+- show average riptrig CA1, MEC LFP and SU spiking
+- show rip trig theta power
 
-% :: D12 :: 
-% current ref is 11
-% the problem is that i can see a lfp response in the unreferenced lfp.. 
-% ref 5 seems flatter. but does it have spikes?
-% how to check the validity of a new ref?
+Figure 2:
+% "Theta Phase in MEC During awake ca1 SWR's"
+- show rip trig theta phase
+- show CA1, MEC ITPC over freq, time
 
-%{ 
-- check my notes about that ntrode over days
-- check the preprocess script for the animal to make sure it matches what i
-intended as the ref in my notes
-- check the histology figures to make sure the new ref is in CC
-- load the cellinfo, check if that ntrode has any non-mu
-- look at the raw traces from the rip plots to see how it looks. 
+Figure 3:
+% "Theta Increases according to novelty and learning rate"
+- % show
+
+Figure 4:
+% "Theta reset at time of SWRs"
+- show
+
+Figure 5:
+% "Theta reset at time of SWRs across MEC grid spacing modules"
+-
 %}
 
+% but first plot traces that go along with the all ntrodes heatrasters
+% start with D10, D12, then when D13, JZ1, JZ4 is done, use those too
 
-% i don't think nt5 is a good ref for D12
-% it's in POR
-% the only tet near CC is 11.. but it is really close to deep MEC
-% are there any quiet CA1 tets? maybe 18 or 27
-
-% - ***my notes say that the w track ports were changed for D12 from D10.. see
-% sheet15 in the exp log. is this accounted for in the
-% linpos/preprocessing??? Also D10 day 9 the ports are different.. so need
-% to check on that for D10.. 
-
-% nt 18 looks like a good option as a reference from my notes.. 
-% how does it look SU-wise?
-
-if 0
-    andef = animaldef('JZ3');
-    cellinfo = loaddatastruct(andef{2}, andef{3}, 'cellinfo');
-    su = evaluatefilter(cellinfo, 'isempty($tags)');
-    for i = 1:30
-        checknt = i
-        find(~ismember(1:10, unique(su(su(:,3)==checknt,1))))
-    end
-    hassu = ~isempty(su(su(:,3)==checknt,:));
-    ntsWithSu = unique(su(:,3));
-end
-
-% i decided to use one ref per cannula.. 18 for ca1 and 11 for mec..
-% neither have single units on them.. 
-% now i just need to recreate the referenced LFP.. but I'll do this
-% overnight bc it takes a while.. until then.. lemme just reference the
-% riptrig lfp by hand 
-% actually i really want to check the new referencing by hand before
-% running the lfp processing again.. 
-% ok i loaded and stacked the data. and now the ntinfo
-
-%%
-
-srate = 1500;
-
-Fp.animals = {'D10'};
-Fp.filtfunction = 'dfa_riptriglfp';
-epochEnvironment = 'wtrack';
-Fp.add_params = {epochEnvironment};
-me = animaldef('demetris');
-use_filters = {'firstwell', 'noise'};
-
-run_ff = 0;
+run_ff = 1;
 savedata = run_ff;
 
-loadstuff = 1;
-load_data = loadstuff;
-stack_data = loadstuff;
-load_events = loadstuff;
-make_filter_vecs = 1;
-add_newrefdata = 1;
+load_lfp = 0;
+stack_lfp = 0;
+load_events = 0;
+make_filter_vecs = 0;
 
-plotfigs = 1;
-pausefigs = 0;
+plotfigs = 0;
+plot_heatrast_traces_perep_allnt = 0;
+
 savefigs = 1;
+pausefigs = 0;
+
+use_filters = {'firstwell', 'noise'};
+animals = {'D12', 'D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'}; %, 'D13'}; % next run ff jz1, jz3, jz4
+add_params = {'wtrack'};
+
+Fp.animals = animals;
+Fp.add_params = add_params;
+Fp.filtfunction = 'dfa_riptriglfp';
 Fp = load_filter_params(Fp, 'add_params', Fp.add_params);
-filetail = ''; % mini description to prevent overwriting something else
+filetail = '';
+
 %% run filter/func
 if run_ff == 1
     F = createfilter('animal', Fp.animals, 'epochs', Fp.epochfilter, 'eegtetrodes', ...
@@ -97,16 +68,15 @@ if savedata == 1
     save_data(F, Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, 'filetail',...
         sprintf('_%s%s', Fp.epochEnvironment, filetail))
 end
-%% load data
-if load_data
+%% load lfp
+if load_lfp
     F = load_filter_output(Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, ...
         Fp.animals, 'filetail', sprintf('_%s%s', Fp.epochEnvironment, filetail));
 end
-%% stack
-if stack_data
+%% stack LFP
+if stack_lfp
     lfpstack = stack_riptriglfp(F);
 end
-
 %% load events, infostructs, timefilters
 if load_events
     for ian = 1:length(Fp.animals)
@@ -122,8 +92,6 @@ if load_events
             F(1).epochs{1});
     end
 end
-
-%% create vec with entry for each lfp rip event. save alongside lfpstack
 %% Add filter vecs to stack
 if make_filter_vecs
     for ian = 1:length(Fp.animals)
@@ -174,34 +142,35 @@ if make_filter_vecs
         lfpstack(ian).filtervecs = struct2array(filtervecs);
     end
 end
-if add_newrefdata
+
+if 0
     for ian = 1:length(Fp.animals)
         aninfo = animaldef(Fp.animals{ian});
 %         refnt = evaluatefilter(ntinfo{1}, 'isequal($area, ''ref'')');
-        mecnt = evaluatefilter(ntinfo{1}, 'isequal($area, ''mec'') || isequal($subarea, ''mec'')');
-        mecnt = unique(mecnt(:,3));
-        mecntidx = find(ismember(lfpstack(ian).ntrodes,mecnt));
-        mecrefnt = evaluatefilter(ntinfo{1}, 'isequal($area, ''ref'') && isequal($subarea, ''mec'')');
-        mecrefnt = unique(mecrefnt(:,3));
-        mecrefntidx = find(lfpstack(ian).ntrodes == mecrefnt);
-        ca1nt = evaluatefilter(ntinfo{1}, 'isequal($area, ''ca1'') || isequal($subarea, ''ca1'')');
-        ca1nt = unique(ca1nt(:,3));
-        ca1ntidx = find(ismember(lfpstack(ian).ntrodes,ca1nt));
-        ca1refnt = evaluatefilter(ntinfo{1}, 'isequal($area, ''ref'') && isequal($subarea, ''ca1'')');
-        ca1refnt = unique(ca1refnt(:,3));
-        ca1refntidx = find(lfpstack(ian).ntrodes == ca1refnt);
+%         mecnt = evaluatefilter(ntinfo{1}, 'isequal($area, ''mec'') || isequal($subarea, ''mec'')');
+%         mecnt = unique(mecnt(:,3));
+%         mecntidx = find(ismember(lfpstack(ian).ntrodes,mecnt));
+%         mecrefnt = evaluatefilter(ntinfo{1}, 'isequal($area, ''ref'') && isequal($subarea, ''mec'')');
+%         mecrefnt = unique(mecrefnt(:,3));
+%         mecrefntidx = find(lfpstack(ian).ntrodes == mecrefnt);
+%         ca1nt = evaluatefilter(ntinfo{1}, 'isequal($area, ''ca1'') || isequal($subarea, ''ca1'')');
+%         ca1nt = unique(ca1nt(:,3));
+%         ca1ntidx = find(ismember(lfpstack(ian).ntrodes,ca1nt));
+%         ca1refnt = evaluatefilter(ntinfo{1}, 'isequal($area, ''ref'') && isequal($subarea, ''ca1'')');
+%         ca1refnt = unique(ca1refnt(:,3));
+%         ca1refntidx = find(lfpstack(ian).ntrodes == ca1refnt);
         newstack = struct;
-        newstack(ian).data{1} = lfpstack(ian).data{1};
-        for t = 2:6
-            mecrefd = lfpstack(ian).data{t}(:,:,mecntidx) + lfpstack(ian).data{t}(:,:,11) ...
-                - lfpstack(ian).data{t}(:,:,mecrefnt);
-            ca1refd = lfpstack(ian).data{t}(:,:,ca1ntidx) + lfpstack(ian).data{t}(:,:,11) ...
-                - lfpstack(ian).data{t}(:,:,ca1refntidx);
-            newstack(ian).data{t} = cat(3, mecrefd, ca1refd);
+%         newstack(ian).data{1} = lfpstack(ian).data{1};
+        for t = 1
+            mecrefd1 = lfpstack(ian).data{t}(:,:,1:4) - lfpstack(ian).data{t}(:,:,5);
+            mecrefd2 = lfpstack(ian).data{t}(:,:,6:15) - lfpstack(ian).data{t}(:,:,5);
+            ca1refd = lfpstack(ian).data{t}(:,:,16:30) - lfpstack(ian).data{t}(:,:,5);
+            newstack(ian).data{t} = cat(3, mecrefd1, lfpstack(ian).data{t}(:,:,5), mecrefd2, ca1refd);
         end
     end
 end
-%% plot
+%%
+
 if plotfigs
     Pp = load_plotting_params({'defaults', 'riptriglfp_perLFPtype_allntrodes'});
     for ian = 1:numel(Fp.animals)
@@ -209,13 +178,14 @@ if plotfigs
         anidx = find(strcmp({lfpstack.animal}, animal));
         ntrodes = lfpstack(anidx).ntrodes;
         dayep = [lfpstack(anidx).day lfpstack(anidx).epoch];
+
         use_filts = find(any(cell2mat(cellfun(@(x) strcmp(x, lfpstack(anidx).filterfields), ...
             use_filters, 'un', 0)), 2));
         exclude_rips = any(lfpstack(anidx).filtervecs(:,use_filts),2);
+
         invalidtets = evaluatefilter(ntinfo{ian}, 'isequal($valid, ''no'')');
         invalidtets = unique(invalidtets(:,3));
-        for t = 1:6 %7%1:length(lfpstack(anidx).lfptypes)
-            %         time = datastack(ian).time;
+        for t = 1:length(lfpstack(anidx).lfptypes)
             %% ---- init fig----
             if savefigs && ~pausefigs
                 close all
@@ -225,57 +195,52 @@ if plotfigs
                 ifig = figure('units','normalized','position',Pp.position);
             end
             set(gcf,'color','white')
-            %%
+            
             for nti = 1:length(ntrodes)
                 ntrode = ntrodes(nti);
                 if ismember(ntrode, invalidtets)
                     continue
                 end
-                subaxis(2,ceil(max(ntrodes)/2), nti, 'SpacingVert', Pp.SpVt, ...
-                    'SpacingHoriz', Pp.SpHz, 'MarginLeft', Pp.MgLt, 'MarginRight', ...
-                    Pp.MgRt, 'MarginTop', Pp.MgTp, 'MarginBottom', Pp.MgBm);
                 
+                subaxis(2,ceil(max(ntrodes)/2), nti, 'SpacingVert', Pp.SpVt, ...
+                'SpacingHoriz', Pp.SpHz, 'MarginLeft', Pp.MgLt, 'MarginRight', ...
+                Pp.MgRt, 'MarginTop', Pp.MgTp, 'MarginBottom', Pp.MgBm);
+
                 exdayep = dayep(~exclude_rips,:);
                 de = unique(exdayep, 'rows');
-%                 numeps = length(de(:,1));
-                days = unique(de(:,1));
-%                 numdays = length(days);
                 daybounds = find(diff(exdayep(:,1)));
                 epbounds = find(abs(diff(exdayep(:,2))));
-                
-                exclude_rips = any(lfpstack(anidx).filtervecs(:,use_filts),2);
-                ntd = squeeze(double(newstack(anidx).data{t}(:,:,nti)));
-                %d = double(d(:,mididx-(Pp.pwin(1)*srate):mididx+(Pp.pwin(2)*srate)));
-                excld = ntd;
-                excld(exclude_rips,:) = [];
 
-                d = newstack(anidx).data{t}(:,:,nti);
-                %trim and nan zscore
-                mididx = ceil(size(excld,2)/2); % right now assumes center is rip start
-                ptime = Fp.time(mididx-(Pp.pwin(1)*srate):mididx+(Pp.pwin(2)*srate));
-                m = nanmean(excld,2);
-                s = nanstd(excld, [], 2);
-                z = (excld-m)./s;
+                excld_stack = squeeze(double(lfpstack(anidx).data{t}(~exclude_rips,:,nti)));
+                
+                mididx = ceil(size(excld_stack,2)/2); % right now assumes center is rip start
+                ptime = Fp.time(mididx-(Pp.pwin(1)*Fp.srate):mididx+(Pp.pwin(2)*Fp.srate));
+                m = nanmean(excld_stack,2);
+                s = nanstd(excld_stack, [], 2);
+                z = (excld_stack-m)./s;
                 imagesc(ptime, 1:size(z,1), z)
                 colormap(parula)
-                % day/epoch lines
-%                 dayind = find(diff(lfpstack(anidx).dayeps(:,1))>0);
-%                 epbounds = cumsum(lfpstack(anidx).numrips_perep);
-%                 daybounds = epbounds(dayind);
-                line([-Pp.pwin(1) Pp.pwin(2)], [epbounds'; epbounds'], 'color', [.9 .9 .9])
+                
+                line([-Pp.pwin(1) Pp.pwin(2)], [epbounds'; epbounds'], 'color',[.9 .9 .9])
                 line([-Pp.pwin(1) Pp.pwin(2)], [daybounds'; daybounds'], 'color', [0 0 0])
                 line([0 0], [1 size(z,1)], 'color', [0 0 0], 'linestyle', '--')
-                title(sprintf('%d', ntrode), 'FontSize',Pp.FontS, ...
+                title(sprintf('%d', ntrode), 'FontSize',Pp.FontS, 'FontWeight',Pp.FontW, ...
+                    'FontName', Pp.FontNm)
+                caxis([-1 1])
+                xlabel('time s', 'FontSize',Pp.FontS,'FontWeight',Pp.FontW,'FontName', ...
+                    Pp.FontNm)
+                ylabel('ripnum (day-b epoch-w)','FontSize',Pp.FontS, ...
                     'FontWeight',Pp.FontW,'FontName', Pp.FontNm)
-%                 caxis([-1 1])
                 if nti ~= 1
+                    xlabel('')
+                    ylabel('')
                     set(gca, 'ytick', []);
                     set(gca, 'xtick', []);
                 end
             end
             %% super
             sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
-            sprtit = sprintf('%s %s %s %s %s', animal, lfpstack(anidx).lfptypes{t}, ...
+            sprtit = sprintf('%s %s %s %s %s 20190615', animal, lfpstack(anidx).lfptypes{t}, ...
                 Fp.paths.filenamesave(5:end), Fp.epochEnvironment, filetail);
             iStitle = text(.5, .98, {sprtit}, 'Parent', sprtitleax, 'Units', 'normalized');
             set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
@@ -300,4 +265,8 @@ if plotfigs
         end
     end
 end
+
+
+
+
 

@@ -29,6 +29,53 @@ for s = param_set
             FontNm = 'Arial';
             SupFontS = 12;
             tickSz = 8; % tick labels font size
+        case 'power'
+%             mcLineColor = [.2 .2 .2];
+            pwin = [1 1];
+            usecolormap = 'jet';
+            contourRes = 200;
+            position = [.1 .1 .9 .8];
+
+        case 'behaveperform'
+            colorSet = 'DR1';
+            % clims = [0 1]; %[0 .7]
+            % position = [.1 .1 .9 .8];
+            SpacingHorizontal = 0.01;
+            SpacingVertical = 0.02;
+            % Spacing = 0.00;
+            % Padding = 0.0;
+            % MarginLeft = 0.04;
+            % MarginRight = 0.04;
+            % MarginTop = 0.09;
+            % MarginBottom =  0.08;
+            position = [.1 .1 .5 .7];
+            SpacingHorizontal = 0.00;
+            SpacingVertical = 0.00;
+            Spacing = 0.00;
+            Padding = 0.00;
+            MarginLeft = 0.05;
+            MarginRight = 0.05;
+            MarginTop = 0.14;
+            MarginBottom =  0.08;
+            usecolormap = 'jet';
+            win = [.5 .5]; %in seconds
+            % indwin = win*1500;
+        case 'frmaps'
+            position = [.1 .1 .8 .4];
+            tits = {'outbound right', 'inbound right', 'outbound left', 'inbound left'};
+%             Sp = 0.00; % spacing
+            SpHz = 0.02; %spacing horizontal
+            SpVt = 0.02; % spacing vertical
+%             Pad = 0.00; % padding
+            MgLt = 0.05; % margin left
+            MgRt = 0.05; % margin right
+            MgTp = 0.1; % margin top
+            MgBm =  0.1; % margin bottom
+            FontS = 8;
+            FontW = 'bold';
+            FontNm = 'Arial';
+            SupFontS = 12;
+            tickSz = 8; % tick labels font size
         case 'riptriglfp_perntrode_perep_traces'
             position = [.1 .1 .4 .4];
             pwin = [1 1];
@@ -70,10 +117,10 @@ for s = param_set
             MarginTop = 0.1;
             MarginBottom =  0.1;
         case 'riptriglfp_perLFPtype_allntrodes'
-            position = [.1 .1 .9 .9];
+            position = [.1 .1 .9 .3];
             pwin = [1 1];
         case 'riptriglfp_allLFPtype_perntrode'
-            position = [.1 .1 .9 .4];
+            position = [.1 .1 .4 .7];
             pwin = [1 1];
         case 'riptriglfp_acrossdays'
             position = [.1 .1 .8 .3];
@@ -142,8 +189,8 @@ for s = param_set
             alpha = .001;
         case 'paircorrVperformance_hm'
             position = [.05 .05 .5 .5];
-        case 'statespacePerformance'
-            position = [.05 .05 .5 .5];
+%         case 'statespacePerformance'
+%             position = [.05 .05 .5 .5];
         case 'riptrigFRxdays'
             position = [.05 .05 .3 .6];
     end

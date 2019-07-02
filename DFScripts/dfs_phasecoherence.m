@@ -244,10 +244,10 @@ end
 if runPermutationTesting
     tic
     %% permutation testing... this will take TIME and a shit ton of RAM.. 
-    %                 permTestType = 'outboundVSinbound';
-    %                 ixpc = permutationTest(ixpc, as, ph, ian, intr, IndTypes, DataTypeFields, n_permutes, permTestType);
-    %                 permTestType = 'correctOutvsmistakeOut';
-    %                 ixpc = permutationTest(ixpc, as, ph, ian, intr, IndTypes, DataTypeFields, n_permutes, permTestType);
+    permTestType = 'outboundVSinbound';
+    ixpc = permutationTest(ixpc, as, ph, ian, intr, IndTypes, DataTypeFields, n_permutes, permTestType);
+    permTestType = 'correctOutvsmistakeOut';
+    ixpc = permutationTest(ixpc, as, ph, ian, intr, IndTypes, DataTypeFields, n_permutes, permTestType);
     %% ---------------- Save RESULTS Output ---------------------------------------------------
     if savePermutationOutput == 1;
         dtypedir = sprintf('%s/%s_permutes',calcfunction, calcfunction);

@@ -5,17 +5,25 @@ function data = load_filter_output(filtOutputDirectory, filename, animals, varar
 % specify additional filename string with varargin 'filetail'
 
 % Author: Demetris Roumis June 2019
-
+filtfunction = '';
 filetail = '';
 if ~isempty(varargin)
     assign(varargin{:})
 end
 
 for an = 1:length(animals)
-    tmp = load(sprintf('%s/%s%s_%s.mat',filtOutputDirectory, filename, filetail, ...
-        animals{an}));    
-    fprintf('loaded: %s/%s%s_%s.mat \n',filtOutputDirectory, filename, filetail, ...
-        animals{an})
-    data{an} = tmp.F;
+    andef = animaldef(animals{an});
+    switch filtfunction
+        case 'behavestate'
+            tmp = load(sprintf('%s%sBehaveState.mat',andef{2}, andef{3}));
+            fprintf('%s%ssBehaveState.mat \n',andef{2}, andef{3});
+            data{an} = tmp.BehaveState;
+        otherwise
+            tmp = load(sprintf('%s/%s%s_%s.mat',filtOutputDirectory, filename, filetail, ...
+                animals{an}));
+            fprintf('loaded: %s/%s%s_%s.mat \n',filtOutputDirectory, filename, filetail, ...
+                animals{an})
+            data{an} = tmp.F;
+    end
 end
 data = [data{:}]'; % merge the cell array of structs to match filter output form

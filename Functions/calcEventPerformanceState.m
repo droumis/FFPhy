@@ -63,17 +63,9 @@ for ianimal = 1:length(F)
     if isempty(eventstate.state)
         continue
     end
-%     removevec = ones(length(eventstate.state(:,1)),1);
-%     if max(abs(diff(eventstate.state(:,1:2),[],2))) > 0.033;
-%         disp(sprintf('%d max event-time offset between pos and lfp times is more than 33ms (1 cam frame).. removing offset events', max(abs(diff(eventstate.state(:,1:2),[],2)))))
-%         removeevents = find(abs(diff(eventstate.state(:,1:2),[],2)) > 0.033);
-% %         removevec = ones(length(ixpc.eventstate{ian}.state(:,1)),1);
-%         removevec(removeevents) = 0;
-%         eventstate.state = eventstate.state(logical(removevec),:);
-%         eventstate.eventStartTimes = eventstate.eventStartTimes(logical(removevec),:);
-%     end
-
-%     out.removevec{ianimal} = removevec;
-    out.eventstate{ianimal} = eventstate;
-
+    if length(F) == 1
+        out = eventstate;
+    else
+        out.eventstate{ianimal} = eventstate;
+    end
 end

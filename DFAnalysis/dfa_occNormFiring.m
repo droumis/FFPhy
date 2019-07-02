@@ -1,5 +1,4 @@
-function [out] = dfa_occNormFiring(index, excludeperiods, spikes,linpos, pos, ...
-    task, varargin)
+function [out] = dfa_occNormFiring(index, excludeperiods, varargin)
 %
 %Calculates the 2d occupancy normalized firing rate for the cell and
 %organizes the output into the different trajectories.
@@ -10,7 +9,10 @@ function [out] = dfa_occNormFiring(index, excludeperiods, spikes,linpos, pos, ..
 %The output is a cell array where each cell contains a cell
 %descibing one trajectory
 
-
+spikes = [];
+linpos = [];
+pos = [];
+task = [];
 % parse the options
 appendindex = 1;
 binsize = 1; % cm squarec

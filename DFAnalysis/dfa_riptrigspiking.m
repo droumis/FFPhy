@@ -1,5 +1,4 @@
-function [out] = dfa_riptrigspiking(index, excludeperiods, spikes, ...
-    eventscons, pos, task, varargin)
+function [out] = dfa_riptrigspiking(index, excludeperiods, varargin)
 
 % MS adapted 2016 from dfakk_geteventtriggeredspiking
 % This function finds spiking triggered to LFP events such as ripples.
@@ -37,6 +36,10 @@ disp(sprintf('%d %d %d %d',index))
 %                       each ripple
 
 % default options
+spikes = {};
+eventscons = {};
+pos = {};
+task = {};
 minvelocity = 0;  
 welldist = [];
 window = [0.5 0.5]; % in sec
@@ -80,8 +83,12 @@ epoch = index(2);
 
 % animaldir,animalprefix
 
+% if it came in as ca1rippleskons or something instead of eventcons
+if isempty(eventscons)
+    evvar = varargin{find(cellfun(@(x) ~isempty(x), strfind(varargin(1:2:end), 'kons')))*2-1};
+    eventscons = eval(evvar);
+end
 % First receive valid event periods for the epoch's day.
-
 ec = eventscons{day}{epoch}{TF};
 
 % if the eventcons is empty or not found..
@@ -275,7 +282,7 @@ else
     out.epoch_environment = '';
 end
 out.time = time;
-out.eventstartend = ;
+out.eventstartend = eventtimes;
 out.frtime = frtime;
 % out.psth = sparse(psth);
 out.psth = psth;

@@ -13,7 +13,7 @@ function filter_params = load_filter_params(params, varargin)
 
 add_paths = 1;
 set_filt_func = 1;
-default_params = {'all_epoch_types'};
+% default_params = {'all_epoch_types'};
 
 if isa(params, 'string')
     params = {params};
@@ -21,10 +21,10 @@ elseif isa(params, 'struct')
     filter_params = params;
     params = {filter_params.filtfunction};
 end
-
-if ~isempty(default_params)
-    params = {default_params{:}, params{:}};
-end
+% 
+% if ~isempty(default_params)
+%     params = {default_params{:}, params{:}};
+% end
 
 add_params = {};
 if ~isempty(varargin)
@@ -39,6 +39,7 @@ epochfilter = '';
 tetfilter = '';
 cellfilter = '';
 timefilter = {};
+options = {};
 sysDateTime = clock;
 for s = params
     switch s{1}
@@ -49,6 +50,10 @@ for s = params
                 epochEnvironment);
         case 'wtrack'
             epochEnvironment = 'wtrack';
+            epochfilter = sprintf('(isequal($environment,''%s''))', ...
+                epochEnvironment);
+        case 'openfield'
+            epochEnvironment = 'openfield';
             epochfilter = sprintf('(isequal($environment,''%s''))', ...
                 epochEnvironment);
             %         case 'all_epoch_types'
@@ -111,21 +116,27 @@ for s = params
             %         Fp.minvelocity, 'consensus_numtets',Fp.consensus_numtets,'welldist', ...
             %         Fp.welldist);
             %% filter function specific params
+        case 'wavelets'
+            waveSet = '4-30Hz';
+        case 'wavelets4-300Hz'
+            waveSet = '4-300Hz';
+        case 'behavestate'
+            
         case 'dfa_riptriglfp'
 %             LFPtypes = {'eeggnd', 'eeg', 'theta', };
             eventSourceArea = 'ca1';
             eventtype = 'rippleskons';
-            LFPtypes = {'eeggnd', 'eeg'}; %, 'theta', 'lowgamma', 'fastgamma', 'ripple'};
-            LFPrangesHz = {'1-400', '1-400'}; %, '6-9', '20-50', '65-140', '140-250'};
+            LFPtypes = {'eeggnd', 'eeg'};%, 'theta', 'ripple'}; %'lowgamma', 'fastgamma', 'ripple'};
+            LFPrangesHz = {'1-400', '1-400'};%, '6-9', '140-250'}; %'20-50', '65-140',};
             srate = 1500;
-            win = [1 1];
+            win = [2 2];
             time = -win(1):1/srate:win(2);
             TF = 1;
             eventtype = 'rippleskons';
             eventSourceArea = 'ca1';
             eventDataLabel = [eventSourceArea eventtype];
             consensus_numtets = 2;   % minimum # of tets for consensus event detection
-            minstdthresh = 2;        % STD. how big your ripples are
+            minstdthresh = 3;        % STD. how big your ripples are
             exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
             minvelocity = 0;
             maxvelocity = 4;
@@ -149,17 +160,16 @@ for s = params
             eegfilter = {'geteegtet', 'theta','sametet', 1};
             datatypes = {'spikes','theta'};
             
-        case 'ratemaps'
-            timefiler{end+1} = {'get2dstate', '(abs($velocity) >= 4)'};
+        case 'dfa_occNormFiring'
+            cellfilter = ...
+                '($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))';
+            timefilter{end+1} = {'get2dstate', '(abs($velocity) >= 4)'};
             iterator = 'singlecellanal';
             filtfunction = 'dfa_occNormFiring';
             datatypes = {'spikes', 'linpos', 'pos', 'task'};
             
         case 'dfa_riptrigspiking'
-                        eventSourceArea = 'ca1';
             eventtype = 'rippleskons';
-            LFPtypes = {'eeggnd', 'eeg', 'theta', 'lowgamma', 'fastgamma', 'ripple'};
-            LFPrangesHz = {'1-400', '1-400', '6-9', '20-50', '65 - 140', '140-250'};
             srate = 1500;
             win = [1 1];
             time = -win(1):1/srate:win(2);
@@ -167,7 +177,7 @@ for s = params
             eventtype = 'rippleskons';
             eventSourceArea = 'ca1';
             eventDataLabel = [eventSourceArea eventtype];
-            consensus_numtets = 2;   % minimum # of tets for consensus event detection
+            consensus_numtets = 1;   % minimum # of tets for consensus event detection
             minstdthresh = 2;        % STD. how big your ripples are
             exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
             minvelocity = 0;
