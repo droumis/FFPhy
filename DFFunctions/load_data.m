@@ -1,4 +1,4 @@
-function data = load_filter_output(filtOutputDirectory, filename, animals, varargin)
+function data = load_data(filtOutputDirectory, filename, animals, varargin)
 % d = load_filter_output(Fp.paths.filtOutputDirectory, Fp.paths.filename, Fp.animals);
 % load filter framework results
 

@@ -35,7 +35,7 @@ for ian = 1:length(data)
     for ide = 1:length(out(ian).dayeps(:,1)) % day epoch
         day = out(ian).dayeps(ide,1);
         epoch = out(ian).dayeps(ide,2);
-        if isempty(data(ian).output{day}(epoch).data)
+        if isempty(data(ian).output{ide}.data)
             fprintf('missing data %s %d %d \n', out(ian).animal, day, epoch);
             continue
         end
@@ -43,7 +43,7 @@ for ian = 1:length(data)
             % need to seperate out the different lfp bands so i can load
             % per type
             % ntrode x time X rip#
-            tmp = data(ian).output{day}(epoch).data{t};
+            tmp = data(ian).output{ide}.data{t};
             if isempty(tmp)
                 continue
             else
@@ -56,19 +56,19 @@ for ian = 1:length(data)
         out(ian).numrips_perep{ide,1} = length(out(ian).data{t}{ide}(1,1,:));
         out(ian).day{ide,1} = day*ones(length(out(ian).data{t}{ide}(1,1,:)), 1);
         out(ian).epoch{ide,1} = epoch*ones(length(out(ian).data{t}{ide}(1,1,:)), 1);
-        out(ian).ripStartIdx{ide,1} = data(ian).output{day}(epoch).eventStartIndices;
-        out(ian).ripEndIdx{ide,1} = data(ian).output{day}(epoch).eventEndIndices;
-        out(ian).ripStartTime{ide,1} = data(ian).output{day}(epoch).LFPtimes(...
-            data(ian).output{day}(epoch).eventStartIndices);
-        out(ian).ripEndTime{ide,1} = data(ian).output{day}(epoch).LFPtimes(...
-            data(ian).output{day}(epoch).eventEndIndices);
+        out(ian).ripStartIdx{ide,1} = data(ian).output{ide}.eventStartIndices;
+        out(ian).ripEndIdx{ide,1} = data(ian).output{ide}.eventEndIndices;
+        out(ian).ripStartTime{ide,1} = data(ian).output{ide}.LFPtimes(...
+            data(ian).output{ide}.eventStartIndices);
+        out(ian).ripEndTime{ide,1} = data(ian).output{ide}.LFPtimes(...
+            data(ian).output{ide}.eventEndIndices);
     end
     
     % collapse data across collected epochs into one matrix
     for t = 1:length(out(ian).lfptypes) % LFP type
         out(ian).data{t} = cell2mat(permute(out(ian).data{t}, [1 3 2])); % stack across time
     end
-    out(ian).ntrodes = unique(cell2mat(cellfun(@(x) x(:,3), {data(ian).output{day}(epoch).index}, ...
+    out(ian).ntrodes = unique(cell2mat(cellfun(@(x) x(:,3), {data(ian).output{ide}.index}, ...
         'un', 0)'), 'stable');
     out(ian).time = data(ian).datafilter_params.time;
     out(ian).numrips_perep = cell2mat(out(ian).numrips_perep);

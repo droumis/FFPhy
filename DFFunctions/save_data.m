@@ -12,9 +12,13 @@ end
 % the animal field should either just be their name or the loaded content
 % of andef (currently 6 cell array)
 try
-    animals = cellfun(@(x) x{3}, {F.animal}, 'un', 0);
+        animals = cellfun(@(x) x{3}, {F.animal}, 'un', 0);
 catch
-    animals = cellfun(@(x) x{1}, {F.animal}, 'un', 0);
+    try
+        animals = cellfun(@(x) x{1}, {F.animal}, 'un', 0);
+    catch
+        animals = cellfun(@(x) x, {F.animal}, 'un', 0);
+    end
 end
 
 if per_animal

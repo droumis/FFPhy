@@ -111,10 +111,12 @@ switch waveSet
         nConv2pow = 2^nextpow2(nConv); %find the next pwr of 2 (for FFT optimization purposes)
         zpad2pow = nConv2pow - nConv;
     case '4-300HzJustfreqs'
+        srate = 1500;
         min_freq =  4;
         max_freq = 300;
         numfrex = 25;
         frex = logspace(log10(min_freq),log10(max_freq),numfrex);
+        baseind = [.75 1] * srate;
         
     case '4-300Hz'
         srate = 1500;

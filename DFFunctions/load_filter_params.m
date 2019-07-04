@@ -90,9 +90,11 @@ for s = params
             timefilter{end+1} = {'get2dstate','($velocity>4)'};
         case 'correcttrials'
             timefilter{end+1} = {'getWtracktrialstate','($correct==1)'};
-        case 'exclude noise events'
-            timefilter{end+1} = {'excludenoiseevents', '($noise == 0)', ...
-                [eventSourceArea,'noisekons'], 1, };
+        case 'excludeNoise'
+            timefilter{end+1} = {'excludenoiseevents', '($noise == 0)', 'ca1noisekons', ...
+                'exclpad', 1, 'stdthresh', 15};
+        case 'excludePriorFirstWell'
+            timefilter{end+1} = {'getpriortofirstwell', '($prefirst == 0)'};
         case 'ripples'
             TF = 1;
             eventtype = 'rippleskons';

@@ -1,78 +1,92 @@
 
 
-function pwrout = getPower(ripstate, Fp, varargin)
+function getPower(ripstate, Fp, varargin)
 % LOAD ANALYTIC SIGNAL PER NTRODE AND COMPUTE POWER
+% Fp = filter params (see load_filter_params)
+% p = wave params (see getWaveParams)
 % TODO: only uses lfpstack to get the list of ntrodes.. so i could do without it
-% TODO: save power
 
 % pwrout is a struct array per animal with dbpower data
 % pwrout(an).dbpower is a cell array per ntrode of a cell array per statetype
 
-baseline = [];
+lfptypes = {'eeg'};
 savepower = 1;
 if ~isempty(varargin)
    assign(varargin{:}); 
 end
 
-pwrout = struct;
 for ian = 1:length(Fp.animals)
+    pwrout = struct;
+    wp = getWaveParams(Fp.waveSet, []);
     animal = Fp.animals{ian};
-%     ntrodes = lfpstack(ian).ntrodes;
+    %     ntrodes = lfpstack(ian).ntrodes;
     andef = animaldef(animal);
     tetinfo = loaddatastruct(andef{2}, animal, 'tetinfo');
     tmp = cellfetch(tetinfo, '');
     ntrodes = unique(tmp.index(:,3));
-    meanpwr = cell(1,length(ntrodes));
-    medianpwr = cell(1,length(ntrodes));
-    meanZpwr = cell(1,length(ntrodes));
-    parfor nti = 1:length(ntrodes) % use parfor
-        meandbpwr = cell(1,length(ripstate(ian).statesetsfields));
-        mediandbpwr = cell(1,length(ripstate(ian).statesetsfields));
-        meanZpower = cell(1,length(ripstate(ian).statesetsfields));
-        nt = ntrodes(nti);
-        as = loadAS(animal, nt, Fp.waveSet, 'AS');
-        for stset = 1:length(ripstate(ian).statesetsfields)
-            stidx = find(ripstate(ian).statesets(:,stset));
-            if ~isempty(baseline)
-                basidx = baseline;
-            else
-                basidx = as.analyticsignal.waveparams.baseind;
-            end
-            [meandbpwr{stset}, mediandbpwr{stset}, meanZpower{stset}] = computePower(...
-                as.analyticsignal.analyticsignal(:,stidx,:), ...
-                'baselIdx', basidx);
-            % for each condition, ntrode, run permutation test to get
-            % significant blob mask.. so i was only doing the perm test
-            % for the diff sets before.. so i need to figure out the
-            % right way to do single set perm testing..
-            %                 powerpermtest(dbpwr{stset}, stidx
-        end
-        % now run the set diff for outb - inb, correct - error, etc..
-        % with perm testing..
-        
-        meanpwr{nti} = meandbpwr;
-        medianpwr{nti} = mediandbpwr;
-        meanZpwr{nti} = meanZpower;
-    end
-    pwrout(ian).animal = animal;
-    pwrout(ian).ripstate = ripstate;
-    pwrout(ian).meandbpower = meanpwr;
-    pwrout(ian).mediandbpower = medianpwr;
-    pwrout(ian).meanZpower = meanZpwr;
     
-    if savepower
-        % save power
-        me = animaldef('Demetris');
-        savedir = sprintf('%s/power', me{2});
-        if ~isdir(savedir)
-            mkdir(savedir);
+    for itype = 1:length(lfptypes)
+        lfptype = lfptypes{itype};
+        meanpwr = cell(1,length(ntrodes));
+        medianpwr = cell(1,length(ntrodes));
+        meanZpwr = cell(1,length(ntrodes));
+        parfor nti = 1:length(ntrodes) % use parfor
+            meandbpwr = cell(1,length(ripstate(ian).statesetsfields));
+            mediandbpwr = cell(1,length(ripstate(ian).statesetsfields));
+            meanZpower = cell(1,length(ripstate(ian).statesetsfields));
+            nt = ntrodes(nti);
+            as = loadAS(animal, nt, Fp.waveSet, lfptype);
+            
+            for stset = 1:length(ripstate(ian).statesetsfields)
+                stidx = find(ripstate(ian).statesets(:,stset));
+                if ~isempty(wp.baseind)
+                    basidx = wp.baseind;
+                else
+                    basidx = as.analyticsignal.waveparams.baseind;
+                end
+                [meandbpwr{stset}, mediandbpwr{stset}, meanZpower{stset}] = computePower(...
+                    as.analyticsignal.analyticsignal(:,stidx,:), ...
+                    'baselIdx', basidx);
+                % for each condition, ntrode, run permutation test to get
+                % significant blob mask.. so i was only doing the perm test
+                % for the diff sets before.. so i need to figure out the
+                % right way to do single set perm testing..
+                %                 powerpermtest(dbpwr{stset}, stidx
+            end
+            % now run the set diff for outb - inb, correct - error, etc..
+            % with perm testing..
+            meanpwr{nti} = meandbpwr;
+            medianpwr{nti} = mediandbpwr;
+            meanZpwr{nti} = meanZpower;
         end
-        savestr = sprintf('%s/power_%s_%s_waveSet-%s.mat', savedir, animal, 'wtrack', ...
-            Fp.waveSet);
-        save(savestr, 'pwrout', '-v7.3');
-        fprintf('SAVED POWER SIGNAL RESULTS ++++++++++ %s \n',savestr)
+        pwrout.animal = animal;
+        pwrout.ripstate = ripstate;
+        pwrout.wp = wp;
+        pwrout.Fp = Fp;
+        pwrout.lfptype = lfptype;
+        
+        pwrout.meandbpower = meanpwr;
+        pwrout.mediandbpower = medianpwr;
+        pwrout.meanZpower = meanZpwr;
+        
+        if savepower
+            save_power(pwrout, animal, Fp.waveSet, lfptype)
+        end
     end
 end
+    
+end
+
+function save_power(pwrout, animal, waveSet, lfptype)
+me = animaldef('Demetris');
+savedir = sprintf('%s/power', me{2});
+if ~isdir(savedir)
+    mkdir(savedir);
+end
+savestr = sprintf('%s/power_%s_%s_waveSet-%s_%s.mat', savedir, animal, ...
+    'wtrack', waveSet, lfptype);
+save(savestr, 'pwrout', '-v7.3');
+fprintf('SAVED POWER SIGNAL RESULTS ++++++++++ %s \n',savestr)
 end
 
 function [meandbpower, mediandbpower, meanZpower] = computePower(as,varargin)
@@ -81,18 +95,17 @@ baseind = [2 3]*round(6001/6);
 if ~isempty(varargin)
     assign(varargin{:});
 end
-% as dims :: samples X events X freqs
+% AS dims = samples X events X freqs
 power = mean(abs(as).^2,2);
 baseline_power = mean(mean(abs( as(baseind(1):baseind(2),:,:)) .^2,2),1);
 baseline_std_power = std(mean(abs( as(baseind(1):baseind(2),:,:)) .^2,2),[],1);
 % pctpower = 100 * bsxfun(@rdivide, bsxfun(@minus, power, basepower), basepower);
 meandbpower = 10*log10(bsxfun(@rdivide, power, baseline_power));
+meanZpower = (power-baseline_power) ./ baseline_std_power;
 
 medianpower = median(abs(as).^2,2);
 medianbasepower = median(median(abs( as(baseind(1):baseind(2),:,:)) .^2,2),1);
 mediandbpower = 10*log10(bsxfun(@rdivide, medianpower, medianbasepower));
-
-meanZpower = (power-baseline_power) ./ baseline_std_power;
 
 end
 

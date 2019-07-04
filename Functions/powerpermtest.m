@@ -12,20 +12,25 @@ function [powerzmask, MC_power_minmax] = powerpermtest(pwr, aIdx, bIdx, varargin
 % once this is working, call it from within the getPower nt loop so i don't
 % have to load the individual AS's twice
 
+% need to compute the significance mask for the individual settypes.. and
+% then i can get to the diffs that I was doing previously.
+
 n_permutes = 1000;
 if ~isempty(varargin)
     assign(varargin{:});
 end
 
-% this needs to live in a parfor'd ntrode loop.
 for ian = 1:length(Fp.animals)
     animal = Fp.animals{ian};
     ntrodes = lfpstack(ian).ntrodes;
 %     pwr = cell(1,length(ntrodes));
-    parfor nti = 1:length(ntrodes)
-        dbpwr = cell(1,length(ripstate(ian).statesetsfields));
+    for nti = 1:length(ntrodes)
+%         dbpwr = cell(1,length(ripstate(ian).statesetsfields));
         nt = ntrodes(nti);
         as = loadAS(animal, nt, Fp.waveSet, 'AS');
+        
+        permdataInds = aIdx;
+        
         
         %% create the shuffled distribution of indices for each pixel
         permdataInds = [aIdx; bIdx];

@@ -1,4 +1,12 @@
-function out = excludenoiseevents(animaldir,animalprefix, epochs, eventconsname, tetfilter, varargin)
+function out = excludenoiseevents(animaldir,animalprefix, epochs, eventconsname, varargin)
+
+tetfilter = 1;
+exclpad = 0; % in seconds. padding pre and post event start/end to also exclude
+stdthresh = 0;
+if ~isempty(varargin)
+    assign(varargin{:})
+end
+
 loaddays = unique(epochs(:,1));
 eventcons = loaddatastruct(animaldir, animalprefix, eventconsname, loaddays);
 
@@ -8,12 +16,12 @@ for i = 1:size(epochs,1)
     
     % empty error checking: possibly no eventcons..(perhaps not computed because of too much noise this epoch) if so, skip
     if isempty(eventcons)
-        disp(sprintf('d %d e %d skipped, noise struct is empty',epochs(i,1),epochs(i,2)))
+        fprintf('d %d e %d skipped, noise struct is empty\n',epochs(i,1),epochs(i,2))
         out{epochs(i,1)}{epochs(i,2)}.time = nan;
         out{epochs(i,1)}{epochs(i,2)}.noise = nan;
         continue
     elseif (epochs(i,2) > length(eventcons{epochs(i,1)})) || isempty(eventcons{epochs(i,1)}{epochs(i,2)})
-        disp(sprintf('d %d e %d skipped, no eventcons data',epochs(i,1),epochs(i,2)))
+        fprintf('d %d e %d skipped, no eventcons data\n',epochs(i,1),epochs(i,2))
         out{epochs(i,1)}{epochs(i,2)}.time = nan;
         out{epochs(i,1)}{epochs(i,2)}.noise = nan;
         continue
@@ -27,16 +35,30 @@ for i = 1:size(epochs,1)
     else
        error('bum bum bummmmmmm')
     end
-    
-         
-    
+
     ec = eventcons{epochs(i,1)}{epochs(i,2)}{TF};
+    if stdthresh
+        y = ec.maxthresh > stdthresh;
+        fprintf('%d %d: %d noise events >%dstd \n', epochs(i,1), epochs(i,2), sum(y), ...
+            stdthresh)
+        ec.maxthresh = ec.maxthresh(y);
+        ec.starttime = ec.starttime(y);
+        ec.endtime = ec.endtime(y);
+        ec.peak_value = ec.peak_value(y);
+        ec.peak_index = ec.peak_index(y);
+        ec.total_area = ec.total_area(y);
+        ec.area_midpoint_index = ec.area_midpoint_index(y);
+        ec.energy_midpoint_index = ec.energy_midpoint_index(y);
+        ec.absolute_maxthresh = ec.absolute_maxthresh(y);
+    end
+    
     times = ec.timerange(1):1/ec.samprate:ec.timerange(end);
-    ectimes = [ec.starttime(:) ec.endtime(:)];
+    ectimes = [ec.starttime(:)-exclpad ec.endtime(:)-exclpad];
     noise = list2vec(ectimes,times)';
-    noisetime = (sum(noise)/1500/60);
+    noisetime = (sum(noise)/ec.samprate/60);
     totaltime = (ec.timerange(end) - ec.timerange(1))/60;
-    disp(sprintf('day%d ep%d -- %.02f of %.02f minutes labeled as noise', epochs(i,1),epochs(i,2), noisetime, totaltime))
+    fprintf('day%d ep%d -- %.02f of %.02f minutes noise\n', epochs(i,1),epochs(i,2), ...
+        noisetime, totaltime)
     out{epochs(i,1)}{epochs(i,2)} = ec;
     out{epochs(i,1)}{epochs(i,2)}.time = times;
     out{epochs(i,1)}{epochs(i,2)}.noise = noise;

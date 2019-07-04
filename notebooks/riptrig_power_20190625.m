@@ -2,8 +2,8 @@
 run_ff = 0;
 savedata = run_ff;
 
-load_lfp = 0;
-stack_lfp = 0;
+load_lfp = 1;
+stack_lfp = 1;
 calculateAnalyticSignal = 1;
 makeStateFilters = 1;
 computePWR = 1;
@@ -11,11 +11,11 @@ runPermutationTest = 0;
 loadPWR = 0;
 
 plotfigs = 0;
-savefigs = 1;
+savefigs = 0;
 pausefigs = 0;
 
 use_filters = {'firstwell', 'noise'};
-animals = {'D12', 'D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'};
+animals = {'D13'};
 add_params = {'wtrack', 'wavelets4-300Hz'};
 me = animaldef('Demetris');
 
@@ -50,8 +50,7 @@ if stack_lfp
 end
 %% Calculate and Save Analytic Signal
 if calculateAnalyticSignal
-        computeAnalyticSignal(lfpstack(ian).data{eegidx}, lfpstack(ian).ntrodes, ...
-            'saveAnalyticSignal', 1, 'waveSet', Fp.waveSet);
+        computeAnalyticSignal(lfpstack, 'saveAnalyticSignal', 1, 'waveSet', Fp.waveSet);
 end
 %% make statesets as sets of indices into AS ripple dim for specified states
 if makeStateFilters
@@ -59,7 +58,8 @@ if makeStateFilters
 end
 %% Compute Power from analytic signal for each ntrode, condition
 if computePWR
-    pwr = getPower(ripstate, Fp, 'baseline', [1 1.5]*1500);
+    wp = getWaveParams('4-300HzJustfreqs',[]);
+    pwr = getPower(ripstate, Fp, 'baseline', wp.baseind);
 end
 %% load power
 if loadPWR
@@ -88,6 +88,10 @@ if plotfigs
         animal = Fp.animals{ian};
         anidx = find(strcmp({pwr.animal}, animal));
         for iset = 1:length(pwr(ian).ripstate(1).statesetsfields)
+            % Seperate MEC from CA1. 
+            ntrodegroups = {[1:15], [16:30]};
+            areas = {'mec', 'ca1'};
+            for area = 1:2
             if savefigs && ~pausefigs
                 close all
                 ifig =figure('Visible','off','units','normalized','position',Pp.position);
@@ -95,24 +99,29 @@ if plotfigs
                 ifig = figure('units','normalized','position',Pp.position);
             end
             set(gcf,'color','white')
-            for nt = 1:length(pwr(ian).mediandbpower)
-                sf = subaxis(5,6,nt, 'SpacingVert', Pp.SpVt, 'SpacingHoriz', Pp.SpHz, ...
+            for int = 1:length(ntrodegroups{area})'%1:length(pwr(ian).mediandbpower)
+                sf = subaxis(3,5,int, 'SpacingVert', Pp.SpVt, 'SpacingHoriz', Pp.SpHz, ...
                     'MarginLeft', Pp.MgLt, 'MarginRight', Pp.MgRt, 'MarginTop', Pp.MgTp, ...
                     'MarginBottom', Pp.MgBm);
-                
-                idata2plot = squeeze(pwr(ian).mediandbpower{nt}{iset})';
+                nt = ntrodegroups{area};
+                nt = nt(int);
+                idata2plot = squeeze(pwr(anidx).mediandbpower{nt}{iset})';
                 idata2plot = trim2win(idata2plot, Fp.srate, Pp.pwin);
                 time = linspace(-Pp.pwin(1), Pp.pwin(2), length(idata2plot(1,:)));
                 contourf(sf, time, wp.frex, idata2plot, Pp.contourRes,'linecolor','none');
                 set(gca,'ydir','normal','yscale','log'); %,'xlim',[-Pp.pwin(1) Pp.pwin(2)], 'ylim',[wp.frex(1) wp.frex(end)])0                coloraxis = [-5 50]; %'auto';%
-                coloraxis = [-1 1]; %[-5 50];
+                if area == 1
+                    coloraxis = [-1 1]; %[-5 50];
+                else
+                    coloraxis = [-2 5]; %[-5 50];
+                end
                 caxis(coloraxis)
                 colormap(Pp.usecolormap)
 
                 hold on;
                 title(sprintf('nt%d',nt), 'FontSize',Pp.FontS,'FontWeight',Pp.FontW, 'FontName', ...
                     Pp.FontNm)
-                if nt == 1
+                if int == 1
                     xlabel('time s', 'FontSize',Pp.FontS,'FontWeight',Pp.FontW,'FontName', Pp.FontNm)
                     ylabel('freq Hz','FontSize',Pp.FontS, 'FontWeight',Pp.FontW,'FontName', Pp.FontNm)
                     ytickskip = 2:4:wp.numfrex;
@@ -126,7 +135,9 @@ if plotfigs
             end
             %% super
             sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
-            sprtit = sprintf('%s dbPower %s %s %s', animal, pwr(ian).ripstate(ian).statesetsfields{iset}, add_params{1}, add_params{2});
+            sprtit = sprintf('%s dbPower %s %s %s %s', animal, ...
+                pwr(anidx).ripstate(ian).statesetsfields{iset}, add_params{1}, ...
+                add_params{2}, areas{area});
             iStitle = text(.5, .98, {sprtit}, 'Parent', sprtitleax, 'Units', 'normalized');
             set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
                 'horizontalAlignment', 'center','FontSize', 12);
@@ -140,6 +151,7 @@ if plotfigs
                 close all
             end
             close all;
+            end
         end
     end
 end

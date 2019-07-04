@@ -2,9 +2,13 @@
 
 % given an animal, day, epoch, timestamp.. evaluate the state of each type
 
-function ripstate = getStateFilters(lfpstack)
+function ripstate = getStateFilters(lfpstack, varargin)
     statefilters = {'all', 'rewarded', 'unrewarded', 'inbound' , 'outbound', 'rewarded_inbound', ...
         'unrewarded_inbound', 'rewarded_outbound', 'unrewarded_outbound'};
+    
+    if ~isempty(varargin)
+        assign(varargin{:})
+    end
     
     ripstate = struct;
     for ian = 1:length(lfpstack)

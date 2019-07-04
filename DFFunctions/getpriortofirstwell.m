@@ -39,8 +39,8 @@ for i = 1:size(epochs,1)
             linpos{epochs(i,1)}{epochs(i,2)}.statematrix.time);
         
         
-        fprintf('%d %d :: %d intervals \n',epochs(i,1),epochs(i,2), ...
-            length(excl_prefirst_list));
+%         fprintf('%d %d :: %d intervals \n',epochs(i,1),epochs(i,2), ...
+%             length(excl_prefirst_list));
         
         if plotfigs
             figure
