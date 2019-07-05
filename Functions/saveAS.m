@@ -6,7 +6,7 @@ if ~isdir(dirstr)
     mkdir(dirstr);
 end
 
-analyticsignal.analyticsignal = as;
+analyticsignal.as = as;
 analyticsignal.waveparams = wp;
 analyticsignal.ntrodeN = ntN;
 analyticsignal.ntrode = nt;
@@ -14,7 +14,7 @@ analyticsignal.lfptype = lfptype;
 
 ASsavestr = sprintf('%s/AnalyticSignal_nt%02d_waveSet-%s_%s.mat', dirstr, ...
     analyticsignal.ntrode, analyticsignal.waveparams.waveSet, lfptype);
-save(ASsavestr, 'as', '-v7.3');
+save(ASsavestr, 'analyticsignal', '-v7.3');
 fprintf('SAVED ANALYTIC SIGNAL RESULTS ++++++++++ %s \n',ASsavestr)
 
 % PHsavestr = sprintf('%s/nt%02d_waveSet-%s_PH.mat',dirstr, nt, wp.waveSet);

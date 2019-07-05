@@ -11,8 +11,9 @@ switch waveSet
     case 'default'
         srate = 1500;
         win = [-1.5 1.5]; %in seconds. The morlet wavelet needs to be centered at time zero.. so always make this window symmetric about zero
+        timeWin = win(1):1/srate:win(2);
         plotwin = [-.5 .5];
-        basewin = plotwin(2); %baseline window to use for 1/f normalization
+        basewin = plotwin(2); %baseline window to use for normalization
         plottimeWin = plotwin(1):1/srate:plotwin(2);
         %baseline indices. length of 1/2 plot window, centered on first plot ind
         % i.e. 0.5 sec basewindow starting at .25 sec before the start of the
@@ -34,7 +35,7 @@ switch waveSet
         % more wavelets for the same frequency will increase the frequency precision
         % range_cycles = [4 floor(max_freq/10)];
         range_cycles = (([min_freq max_freq])/min_freq); % sliding window
-        timeWin = win(1):1/srate:win(2);
+
         frex = logspace(log10(min_freq),log10(max_freq),numfrex);
         % frex = linspace(min_freq,max_freq,numfrex+1);
         % nWavecycles = linspace(range_cycles(1),range_cycles(end),numfrex); %number of wavelet cycles per freq
@@ -125,10 +126,15 @@ switch waveSet
         plotwin = [-1 1];
         plottimeWin = plotwin(1):1/srate:plotwin(2);
 
-        baseind = [.75 1] * srate;
+        basetime = [-1.25 -1]; % in seconds, period before event start to use as baseline
+        baseind(1,1) = dsearchn(timeWin',basetime(1));
+        baseind(1,2) = dsearchn(timeWin',basetime(2));
+        
+%         baseind = [.75 1] * srate;
         pval = 0.05;
+        voxel_pval = 0.01;
         zval = abs(norminv(pval)); % convert p-value to Z value
-        n_permutes = 1000;
+        n_permutes = 10;
         
         min_freq =  4;
         max_freq = 300;

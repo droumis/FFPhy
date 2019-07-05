@@ -1,5 +1,5 @@
 
-function [powerzmask, MC_power_minmax] = powerpermtest(pwr, aIdx, bIdx, varargin)
+function [powerzmask, MC_power_minmax] = powerpermtest(pwr, varargin)
 % compute the power z mask for a two-condition power diff
 
 % as : analytic signal. samples x events x freqs
@@ -20,6 +20,8 @@ if ~isempty(varargin)
     assign(varargin{:});
 end
 
+wp = getWaveParams(Fp.waveSet, []);
+
 for ian = 1:length(Fp.animals)
     animal = Fp.animals{ian};
     ntrodes = lfpstack(ian).ntrodes;
@@ -29,7 +31,8 @@ for ian = 1:length(Fp.animals)
         nt = ntrodes(nti);
         as = loadAS(animal, nt, Fp.waveSet, 'AS');
         
-        permdataInds = aIdx;
+        
+        
         
         
         %% create the shuffled distribution of indices for each pixel

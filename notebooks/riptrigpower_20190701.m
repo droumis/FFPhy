@@ -12,15 +12,15 @@
 % exclude firstwell, noise rips
 % i should just exclude the firstwell and noise rips from the beginning..
 
-run_ff = 1;
+run_ff = 0;
 savedata = run_ff;
 
-load_lfp = 1;
-stack_lfp = 1;
-load_stack = 1;
-get_ripstate = 1;
-calc_AS = 1;
-calc_PWR = 0;
+load_lfp = 0;
+stack_lfp = 0;
+load_stack = 0;
+get_ripstate = 0;
+calc_AS = 0;
+calc_PWR = 1;
 load_PWR = 0;
 run_permtest = 0;
 
@@ -29,7 +29,7 @@ savefigs = 0;
 pausefigs = 0;
 
 % use_filters = {'firstwell', 'noise'};
-Fp.animals = {'D12', 'D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'};
+Fp.animals = {'D10'};%, 'D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'};
 Fp.add_params = {'wtrack', 'wavelets4-300Hz', 'excludeNoise','excludePriorFirstWell'};
 Fp.filtfunction = 'dfa_riptriglfp';
 Fp = load_filter_params(Fp, 'add_params', Fp.add_params);
@@ -63,6 +63,11 @@ end
 if load_stack
     lfpstack = load_data(Fp.paths.resultsDirectory, 'riptriglfpstack_wtrack', Fp.animals);
 end
+%% Calculate and Save Analytic Signal
+if calc_AS
+    computeAnalyticSignal(lfpstack, 'waveSet', Fp.waveSet, 'overwrite', 1);
+end
+
 %% get behavioral state for each rip
 if get_ripstate
     ripstate = getStateFilters(lfpstack);
@@ -77,17 +82,24 @@ end
 %     end
 %     save_data(lfpstack, Fp.paths.resultsDirectory, 'riptriglfpstack_wtrack')
 % end
-%% Calculate and Save Analytic Signal
-if calc_AS
-    computeAnalyticSignal(lfpstack, 'waveSet', Fp.waveSet, 'overwrite', 1);
-end
+
 % use_filts = find(any(cell2mat(cellfun(@(x) strcmp(x, excludefields), use_filters, 'un', 0)), 2));
 %     [excludefields, excludestate] = getExclusionFilters(lfpstack);
 % exclude_rips = any(excludestate,2);
 %% Compute and Save Power from analytic signal for each ntrode, condition
 if calc_PWR
     lfptypes = {'eeggnd', 'eeg'};
-    pwr = getPower(ripstate, Fp, 'lfptypes', lfptypes);
+%     ntrodes = 1:30;
+%     as = cell(1,length(lfptypes));
+%     for itype = 1:length(lfptypes)
+%         asnt = cell(1,length(ntrodes));
+%         parfor nti = 1:length(ntrodes)
+%             nt = ntrodes(nti);
+%             asnt{nti} = loadAS(Fp.animals{1}, nt, Fp.waveSet, lfptypes{itype});
+%         end
+%         as{itype} = asnt;
+%     end
+    getPower(as,ripstate, Fp, 'lfptypes', lfptypes);
 end
 
 % %% Compute and Save ITPC from analytic signal for each ntrode, condition
@@ -112,11 +124,11 @@ if load_PWR
 end
 
 %% runPermutationTest
-if run_permtest
-    aIdx = find(ripstate(ian).statesets(:,2)); % rewarded (2)
-    bIdx = find(ripstate(ian).statesets(:,3)); % unrewarded (3)
-    pwr = powerpermtest(pwr, aIdx, bIdx);
-end
+% if run_permtest
+% %     aIdx = find(ripstate(ian).statesets(:,2)); % rewarded (2)
+% %     bIdx = find(ripstate(ian).statesets(:,3)); % unrewarded (3)
+%     pwr = powerpermtest(pwr);
+% end
 
 %% load other stuff 
 ntinfo = struct;
