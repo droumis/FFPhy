@@ -1,7 +1,13 @@
 
 
-function out = trim2win(inData, srate, plotwin)
+function out = trim2win(inData, srate, pwin, varargin)
+
+dsamp = 1; % 1 = not downsampled
+if ~isempty(varargin)
+   assign(varargin{:}); 
+end
 
 midpoint = floor(size(inData,2)/2); %get middle index of window
-out = inData(:,midpoint - plotwin(1)*srate : midpoint + plotwin(2)*srate); %get plot wind
+sampsrate = (srate/floor(dsamp));
+out = inData(:,midpoint-pwin(1)*sampsrate:midpoint+pwin(2)*sampsrate);
 end

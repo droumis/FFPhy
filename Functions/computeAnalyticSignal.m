@@ -9,67 +9,80 @@ function as = computeAnalyticSignal(lfpstack, varargin)
 
 saveAnalyticSignal = 1;
 overwrite = 1;
-useeeg = 'eeg';
+uselfptypes = {'eeg'};
 waveSet = '4-300Hz';
+
 if ~isempty(varargin)
     assign(varargin{:});
 end
 
 for ian = 1:length(lfpstack)
-    %     eegidx = find(cellfun(@(x) strcmp(x,useeeg),lfpstack(ian).lfptypes, 'un', 1));
-    wp = getWaveParams(waveSet, lfpstack(ian).data{1});
-    for itype = 1:length(lfpstack(ian).lfptypes)
-        lfptype = lfpstack(ian).lfptypes{itype};
+    wp = getWaveParams(waveSet);
+    for itype = 1:length(uselfptypes)
+        phaseout = struct;
+        powerout = struct;
+        lfptype = uselfptypes{itype};
+        itypeidx = find(strcmp(lfpstack(ian).lfptypes, lfptype));
         animal = lfpstack(ian).animal;
         ntrodes = lfpstack(ian).ntrodes;
         fprintf('waveSet: %s\n', waveSet);
+
+        srate = wp.srate/wp.dsamp;
+        dsampdata = lfpstack(ian).data{itypeidx}(:,1:wp.dsamp:end,:);
+        nevents = size(dsampdata,3);
+        nsamps = size(dsampdata,2);
+        nNTrodes = size(dsampdata,1);
+        nData = nsamps*nevents*nNTrodes;
         
-        %     try
-        %         waveletFFT = lfpstack(ian).waveletFFT;
-        %     catch
-        %         % create complex morlet wavelets and get FFT
-        waveletFFT = createCMWfft(wp);
-        %     end
+        timeWin = wp.win(1):1/srate:wp.win(2);
+        baseind(1,1) = dsearchn(timeWin',wp.basewin(1));
+        baseind(1,2) = dsearchn(timeWin',wp.basewin(2));
+        lenWave = length(timeWin);
+        hws = (length(timeWin)-1)/2; % half_wave_size
         
-%         pathdef = animaldef(lower('Demetris'));
-%         dirstr = sprintf('%s/analyticSignal/%s', pathdef{2}, animal);
+        nConv = lenWave+nData-1; % length of the result of convolution
+        nConv2pow = 2^nextpow2(nConv); % next pwr of 2 for FFT speedup
+        zpad2pow = nConv2pow - nConv; % zero padding added by nextpow2
+
+        tic
+        waveletFFT = createCMWfft(wp, nConv2pow, timeWin);
+        fprintf('%d seconds to make CMWFFT\n', toc);
         
-        parfor nt = 1:length(ntrodes) %use parfor
-%             ASsavestr = sprintf('%s/nt%02d_waveSet-%s_AS.mat',dirstr, nt, wp.waveSet);
-%             if ~overwrite && exist(ASsavestr, 'file')
-%                 fprintf('AS results detected, skipping ++++++++++ %s \n',ASsavestr)
-%                 continue
-%             end
-            fprintf('computing Analytic Signal for ntrode %d of %d %s\n',nt,wp.nNTrodes,lfptype );
-            
-            dataY = zeros(wp.nConv2pow, wp.nTimeSeries);
-            astmp = zeros(wp.nConv2pow, wp.numfrex);
-            astmp2 = zeros(wp.numfrex, wp.nConv2pow);
-            astmp3 = zeros(wp.numfrex, wp.nData);
-            as = zeros(wp.nsamps, wp.nevents, wp.numfrex);
-            
-            % get pow2 padded FFT of nt data
-            tmp1 = squeeze(lfpstack(ian).data{itype}(nt,:,:));
-            tmp2 = reshape(tmp1,wp.nData,wp.nTimeSeries);
-            dataY = fft(tmp2,wp.nConv2pow,1); %fft works on columns
-            
-            % run convolution (filtering) : Time-domain convolution in the frequency domain...
-            astmp = bsxfun(@times,dataY,waveletFFT); %multiply the pwr spectrum (FFT) of the data and the wavelet
-            %  ifft returns the inverse DFT of each column of the AS matrix
-            astmp2 = ifft(astmp,wp.nConv2pow,1); % take the inverse transform of convolution
-            % trim half length wavelet and zero padding at the tail
-            astmp3 = astmp2(wp.half_wave_size+1:end-(wp.half_wave_size+wp.zpad2pow),:);
-            % reshape back to nt x samples x events x frequencies
-            as = reshape(astmp3,wp.nsamps,wp.nevents,wp.numfrex);
-%             phaze =  angle(as);
-%             reel =  abs(as);
-            
-            %% ---------------- Save Analytic Signal Output ---------------------------------------------------
-            if saveAnalyticSignal == 1
-                saveAS(as,ntrodes(nt),nt,wp,animal, lfptype)
-%                 saveAS(phaze,ntrodes(nt),nt,wp,animal, lfptype, 'filtail', 'phase')
-%                 saveAS(reel,ntrodes(nt),nt,wp,animal, lfptype, 'filetail', 'mgt')
-            end
+        fprintf('computing Analytic Signal for %s %s\n', animal, lfptype);        
+        dataFFT = zeros(nConv2pow, 1);
+        astmp = zeros(nConv2pow, wp.numfrex);
+        as = zeros(nNTrodes, nsamps, nevents, wp.numfrex);
+        
+        dataFFT = fft(reshape(dsampdata,nData,1),nConv2pow,1);
+        % Time-domain convolution in the frequency domain
+        astmp = bsxfun(@times,dataFFT,waveletFFT);
+        astmp = ifft(astmp,nConv2pow,1);
+        % trim and reshape to 'source', 'sample', 'trial', 'frequency'
+        as = reshape(astmp(hws+1:end-(hws+zpad2pow),:), ...
+            nNTrodes, nsamps, nevents, wp.numfrex);
+        % Phase
+        phaseout.ph =  angle(as);
+        phaseout.wp = wp;
+        phaseout.animal = animal;
+        phaseout.lfptype = lfptype;
+        phaseout.dsampsrate = srate;
+        phaseout.dsamp = wp.dsamp;
+        phaseout.dims = {'source', 'sample', 'trial', 'frequency'};
+        % Power
+        powerout.pwr =  abs(as).^2;
+        powerout.wp = wp;
+        powerout.animal = animal;
+        powerout.lfptype = lfptype;
+        powerout.dsampsrate = srate;
+        powerout.dsamp = wp.dsamp;
+        powerout.dims = {'source', 'sample', 'trial', 'frequency'};
+        %% ---------------- Save Analytic Signal Output ---------------------------------------------------
+        if saveAnalyticSignal == 1
+            andef = animaldef(lower('Demetris'));
+            save_data(phaseout, sprintf('%s/analyticSignal/', andef{2}), ...
+                sprintf('AS_waveSet-%s_%s_phase', waveSet, lfptype))
+            save_data(powerout, sprintf('%s/analyticSignal/', andef{2}), ...
+                sprintf('AS_waveSet-%s_%s_power', waveSet, lfptype))
         end
     end
 end

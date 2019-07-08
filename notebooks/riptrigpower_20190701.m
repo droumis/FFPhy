@@ -17,9 +17,9 @@ savedata = run_ff;
 
 load_lfp = 0;
 stack_lfp = 0;
-load_stack = 0;
-get_ripstate = 0;
-calc_AS = 0;
+load_stack = 1;
+get_ripstate = 1;
+calc_AS = 1;
 calc_PWR = 1;
 load_PWR = 0;
 run_permtest = 0;
@@ -29,7 +29,7 @@ savefigs = 0;
 pausefigs = 0;
 
 % use_filters = {'firstwell', 'noise'};
-Fp.animals = {'D10'};%, 'D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'};
+Fp.animals = {'JZ2', 'JZ3', 'JZ4'};
 Fp.add_params = {'wtrack', 'wavelets4-300Hz', 'excludeNoise','excludePriorFirstWell'};
 Fp.filtfunction = 'dfa_riptriglfp';
 Fp = load_filter_params(Fp, 'add_params', Fp.add_params);

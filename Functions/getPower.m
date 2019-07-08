@@ -1,73 +1,135 @@
 
 
-function getPower(as, ripstate, Fp, varargin)
-% LOAD ANALYTIC SIGNAL PER NTRODE AND COMPUTE POWER
+function getPower(ripstate, Fp, varargin)
+% 
 % Fp = filter params (see load_filter_params)
-% p = wave params (see getWaveParams)
-% TODO: only uses lfpstack to get the list of ntrodes.. so i could do without it
-
-% pwrout is a struct array per animal with dbpower data
-% pwrout(an).dbpower is a cell array per ntrode of a cell array per statetype
+% wp = wave params (see getWaveParams)
 
 lfptypes = {'eeg'};
+ripstatetypes = {'all'};
 savepower = 1;
+run_permutation_test = 0;
+dsamp = 2;
 if ~isempty(varargin)
    assign(varargin{:}); 
 end
 
 for ian = 1:length(Fp.animals)
-    wp = getWaveParams(Fp.waveSet, []);
+    wp = getWaveParams(Fp.waveSet);
     animal = Fp.animals{ian};
+    fprintf('animal %s \n', animal);
     andef = animaldef(animal);
     tetinfo = loaddatastruct(andef{2}, animal, 'tetinfo');
-    tmp = cellfetch(tetinfo, '');
-    ntrodes = unique(tmp.index(:,3));
-
+    den = cellfetch(tetinfo, '');
+    ntrodes = unique(den.index(:,3));
+    
+    % batch load and vectorize all AS data across ntrodes for this animal
+    tic
+    as = cell(1,length(lfptypes));
+    for itype = 1:length(lfptypes)
+        asnt = cell(1,length(ntrodes));
+        parfor nti = 1:length(ntrodes)
+            % this takes ~100Gb mem, 13-34 min per animal
+            nt = ntrodes(nti);
+            asnt{nti} = loadAS(Fp.animals{ian}, nt, Fp.waveSet, lfptypes{itype});
+        end
+        as{itype} = asnt;
+        clear asnt
+        a = [as{itype}{:}];
+        clear as
+        b = {a.as};
+        clear a
+        asdatacat{itype} = cat(4,b{:});
+        clear b
+    end
+    fprintf('batch load AS took %d seconds \n', toc)
+    
+    if isempty(ripstatetypes)
+        ripstatetypes = ripstate(ian).statesetsfields;
+    end
     for itype = 1:length(lfptypes)
         pwrout = struct;
         lfptype = lfptypes{itype};
-        meanpwrNTs = cell(1,length(ntrodes));
-        medianpwrNTs = cell(1,length(ntrodes));
-%         meanZpwr = cell(1,length(ntrodes));
-        zmappwrNTs = cell(1,length(ntrodes));
-        threshmeanpwrNTs = cell(1,length(ntrodes));
-        parfor nti = 1:length(ntrodes) % use parfor
-            meandbpwrSTs = cell(1,length(ripstate(ian).statesetsfields));
-            mediandbpwrSTs = cell(1,length(ripstate(ian).statesetsfields));
-            zmapSTs = cell(1,length(ripstate(ian).statesetsfields));
-            threshmeanSTs = cell(1,length(ripstate(ian).statesetsfields));
-            nt = ntrodes(nti);
-%             as = loadAS(animal, nt, Fp.waveSet, lfptype);
-            % for each state/condition, compute power and run perm test vs baseline
-            for stset = 1:length(ripstate(ian).statesetsfields)
-                stidx = find(ripstate(ian).statesets(:,stset));
-                [meandbpwrSTs{stset}, mediandbpwrSTs{stset}, zmapSTs{stset}, threshmeanSTs{stset}] = ...
-                    computePower(as{itype}{nti}.as(:,stidx,:), wp, 'baselIdx', wp.baseind);
-            end
-            meanpwrNTs{nti} = meandbpwrSTs;
-            medianpwrNTs{nti} = mediandbpwrSTs;
-%             meanZpwr{nti} = meanZpower;
-            zmappwrNTs{nti} = zmapSTs;
-            threshmeanpwrNTs{nti} = threshmeanSTs;
+        fprintf('lfptype %s \n', lfptype);
+        meandbpower = cell(1,length(ripstate(ian).statesetsfields));
+
+        % for each state/condition, compute dbpower, run timeshift permtest vs baseline
+        for stset = 1:length(ripstatetypes)
+            fprintf('ripstate %s \n', ripstatetypes{stset});
+            stidx = find(strcmp(ripstatetypes{stset}, ripstate(ian).statesetsfields));
+            sripidx = find(ripstate(ian).statesets(:,stidx));
+            meandbpower{stset} = computePower(asdatacat{itype}(:,sripidx,:,:), wp, ...
+                'dsamp',dsamp, 'run_permutation_test', run_permutation_test);
         end
+
         pwrout.animal = animal;
         pwrout.ripstate = ripstate;
+        pwrout.ripstatetypes = ripstatetypes;
         pwrout.wp = wp;
         pwrout.Fp = Fp;
         pwrout.lfptype = lfptype;
-        
-        pwrout.meandbpower = meanpwrNTs;
-        pwrout.mediandbpower = medianpwrNTs;
-        pwrout.zmap = zmappwrNTs;
-        pwrout.threshmean = threshmeanpwrNTs;
-%         pwrout.meanZpower = meanZpwr;
-        
+        pwrout.meandbpower = meandbpower;
+
         if savepower
             save_power(pwrout, animal, Fp.waveSet, lfptype)
         end
     end
 end
+end
+
+function [pout] = computePower(as,wp,varargin)
+fprintf('computing power\n');
+tic
+dsamp = 10;
+run_permutation_test = 1;
+if ~isempty(varargin)
+    assign(varargin{:});
+end
+% AS dims = samples X events X freqs X ntrodes
+pwr = abs(as(1:dsamp:end,:,:,:)).^2; %default dsamp is 2: 1.5kHz to .75kHz sampling
+pout.bl_pwr_mean = mean(mean(abs( as(wp.baseind(1):wp.baseind(2),:,:,:)) .^2,2),1);
+pout.pwr_mean_db = 10*log10(bsxfun(@rdivide, mean(pwr,2), pout.bl_pwr_mean));
+pout.dsamp = dsamp;
+% baseline_std_power = std(mean(abs( as(baseind(1):baseind(2),:,:)) .^2,2),[],1);
+% pctpower = 100 * bsxfun(@rdivide, bsxfun(@minus, power, basepower), basepower);
+% meanZpower = (power-baseline_power) ./ baseline_std_power;
+% medianpower = median(abs(as).^2,2);
+% medianbasepower = median(median(abs( as(wp.baseind(1):wp.baseind(2),:,:)) .^2,2),1);
+% mediandbpower = 10*log10(bsxfun(@rdivide, medianpower, medianbasepower));
+
+pout.permt = struct;
+if run_permutation_test
+    pout.permt = run_pwr_perm_test(pwr, pout.bl_pwr_mean, pout.pwr_mean_db);
+else
+    fprintf('not running permtest\n');
+end
+fprintf('power took %d seconds \n', toc)
+
+end
+
+function permt = run_pwr_perm_test(pwr, dbmean, bl_dbmean, wp)
+
+    fprintf('running %d permutes \n', wp.n_permutes);
+    tic
+    cutpnts = randsample(1:size(dbmean,1),wp.n_permutes,true);
+    powerperms = cell(1,length(wp.n_permutes));
+    parfor p = 1:length(cutpnts) % parfor2 on virga, 4 on typhoon
+        powerperms{p} = bsxfun(@rdivide, ...
+            mean(pwr([cutpnts(p):end 1:cutpnts(p)-1],:,:,:),2),bl_dbmean);
+    end
+    permutes_vals = 10*log10(cat(2,powerperms{:}));
+    permutes_max = max(max(permutes_vals, [],1),[],3);
+    permutes_min = min(min(permutes_vals, [],1),[],3);
     
+    zmap = squeeze((dbmean-mean(permutes_vals,2)) ./ std(permutes_vals,[],2));
+    threshmean = squeeze(dbmean);
+    threshmean(abs(zmap)<norminv(1-wp.voxel_pval))=0;
+    permt.zmap = zmap;
+    permt.threshmean = threshmean;
+    permt.permutes_max = permutes_max;
+    permt.permutes_min = permutes_min;
+    fprintf('perm test took %d seconds \n', toc)
+
 end
 
 function save_power(pwrout, animal, waveSet, lfptype)
@@ -80,43 +142,6 @@ savestr = sprintf('%s/power_%s_%s_waveSet-%s_%s.mat', savedir, animal, ...
     'wtrack', waveSet, lfptype);
 save(savestr, 'pwrout', '-v7.3');
 fprintf('SAVED POWER SIGNAL RESULTS ++++++++++ %s \n',savestr)
-end
-
-function [meanpowerdb, mediandbpower, zmap, threshmean] = computePower(as,wp,varargin)
-
-% baseind = [2 3]*round(6001/6);
-run_permutation_test = 1;
-voxel_pval   = 0.01;
-if ~isempty(varargin)
-    assign(varargin{:});
-end
-% AS dims = samples X events X freqs
-power = abs(as).^2;
-meanpower = mean(power,2);
-baseline_power_mean = mean(mean(abs( as(wp.baseind(1):wp.baseind(2),:,:)) .^2,2),1);
-% baseline_std_power = std(mean(abs( as(baseind(1):baseind(2),:,:)) .^2,2),[],1);
-% pctpower = 100 * bsxfun(@rdivide, bsxfun(@minus, power, basepower), basepower);
-meanpowerdb = 10*log10(bsxfun(@rdivide, meanpower, baseline_power_mean));
-% meanZpower = (power-baseline_power) ./ baseline_std_power;
-
-if run_permutation_test
-    permuted_vals = zeros(numel(wp.timeWin), wp.n_permutes, wp.numfrex);
-    %     powercut = power(1000:5000, :, :);
-    for permi=1:wp.n_permutes
-        fprintf(' %d ', permi);
-        cutpoint = randsample(2:length(power(:,1,1))-diff(wp.baseind)-2,1);
-        permuted_vals(:,permi,:) = 10*log10(bsxfun(@rdivide, ...
-            mean(power([cutpoint:end 1:cutpoint-1],:,:),2),baseline_power_mean) );
-    end
-    zmap = squeeze((meanpowerdb-mean(permuted_vals,2)) ./ std(permuted_vals,[],2));
-    threshmean = squeeze(meanpowerdb);
-    threshmean(abs(zmap)<norminv(1-voxel_pval))=0;
-end
-
-medianpower = median(abs(as).^2,2);
-medianbasepower = median(median(abs( as(wp.baseind(1):wp.baseind(2),:,:)) .^2,2),1);
-mediandbpower = 10*log10(bsxfun(@rdivide, medianpower, medianbasepower));
-
 end
 
 

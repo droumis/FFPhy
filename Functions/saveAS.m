@@ -1,4 +1,4 @@
-function saveAS(as,nt,ntN,wp, animal, lfptype)
+function saveAS(as, wp, animal, lfptype)
 
 pathdef = animaldef(lower('Demetris'));
 dirstr = sprintf('%s/analyticSignal/%s', pathdef{2}, animal);
@@ -13,8 +13,8 @@ analyticsignal.ntrode = nt;
 analyticsignal.lfptype = lfptype;
 
 ASsavestr = sprintf('%s/AnalyticSignal_nt%02d_waveSet-%s_%s.mat', dirstr, ...
-    analyticsignal.ntrode, analyticsignal.waveparams.waveSet, lfptype);
-save(ASsavestr, 'analyticsignal', '-v7.3');
+    as.ntrode, as.waveparams.waveSet, lfptype);
+save(ASsavestr, 'as', '-v7.3');
 fprintf('SAVED ANALYTIC SIGNAL RESULTS ++++++++++ %s \n',ASsavestr)
 
 % PHsavestr = sprintf('%s/nt%02d_waveSet-%s_PH.mat',dirstr, nt, wp.waveSet);
