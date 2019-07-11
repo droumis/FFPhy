@@ -4,13 +4,13 @@
 run_ff = 0;
 savedata = run_ff;
 
-load_stack = 0;
-calc_AS = 0;
+load_stack = 1;
+calc_AS = 1;
 
 % batch_load_AS = 0; % use parfor 30 and 1 animal
 get_ripstate = 0;
 load_ripstate = 0;
-calc_PWR = 1; % use parfor 4
+calc_PWR = 0; % use parfor 4
 run_permtest = 0;
 
 load_PWR = 0;
@@ -22,7 +22,7 @@ pausefigs = 0;
 dsamp = 2;
 
 % use_filters = {'firstwell', 'noise'};
-Fp.animals = {'JZ1'};
+Fp.animals = {'JZ3'};
 Fp.add_params = {'wtrack', 'wavelets4-300Hz', 'excludeNoise','excludePriorFirstWell'};
 Fp.filtfunction = 'dfa_riptriglfp';
 Fp = load_filter_params(Fp, 'add_params', Fp.add_params);

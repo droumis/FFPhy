@@ -1,17 +1,16 @@
 
 
-
 run_ff = 0;
 savedata = run_ff;
 
-load_stack = 0;
-calc_AS = 1;
+load_stack = 1;
+calc_AS = 0;
 
 % batch_load_AS = 0; % use parfor 30 and 1 animal
-get_ripstate = 0;
-load_ripstate = 0;
-calc_PWR = 0; % use parfor 4
-run_permtest = 0;
+get_ripstate = 1;
+load_ripstate = 1;
+calc_PWR = 1;
+run_permtest = 0; % use parfor 4 on typhoon
 
 load_PWR = 0;
 plotfigs = 0;
@@ -22,7 +21,7 @@ pausefigs = 0;
 dsamp = 2;
 
 % use_filters = {'firstwell', 'noise'};
-Fp.animals = {'JZ2'};
+Fp.animals = {'JZ4'};
 Fp.add_params = {'wtrack', 'wavelets4-300Hz', 'excludeNoise','excludePriorFirstWell'};
 Fp.filtfunction = 'dfa_riptriglfp';
 Fp = load_filter_params(Fp, 'add_params', Fp.add_params);
@@ -31,6 +30,8 @@ me = animaldef('Demetris');
 %% load lfpstack
 % D13 - 80 seconds
 % JZ2 - 24 seconds
+% JZ1 - 67 seconds
+% JZ4 - 59 seconds
 if load_stack
     tic
     fprintf('loading %s\n', Fp.animals{:})
@@ -38,20 +39,17 @@ if load_stack
     fprintf('loading lfpstack took %d seconds\n',toc);
 end
 %% Calculate and Save Analytic Signal %% this should use 30 workers (on typhoon)
-% JZ2 - 2.5 minutes to make CMW
+% JZ2 - 2.5 minutes to make CMW. 30 min for the AS + saving (mostly saving)
 if calc_AS
-    tic
     computeAnalyticSignal(lfpstack, 'waveSet', Fp.waveSet, 'overwrite', 1);
-    fprintf('calculating AS took %d seconds\n',toc);
 end
 %% get behavioral state for each rip
 if get_ripstate
     ripstate = getStateFilters(lfpstack);
     save_data(ripstate, [me{2}, 'ripstate/'], 'ripstate_wtrack');
-    
 end
 if load_ripstate
-    load_data([me{2}, 'ripstate/'], 'ripstate_wtrack', Fp.animals)
+    load_data([me{2}, 'ripstate/'], 'ripstate_wtrack', Fp.animals);
 end
 
 %% Compute and Save Power %% this should use 4 workers if doing perms
@@ -59,6 +57,13 @@ end
 % D12 - computepower - 3 minutes. no perms. parfor30
 % D13 - batchloader - 34 min. 
 % D13 - computepower - 4 min. 
+% JZ1 - batchloader - 22 min
+% JZ1 - computepower - 3.5 minutes
+% JZ2 - load single ASpower - 1.5 min (15Gb instead of 30 files ~ 104 Gb)
+% JZ2 - computepower - 1.5 min on derecho!!
+% i'll need to redo the loading and computing since now (for JZ2) I'm saving
+% the power for all ntrodes in a struct (1/4 of the disksize and only 1
+% file to load per animal).. should speed batchloader up by a lot
 
 if calc_PWR
     getPower(ripstate, Fp, 'lfptypes', {'eeg'}, ...
@@ -91,7 +96,7 @@ if plotfigs
         end
     end
     Pp = load_plotting_params({'defaults', 'power'});
-    wp = getWaveParams('4-300HzJustfreqs', []);
+    wp = getWaveParams('4-300Hz');
     for ian = 1:numel(Fp.animals) % for each animal
         animal = Fp.animals{ian};
         anidx = find(strcmp({pwr.animal}, animal));
@@ -204,13 +209,14 @@ end
 
 
 %% run the other animals to get power. all wtrack rips
-% confirm that things look ok and group into mec area
 
 %% plot - per animal - per ntrode - all wtrack rips
+% confirm that things look ok and group into mec area
 
-%% plot - all animals - per area - all wtrack rips
+%% plot - all animals - per area - all wtrack rips with perm test zmap or MCmap
 
 %% Do all that for phase clustering (this is where i need to be by monday)
+
 
 %% Conditions
 % - circular continuous: head direction

@@ -118,10 +118,11 @@ for s = params
             %         Fp.minvelocity, 'consensus_numtets',Fp.consensus_numtets,'welldist', ...
             %         Fp.welldist);
             %% filter function specific params
-        case 'wavelets'
-            waveSet = '4-30Hz';
         case 'wavelets4-300Hz'
             waveSet = '4-300Hz';
+            uselfptype = 'eeggnd';
+            useripstates = {'all'};
+            
         case 'behavestate'
             
         case 'dfa_riptriglfp'
