@@ -42,6 +42,7 @@ timefilter = {};
 options = {};
 sysDateTime = clock;
 for s = params
+    fprintf('%s\n', s{:})
     switch s{1}
         %% EPOCH TETRODE CELL RIPPLE filters
         case 'sleep'
@@ -52,6 +53,11 @@ for s = params
             epochEnvironment = 'wtrack';
             epochfilter = sprintf('(isequal($environment,''%s''))', ...
                 epochEnvironment);
+        case 'wtrackdays'
+            epochEnvironment = 'wtrack';
+            daytype = 'wtrack';
+            epochfilter = sprintf('(isequal($daytype,''%s'')) && (isequal($environment,''%s''))', ...
+                daytype, epochEnvironment);
         case 'openfield'
             epochEnvironment = 'openfield';
             epochfilter = sprintf('(isequal($environment,''%s''))', ...
@@ -120,8 +126,7 @@ for s = params
             %% filter function specific params
         case 'wavelets4-300Hz'
             waveSet = '4-300Hz';
-            uselfptype = 'eeggnd';
-            useripstates = {'all'};
+
             
         case 'behavestate'
             

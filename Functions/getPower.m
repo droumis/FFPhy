@@ -34,7 +34,7 @@ for ian = 1:length(Fp.animals)
         sprintf('AS_waveSet-%s_%s_power', wp.waveSet, uselfptype), animal);
     fprintf('%d seconds to load AS power\n', toc);
     fprintf('lfptype %s \n', uselfptype);
-    meandbpower = cell(1,length(ripstate(ian).statesetsfields));
+    meandbpower = cell(1,length(ripstatetypes));
     
     % for each state/condition, compute dbpower, run timeshift permtest vs baseline
     for stset = 1:length(ripstatetypes)

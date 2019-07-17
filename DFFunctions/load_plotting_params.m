@@ -34,7 +34,12 @@ for s = param_set
             pwin = [1 1];
             usecolormap = 'jet';
             contourRes = 200;
-            position = [.1 .1 .9 .8];
+            position = [.1 .1 .9 .9];
+            SpHz = 0.02; %spacing horizontal
+            SpVt = 0.04; % spacing vertical
+            MgLt = 0.02; % margin left
+            MgTp = 0.07; % margin top
+
 
         case 'behaveperform'
             colorSet = 'DR1';
@@ -118,6 +123,9 @@ for s = param_set
             MarginBottom =  0.1;
         case 'riptriglfp_perLFPtype_allntrodes'
             position = [.1 .1 .9 .3];
+            pwin = [1 1];
+        case 'riptriglfp_perstatefrex_allntrodes'
+            position = [.1 .1 .9 .9];
             pwin = [1 1];
         case 'riptriglfp_allLFPtype_perntrode'
             position = [.1 .1 .4 .7];

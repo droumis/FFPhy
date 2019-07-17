@@ -22,7 +22,7 @@ plot_prepost = 0;
 pausefigs = 0;
 savefigs = 1;
 
-Fp.animals = {'JZ2', 'JZ3', 'JZ4'};
+Fp.animals = {'D10', 'D12', 'D13', 'JZ1'};
 Fp.add_params = {'wtrack', 'wavelets4-300Hz', 'excludeNoise','excludePriorFirstWell'};
 Fp.filtfunction = 'dfa_riptriglfp';
 Fp = load_filter_params(Fp, 'add_params', Fp.add_params);
@@ -85,13 +85,16 @@ if plot_pwr
         anidx = find(strcmp({pwr.animal}, animal));
         invalidtets = evaluatefilter(ntinfo(anidx).ntinfo, 'strcmp($valid, ''no'')');
         invalidtets = unique(invalidtets(:,3));
-        areas = {'ca1', 'mec', 'ref'};
+        areas = {'ca1', 'mec'};
         den = cellfetch(ntinfo(anidx).ntinfo, '');
         matidx = unique(den.index(:,3));
+%         refntrodes = cellfetch(ntinfo(anidx).ntinfo, 'ref');
         for ar = 1:length(areas) % for each area
             areantrodes = evaluatefilter(ntinfo(anidx).ntinfo, ...
                 sprintf('isequal($area, ''%s'')', areas{ar}));
             areantrodes = unique(areantrodes(~ismember(areantrodes(:,3), invalidtets),3));
+            refnt = ntinfo(anidx).ntinfo{1}{1}{areantrodes(1)}.ref;
+            areantrodes = [areantrodes; refnt];
             % for each condition state
             for co = 1:length(Fp.useripstates)
                 if savefigs && ~pausefigs
@@ -153,8 +156,8 @@ if plot_pwr
                 end
                 %% super
                 sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
-                sprtit = sprintf('%s %s mean dbPower p01zmap %s %s %s %s', animal, areas{ar}, ...
-                    Fp.add_params{1}, Fp.add_params{2});
+                sprtit = sprintf('%s %s norm mean dbPower %s %s %s %s', animal, areas{ar}, ...
+                    Fp.uselfptype, Fp.useripstates{co}, Fp.add_params{1}, Fp.add_params{2});
                 iStitle = text(.5, .98, {sprtit}, 'Parent', sprtitleax, 'Units', 'normalized');
                 set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
                     'horizontalAlignment', 'center','FontSize', 12);
@@ -190,13 +193,16 @@ if plot_itpc
         anidx = find(strcmp({itpc.animal}, animal));
         invalidtets = evaluatefilter(ntinfo(anidx).ntinfo, 'strcmp($valid, ''no'')');
         invalidtets = unique(invalidtets(:,3));
-        areas = {'ca1', 'mec', 'ref'};
+        areas = {'ca1', 'mec'};
         den = cellfetch(ntinfo(anidx).ntinfo, '');
         matidx = unique(den.index(:,3));
+%         refntrodes = cellfetch(ntinfo(anidx).ntinfo, 'ref');
         for ar = 1:length(areas) % for each area
             areantrodes = evaluatefilter(ntinfo(anidx).ntinfo, ...
                 sprintf('isequal($area, ''%s'')', areas{ar}));
             areantrodes = unique(areantrodes(~ismember(areantrodes(:,3), invalidtets),3));
+            refnt = ntinfo(anidx).ntinfo{1}{1}{areantrodes(1)}.ref;
+            areantrodes = [areantrodes; refnt];
             for co = 1:length(Fp.useripstates)
                 if savefigs && ~pausefigs
                     close all
@@ -251,8 +257,8 @@ if plot_itpc
                 end
                 %% super
                 sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
-                sprtit = sprintf('%s %s ITPC %s %s %s %s', animal, areas{ar}, ...
-                    Fp.add_params{1}, Fp.add_params{2});
+                sprtit = sprintf('%s %s itpc %s %s %s %s', animal, areas{ar}, ...
+                    Fp.uselfptype, Fp.useripstates{co}, Fp.add_params{1}, Fp.add_params{2});
                 iStitle = text(.5, .98, {sprtit}, 'Parent', sprtitleax, 'Units', 'normalized');
                 set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
                     'horizontalAlignment', 'center','FontSize', 12);
@@ -354,4 +360,6 @@ if plot_prepost
         end
     end
 end
+
+
 

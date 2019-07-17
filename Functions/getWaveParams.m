@@ -128,7 +128,7 @@ switch waveSet
 %         plotwin = [-1 1];
 %         plottimeWin = plotwin(1):1/srate:plotwin(2);
 
-        basewin = [-1.25 -1]; % in seconds, period before event start to use as baseline
+        basewin = [-1.5 -1]; % in seconds, period before event start to use as baseline
         prewin = [-1 -.5];
         postwin = [.5 1];
 %         baseind(1,1) = dsearchn(timeWin',basetime(1));
