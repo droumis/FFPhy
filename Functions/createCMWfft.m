@@ -2,6 +2,7 @@
 
 function waveletFFT=createCMWfft(wp, nConv2pow, timeWin)
 % create wavelet FFT
+tic
 waveletFFT = zeros(nConv2pow, wp.numfrex);
 parfor fi=1:wp.numfrex % can use parfor
     % creating the morlet wavelet by combining the complex sine wave and the gaussian
@@ -14,4 +15,5 @@ parfor fi=1:wp.numfrex % can use parfor
     waveletFFT(:,fi) = (wavefft ./ max(wavefft))';
     fprintf('creating wavelet for freq %d of %d \n',fi,wp.numfrex);
 end
+fprintf('%.02f seconds to make CMWFFT\n', toc);
 end

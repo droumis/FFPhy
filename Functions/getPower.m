@@ -15,7 +15,6 @@ if ~isempty(varargin)
     assign(varargin{:});
 end
 
-pwrout = struct;
 for ian = 1:length(Fp.animals)
     wp = getWaveParams(Fp.waveSet);
     animal = Fp.animals{ian};
@@ -40,11 +39,11 @@ for ian = 1:length(Fp.animals)
     for stset = 1:length(ripstatetypes)
         fprintf('ripstate %s \n', ripstatetypes{stset});
         stidx = find(strcmp(ripstatetypes{stset}, ripstate(ian).statesetsfields));
-        sripidx = find(ripstate(ian).statesets(:,stidx));
         if strcmp(ripstatetypes{stset}, 'all') % avoid slice copy if 'all'
             meandbpower{stset} = computePower(pwr.pwr, wp, ...
                 'dsamp',dsamp, 'run_permutation_test', run_permutation_test);
         else
+            sripidx = find(ripstate(ian).statesets(:,stidx));
             meandbpower{stset} = computePower(pwr.pwr(:,:,sripidx,:), wp, ...
                 'dsamp',dsamp, 'run_permutation_test', run_permutation_test);
         end

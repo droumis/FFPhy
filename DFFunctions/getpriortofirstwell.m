@@ -20,7 +20,7 @@ loaddays = unique(epochs(:,1));
 linpos = loaddatastruct(animaldir, animalprefix, 'linpos', loaddays);
 
 for i = 1:size(epochs,1)
-    try
+%     try
         timevec = linpos{epochs(i,1)}{epochs(i,2)}.statematrix.time;
         out{epochs(i,1)}{epochs(i,2)}.time = timevec;
         
@@ -52,9 +52,9 @@ for i = 1:size(epochs,1)
         
         out{epochs(i,1)}{epochs(i,2)}.prefirst = excl_prefirst;
         out{epochs(i,1)}{epochs(i,2)}.prefirst_list = excl_prefirst_list;
-    catch
-        fprintf('skipping %s linpos day %d epoch %d \n', animaldir, epochs(i,1), ...
-            epochs(i,2));
-        continue
-    end
+%     catch
+%         fprintf('skipping %s linpos day %d epoch %d \n', animaldir, epochs(i,1), ...
+%             epochs(i,2));
+%         continue
+%     end
 end

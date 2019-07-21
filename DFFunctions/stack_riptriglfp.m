@@ -1,12 +1,10 @@
 function out = stack_riptriglfp(data, varargin)
-% get a single matrix for the main data per animal. this makes it easier to
-% work across epochs, etc
-% compile results from {day}(ep).data(<ntXv>) into lfp(animal).<lfptype>(<ntXsamplesXtrial>)
+% make single data matrix per animal
+
+% compile results from F(anim).output{dayep}.data{lfptype}{ripN: ntXsamp}
+% into out(ian).data{lfptype}(ntrode x sample x ripple)
 
 % Demetris Roumis June 2019
-% changed the dims on june 25 2019 to match the wavelet format.. 
-% now nt x samples x rip.. will need to update the other stuff
-
 
 if ~isempty(varargin)
     assign(varargin)
@@ -20,19 +18,11 @@ for ian = 1:length(data)
         out(ian).LFPrangesHz = data(ian).datafilter_params.LFPrangesHz;
     catch
     end    
-    out(ian).data_dims = {'ntrode', 'sample', 'ripnum'};
+    out(ian).data_dims = {'ntrode', 'sample', 'ripple'};
     out(ian).dayeps = data(ian).epochs{1, 1};
-%     if out(ian).animal == 'JZ4'
-%         out(ian).dayeps = out(ian).dayeps(out(ian).dayeps(:,1)<8, :);
-%     elseif out(ian).animal == 'D10'
-%         out(ian).dayeps = out(ian).dayeps(out(ian).dayeps(:,1)<9, :);
-%     elseif out(ian).animal == 'JZ3'
-%         out(ian).dayeps = out(ian).dayeps(out(ian).dayeps(:,1)<9, :);
-%     elseif out(ian).animal == 'D12'
-%         out(ian).dayeps = out(ian).dayeps(out(ian).dayeps(:,1)<7, :);
-%     end
-    out(ian).data = {}; out(ian).numrips_perep = {};
-    for ide = 1:length(out(ian).dayeps(:,1)) % day epoch
+    out(ian).data = {};
+    out(ian).numrips_perep = {};
+    for ide = 1:length(out(ian).dayeps(:,1)) % per epoch
         day = out(ian).dayeps(ide,1);
         epoch = out(ian).dayeps(ide,2);
         if isempty(data(ian).output{ide}.data)
@@ -40,15 +30,13 @@ for ian = 1:length(data)
             continue
         end
         for t = 1:length(out(ian).lfptypes) % LFP type.. 
-            % need to seperate out the different lfp bands so i can load
-            % per type
-            % ntrode x time X rip#
-            tmp = data(ian).output{ide}.data{t};
+            % TODO: need to seperate out the different lfp bands so i can load per type
+            % ntrode x sample X ripple
+            tmp = data(ian).output{1,ide}.data{t};
             if isempty(tmp)
                 continue
             else
-%                 out(ian).data{t}{ide} = permute(cat(3,tmp{:}), [3 2 1]);
-                out(ian).data{t}{ide} = cat(3,tmp{:});
+                out(ian).data{t}{1,ide} = cat(3,tmp{:}); % concat ripples into 3rd dim
             end
             
         end
@@ -66,7 +54,7 @@ for ian = 1:length(data)
     
     % collapse data across collected epochs into one matrix
     for t = 1:length(out(ian).lfptypes) % LFP type
-        out(ian).data{t} = cell2mat(permute(out(ian).data{t}, [1 3 2])); % stack across time
+        out(ian).data{t} = cell2mat(permute(out(ian).data{t}, [1 3 2])); % stack all rips
     end
     out(ian).ntrodes = unique(cell2mat(cellfun(@(x) x(:,3), {data(ian).output{ide}.index}, ...
         'un', 0)'), 'stable');

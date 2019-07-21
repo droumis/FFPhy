@@ -19,7 +19,11 @@ if isa(params, 'string')
     params = {params};
 elseif isa(params, 'struct')
     filter_params = params;
-    params = {filter_params.filtfunction};
+    try
+        params = {filter_params.filtfunction};
+    catch
+        params = {};
+    end
 end
 % 
 % if ~isempty(default_params)
@@ -94,13 +98,26 @@ for s = params
             timefilter{end+1} = {'get2dstate','($velocity<4)'};
         case '>4cm/s'
             timefilter{end+1} = {'get2dstate','($velocity>4)'};
+            
         case 'correcttrials'
             timefilter{end+1} = {'getWtracktrialstate','($correct==1)'};
+        
+        case 'errortrials'
+            timefilter{end+1} = {'getWtracktrialstate','($correct==0)'};
+        
+        case 'outbound'
+            timefilter{end+1} = {'getWtracktrialstate','($outbound==1)'};
+
+        case 'inbound'
+            timefilter{end+1} = {'getWtracktrialstate','($inbound==1)'};            
+            
         case 'excludeNoise'
             timefilter{end+1} = {'excludenoiseevents', '($noise == 0)', 'ca1noisekons', ...
-                'exclpad', 1, 'stdthresh', 15};
+                'exclpad', 1, 'stdthresh', 15}; %15
+            
         case 'excludePriorFirstWell'
             timefilter{end+1} = {'getpriortofirstwell', '($prefirst == 0)'};
+            
         case 'ripples'
             TF = 1;
             eventtype = 'rippleskons';
@@ -239,6 +256,10 @@ for a = 1:length(w)
     filter_params.(w(a).name) = eval(w(a).name);
 end
 if add_paths
-    filter_params.paths = make_paths(filter_params.filtfunction);
+    try
+        filter_params.paths = make_paths(filter_params.filtfunction);
+    catch
+        disp('could not generate paths');
+    end
 end
 end
