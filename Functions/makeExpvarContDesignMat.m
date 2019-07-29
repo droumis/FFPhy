@@ -1,5 +1,5 @@
 
-function out = getDesignMatrix(lfpstack, Fp, varargin)
+function out = makeExpvarContDesignMat(lfpstack, Fp, varargin)
     % Given a set of animal, day, epoch, timestamps.. return design matrix
     % of experiment variables: 
     % Demetris Roumis 2019
@@ -7,15 +7,14 @@ function out = getDesignMatrix(lfpstack, Fp, varargin)
     pconf = paramconfig;
     saveout = 1;
     outdir = 'expvarCont'; 
-    outpath = [pconf.andef{2},outdir,'/'];
     if ~isempty(varargin)
         assign(varargin{:})
     end
-    
+    outpath = [pconf.andef{2},outdir,'/'];    
     expvars = {'timeSinceDay', 'timeSinceEpoch','xpos', 'ypos', 'headdirection',  'speed',...
-        'performance', 'learningrate'}; %, 'timeSinceLastReward', 'timeUntilNextReward', 'ripnum'};
+        'performance', 'learningrate', 'ripnum', 'day', 'epoch'}; %, 'timeSinceLastReward', 'timeUntilNextReward', 'ripnum'};
     
-    numvars = length(expvars);
+    
     out = struct;
     for ian = 1:length(lfpstack)
         animal = lfpstack(ian).animal;
@@ -26,14 +25,17 @@ function out = getDesignMatrix(lfpstack, Fp, varargin)
         out(ian).ripEndTime = lfpstack(ian).ripEndTime;
         out(ian).dayeps = [lfpstack(ian).day lfpstack(ian).epoch];
         out(ian).expvars = expvars;
-        out(ian).dm = nan(numrips,numvars);
+        out(ian).dims = {'ripple', 'expvar'};
+        out(ian).dm = nan(numrips,length(expvars));
         % timeSinceDay is just the ripstarttimes
         out(ian).dm(:,1) = lfpstack(ian).ripStartTime;
         % get position, speed vars
         dayeps = unique(out(ian).dayeps,'rows', 'stable');
         load(sprintf('%s/%sBehaveState.mat',andef{1,2}, animal));
         allbound = BehaveState.statespace.allbound;
-        out(ian).dm(:,11) = 1:numrips;
+        out(ian).dm(:,9) = 1:numrips;
+        out(ian).dm(:,10) = lfpstack(ian).day;
+        out(ian).dm(:,11) = lfpstack(ian).epoch;
         for ide = 1:length(dayeps(:,1))
             day = dayeps(ide,1);
             epoch = dayeps(ide,2);
@@ -45,7 +47,7 @@ function out = getDesignMatrix(lfpstack, Fp, varargin)
             epochstartime = pos{day}{epoch}.data(1,1);
             out(ian).dm(iderips,2) = ideripstarts - epochstartime;
             
-            % pos vars
+            % pos vars (x, y, hd, sp) ~ (6,7,8,9)
             out(ian).dm(iderips,[3 4 5 6]) = pos{day}{epoch}.data(ripidx,[6 7 8 9]);
        
             % get performance and reward vars       

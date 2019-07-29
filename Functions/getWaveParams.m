@@ -137,8 +137,10 @@ switch waveSet
 %         baseind = [.75 1] * srate;
         pval = 0.05;
         voxel_pval = 0.01;
+        mcc_voxel_pval = 0.05;
+        mcc_cluster_pval = 0.05;
         zval = abs(norminv(pval)); % convert p-value to Z value
-        n_permutes = 1000;
+        n_permutes = 200;
         
         min_freq =  4;
         max_freq = 300;

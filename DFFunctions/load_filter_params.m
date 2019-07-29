@@ -109,7 +109,13 @@ for s = params
             timefilter{end+1} = {'getWtracktrialstate','($outbound==1)'};
 
         case 'inbound'
-            timefilter{end+1} = {'getWtracktrialstate','($inbound==1)'};            
+            timefilter{end+1} = {'getWtracktrialstate','($inbound==1)'};
+        
+        case 'proximalWell'
+            timefilter{end+1} = {'getnearwells','($nearwell == 0)'};
+        
+        case 'distalWell'
+            timefilter{end+1} = {'getnearwells','($nearwell == 1)'};            
             
         case 'excludeNoise'
             timefilter{end+1} = {'excludenoiseevents', '($noise == 0)', 'ca1noisekons', ...
@@ -117,6 +123,9 @@ for s = params
             
         case 'excludePriorFirstWell'
             timefilter{end+1} = {'getpriortofirstwell', '($prefirst == 0)'};
+            
+        case 'excludeAfterLastWell'
+            timefilter{end+1} = {'getpostlastwell', '($postlast == 0)'};            
             
         case 'ripples'
             TF = 1;

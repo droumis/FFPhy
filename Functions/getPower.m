@@ -1,20 +1,21 @@
 
 
-function pwrout = getPower(ripstate, Fp, varargin)
+function out = getPower(expvarCat, rawpwr, Fp, varargin)
 %
 % Fp = filter params (see load_filter_params)
 % wp = wave params (see getWaveParams)
-
-uselfptype = 'eeg';
-ripstatetypes = {'all'};
-savepower = 1;
-run_permutation_test = 0;
-dsamp = 2;
+pconf = paramconfig;
 me = animaldef('Demetris');
+
+lfptype = 'eeg';
+expvars = {'onlywdays','rewarded', 'unrewarded', 'inbound' , 'outbound', 'proximalWell', ...
+    'distalWell'};
+saveout = 1;
+run_permutation_test = 1;
+outdir = 'expvarCatMeanPwr';
 if ~isempty(varargin)
     assign(varargin{:});
 end
-
 for ian = 1:length(Fp.animals)
     wp = getWaveParams(Fp.waveSet);
     animal = Fp.animals{ian};
@@ -23,42 +24,32 @@ for ian = 1:length(Fp.animals)
     tetinfo = loaddatastruct(andef{2}, animal, 'tetinfo');
     den = cellfetch(tetinfo, '');
     ntrodes = unique(den.index(:,3));
-    
-    if isempty(ripstatetypes)
-        ripstatetypes = ripstate(ian).statesetsfields;
-    end
-    
-    tic
-    pwr = load_data(sprintf('%s/analyticSignal/', me{2}), ...
-        sprintf('AS_waveSet-%s_%s_power', wp.waveSet, uselfptype), animal);
-    fprintf('%d seconds to load AS power\n', toc);
-    fprintf('lfptype %s \n', uselfptype);
-    meandbpower = cell(1,length(ripstatetypes));
+%     tic
+%     pwr = load_data(sprintf('%s/analyticSignal/', me{2}), ...
+%         sprintf('AS_waveSet-%s_%s_power', wp.waveSet, lfptype), animal);
+%     fprintf('%d seconds to load AS power\n', toc);
+    fprintf('lfptype %s \n', lfptype);
+    meandbpower = cell(1,length(expvars));
     
     % for each state/condition, compute dbpower, run timeshift permtest vs baseline
-    for stset = 1:length(ripstatetypes)
-        fprintf('ripstate %s \n', ripstatetypes{stset});
-        stidx = find(strcmp(ripstatetypes{stset}, ripstate(ian).statesetsfields));
-        if strcmp(ripstatetypes{stset}, 'all') % avoid slice copy if 'all'
-            meandbpower{stset} = computePower(pwr.pwr, wp, ...
-                'dsamp',dsamp, 'run_permutation_test', run_permutation_test);
-        else
-            sripidx = find(ripstate(ian).statesets(:,stidx));
-            meandbpower{stset} = computePower(pwr.pwr(:,:,sripidx,:), wp, ...
-                'dsamp',dsamp, 'run_permutation_test', run_permutation_test);
-        end
+    for stset = 1:length(expvars)
+        fprintf('ripstate %s \n', expvars{stset});
+        stidx = find(strcmp(expvars{stset}, expvarCat(ian).expvars));
+            sripidx = find(expvarCat(ian).dm(:,stidx));
+            meandbpower{stset} = computePower(rawpwr(ian).pwr(:,:,sripidx,:), wp, ...
+                'dsamp',wp.dsamp, 'run_permutation_test', run_permutation_test);
     end
     
-    pwrout(ian).animal = animal;
-    pwrout(ian).ripstate = ripstate;
-    pwrout(ian).ripstatetypes = ripstatetypes;
-    pwrout(ian).wp = wp;
-    pwrout(ian).Fp = Fp;
-    pwrout(ian).lfptype = uselfptype;
-    pwrout(ian).meandbpower = meandbpower;
+    out(ian).animal = animal;
+    out(ian).dm = expvarCat;
+    out(ian).expvars = expvars;
+    out(ian).wp = wp;
+    out(ian).Fp = Fp;
+    out(ian).lfptype = lfptype;
+    out(ian).meandbpower = meandbpower;
     
-    if savepower
-        save_power(pwrout(ian), Fp, uselfptype)
+    if saveout
+        save_data(out, [pconf.andef{2},outdir,'/'], [outdir, '_', Fp.epochEnvironment])
     end
 end
 end
@@ -135,90 +126,4 @@ permt.threshmean = threshmean;
 permt.permutes_max = permutes_max;
 permt.permutes_min = permutes_min;
 fprintf('perm test took %.03f sec \n', toc)
-
 end
-
-function save_power(pwrout, Fp, lfptype)
-me = paramconfig;
-savedir = sprintf('%s/power/', me.andef{2});
-savestr = sprintf('/power_waveSet-%s_%s_%s',Fp.waveSet,lfptype,Fp.epochEnvironment);
-save_data(pwrout, savedir, savestr)
-end
-
-
-% [powerout, basedmeanpower, percbasedpowerout,logbasedpowerout, logbasedpoweroutUnspec,percbasedpoweroutUnspec,basedmeanpowerUnspec]  =...
-%     computePower(as,ian,int,iEpTetIndsType,baseind, indsSet)
-% fprintf('$$$$$$$$$$$$$$$ POWER for animal %s nt %s  $$$$$$$$$$$$$$$$$$$ \n',ian, int);
-
-% % condition-unspecific baseline mean
-% %     basedmeanpower = mean(mean(abs(ias).^2,2),1); %mean for each freq across time and across all events for the baseline period
-%     basedmeanpowerUnspec = mean(mean(abs(as(baseind(1):baseind(2),:,:)).^2,2),1);
-
-% % for iSet = 1:size(iEpTetIndsType, 2)
-%     % currently AS is samples x events x freq
-%     % compute power as the magnitude squared from origin in complex space
-%     powertmp = cellfun(@(x) mean(abs(as(:,x,:)).^2,2), iEpTetIndsType(:,iSet), 'un', 0);
-%     powerout{iSet} = cat(2,powertmp{:}); %col cat the means for each event state type
-%
-%     %% baseline data, mean
-%     % baselineASignal = as(baseind(1):baseind(2),iEpTetIndsType{1},:); %analytic signal from baseline period
-%     % condition-specific baseline mean (mean across events and basline samples (times)
-%     powerbaselinemeans = cellfun(@(x) mean(mean(abs(as(baseind(1):baseind(2),x,:)).^2,2),1),iEpTetIndsType(:,iSet), 'un', 0);
-%     % powerbaselinemeans = cellfun(@(x) mean(mean(abs(baselineASignal(:,x,:)).^2,2),1),iEpTetIndsType, 'un', 0);
-%     basepower{iSet} = cat(2,powerbaselinemeans{:});
-%
-%     %% Normalization
-%     % % z-score normalization using only the baseline window to compute mean, std; condition-specific baseline mean
-%     % powerbaselinestds = cellfun(@(x) std(reshape(abs(ias(:,x,:)).^2,[],1,numfrex),1),iEpTetIndsType, 'un', 0);
-%     % basedstdpower = cat(2,powerbaselinestds{:});
-%     % zscoredbasedpowerOut = bsxfun(@rdivide, bsxfun(@minus, powerOut,basedmeanpower), basedstdpower);
-%     %
-%     % % z-score normalization using the entire window to compute mean, std;  condition-specific baseline mean
-%     % % vert cat all the traces into columns of frex, then std within freq of the baseline period
-%     % powermeans = cellfun(@(x) mean(mean(abs(as{int}(:,x,:)).^2,2),1),iEpTetIndsType, 'un', 0);
-%     % meanpower = cat(2,powermeans{:});
-%     % powerstds = cellfun(@(x) std(reshape(abs(as{int}(:,x,:)).^2,[],1,numfrex),1),iEpTetIndsType, 'un', 0);
-%     % stdpower = cat(2,powerstds{:});
-%     % zscoredpowerOut = bsxfun(@rdivide, bsxfun(@minus, powerOut,meanpower), stdpower);
-%
-%     % percent change from baseline - normalization using condition-specific baseline mean
-%     % (power - baseline mean) /  baseline mean
-%     pctpower{iSet} = 100 * bsxfun(@rdivide, bsxfun(@minus, powerout{iSet}, basepower{iSet}), basepower{iSet});
-%
-%     % decibel - normalization using condition-specific baseline mean
-%     % 10 * log10( power / baseline mean )
-%     logpower{iSet} = 10*log10(bsxfun(@rdivide, powerout{iSet},basepower{iSet}));
-%
-% % %     % percent change from baseline - normalization using condition-UNspecific baseline mean
-% % %     percbasedpoweroutUnspec{iSet} = 100 * bsxfun(@rdivide, bsxfun(@minus, powerout{iSet},basedmeanpowerUnspec), basedmeanpowerUnspec);
-% % %
-% % %     % decibel - normalization using condition-UNspecific baseline mean
-% % %     logbasedpoweroutUnspec{iSet} = 10*log10(bsxfun(@rdivide, powerout{iSet},basedmeanpowerUnspec));
-% % %
-% %     %% compute differential tf maps
-% % %     if strcmp(indsSet, 'performance') || strcmp(indsSet, 'performanceByDay')
-% % %         try
-% %             powerout{iSet}(:,6,:) = powerout{iSet}(:,4,:) - powerout{iSet}(:,5,:);
-% %             powerout{iSet}(:,7,:) = powerout{iSet}(:,2,:) - powerout{iSet}(:,3,:);
-% %             logbasedpowerout{iSet}(:,6,:) = logbasedpowerout{iSet}(:,4,:) - logbasedpowerout{iSet}(:,5,:);
-% %             logbasedpowerout{iSet}(:,7,:) = logbasedpowerout{iSet}(:,2,:) - logbasedpowerout{iSet}(:,3,:);
-% %             pctbasedpowerout{iSet}(:,6,:) = pctbasedpowerout{iSet}(:,4,:) - pctbasedpowerout{iSet}(:,5,:);
-% %             pctbasedpowerout{iSet}(:,7,:) = pctbasedpowerout{iSet}(:,2,:) - pctbasedpowerout{iSet}(:,3,:);
-% %
-% %             % % i actually don't think you want to use the raw difference. instead use
-% %             % the already normalized, then differenced
-% %             % tmpinds = [iEpTetIndsType{4}; iEpTetIndsType{5}];
-% %             % basedmeanpower(:,6,:) = mean(mean(abs(baselineASignal(:,tmpinds,:)).^2,2),1);
-% %             % tmpinds = [iEpTetIndsType{2}; iEpTetIndsType{3}];
-% %             % basedmeanpower(:,7,:) = mean(mean(abs(baselineASignal(:,tmpinds,:)).^2,2),1);
-% %
-% % %             logbasedpoweroutUnspec{iSet}(:,6,:) = logbasedpoweroutUnspec{iSet}(:,4,:) - logbasedpoweroutUnspec{iSet}(:,5,:);
-% % %             logbasedpoweroutUnspec{iSet}(:,7,:) = logbasedpoweroutUnspec{iSet}(:,2,:) - logbasedpoweroutUnspec{iSet}(:,3,:);
-% % %             percbasedpoweroutUnspec{iSet}(:,6,:) = percbasedpoweroutUnspec{iSet}(:,4,:) - percbasedpoweroutUnspec{iSet}(:,5,:);
-% % %             percbasedpoweroutUnspec{iSet}(:,7,:) = percbasedpoweroutUnspec{iSet}(:,2,:) - percbasedpoweroutUnspec{iSet}(:,3,:);
-% % %
-% % %         catch
-% % %             disp(' ..')
-% % %         end
-% % %     end
-%

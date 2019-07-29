@@ -1,7 +1,7 @@
 function out = getpriortofirstwell(animaldir,animalprefix,epochs,varargin)
 % out = getpriortofirstwell(animaldir,animalprefix,epochs)
 % Produces a cell structure with the fields:
-% time, immobile
+% time, prefirst
 % EPOCHS - N by 2 matrix, columns are [day epoch]
 % intended to be used to exclude period before the first well visit
 % often this is a very noisy period that contains the time when the animal
@@ -37,7 +37,6 @@ for i = 1:size(epochs,1)
             < firstidx)';
         excl_prefirst_list = vec2list(excl_prefirst, ...
             linpos{epochs(i,1)}{epochs(i,2)}.statematrix.time);
-        
         
 %         fprintf('%d %d :: %d intervals \n',epochs(i,1),epochs(i,2), ...
 %             length(excl_prefirst_list));

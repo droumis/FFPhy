@@ -29,6 +29,19 @@ for s = param_set
             FontNm = 'Arial';
             SupFontS = 12;
             tickSz = 8; % tick labels font size
+        case 'powerVarCorr'
+            stitFsize = 16;
+            tickFsize = 8;
+            sfTitFsize = 14;
+            pwin = [1 1];
+            usecolormap = 'jet';
+            contourRes = 40;
+            position = [.1 .1 1 1];
+            SpHz = 0.02; %spacing horizontal
+            SpVt = 0.04; % spacing vertical
+            MgLt = 0.02; % margin left
+            MgTp = 0.1; % margin top
+            MgBm =  0.04; % margin bottom
         case 'power'
 %             mcLineColor = [.2 .2 .2];
             pwin = [1 1];
@@ -124,9 +137,10 @@ for s = param_set
         case 'riptriglfp_perLFPtype_allntrodes'
             position = [.1 .1 .9 .3];
             pwin = [1 1];
-        case 'riptriglfp_perstatefrex_allntrodes'
+        case 'powerheatRast'
             position = [.1 .1 .9 .9];
             pwin = [1 1];
+            plot_frex = [8 15 40 85 150 300];
         case 'riptriglfp_allLFPtype_perntrode'
             position = [.1 .1 .4 .7];
             pwin = [1 1];

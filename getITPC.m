@@ -1,10 +1,10 @@
 
 
-function out = getITPC(ripstate, Fp, varargin)
+function out = getITPC(expvarCat, Fp, varargin)
 % Fp = filter params (see load_filter_params)
 
 uselfptype = 'eeg';
-ripstatetypes = {'all'};
+expvars = {'all'};
 saveresult = 1;
 run_permutation_test = 0;
 me = animaldef('Demetris');
@@ -21,24 +21,24 @@ for ian = 1:length(Fp.animals)
     tetinfo = loaddatastruct(andef{2}, animal, 'tetinfo');
     den = cellfetch(tetinfo, '');
     ntrodes = unique(den.index(:,3));
-    
-    if isempty(ripstatetypes)
-        ripstatetypes = ripstate(ian).statesetsfields;
-    end
+%     
+%     if isempty(expvars)
+%         expvars = expvarCat(ian).statesetsfields;
+%     end
     
     tic
     ph = load_data(sprintf('%s/analyticSignal/', me{2}), ...
         sprintf('AS_waveSet-%s_%s_phase', wp.waveSet, uselfptype), animal);
     fprintf('%d seconds to load AS phase\n', toc);
     fprintf('lfptype %s \n', uselfptype);
-    ITPC = cell(1,length(ripstate(ian).statesetsfields));
+    ITPC = cell(1,length(expvarCat(ian).statesetsfields));
     
     % for each state/condition, compute dbpower, run timeshift permtest vs baseline
-    for stset = 1:length(ripstatetypes)
-        fprintf('ripstate %s \n', ripstatetypes{stset});
-        stidx = find(strcmp(ripstatetypes{stset}, ripstate(ian).statesetsfields));
-        sripidx = find(ripstate(ian).statesets(:,stidx));
-        if strcmp(ripstatetypes{stset}, 'all') % avoid slice copy if 'all'
+    for stset = 1:length(expvars)
+        fprintf('ripstate %s \n', expvars{stset});
+        stidx = find(strcmp(expvars{stset}, expvarCat(ian).statesetsfields));
+        sripidx = find(expvarCat(ian).statesets(:,stidx));
+        if strcmp(expvars{stset}, 'all') % avoid slice copy if 'all'
             ITPC{stset} = computeITPC(ph.ph, wp, ...
                 'dsamp',wp.dsamp, 'run_permutation_test', run_permutation_test);
         else
@@ -48,8 +48,8 @@ for ian = 1:length(Fp.animals)
     end
     
     out(ian).animal = animal;
-    out(ian).ripstate = ripstate;
-    out(ian).ripstatetypes = ripstatetypes;
+    out(ian).ripstate = expvarCat;
+    out(ian).ripstatetypes = expvars;
     out(ian).wp = wp;
     out(ian).Fp = Fp;
     out(ian).lfptype = uselfptype;

@@ -1,32 +1,31 @@
 
-function out = getStateFilters(lfpstack, varargin)
+function out = makeExpvarCatDesignMat(lfpstack, varargin)
     % given a set of animal, day, epoch, timestamp.. evaluate the state filters
     % return design matrix of experiment variables [rip var]
     % Demetris Roumis 2019
     pconf = paramconfig;
-    statefilters = {'onlywdays', 'rewarded', 'unrewarded', 'inbound' , 'outbound', ...
-        'proximalWell', 'distalWell'};
+    expvars = {'onlywdays', 'rewarded', 'unrewarded', 'inbound' , 'outbound', ...
+         'proximalWell', 'distalWell'};
     saveout = 1;
     outdir = 'expvarCat';
-    outpath = [pconf.andef{2},outdir,'/'];
+    defaults = {'wtrackdays', 'excludeNoise','excludePriorFirstWell'};
     if ~isempty(varargin)
         assign(varargin{:})
     end
     
-    out = struct;
+    outpath = [pconf.andef{2},outdir,'/'];
     for ian = 1:length(lfpstack)
         animal = lfpstack(ian).animal;
         out(ian).animal = animal;
+        out(ian).dims = {'ripple', 'expvar'};
         out(ian).ripStartTime = lfpstack(ian).ripStartTime;
         out(ian).ripEndTime = lfpstack(ian).ripEndTime;
         out(ian).dayeps = [lfpstack(ian).day lfpstack(ian).epoch];
-        out(ian).statesetsfields = statefilters;
-        out(ian).statesets = zeros(length(out(ian).ripStartTime), ...
-            length(statefilters));
+        out(ian).expvars = expvars;
+        out(ian).dm = zeros(length(out(ian).ripStartTime), length(expvars));
         Fp = struct;
-        defaults = {'wtrackdays', 'excludeNoise','excludePriorFirstWell', 'excludeAfterLastWell'};
-        for ss = 1:length(statefilters)
-            switch statefilters{ss}
+        for ss = 1:length(expvars)
+            switch expvars{ss}
 %                 case 'all'
 %                     Fp.add_params = {'excludeNoise','excludePriorFirstWell'};
                 case 'onlywdays'
@@ -59,7 +58,7 @@ function out = getStateFilters(lfpstack, varargin)
                 day = F.epochs{1}(de,1);
                 epoch = F.epochs{1}(de,2);
                 ieprips = ismember(out(ian).dayeps, [day epoch], 'rows');
-                out(ian).statesets(ieprips,ss) = ...
+                out(ian).dm(ieprips,ss) = ...
                     ~isExcluded(out(ian).ripStartTime(ieprips), ...
                     F.excludetime{1}{de});
             end
