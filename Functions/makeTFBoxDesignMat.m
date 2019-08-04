@@ -1,12 +1,16 @@
 function out = makeTFBoxDesignMat(rawpwr,Fp, varargin)
 % makes a design matrix of feature values per ripple
 pconf = paramconfig;
-tfboxlabels = {'swrRipple', 'swrFastGamma', 'swrSlowGamma','swrBeta','swrTheta',...
-    'preSwrRipple', 'preSwrFastGamma', 'preSwrSlowGamma',  'preSwrBeta', 'preSwrTheta',...
-    'postSwrRipple', 'postSwrFastGamma', 'postSwrSlowGamma', 'postSwrBeta', ...
-    'postSwrTheta', 'prePreSwrRipple', 'prePreSwrFastGamma', 'prePreSwrSlowGamma', ...
-    'prePreSwrBeta', 'prePreSwrTheta', 'postPostSwrRipple', 'postPostSwrFastGamma', ...
-    'postPostSwrSlowGamma', 'postPostSwrBeta', 'postPostSwrTheta'};
+tfboxlabels = {'swrRipple', 'postPostSwrTheta', 'prePreSwrTheta', 'postPostSwrFastGamma', ...
+    'prePreSwrFastGamma'};
+
+%,'swrFastGamma'}; %, ...
+%     'swrSlowGamma','swrBeta','swrTheta'};%,...
+%     'preSwrRipple', 'preSwrFastGamma', 'preSwrSlowGamma',  'preSwrBeta', 'preSwrTheta',...
+%     'postSwrRipple', 'postSwrFastGamma', 'postSwrSlowGamma', 'postSwrBeta', ...
+%     'postSwrTheta', 'prePreSwrRipple',  'prePreSwrSlowGamma', ...
+%     'prePreSwrBeta', 'postPostSwrRipple', , ...
+%     'postPostSwrSlowGamma', 'postPostSwrBeta', };
 
 saveout = 1;
 outdir = 'tfbvarCont'; 
@@ -22,13 +26,17 @@ for ani = 1:length(animals)
     out(ani).dims = {'ripple', 'tfbvar', 'ntrode'};
     out(ani).expvars = tfboxlabels;
     for tfb = 1:length(tfboxlabels)
-        out(ani).timeidx{tfb} = dsearchn(rawpwr(ani).time', out(ani).time{tfb}');
-        out(ani).freqidx{tfb} = dsearchn(rawpwr(ani).frequency', out(ani).freq{tfb}');
+        timeidx = dsearchn(rawpwr(ani).time', out(ani).time{tfb}');
+        freqidx = dsearchn(rawpwr(ani).frequency', out(ani).freq{tfb}');
+        out(ani).timeidx{tfb} = timeidx;
+        out(ani).freqidx{tfb} = freqidx;
         out(ani).realfreq{tfb} = rawpwr(ani).frequency(out(ani).freqidx{tfb}(1):...
             out(ani).freqidx{tfb}(2));
-        out(ani).dm(:,tfb,:) = permute(squeeze(mean(mean(rawpwr(ani).pwr(:, ...
-        out(ani).timeidx{tfb}(1):out(ani).timeidx{tfb}(2),:, ...
-        out(ani).freqidx{tfb}(1):out(ani).freqidx{tfb}(2)), 2), 4)), [2 1 3]); % mean TF
+        % rawpwr dims [ntrode time ripple freq].. take mean in time, frex ranges
+        pwrtfb = rawpwr(ani).pwr(:,timeidx(1):timeidx(2),:,freqidx(1):freqidx(2));
+        mpwrtfb = nanmean(nanmean(pwrtfb, 2), 4);
+        out(ani).dm(:,tfb,:) = squeeze(mpwrtfb)'; %reshape to [ripple ntrode]
+        % dm dims [rip tfb ntrode]
     end
 end
 if saveout
@@ -43,11 +51,11 @@ frexlookup.SlowGamma = [25 50];
 frexlookup.Beta = [12 20];
 frexlookup.Theta = [6 12];
 
-timelookup.prePreSwr = [-.6 -.2];
-timelookup.preSwr = [-.2 0];
-timelookup.Swr = [0 .2];
-timelookup.postSwr = [.2 .4];
-timelookup.postPostSwr = [.4 .8];
+timelookup.prePreSwr = [-1 -.5];
+timelookup.preSwr = [-.3 0];
+timelookup.Swr = [0 .1];
+timelookup.postSwr = [.1 .4];
+timelookup.postPostSwr = [.5 1];
 
 freq = {};
 time = {};

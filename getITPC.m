@@ -1,18 +1,21 @@
 
 
-function out = getITPC(expvarCat, Fp, varargin)
+function out = getITPC(expvarCat, phase, Fp, varargin)
 % Fp = filter params (see load_filter_params)
 
-uselfptype = 'eeg';
-expvars = {'all'};
-saveresult = 1;
-run_permutation_test = 0;
+pconf = paramconfig;
 me = animaldef('Demetris');
+
+lfptype = 'eeg';
+expvars = {'onlywdays','rewarded', 'unrewarded', 'inbound' , 'outbound', 'proximalWell', ...
+    'distalWell'};
+saveout = 1;
+run_perm = 1;
+outdir = 'expvarCatITPC';
 if ~isempty(varargin)
     assign(varargin{:});
 end
 
-out = struct;
 for ian = 1:length(Fp.animals)
     wp = getWaveParams(Fp.waveSet);
     animal = Fp.animals{ian};
@@ -21,42 +24,23 @@ for ian = 1:length(Fp.animals)
     tetinfo = loaddatastruct(andef{2}, animal, 'tetinfo');
     den = cellfetch(tetinfo, '');
     ntrodes = unique(den.index(:,3));
-%     
-%     if isempty(expvars)
-%         expvars = expvarCat(ian).statesetsfields;
-%     end
-    
-    tic
-    ph = load_data(sprintf('%s/analyticSignal/', me{2}), ...
-        sprintf('AS_waveSet-%s_%s_phase', wp.waveSet, uselfptype), animal);
-    fprintf('%d seconds to load AS phase\n', toc);
-    fprintf('lfptype %s \n', uselfptype);
-    ITPC = cell(1,length(expvarCat(ian).statesetsfields));
-    
-    % for each state/condition, compute dbpower, run timeshift permtest vs baseline
+    ITPC = cell(1,length(expvarCat(ian).expvars));
     for stset = 1:length(expvars)
         fprintf('ripstate %s \n', expvars{stset});
-        stidx = find(strcmp(expvars{stset}, expvarCat(ian).statesetsfields));
-        sripidx = find(expvarCat(ian).statesets(:,stidx));
-        if strcmp(expvars{stset}, 'all') % avoid slice copy if 'all'
-            ITPC{stset} = computeITPC(ph.ph, wp, ...
-                'dsamp',wp.dsamp, 'run_permutation_test', run_permutation_test);
-        else
-            ITPC{stset} = computeITPC(ph.ph(:,:,sripidx,:), wp, ...
-                'dsamp',wp.dsamp, 'run_permutation_test', run_permutation_test);
-        end
+        stidx = find(strcmp(expvars{stset}, expvarCat(ian).expvars));
+        sripidx = find(expvarCat(ian).dm(:,stidx));
+        ITPC{stset} = computeITPC(phase(ian).ph(:,:,sripidx,:), wp, ...
+            'dsamp',wp.dsamp, 'run_permutation_test', run_perm);
     end
-    
     out(ian).animal = animal;
-    out(ian).ripstate = expvarCat;
-    out(ian).ripstatetypes = expvars;
+    out(ian).dm = expvarCat;
+    out(ian).expvars = expvars;
     out(ian).wp = wp;
     out(ian).Fp = Fp;
-    out(ian).lfptype = uselfptype;
+    out(ian).lfptype = lfptype;
     out(ian).ITPC = ITPC;
-    
-    if saveresult
-        save_ITPC(out(ian), Fp, uselfptype)
+    if saveout
+        save_data(out, [pconf.andef{2},outdir,'/'], [outdir, '_', Fp.epochEnvironment])
     end
 end
 end
@@ -64,7 +48,7 @@ end
 function [pout] = computeITPC(ph,wp,varargin)
 fprintf('computing ITPC\n');
 tic
-dsamp = 10;
+% dsamp = 10;
 run_permutation_test = 1;
 if ~isempty(varargin)
     assign(varargin{:});
@@ -74,16 +58,16 @@ srate = wp.srate/wp.dsamp;
 timeWin = wp.win(1):1/srate:wp.win(2);
 baseind(1,1) = dsearchn(timeWin',wp.basewin(1));
 baseind(1,2) = dsearchn(timeWin',wp.basewin(2));
-preind(1,1) = dsearchn(timeWin',wp.prewin(1));
-preind(1,2) = dsearchn(timeWin',wp.prewin(2));
-postind(1,1) = dsearchn(timeWin',wp.postwin(1));
-postind(1,2) = dsearchn(timeWin',wp.postwin(2));
+% preind(1,1) = dsearchn(timeWin',wp.prewin(1));
+% preind(1,2) = dsearchn(timeWin',wp.prewin(2));
+% postind(1,1) = dsearchn(timeWin',wp.postwin(1));
+% postind(1,2) = dsearchn(timeWin',wp.postwin(2));
 
 fprintf('event time 0\n');
 fprintf('win %.02f:%.02f sec\n',wp.win(1), wp.win(2));
 fprintf('baseline %.02f:%.02f sec \n', wp.basewin(1), wp.basewin(2));
-fprintf('prewin %.02f:%.02f sec \n', wp.prewin(1), wp.prewin(2));
-fprintf('postwin %.02f:%.02f sec \n', wp.postwin(1), wp.postwin(2));
+% fprintf('prewin %.02f:%.02f sec \n', wp.prewin(1), wp.prewin(2));
+% fprintf('postwin %.02f:%.02f sec \n', wp.postwin(1), wp.postwin(2));
 
 % pre and post mean per ntrode per event per freq
 % pout.premean = squeeze(nanmean(ph(:,preind(1):preind(2),:,:),2));

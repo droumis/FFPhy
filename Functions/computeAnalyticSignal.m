@@ -22,14 +22,13 @@ for ian = 1:length(lfpstack)
     fprintf('computing Analytic Signal for %s %s\n', animal, uselfptype);
     fprintf('waveSet: %s\n', waveSet);
     wp = getWaveParams(waveSet);    
-    srate = wp.srate/wp.dsamp;
     itypeidx = find(strcmp(lfpstack(ian).lfptypes, uselfptype));
     dsampdata = lfpstack(ian).data{itypeidx}(:,1:wp.dsamp:end,:);
     nevents = size(dsampdata,3);
     nsamps = size(dsampdata,2);
     nNtrodes = size(dsampdata,1);
     nData = nsamps*nevents*nNtrodes;
-    timeWin = wp.win(1):1/srate:wp.win(2);
+%     timeWin = wp.win(1):1/(wp.srate/wp.dsamp):wp.win(2);
     baseind(1,1) = dsearchn(timeWin',wp.basewin(1));
     baseind(1,2) = dsearchn(timeWin',wp.basewin(2));
     lenWave = length(timeWin);
@@ -38,7 +37,7 @@ for ian = 1:length(lfpstack)
     nConv2pow = 2^nextpow2(nConv); % next pwr of 2 for FFT speedup
     zpad2pow = nConv2pow - nConv; % zero padding added by nextpow2
 
-    waveletFFT = createCMWfft(wp, nConv2pow, timeWin);
+    waveletFFT = createCMWfft(wp, nConv2pow);
     
     tic
     dataFFT = zeros(nConv2pow, 1);
@@ -64,7 +63,7 @@ for ian = 1:length(lfpstack)
     phaseout.ntrode = lfpstack(ian).ntrodes;
     phaseout.frequency = wp.frex;
     phaseout.lfptype = uselfptype;
-    phaseout.dsampsrate = srate;
+    phaseout.dsampsrate = wp.win(1):1/(wp.srate/wp.dsamp):wp.win(2);
     phaseout.dsamp = wp.dsamp;
     phaseout.time = timeWin;
     phaseout.dims = {'ntrode', 'sample', 'ripple', 'frequency'};
@@ -81,7 +80,7 @@ for ian = 1:length(lfpstack)
     powerout.ntrode = lfpstack(ian).ntrodes;
     powerout.frequency = wp.frex;
     powerout.lfptype = uselfptype;
-    powerout.dsampsrate = srate;
+    powerout.dsampsrate = wp.win(1):1/(wp.srate/wp.dsamp):wp.win(2);
     powerout.dsamp = wp.dsamp;
     powerout.time = timeWin;
     powerout.dims = {'ntrode', 'sample', 'ripple', 'frequency'};
@@ -99,15 +98,29 @@ for ian = 1:length(lfpstack)
 end
 end
 
-function waveletFFT=createCMWfft(wp, nConv2pow, timeWin)
+Thanks for taking the time and for the awesome response! I totally agree with your assessment about the paper. :)
+
+I like the idea of using FWHM to parameterize the wavelets, it is certainly more intuitive than ncycles, although I'm not sure I see understand how it resolves the issue of choosing the upper bound of of the param range.
+In your paper's code, you use 800:700ms
+fwhm = linspace(.8,.7,nfrex);
+, for frequencies 2:25Hz. I understand that 800ms is reasonable for the low end, but I'm curious why 700ms for 25Hz? Did I misunderstand something, and that this was analytically derived?
+
+To give a bit more context, I care about this is because (I think) using too narrow of a gaussian for the higher frequencies would penalize high frequency time-frequency-clusters more than lower frequency time-frequency-clusters during cluster size correction, since the the cluster size distribution is based on the entire time-frequency map. no?
+
+Thanks!
+-Demetris
+function waveletFFT=createCMWfft(wp, nConv2pow)
 % create complex morlet wavelets and return FFT
 tic
 waveletFFT = zeros(nConv2pow, wp.numfrex);
+% fwhm = linspace(.8, .7, wp.numfrex);
+timeWin = wp.win(1):1/(wp.srate/wp.dsamp):wp.win(2);
 parfor fi=1:wp.numfrex % can use parfor
     sine_wave = exp(2*1i*pi*wp.frex(fi).*timeWin); % complex sine wave
     bn = wp.nWavecycles(fi)/(2*pi*wp.frex(fi)); % std of gaussian, dependent on freq and #cycles
     gaus_win = exp(-timeWin.^2./(2*bn^2)); % gaussian
     wavelet = sine_wave .* gaus_win;
+%     gaus_fwhm = exp(-(4*log(2)*timeWin).^2/fwhm(fi).^2);
     wavefft = fft(wavelet,nConv2pow); % fft of the wavelet, pad to next power of 2 
     % normalize wavelet to a maximum of 1 to ensure convolution units are same as data
     waveletFFT(:,fi) = (wavefft ./ max(wavefft))';

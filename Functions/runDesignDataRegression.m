@@ -56,12 +56,22 @@ for ian = 1:length(rawpwr)
         % get in,iv tfcorr for design vs data
         %         [PV(ian).data(in,:,:,iv), PV(ian).zmap(in,:,:,iv), PV(ian).thresh(in,:,:,:)] = ...
         %             regress(designmat(ian).data(:,iv), rawpwr(ian).data(nt,win1:win2,:));
+        % rotate to make time dim 2
         data = permute(squeeze(rawpwr(ian).pwr(nti, :, include_rips,:)),[2 1 3]);
         data = trim2win(data, Fp.srate, Pp.pwin, 'dsamp', wp.dsamp);
         nTimepoints = size(data,2);
-        data = permute(data, [3 2 1]);
-        powerreshaped = reshape(data, wp.numfrex*nTimepoints,numrips)';
-        powerrank = tiedrank(powerreshaped); % tiedrank on dim 1, across rips
+        data = permute(data, [3 2 1]); % rotate back to [freq time ripple]
+        powerreshaped = reshape(data, wp.numfrex*nTimepoints,numrips); % flatten [ripple timefreq]
+        powerrank = tiedrank(powerreshaped'); % tiedrank on dim 1, across rips.
+        % powerrank (1168, 37525) numbers 1:1168
+        % X (25, 1168) numbers -2:16, mostly -2:4
+%         a = (X*X'); %not nan (25, 25) numbers tens to hundreds. thousand on diag
+%         b = powerrank; % b is not nan (25, 37525) numbers in the thousands, tens thousands
+%         realbeta = a\b; % EVERYTHING IS NAN.. are the b numbers too large as denominators?
+        % something is going on with the line above to make everything Nan... 
+%         realbeta = (X*X')\X; % aha!! this is nan.. so it's a design matrix issue
+        % aha! the issue was that i was using too many tfboxes.. since this
+        % is multiregression, it was making the beta's infinitely small
         realbeta = (X*X')\X*powerrank;
         realbeta = reshape(realbeta,numvars,wp.numfrex,nTimepoints);
         PV(ian).CorrVals(nti,:,:,:)  = realbeta;
@@ -71,11 +81,18 @@ for ian = 1:length(rawpwr)
         %             max_pixel_rvals = zeros(wp.n_permutes,numvars);
         max_clust_info  = zeros(wp.n_permutes,numvars);
         % generate pixel-specific null hypothesis parameter distributions
-        parfor permi = 1:wp.n_permutes
+        for permi = 1:wp.n_permutes %parfor this
             % randomly shuffle trial order
             fakeX = X(:,randperm(numrips));
-            % compute beta-map of null hypothesis
+            % compute beta-map of null hypothesis.. i.e. do the
+            % multiregression on the ripple-shuffled design matrix and power
             fakebeta = (fakeX*fakeX')\fakeX*powerrank;
+%             a = fakeX*powerrank;
+%             b = fakebeta\a;
+%             if sum(sum(isnan(b)))
+%                 fprintf('nans in the pudding\n')
+% %                 pause
+%             end
             % reshape to 2D map for cluster-correction
             fakebeta = reshape(fakebeta,numvars,wp.numfrex,nTimepoints);
             % save all permuted values
@@ -83,9 +100,9 @@ for ian = 1:length(rawpwr)
             % save maximum pixel values
             %                 max_pixel_rvals(permi,:) = [ min(fakebeta(:)) max(fakebeta(:)) ];
         end
-        % this time, the cluster correction will be done on the permuted data, thus
+        % the cluster correction will be done on the permuted data, thus
         % making no assumptions about parameters for p-values
-        parfor permi = 1:wp.n_permutes % i should par for this
+        for permi = 1:wp.n_permutes % i should par for this
             for testi = 1:numvars
                 % for cluster correction, apply uncorrected threshold and
                 % get maximum cluster sizes
@@ -100,7 +117,7 @@ for ian = 1:length(rawpwr)
                     cellfun(@numel,clustinfo.PixelIdxList) ]);
             end
         end
-        for testi = 1:numvars
+        for testi = 1:numvars % parfor this
             % now compute Z-map
             zmap = (squeeze(realbeta(testi,:,:))-...
                 squeeze(mean(permuted_bvals(:,testi,:,:),1))) ./ ...

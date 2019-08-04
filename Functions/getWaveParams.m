@@ -128,9 +128,9 @@ switch waveSet
 %         plotwin = [-1 1];
 %         plottimeWin = plotwin(1):1/srate:plotwin(2);
 
-        basewin = [-1.5 -1]; % in seconds, period before event start to use as baseline
-        prewin = [-1 -.5];
-        postwin = [.5 1];
+        basewin = [-1 -.5]; % in seconds, period before event start to use as baseline
+%         prewin = [-1 -.5];
+%         postwin = [.5 1];
 %         baseind(1,1) = dsearchn(timeWin',basetime(1));
 %         baseind(1,2) = dsearchn(timeWin',basetime(2));
 %         
@@ -140,7 +140,7 @@ switch waveSet
         mcc_voxel_pval = 0.05;
         mcc_cluster_pval = 0.05;
         zval = abs(norminv(pval)); % convert p-value to Z value
-        n_permutes = 200;
+        n_permutes = 100;
         
         min_freq =  4;
         max_freq = 300;

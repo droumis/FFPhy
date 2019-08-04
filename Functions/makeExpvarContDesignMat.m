@@ -11,8 +11,8 @@ function out = makeExpvarContDesignMat(lfpstack, Fp, varargin)
         assign(varargin{:})
     end
     outpath = [pconf.andef{2},outdir,'/'];    
-    expvars = {'timeSinceDay', 'timeSinceEpoch','xpos', 'ypos', 'headdirection',  'speed',...
-        'performance', 'learningrate', 'ripnum', 'day', 'epoch'}; %, 'timeSinceLastReward', 'timeUntilNextReward', 'ripnum'};
+    expvars = {'speed','performance', 'learningrate', 'day'}; 
+    %,, 'epoch''ripnum',  'timeSinceDay', 'timeSinceEpoch','xpos', 'ypos', 'headdirection', 'timeSinceLastReward', 'timeUntilNextReward', 'ripnum'};
     
     
     out = struct;

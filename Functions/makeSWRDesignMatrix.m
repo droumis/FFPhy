@@ -11,7 +11,7 @@ if ~isempty(varargin)
     assign(varargin{:})
 end
 outpath = [pconf.andef{2},outdir,'/'];
-expvars = {'std', 'total_energy', 'duration'};
+expvars = {'std', 'duration'}; %'total_energy', 
 for ian = 1:length(lfpstack)
     animal = lfpstack(ian).animal;
     andef = animaldef(animal);
@@ -31,11 +31,11 @@ for ian = 1:length(lfpstack)
         iderips = ismember(out(ian).dayeps, [day epoch], 'rows');
         ideripstarts = out(ian).ripStartTime(iderips);
         ripidx = knnsearch(ripks{day}{epoch}{1}.starttime, ideripstarts);
-        % var std, energy?
+        % var std
         out(ian).dm(iderips,1) = ripks{day}{epoch}{1}.maxthresh(ripidx);
-        out(ian).dm(iderips,2) = ripks{day}{epoch}{1}.total_energy(ripidx);
+%         out(ian).dm(iderips,2) = ripks{day}{epoch}{1}.total_energy(ripidx);
         % var duration
-        out(ian).dm(iderips,3) = ripks{day}{epoch}{1}.endtime(ripidx) - ...
+        out(ian).dm(iderips,2) = ripks{day}{epoch}{1}.endtime(ripidx) - ...
             ripks{day}{epoch}{1}.starttime(ripidx);
     end
 end

@@ -29,7 +29,7 @@ for s = param_set
             FontNm = 'Arial';
             SupFontS = 12;
             tickSz = 8; % tick labels font size
-        case 'powerVarCorr'
+        case 'powerTFmap'
             stitFsize = 16;
             tickFsize = 8;
             sfTitFsize = 14;
@@ -42,16 +42,17 @@ for s = param_set
             MgLt = 0.02; % margin left
             MgTp = 0.1; % margin top
             MgBm =  0.04; % margin bottom
-        case 'power'
-%             mcLineColor = [.2 .2 .2];
-            pwin = [1 1];
-            usecolormap = 'jet';
-            contourRes = 200;
-            position = [.1 .1 .9 .9];
-            SpHz = 0.02; %spacing horizontal
-            SpVt = 0.04; % spacing vertical
-            MgLt = 0.02; % margin left
-            MgTp = 0.07; % margin top
+%         case 'expvarCatMeanPwr'
+% %             mcLineColor = [.2 .2 .2];
+%             pwin = [1 1];
+%             usecolormap = 'jet';
+%             contourRes = 40;
+%             position = [.1 .1 1 1];
+%             SpHz = 0.02; %spacing horizontal
+%             SpVt = 0.04; % spacing vertical
+%             MgLt = 0.02; % margin left
+%             MgTp = 0.1; % margin top
+%             MgBm =  0.04; % margin bottom
 
 
         case 'behaveperform'

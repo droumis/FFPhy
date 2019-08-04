@@ -25,7 +25,7 @@ SSallboundtimes = [SSallboundLastTime SSallboundCurrentTime];
 
 
 % days = unique(totalepochs(:,1));
-for dayep = 1:length(totalepochs(:,1));
+for dayep = 1:length(totalepochs(:,1))
     day = totalepochs(dayep,1);
     epoch = totalepochs(dayep,2);
     

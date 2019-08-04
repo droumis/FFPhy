@@ -5,7 +5,7 @@ function out = makeExpvarCatDesignMat(lfpstack, varargin)
     % Demetris Roumis 2019
     pconf = paramconfig;
     expvars = {'onlywdays', 'rewarded', 'unrewarded', 'inbound' , 'outbound', ...
-         'proximalWell', 'distalWell'};
+         'proximalWell', 'distalWell', 'rewarded_outbound', 'rewarded_inbound'};
     saveout = 1;
     outdir = 'expvarCat';
     defaults = {'wtrackdays', 'excludeNoise','excludePriorFirstWell'};
@@ -25,31 +25,38 @@ function out = makeExpvarCatDesignMat(lfpstack, varargin)
         out(ian).dm = zeros(length(out(ian).ripStartTime), length(expvars));
         Fp = struct;
         for ss = 1:length(expvars)
+            Fp.add_params = defaults;
             switch expvars{ss}
 %                 case 'all'
 %                     Fp.add_params = {'excludeNoise','excludePriorFirstWell'};
                 case 'onlywdays'
-                    Fp.add_params = defaults;
+                    % all defaults
                 case 'rewarded'
-                    Fp.add_params = {defaults{:}, 'correcttrials'};
-                case 'unrewared'
-                    Fp.add_params = {defaults{:}, 'errortrials'};
+                    Fp.add_params{end+1} = 'correcttrials';
+                case 'unrewarded'
+                    Fp.add_params{end+1} = 'errortrials';
                 case 'outbound'
-                    Fp.add_params = {defaults{:}, 'outbound'};
+                    Fp.add_params{end+1} = 'outbound';
                 case 'inbound'
-                    Fp.add_params = {defaults{:}, 'inbound'};
+                    Fp.add_params{end+1} = 'inbound';
                 case 'rewarded_outbound'
-                    Fp.add_params = {defaults{:}, 'correcttrials', 'outbound'};
+                    Fp.add_params{end+1} = 'correcttrials';
+                    Fp.add_params{end+1} = 'outbound';
                 case 'unrewarded_outbound'
-                    Fp.add_params = {defaults{:}, 'errortrials', 'outbound'};
+                    Fp.add_params{end+1} = 'errortrials';
+                    Fp.add_params{end+1} = 'outbound';
                 case 'rewarded_inbound'
-                    Fp.add_params = {defaults{:}, 'correcttrials', 'inbound'};
+                    Fp.add_params{end+1} = 'correcttrials';
+                    Fp.add_params{end+1} = 'inbound';
                 case 'unrewarded_inbound'
-                    Fp.add_params = {defaults{:}, 'errortrials', 'inbound'};
+                    Fp.add_params{end+1} = 'errortrials';
+                    Fp.add_params{end+1} = 'inbound';
                 case 'proximalWell'
-                    Fp.add_params = {defaults{:}, 'proximalWell'};
+                    Fp.add_params{end+1} = 'proximalWell';
                 case 'distalWell'
-                    Fp.add_params = {defaults{:}, 'distalWell'};
+                    Fp.add_params{end+1} = 'distalWell';
+                otherwise
+                    error('condition string %s unrecognized', expvars{ss});
             end
             Fp = load_filter_params(Fp, 'add_params', Fp.add_params);
             F = createfilter('animal', {out(ian).animal}, 'epochs', ...
