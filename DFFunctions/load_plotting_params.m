@@ -141,7 +141,8 @@ for s = param_set
         case 'powerheatRast'
             position = [.1 .1 .9 .9];
             pwin = [1 1];
-            plot_frex = [8 15 40 85 150 300];
+            plot_frex = [6 7 8 10 12 14 40 60 85 150 300];
+            cmap = 'jet';
         case 'riptriglfp_allLFPtype_perntrode'
             position = [.1 .1 .4 .7];
             pwin = [1 1];

@@ -5,7 +5,7 @@ function out = getPowerDiff(expvarCat, rawpwr, Fp, varargin)
 % wp = wave params (see getWaveParams)
 pconf = paramconfig;
 me = animaldef('Demetris');
-
+invalid_rips = struct;
 lfptype = 'eeg';
 expvars = {{'rewarded', 'unrewarded'},{'outbound', 'inbound'},{'distalWell', 'proximalWell'},...
     {'rewarded_outbound', 'rewarded_inbound'}};
@@ -15,6 +15,7 @@ outdir = 'expvarCatMeanPwrDiff';
 if ~isempty(varargin)
     assign(varargin{:});
 end
+
 for ian = 1:length(Fp.animals)
     wp = getWaveParams(Fp.waveSet);
     animal = Fp.animals{ian};
@@ -25,13 +26,23 @@ for ian = 1:length(Fp.animals)
     ntrodes = unique(den.index(:,3));
     fprintf('lfptype %s \n', lfptype);
     meandbpowerDiff = cell(1,length(expvars));
+    pwranidx = find(strcmp({rawpwr.animal}, animal));
+    if ~isempty(invalid_rips)
+        % exclude invalid rips
+        noiseanidx = find(strcmp({invalid_rips.animal}, animal));
+        invalidrips = invalid_rips(noiseanidx ).ripnums;
+        userips = ones(length(rawpwr(pwranidx).day),1);
+        userips(invalidrips) = 0;
+    end
     % for each state/condition, compute dbpower, run timeshift permtest vs baseline
     for s = 1:length(expvars)
         stidx = find(strcmp(expvars{s}{1}, expvarCat(ian).expvars));
-        Aidx = find(expvarCat(ian).dm(:,stidx));
+        Aidx = expvarCat(ian).dm(:,stidx);
+        Aidx = find(all([Aidx, userips], 2));
         stidx = find(strcmp(expvars{s}{2}, expvarCat(ian).expvars));
-        Bidx = find(expvarCat(ian).dm(:,stidx));
-        meandbpowerDiff{s} = computePowerDiff(rawpwr(ian).pwr, Aidx, Bidx, wp, 'dsamp',wp.dsamp, ...
+        Bidx = expvarCat(ian).dm(:,stidx);
+        Bidx = find(all([Bidx, userips], 2));
+        meandbpowerDiff{s} = computePowerDiff(rawpwr(pwranidx).pwr, Aidx, Bidx, wp, 'dsamp',wp.dsamp, ...
             'run_permutation_test', run_perm);
     end
     

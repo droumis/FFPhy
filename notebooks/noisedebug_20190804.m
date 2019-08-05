@@ -1,4 +1,16 @@
 
+
+noiseyrips(1).animal = 'JZ3';
+noiseyrips(1).ripnums = [682:683  777:780 794:795 2924:2959 2963:3000 3013:3038 3054:3077 3083:3110 3157:3172 ...
+    3184:3196 3235:3265 3269:3271 3278:3280 3345:3355 3359:3373 3378:3385 3391:3403 ...
+    3406:3410 3423:3424 3454:3462 3468:3469 3484:3485 3514:3522 3527:3531 3583:3590 ...
+    3599:3614 3627:3634 3717:3749 3760:3770 3811:3819 3909:3921 3927:3929 3933:3975 ...
+    5285:5311 5329:5336 5346:5349 5358:5361 5366:5379 5387:5393 5398:5407 3049:3051 ...
+    621:623 4001 4022 4025 4072 4258 4121 4281 4152:4581 563 1128 3079 4004 4074 3758 ...
+    3759 3706 3707 237:239 3925:3927 3978:3981 3998:4000 4022:4024 4085:4088 4093:4100 ...
+    4139:4143 4622:4626 4715:4718 4690:4694 4793:4795 4810:4815 4826:4828 5138:5142 ...
+    4106:4108 3989:3993 4981:4983 5004:5019 5162:5165 5172:5174 5478:5503];
+
 % LFP
 make_swrLFP = 0;
 save_swrLFP = make_swrLFP;
@@ -11,7 +23,7 @@ load_rawpwr = 0;
 load_phase = 0;
 % Design Mats
 loadDesMats = 0;
-makeDesMats = 1;
+makeDesMats = 0;
 make_expvarCat = makeDesMats;
 load_expvarCat = loadDesMats;
 make_expvarCont = makeDesMats;
@@ -23,20 +35,21 @@ load_tfbvarCont = loadDesMats;
 % Mean Power, ITPC
 make_expvarCatMeanPwr = 0;
 make_expvarCatMeanPwrDiff = 1;
-make_varContPwrCorr = 1; % expvarCont, swrvarCont tfbvarCont
+make_varContPwrCorr = 0; % expvarCont, swrvarCont tfbvarCont
 make_expvarCatITPC = 0;
 make_expvarCatITPCDiff = 0;
 % load results
-load_expvarCatMeanPwr = 0;
-load_expvarCatMeanPwrDiff = 0;
-load_varContPwrCorr = 0;
-load_expvarCatITPC = 0;
-load_expvarCatITPCDiff = 0;
+load_results = 0;
+load_expvarCatMeanPwr = load_results;
+load_expvarCatMeanPwrDiff = load_results;
+load_varContPwrCorr = load_results;
+load_expvarCatITPC = load_results;
+load_expvarCatITPCDiff = load_results;
 % plot
-plot_expvarCatMeanPwr = 0;
+plot_expvarCatMeanPwr = 1;
 plot_expvarCatMeanPwrDiff = 1;
-plot_varCont = 1;
-plot_pwrStrips_timeXrip = 0; % raw Strips
+plot_varCont = 0;
+plot_pwrStrips_timeXrip = 1; % raw Strips
 plot_expvarCatITPC = 0;
 plot_expvarCatITPCDiff = 0;
 plot_phaseStrips_timeXrip = 0; % raw Strips
@@ -44,10 +57,10 @@ plot_phaseStrips_timeXrip = 0; % raw Strips
 pausefigs = 0;
 savefigs = 1;
 % plot stats
-plot_ContFit = 1; % fitLM
-plot_CatDiffBars = 1; % KS
+plot_ContFit = 0; % fitLM
+plot_CatDiffBars = 0; % KS
 % Init params
-Fp.animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'};
+Fp.animals = {'JZ3'};
 Fp.filtfunction = 'dfa_riptriglfp';
 Fp.add_params = {'wtrackdays', 'excludeNoise','excludePriorFirstWell', '<4cm/s', ...
     'wavelets4-300Hz',  'excludeAfterLastWell'};
@@ -57,8 +70,36 @@ pconf = paramconfig;
 me = animaldef('Demetris');
 wp = getWaveParams(Fp.waveSet);
 
-%% riptrigLFP
-    % make.save.load riptrigLFP
+% %% ripSpiking
+% sFp.animals = animals;
+% sFp.add_params = add_params;
+% sFp.filtfunction = 'dfa_riptrigspiking';
+% sFp = load_filter_params(sFp, 'add_params',sFp.add_params);
+% if make_swrSpikes
+%     spikesF = createfilter('animal',sFp.animals, 'epochs', sFp.epochfilter, ...
+%         'cells',sFp.cellfilter, 'excludetime',sFp.timefilter, 'iterator',sFp.iterator);
+%     spikesF = setfilterfunction(spikesF,sFp.filtfunction,sFp.datatypes,sFp.options{:});
+%     spikesF = runfilter(spikesF);
+%     for d = 1:length(spikesF)
+%         spikesF(d).datafilter_params = sFp;
+%     end
+% end
+% if save_swrSpikes == 1
+%     save_data(spikesF,sFp.paths.filtOutputDirectory,sFp.paths.filenamesave, 'filetail',...
+%         ['_',sFp.epochEnvironment])
+% end
+% if load_swrSpikes
+%     spikesF = load_filter_output(sFp.paths.filtOutputDirectory,sFp.paths.filenamesave, ...
+%         sFp.animals, 'filetail', ['_',sFp.epochEnvironment]);
+% end
+% % stack.loadstack riptrigSpikes [nt times rip]
+% if stack_swrSpikes; spikestack = stack_riptrigspiking(spikesF); clear spikesF
+%     save_data(spikestack, Fp.paths.resultsDirectory, 'riptrigspikestack_wtrack'); end
+% if load_swrSpikestack
+%     spikestack = load_data(Fp.paths.resultsDirectory, 'riptrigspikestack_wtrack', Fp.animals);
+% end
+
+%% ripLFP
 if make_swrLFP
     F = createfilter('animal', Fp.animals, 'epochs', Fp.epochfilter, 'eegtetrodes', ...
         Fp.tetfilter, 'excludetime', Fp.timefilter, 'iterator', Fp.iterator);
@@ -113,11 +154,13 @@ if load_tfbvarCont; outdir = 'tfbvarCont'; outpath = [pconf.andef{2},outdir,'/']
     % :expvarCat @mean /ntTF $time
     % don't run perm test for means bc time shuffling doesn't work for tonic signal
 if make_expvarCatMeanPwr
-    expvarCatMeanPwr = getPower(expvarCat, rawpwr,Fp, 'run_perm', 0); end
+    expvarCatMeanPwr = getPower(expvarCat, rawpwr,Fp, 'run_perm', 0, 'invalid_rips', ...
+        noiseyrips); end
 % :expvarCatDiff @dmean /ntTF $var {outbound-inbound, rewarded-unrewarded, ...
         % proximalWell-distalWell, outboundrewarded-inboundrewarded}
 if make_expvarCatMeanPwrDiff
-    expvarCatMeanPwrDiff = getPowerDiff(expvarCat,rawpwr,Fp, 'run_perm', 0); end
+    expvarCatMeanPwrDiff = getPowerDiff(expvarCat,rawpwr,Fp, 'run_perm', 0, 'invalid_rips', ...
+        noiseyrips); end
     % @corr (expvarCont tfbvarCont swrvarCont) /ntTF $swr
 if make_varContPwrCorr
     expvarContPwrCorr = runDesignDataRegression(expvarCont,rawpwr,Fp,'outdir','expvarCont');
@@ -149,8 +192,153 @@ if load_expvarCatITPC; outdir = 'expvarCatITPC'; outpath = [pconf.andef{2},outdi
 if load_expvarCatITPCDiff; outdir = 'expvarCatITPCDiff'; outpath = [pconf.andef{2},outdir,'/'];
    expvarCatITPCDiff = load_data(outpath, [outdir,'_', Fp.epochEnvironment] ,Fp.animals); end
 
+%% plot each ripple
+% if 0
+% Pp = load_plotting_params({'riptrigall'});
+%     for ian = 1:length(Fp.animals)
+%         animal = Fp.animals{ian};
+%         rips = 
+%         for ir = 1:length(rips)
+%             if savefigs && ~pausefigs
+%                 close all
+%                 ifig =figure('Visible','off','units','normalized','position', ...
+%                     Pp.position);
+%             else
+%                 ifig = figure('units','normalized','position',Pp.position);
+%             end
+%             set(gcf,'color','white')
+%             subaxis(2,Pp.nrow,1, 'Spacing', Pp.Spacing, ...
+%                 'SpacingVert', Pp.SpacingVert, 'SpacingHoriz', Pp.SpacingHoriz, 'Padding', ...
+%                 Pp.Padding, 'MarginLeft', Pp.MarginLeft, 'MarginRight', Pp.MarginRight,...
+%                 'MarginTop', Pp.MarginTop, 'MarginBottom', Pp.MarginBottom);
+% 
+%             % plot MU spikes
+%             f1 = scatter(sx/1000-1.001, sy, 10, sz,'+'); % could ad 'z' data for coloring
+%             
+%             
+%             
+%             
+%                         %% super
+%             sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
+%             sprtit = sprintf('meanpwrdiff %s-%s %s %s', expvarCatMeanPwrDiff(anidx).expvars{co}{1},...
+%                 expvarCatMeanPwrDiff(anidx).expvars{co}{2}, animal, Fp.epochEnvironment);
+%             iStitle = text(.5, .98, {sprtit}, 'Parent', sprtitleax, 'Units', 'normalized');
+%             set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
+%                 'horizontalAlignment', 'center','FontSize', 16);
+%             
+%             %% ---- pause, save figs ----
+%             if pausefigs
+%                 pause
+%             end
+%             if savefigs
+%                 save_figure(sprintf('%s/perRip/',pconf.andef{4}), 'perRip', sprtit)
+%                 close all
+%             end
+%             close all;
+%         end
+%     end
+% end
 %% Plotting Mean, ITPC, Corr
-% meanpowerDiff varCat TFzmap /nt
+
+    % meanpower varCat TFzmap /nt
+if plot_expvarCatMeanPwr; Pp = load_plotting_params({'defaults', 'powerTFmap'});
+    animals = {expvarCatMeanPwr.animal};
+    for ian = 1:length(animals) % for each animal
+        animal = animals{ian};
+        aninfo = animaldef(animal);
+        ntinfo = loaddatastruct(aninfo{2}, animal, 'tetinfo');
+        ntrodes = evaluatefilter(ntinfo, 'strcmp($valid, ''yes'')');
+        ntrodes = unique(ntrodes(:,3));
+        den = cellfetch(ntinfo, 'area');
+        matidx = unique(den.index(:,3));
+        anidx = find(strcmp({expvarCatMeanPwr.animal}, animal));
+        for co = 1 %:length(expvarCatMeanPwr(anidx).expvars)
+            if savefigs && ~pausefigs
+                close all
+                ifig =figure('Visible','off','units','normalized','position', ...
+                    Pp.position);
+            else
+                ifig = figure('units','normalized','position',Pp.position);
+            end
+            set(gcf,'color','white')
+            numcols = 8;
+            numrows = 4; %ceil(length(ntrodes) / numcols);
+            for nti = 1:length(ntrodes)
+                nt = ntrodes(nti);
+                area = ntinfo{1}{1}{nt}.area;
+                subarea = ntinfo{1}{1}{nt}.subarea;
+%                 try
+                cann = ntinfo{1}{1}{nt}.cannula;
+%                 catch
+%                     fprintf('%d\n',nt)
+%                 end
+                ntxy = ntinfo{1}{1}{nt}.ntxy;
+                if cann == 'ca1'
+                    ntxy(1) = ntxy(1)+4; % offset ca1 to the right
+                end
+                ntp = (ntxy(2)-1)*8+ntxy(1);
+                sf = subaxis(numrows,numcols,ntp, 'SpacingVert', Pp.SpVt, 'SpacingHoriz', Pp.SpHz, ...
+                    'MarginLeft', Pp.MgLt, 'MarginRight', Pp.MgRt, 'MarginTop', ...
+                    Pp.MgTp, 'MarginBottom', Pp.MgBm);
+                
+                if isnumeric(subarea)
+                    subarea = num2str(subarea);
+                end
+                ntidx = find(matidx == nt);
+                idata2plot = squeeze(expvarCatMeanPwr(anidx).meandbpower{co}.pwr_mean_db(ntidx,:,:))';
+                idata2plot = trim2win(idata2plot, Fp.srate, Pp.pwin, ...
+                    'dsamp', expvarCatMeanPwr(anidx).wp.dsamp);
+                time = linspace(-Pp.pwin(1), Pp.pwin(2), length(idata2plot(1,:)));
+                contourf(sf, time, wp.frex, idata2plot, Pp.contourRes, ...
+                    'linecolor','none');
+                set(gca,'ydir','normal','yscale','log');
+                
+                colormap(Pp.usecolormap)
+                caxis(sf, 'auto')
+%                 colorbar
+                
+                hold on
+                % thresholded single pix zmask
+                if ~isempty(fieldnames(expvarCatMeanPwr(anidx).meandbpower{co}.permt))
+                    zmask2plot = squeeze(expvarCatMeanPwr(anidx).meandbpower{co}.permt.threshmean(ntidx,:,:))'; 
+                    zmask2plot = trim2win(zmask2plot, Fp.srate, Pp.pwin, 'dsamp', wp.dsamp);
+                    try
+                        [~,h] = contour(sf, time, wp.frex, logical(zmask2plot), 1);
+                        h.LineColor = 'black';
+                    catch
+                        fprintf('invalid zmask\n')
+                    end
+                end
+                hold on;
+                ytickskip = 2:4:wp.numfrex;
+                set(gca,'ytick', round(wp.frex(ytickskip)), 'FontSize', 8)
+                title(sprintf('%s%s nt%d',area,subarea,nt), 'FontSize',14,...
+                    'FontWeight',Pp.FontW, 'FontName', Pp.FontNm)       
+                yl = ylim;
+                line([0 0], yl, 'Color', [0.8 0.8 0.8],'LineStyle','--', 'LineWidth', 1);
+            end
+            %% super
+            sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
+            sprtit = sprintf('meanpwr %s %s %s', expvarCatMeanPwr(anidx).expvars{co}, animal, ...
+                Fp.epochEnvironment);
+            iStitle = text(.5, .98, {sprtit}, 'Parent', sprtitleax, 'Units', 'normalized');
+            set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
+                'horizontalAlignment', 'center','FontSize', 16);
+            
+            %% ---- pause, save figs ----
+            if pausefigs
+                pause
+            end
+            if savefigs
+                save_figure(sprintf('%s/expvarCatMeanPwr/',pconf.andef{4}), 'expvarCatMeanPwr', sprtit)
+                close all
+            end
+            close all;
+            %                 end
+        end
+    end
+end
+    % meanpowerDiff varCat TFzmap /nt
 if plot_expvarCatMeanPwrDiff; Pp = load_plotting_params({'defaults', 'powerTFmap'});
     animals = {expvarCatMeanPwrDiff.animal};
     for ian = 1:length(animals) % for each animal
@@ -268,104 +456,6 @@ if plot_expvarCatMeanPwrDiff; Pp = load_plotting_params({'defaults', 'powerTFmap
         end
     end
 end
-    % meanpower varCat TFzmap /nt
-if plot_expvarCatMeanPwr; Pp = load_plotting_params({'defaults', 'powerTFmap'});
-    animals = {expvarCatMeanPwr.animal};
-    for ian = 1:length(animals) % for each animal
-        animal = animals{ian};
-        aninfo = animaldef(animal);
-        ntinfo = loaddatastruct(aninfo{2}, animal, 'tetinfo');
-        ntrodes = evaluatefilter(ntinfo, 'strcmp($valid, ''yes'')');
-        ntrodes = unique(ntrodes(:,3));
-        den = cellfetch(ntinfo, 'area');
-        matidx = unique(den.index(:,3));
-        anidx = find(strcmp({expvarCatMeanPwr.animal}, animal));
-        for co = 1:length(expvarCatMeanPwr(anidx).expvars)
-            if savefigs && ~pausefigs
-                close all
-                ifig =figure('Visible','off','units','normalized','position', ...
-                    Pp.position);
-            else
-                ifig = figure('units','normalized','position',Pp.position);
-            end
-            set(gcf,'color','white')
-            numcols = 8;
-            numrows = 4; %ceil(length(ntrodes) / numcols);
-            for nti = 1:length(ntrodes)
-                nt = ntrodes(nti);
-                area = ntinfo{1}{1}{nt}.area;
-                subarea = ntinfo{1}{1}{nt}.subarea;
-%                 try
-                cann = ntinfo{1}{1}{nt}.cannula;
-%                 catch
-%                     fprintf('%d\n',nt)
-%                 end
-                ntxy = ntinfo{1}{1}{nt}.ntxy;
-                if cann == 'ca1'
-                    ntxy(1) = ntxy(1)+4; % offset ca1 to the right
-                end
-                ntp = (ntxy(2)-1)*8+ntxy(1);
-                sf = subaxis(numrows,numcols,ntp, 'SpacingVert', Pp.SpVt, 'SpacingHoriz', Pp.SpHz, ...
-                    'MarginLeft', Pp.MgLt, 'MarginRight', Pp.MgRt, 'MarginTop', ...
-                    Pp.MgTp, 'MarginBottom', Pp.MgBm);
-                
-                if isnumeric(subarea)
-                    subarea = num2str(subarea);
-                end
-                ntidx = find(matidx == nt);
-                idata2plot = squeeze(expvarCatMeanPwr(anidx).meandbpower{co}.pwr_mean_db(ntidx,:,:))';
-                idata2plot = trim2win(idata2plot, Fp.srate, Pp.pwin, ...
-                    'dsamp', expvarCatMeanPwr(anidx).wp.dsamp);
-                time = linspace(-Pp.pwin(1), Pp.pwin(2), length(idata2plot(1,:)));
-                contourf(sf, time, wp.frex, idata2plot, Pp.contourRes, ...
-                    'linecolor','none');
-                set(gca,'ydir','normal','yscale','log');
-                
-                colormap(Pp.usecolormap)
-                caxis(sf, 'auto')
-%                 colorbar
-                
-                hold on
-                % thresholded single pix zmask
-                if ~isempty(fieldnames(expvarCatMeanPwr(anidx).meandbpower{co}.permt))
-                    zmask2plot = squeeze(expvarCatMeanPwr(anidx).meandbpower{co}.permt.threshmean(ntidx,:,:))'; 
-                    zmask2plot = trim2win(zmask2plot, Fp.srate, Pp.pwin, 'dsamp', wp.dsamp);
-                    try
-                        [~,h] = contour(sf, time, wp.frex, logical(zmask2plot), 1);
-                        h.LineColor = 'black';
-                    catch
-                        fprintf('invalid zmask\n')
-                    end
-                end
-                hold on;
-                ytickskip = 2:4:wp.numfrex;
-                set(gca,'ytick', round(wp.frex(ytickskip)), 'FontSize', 8)
-                title(sprintf('%s%s nt%d',area,subarea,nt), 'FontSize',14,...
-                    'FontWeight',Pp.FontW, 'FontName', Pp.FontNm)       
-                yl = ylim;
-                line([0 0], yl, 'Color', [0.8 0.8 0.8],'LineStyle','--', 'LineWidth', 1);
-            end
-            %% super
-            sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
-            sprtit = sprintf('meanpwr %s %s %s', expvarCatMeanPwr(anidx).expvars{co}, animal, ...
-                Fp.epochEnvironment);
-            iStitle = text(.5, .98, {sprtit}, 'Parent', sprtitleax, 'Units', 'normalized');
-            set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
-                'horizontalAlignment', 'center','FontSize', 16);
-            
-            %% ---- pause, save figs ----
-            if pausefigs
-                pause
-            end
-            if savefigs
-                save_figure(sprintf('%s/expvarCatMeanPwr/',pconf.andef{4}), 'expvarCatMeanPwr', sprtit)
-                close all
-            end
-            close all;
-            %                 end
-        end
-    end
-end
     % corrpower varCont TFzmap /nt
 if plot_varCont; Pp = load_plotting_params({'defaults', 'powerTFmap'});
     for ian = 1:numel(Fp.animals) % for each animal
@@ -441,7 +531,7 @@ if plot_varCont; Pp = load_plotting_params({'defaults', 'powerTFmap'});
     end   
 end
     % ITPC varCat TFzmap /nt
-if plot_itpc; Pp = load_plotting_params({'defaults', 'powerTFmap'});
+if plot_expvarCatITPC; Pp = load_plotting_params({'defaults', 'powerTFmap'});
         animals = {expvarCatITPC.animal};
     for ian = 1:length(animals) % for each animal
         animal = animals{ian};
@@ -639,6 +729,131 @@ if plot_expvarCatITPCDiff; Pp = load_plotting_params({'defaults', 'powerTFmap'})
 end
     % strips plot power heatRast /nt /freq
 if plot_pwrStrips_timeXrip; Pp=load_plotting_params({'defaults','powerheatRast'});
+    for ian = 1:numel(Fp.animals)
+        animal = Fp.animals{ian};
+        aninfo = animaldef(animal);
+        ntinfo = loaddatastruct(aninfo{2}, animal, 'tetinfo');
+        anidx = find(strcmp({rawpwr.animal}, animal));
+        ntrodes = rawpwr(anidx).ntrode;
+        dayep = [rawpwr(anidx).day rawpwr(anidx).epoch];
+        evanidx = find(strcmp({expvarCat.animal}, animal));
+        % exclude invalid tets
+        invalidtets = evaluatefilter(ntinfo, 'isequal($valid, ''no'')');
+        invalidtets = unique(invalidtets(:,3));
+        % exclude invalid rips
+        noiseanidx = find(strcmp({noiseyrips.animal}, animal));
+        invalidrips = noiseyrips(noiseanidx ).ripnums;
+        userips = ones(length(rawpwr(anidx).day),1);
+        userips(invalidrips) = 0;
+        
+        for fx = 1:length(Pp.plot_frex)
+            frexidx = knnsearch(rawpwr.wp.frex', Pp.plot_frex(fx));
+            knnfrex = round(rawpwr.wp.frex(frexidx));
+            % plot per ripstate
+            for rs = 1 %:length(Fp.use)
+                %         use_filts = find(any(cell2mat(cellfun(@(x) strcmp(x, lfpstack(anidx).filterfields), ...
+                %             use_filters, 'un', 0)), 2));
+%                 istate = Fp.useripstates{rs};
+                istateidx = find(strcmp('onlywdays', expvarCat(evanidx).expvars));
+                include_rips = expvarCat(ian).dm(:,istateidx);
+%                 include_rips = all([include_rips userips], 2);
+                %% ---- init fig----
+                if savefigs && ~pausefigs
+                    close all
+                    ifig = figure('Visible','off','units','normalized','position', ...
+                        Pp.position);
+                else
+                    ifig = figure('units','normalized','position',Pp.position);
+                end
+                set(gcf,'color','white')
+                
+                for nti = 1:length(ntrodes)
+                    ntrode = ntrodes(nti);
+                    if ismember(ntrode, invalidtets)
+                        continue
+                    end
+                    sf = subaxis(2,ceil(max(ntrodes)/2), nti, 'SpacingVert', Pp.SpVt, ...
+                        'SpacingHoriz', Pp.SpHz, 'MarginLeft', Pp.MgLt, 'MarginRight', ...
+                        Pp.MgRt, 'MarginTop', Pp.MgTp, 'MarginBottom', Pp.MgBm);
+                    h = zoom;
+                    h.Motion = 'vertical';
+                    h.Enable = 'on';
+                    exdayep = dayep(find(include_rips),:);
+                    de = unique(exdayep, 'rows');
+                    daybounds = find(diff(exdayep(:,1)));
+                    daybounds = [1;daybounds];
+                    epbounds = find(abs(diff(exdayep(:,2))));
+                    
+                    excld_stack = squeeze(double(rawpwr(anidx).pwr(nti, :, find(include_rips),frexidx)))';
+                    idata2plot = trim2win(excld_stack, Fp.srate, Pp.pwin, ...
+                        'dsamp', rawpwr(anidx).wp.dsamp);
+                    idata2plot(~userips,:) = 0;
+                    % mididx = ceil(size(excld_stack,2)/2); % right now assumes center is rip start
+                    ptime = linspace(-Pp.pwin(1),Pp.pwin(2),size(idata2plot,2));
+                    z = idata2plot;
+%                     m = nanmean(idata2plot,2);
+%                     s = nanstd(idata2plot, [], 2);
+%                     z = (idata2plot-m)./s;
+                    imagesc(ptime, 1:size(z,1), z)
+                    colormap(Pp.cmap)
+                    caxis(sf, 'auto')
+                    
+                    line([-Pp.pwin(1) Pp.pwin(2)], [epbounds'; epbounds'], 'color',[0 0 0])
+                    line([-Pp.pwin(1) Pp.pwin(2)], [daybounds'; daybounds'], 'color', [.9 .9 .9])
+                    line([0 0], [1 size(z,1)], 'color', [0 0 0], 'linestyle', '--')
+                    title(sprintf('%d', ntrode), 'FontSize',Pp.FontS, 'FontWeight',Pp.FontW, ...
+                        'FontName', Pp.FontNm)
+                    % caxis([-1 1])
+                    xlabel('time s', 'FontSize',Pp.FontS,'FontWeight',Pp.FontW,'FontName', ...
+                        Pp.FontNm)
+                    ylabel('ripnum (day-w epoch-b)','FontSize',Pp.FontS, ...
+                        'FontWeight',Pp.FontW,'FontName', Pp.FontNm)
+                    if nti ~= 1
+                        xlabel('')
+                        ylabel('')
+                        set(gca, 'ytick', []);
+                        set(gca, 'xtick', []);
+                    else
+                        days = num2str(unique(de(:,1)));
+                        for id = 1:length(days)
+                            text(-1.2, daybounds(id), days(id), 'FontSize', 8, 'Color','r');
+                        end
+                    end
+                    allAxesInFigure = findall(ifig,'type','axes');
+                    linkaxes(allAxesInFigure, 'y');
+                    
+                end
+                
+                %% super
+                sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
+                sprtit = sprintf('meandb %s all%d %s %dHz %s', animal, rs, Fp.uselfptype, ...
+                    knnfrex, Fp.epochEnvironment);
+                iStitle = text(.5, .98, {sprtit}, 'Parent', sprtitleax, 'Units', 'normalized');
+                set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
+                    'horizontalAlignment', 'center','FontSize', 12);
+                spylabel = text(.02, .5, sprintf('ripnum'), 'Parent', sprtitleax, 'Units', ...
+                    'normalized', 'Rotation', 90);
+                set(spylabel,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
+                    'horizontalAlignment', 'center', 'FontSize', 12);
+
+                spxlabel = text(.5, .02, sprintf('time'), 'Parent', sprtitleax, 'Units', ...
+                    'normalized');
+                set(spxlabel,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
+                    'horizontalAlignment', 'center', 'FontSize', 12);
+                %% ---- pause, save figs ----
+                if pausefigs
+                    pause
+                end
+                if savefigs
+                    save_figure([pconf.andef{4},'/powerHeatRast/'],'powerHeatRast',sprtit)
+                    close all
+                end
+            end
+        end
+    end
+end
+    % strips plot phase heatRast /nt /freq
+if plot_phaseStrips_timeXrip; Pp=load_plotting_params({'defaults','powerheatRast'});
     for ian = 1:numel(Fp.animals)
         animal = Fp.animals{ian};
         aninfo = animaldef(animal);
