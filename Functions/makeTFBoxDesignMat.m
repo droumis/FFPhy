@@ -1,8 +1,8 @@
 function out = makeTFBoxDesignMat(rawpwr,Fp, varargin)
 % makes a design matrix of feature values per ripple
 pconf = paramconfig;
-tfboxlabels = {'swrRipple', 'postPostSwrTheta', 'prePreSwrTheta', 'postPostSwrFastGamma', ...
-    'prePreSwrFastGamma'};
+tfboxlabels = {'swrRipple', 'postPostSwrTheta', 'prePreSwrTheta', 'postSwrFastGamma', ...
+    'preSwrFastGamma'};
 
 %,'swrFastGamma'}; %, ...
 %     'swrSlowGamma','swrBeta','swrTheta'};%,...
@@ -46,15 +46,15 @@ end
 function [freq, time] = tfboxlookup(tfboxlabels)
 
 frexlookup.Ripple = [125 250];
-frexlookup.FastGamma = [125 250];
-frexlookup.SlowGamma = [25 50];
+frexlookup.FastGamma = [65 115];
+frexlookup.SlowGamma = [25 55];
 frexlookup.Beta = [12 20];
 frexlookup.Theta = [6 12];
 
 timelookup.prePreSwr = [-1 -.5];
-timelookup.preSwr = [-.3 0];
+timelookup.preSwr = [-.5 0];
 timelookup.Swr = [0 .1];
-timelookup.postSwr = [.1 .4];
+timelookup.postSwr = [.1 .6];
 timelookup.postPostSwr = [.5 1];
 
 freq = {};

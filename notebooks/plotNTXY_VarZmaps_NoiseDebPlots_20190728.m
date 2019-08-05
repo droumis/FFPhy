@@ -1,41 +1,17 @@
 
-
-%{
-Part 1
-Hypothesis: TFcontext, expVar --> swrpropagation:(FastGamma, Ripple, MUspikesSWR)
-
-Monday:
-    - fix whatever is happening to mislabel the ntrode numbers, as apparent with D10
-
-    - then noise debugging use the all rips mean power plots and the strips
-plots.. fix references and exclude noise, then assign ntrodes and go from
-there
-
-    - plot diff of expvarcats
-    - plot itpc for expvarcat,  diffs
-
-    - combine frequiency ranges for the strips plots.. i.e. use the freq lookups
-from tdbvarCont maker to get mean of frequencies within each tfbox (gammas, theta, etc)  +
-(250-300Hz noise)
-        - ?? add the single ripple loader and plotter to this.. need to print out all
-        the individual rips again to comb through for noise debugging
-
-%}
 % LFP
 make_swrLFP = 0;
 save_swrLFP = make_swrLFP;
 load_swrLFP = 0;
 stack_swrLFP = make_swrLFP;
-load_swrLFPstack = 0;
-
-% Power Phase
+load_swrLFPstack = 1;
+% Raw Power Phase
 make_powerPhase = 0;
-load_rawpwr = 0;
+load_rawpwr = 1;
 load_phase = 0;
-
-% Des Mats
-loadDesMats = 1;
-makeDesMats = 0;
+% Design Mats
+loadDesMats = 0;
+makeDesMats = 1;
 make_expvarCat = makeDesMats;
 load_expvarCat = loadDesMats;
 make_expvarCont = makeDesMats;
@@ -44,54 +20,44 @@ make_swrvarCont = makeDesMats;
 load_swrvarCont = loadDesMats;
 make_tfbvarCont = makeDesMats;
 load_tfbvarCont = loadDesMats;
-
-% Agg ops and permtest ********
+% Mean Power, ITPC
 make_expvarCatMeanPwr = 0;
-make_expvarCatMeanPwrDiff = 0; % need to finish writing this, with perm testing
-make_varContPwrCorr = 0; % three calls, expvarCont, swrvarCont tfbvarCont
-
-make_itpc = 0;
+make_expvarCatMeanPwrDiff = 0;
+make_varContPwrCorr = 0; % expvarCont, swrvarCont tfbvarCont
+make_expvarCatITPC = 0;
 make_expvarCatITPCDiff = 0;
-
-runStats = 0;
-
 % load results
 load_expvarCatMeanPwr = 0;
-load_expvarCatDiff = 0;
+load_expvarCatMeanPwrDiff = 0;
 load_varContPwrCorr = 0;
-load_itpc = 0;
-load_itpcDiff = 0;
-
+load_expvarCatITPC = 0;
+load_expvarCatITPCDiff = 0;
 % plot
-plot_meanpwr = 0; % agg
-plot_meanpwrDiff = 0; %agg 
-plot_corrpwr = 0; %agg
-plot_pwr_timeXrip = 0; % strips
-
-plot_itpc = 0; %agg
-plot_ITPCDiff = 0; %agg
-plot_phase_timeXrip = 0; %strips
-
-plot_ContFit = 0;
-plot_CatDiffBars = 1;
-
-pausefigs = 1;
-savefigs = 0;
-
-Fp.animals = {'D10', 'D12', 'JZ1', 'JZ4'};
+plot_expvarCatMeanPwr = 0;
+plot_expvarCatMeanPwrDiff = 0;
+plot_varCont = 0;
+plot_pwrStrips_timeXrip = 0; % raw Strips
+plot_expvarCatITPC = 0;
+plot_expvarCatITPCDiff = 0;
+plot_phaseStrips_timeXrip = 0; % raw Strips
+% plot 
+pausefigs = 0;
+savefigs = 1;
+% plot stats
+plot_ContFit = 0; % fitLM
+plot_CatDiffBars = 0; % KS
+% Init params
+Fp.animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'};
 Fp.filtfunction = 'dfa_riptriglfp';
 Fp.add_params = {'wtrackdays', 'excludeNoise','excludePriorFirstWell', '<4cm/s', ...
     'wavelets4-300Hz',  'excludeAfterLastWell'};
 Fp = load_filter_params(Fp, 'add_params', Fp.add_params);
 Fp.uselfptype = 'eeg';
-% Fp.useExpvars = {'onlywdays','rewarded', 'unrewarded', 'inbound' , 'outbound', ...
-%     'proximalWell', 'distalWell'};
-% Fp.useDiffTrialTypes = {'diffRewardedUnrewarded', 'diffOutboundInbound'};
-
 pconf = paramconfig;
 me = animaldef('Demetris');
 wp = getWaveParams(Fp.waveSet);
-%% riptrigLFP m.s.l.
+
+%% riptrigLFP
     % make.save.load riptrigLFP
 if make_swrLFP
     F = createfilter('animal', Fp.animals, 'epochs', Fp.epochfilter, 'eegtetrodes', ...
@@ -111,7 +77,7 @@ if load_swrLFPstack
     lfpstack = load_data(Fp.paths.resultsDirectory, 'riptriglfpstack_wtrack', Fp.animals);
 end
 
-%% Power, Phase m.s.l
+%% Power, Phase
     % make.save.load rawpower, phase [nt times rip freq]
 if make_powerPhase; computeAnalyticSignal(lfpstack,'waveSet',Fp.waveSet,'saveOutput',1, ...
         'uselfptype', Fp.uselfptype); end
@@ -122,61 +88,54 @@ if load_phase; phase = load_data(sprintf('%s/analyticSignal/', me{2}), ...
 
 %% Design Matrices [rip var (nt) (ntB)]
     % :expvarCat @mean @ITPC /rip $time [rip var] ...
-        % all, outbound, inbound, rewarded,  unrewarded, proximalWell, distalWell
+        % {all, outbound, inbound, rewarded, unrewarded, proximalWell, distalWell}
 if make_expvarCat; outdir = 'expvarCat'; 
     expvarCat = makeExpvarCatDesignMat(lfpstack, 'outdir', outdir); end
 if load_expvarCat; outdir = 'expvarCat'; outpath = [pconf.andef{2},outdir,'/'];
     expvarCat = load_data(outpath, [outdir,'_',Fp.epochEnvironment], Fp.animals);end
-
-    % :expvarCont @corr /rip $swr [rip var] ...
-        % hd, speed, xpos, ypos, learn, perform, timeDay, timeEp, ripnum, day, epoch
+    % :expvarCont @corr /rip $swr [rip var] {speed, performance, learningrate}
 if make_expvarCont; outdir = 'expvarCont'; 
     expvarCont = makeExpvarContDesignMat(lfpstack, Fp, 'outdir', outdir); end
 if load_expvarCont; outdir = 'expvarCont'; outpath = [pconf.andef{2},outdir,'/'];
     expvarCont = load_data(outpath, [outdir,'_',Fp.epochEnvironment], Fp.animals); end
-    
-    % :swrvarCont @corr /rip $swr [rip var] std, total_energy, duration
+   % :swrvarCont @corr /rip $swr [rip var] {std, duration}
 if make_swrvarCont; outdir = 'swrvarCont';
     swrvarCont = makeSWRDesignMatrix(lfpstack, Fp, 'outdir', outdir); end
 if load_swrvarCont; outdir = 'swrvarCont'; outpath = [pconf.andef{2},outdir,'/'];
     swrvarCont = load_data(outpath, [outdir,'_',Fp.epochEnvironment], Fp.animals); end
-
-    % :tfbvarCont @corr /rip $swr [rip var nt] ...
-        % {pre prepre swr post postpost, rip gammas beta theta}
+    % :tfbvarCont @corr /rip $swr [rip var nt] {Ripple FastGamma Theta}
 if make_tfbvarCont; outdir = 'tfbvarCont';
     tfbvarCont = makeTFBoxDesignMat(rawpwr, Fp, 'outdir', outdir); end
 if load_tfbvarCont; outdir = 'tfbvarCont'; outpath = [pconf.andef{2},outdir,'/'];
     tfbvarCont = load_data(outpath, [outdir,'_',Fp.epochEnvironment], Fp.animals); end
 
-%% Aggregate Operations on rawpower, phase data by Design Matrices
-    % :expvarCat @mean /ntTF $time m.s.l
+%% Mean, ITPC, Corr
+    % :expvarCat @mean /ntTF $time
     % don't run perm test for means bc time shuffling doesn't work for tonic signal
-if make_expvarCatMeanPwr; getPower(expvarCat,rawpwr,Fp, 'run_perm', 0); end
-
-% :expvarCatDiff @dmean /ntTF $var m.s.l outbound-inbound, rewarded-unrewarded, ...
-        % proximalWell-distalWell, wtrackEp2-wtrackEp4
+if make_expvarCatMeanPwr
+    expvarCatMeanPwr = getPower(expvarCat, rawpwr,Fp, 'run_perm', 0); end
+% :expvarCatDiff @dmean /ntTF $var {outbound-inbound, rewarded-unrewarded, ...
+        % proximalWell-distalWell, outboundrewarded-inboundrewarded}
 if make_expvarCatMeanPwrDiff
-    getPowerDiff(expvarCat,rawpwr,Fp, 'run_perm', 0); 
-end
-
-    % @corr (expvarCont tfbvarCont swrvarCont) /ntTF $swr m.s.l
+    expvarCatMeanPwrDiff = getPowerDiff(expvarCat,rawpwr,Fp, 'run_perm', 0); end
+    % @corr (expvarCont tfbvarCont swrvarCont) /ntTF $swr
 if make_varContPwrCorr
     expvarContPwrCorr = runDesignDataRegression(expvarCont,rawpwr,Fp,'outdir','expvarCont');
     swrvarContPwrCorr = runDesignDataRegression(swrvarCont,rawpwr,Fp,'outdir','swrvarCont');
     tfbvarContPwrCorr = runDesignDataRegression(tfbvarCont,rawpwr,Fp,'outdir','tfbvarCont');
 end
+    % :expvarCat @itpc /ntTF $time
+if make_expvarCatITPC
+    expvarCatITPC = getITPC(expvarCat, phase, Fp,'run_perm', 0); end
+%     :expvarCatDiff @ditpc /ntTF $var
+if make_expvarCatITPCDiff
+    expvarCatITPCDiff = makeExpvarCatITPCDiff(expvarCat, phase, Fp, 'run_perm', 1); end
 
-    % :expvarCat @itpc /ntTF $time m.s.l
-if make_itpc; getITPC(expvarCat, phase, Fp,'run_perm', 0); end
-%     :expvarCatDiff @ditpc /ntTF $var m.s.l
-if make_expvarCatITPCDiff; makeExpvarCatITPCDiff(expvarCat, phase, Fp, 'run_perm', 1); end
-
-
-%% loading and plotting Aggregate Results Exploratory
+%% loading Mean, ITPC, Corr
 if load_expvarCatMeanPwr; outdir = 'expvarCatMeanPwr'; outpath = [pconf.andef{2},outdir,'/'];
-    meanpwr = load_data(outpath, [outdir,'_', Fp.epochEnvironment] ,Fp.animals); end
-if load_expvarCatDiff; outdir = 'expvarCatMeanPwrDiff'; outpath = [pconf.andef{2},outdir,'/'];
-    expvarCatDiff = load_data(outpath, [outdir,'_',Fp.epochEnvironment], Fp.animals);end
+    expvarCatMeanPwr = load_data(outpath, [outdir,'_', Fp.epochEnvironment] ,Fp.animals); end
+if load_expvarCatMeanPwrDiff; outdir = 'expvarCatMeanPwrDiff'; outpath = [pconf.andef{2},outdir,'/'];
+    expvarCatMeanPwrDiff = load_data(outpath, [outdir,'_',Fp.epochEnvironment], Fp.animals);end
 if load_varContPwrCorr
     outdir = 'expvarCont'; outfile='expvarContCorr'; outpath=[pconf.andef{2},outdir,'/'];
     expvarContPwrCorr=load_data(outpath,[outfile,'_', Fp.epochEnvironment],Fp.animals);
@@ -185,15 +144,15 @@ if load_varContPwrCorr
     outdir = 'tfbvarCont'; outfile='tfbvarContCorr'; outpath=[pconf.andef{2},outdir,'/'];
     tfbvarContPwrCorr=load_data(outpath,[outfile,'_', Fp.epochEnvironment],Fp.animals);
 end
+if load_expvarCatITPC; outdir = 'expvarCatITPC'; outpath = [pconf.andef{2},outdir,'/'];
+   expvarCatITPC = load_data(outpath, [outdir,'_', Fp.epochEnvironment] ,Fp.animals); end
+if load_expvarCatITPCDiff; outdir = 'expvarCatITPCDiff'; outpath = [pconf.andef{2},outdir,'/'];
+   expvarCatITPCDiff = load_data(outpath, [outdir,'_', Fp.epochEnvironment] ,Fp.animals); end
 
-if load_itpc; outdir = 'expvarCatITPC'; outpath = [pconf.andef{2},outdir,'/'];
-   itpc = load_data(outpath, [outdir,'_', Fp.epochEnvironment] ,Fp.animals); end
-if load_itpcDiff; outdir = 'expvarCatITPCDiff'; outpath = [pconf.andef{2},outdir,'/'];
-   itpcdiff = load_data(outpath, [outdir,'_', Fp.epochEnvironment] ,Fp.animals); end
-
-    % meanpowerDiff varCat TFzmap /nt
-if plot_meanpwrDiff; Pp = load_plotting_params({'defaults', 'powerTFmap'});
-    animals = {expvarCatDiff.animal};
+%% Plotting Mean, ITPC, Corr
+% meanpowerDiff varCat TFzmap /nt
+if plot_expvarCatMeanPwrDiff; Pp = load_plotting_params({'defaults', 'powerTFmap'});
+    animals = {expvarCatMeanPwrDiff.animal};
     for ian = 1:length(animals) % for each animal
         animal = animals{ian};
         aninfo = animaldef(animal);
@@ -202,8 +161,8 @@ if plot_meanpwrDiff; Pp = load_plotting_params({'defaults', 'powerTFmap'});
         ntrodes = unique(ntrodes(:,3));
         den = cellfetch(ntinfo, 'area');
         matidx = unique(den.index(:,3));
-        anidx = find(strcmp({expvarCatDiff.animal}, animal));
-        for co = 1:length(expvarCatDiff(anidx).expvars)
+        anidx = find(strcmp({expvarCatMeanPwrDiff.animal}, animal));
+        for co = 1:length(expvarCatMeanPwrDiff(anidx).expvars)
             if savefigs && ~pausefigs
                 close all
                 ifig =figure('Visible','off','units','normalized','position', ...
@@ -218,11 +177,7 @@ if plot_meanpwrDiff; Pp = load_plotting_params({'defaults', 'powerTFmap'});
                 nt = ntrodes(nti);
                 area = ntinfo{1}{1}{nt}.area;
                 subarea = ntinfo{1}{1}{nt}.subarea;
-%                 try
                 cann = ntinfo{1}{1}{nt}.cannula;
-%                 catch
-%                     fprintf('%d\n',nt)
-%                 end
                 ntxy = ntinfo{1}{1}{nt}.ntxy;
                 if cann == 'ca1'
                     ntxy(1) = ntxy(1)+4; % offset ca1 to the right
@@ -231,27 +186,24 @@ if plot_meanpwrDiff; Pp = load_plotting_params({'defaults', 'powerTFmap'});
                 sf = subaxis(numrows,numcols,ntp, 'SpacingVert', Pp.SpVt, 'SpacingHoriz', Pp.SpHz, ...
                     'MarginLeft', Pp.MgLt, 'MarginRight', Pp.MgRt, 'MarginTop', ...
                     Pp.MgTp, 'MarginBottom', Pp.MgBm);
-                
                 if isnumeric(subarea)
                     subarea = num2str(subarea);
                 end
                 ntidx = find(matidx == nt);
-                idata2plot = squeeze(expvarCatDiff(anidx).meandbpowerDiff{co}.pwr_meandb_diff(ntidx,:,:))';
+                % actual plotting of data
+                idata2plot = squeeze(expvarCatMeanPwrDiff(anidx).meandbpowerDiff{co}.pwr_meandb_diff(ntidx,:,:))';
                 idata2plot = trim2win(idata2plot, Fp.srate, Pp.pwin, ...
-                    'dsamp', expvarCatDiff(anidx).wp.dsamp);
+                    'dsamp', expvarCatMeanPwrDiff(anidx).wp.dsamp);
                 time = linspace(-Pp.pwin(1), Pp.pwin(2), length(idata2plot(1,:)));
                 contourf(sf, time, wp.frex, idata2plot, Pp.contourRes, ...
                     'linecolor','none');
                 set(gca,'ydir','normal','yscale','log');
-                
                 colormap(Pp.usecolormap)
                 caxis(sf, 'auto')
-%                 colorbar
-                
                 hold on
-                % thresholded single pix zmask
-                if ~isempty(fieldnames(expvarCatDiff(anidx).meandbpowerDiff{co}.permt))
-                    zmask2plot = squeeze(expvarCatDiff(anidx).meandbpowerDiff{co}.permt.threshmean(ntidx,:,:))'; 
+                % thresholded zmask
+                if ~isempty(fieldnames(expvarCatMeanPwrDiff(anidx).meandbpowerDiff{co}.permt))
+                    zmask2plot = squeeze(expvarCatMeanPwrDiff(anidx).meandbpowerDiff{co}.permt.threshmean(ntidx,:,:))'; 
                     zmask2plot = trim2win(zmask2plot, Fp.srate, Pp.pwin, 'dsamp', wp.dsamp);
                     try
                         [~,h] = contour(sf, time, wp.frex, logical(zmask2plot), 1);
@@ -267,11 +219,39 @@ if plot_meanpwrDiff; Pp = load_plotting_params({'defaults', 'powerTFmap'});
                     'FontWeight',Pp.FontW, 'FontName', Pp.FontNm)       
                 yl = ylim;
                 line([0 0], yl, 'Color', [0.8 0.8 0.8],'LineStyle','--', 'LineWidth', 1);
+                hold on
+                % tfboxes and sharp wave triangle. make into function
+                hold on
+                v = [-.4 yl(1); .4 yl(1); 0 25];
+                f = [1 2 3];
+                patch('Faces',f,'Vertices',v,...
+                    'EdgeColor','black','FaceColor','black','FaceAlpha', .3, 'LineWidth',1);
+                usetfboxes = {'prePreSwrTheta', 'postPostSwrTheta', 'swrRipple', ...
+                    'preSwrFastGamma', 'postSwrFastGamma'};
+                for tfb = 1:length(usetfboxes)
+                    tfbani = find(strcmp({tfbvarCont.animal}, animal));
+                    ppthidx = find(strcmp(tfbvarCont(tfbani).expvars, usetfboxes{tfb}));
+                    if isempty(ppthidx)
+                        fprintf('could not find %s\n', usetfboxes{tfb});
+                        continue
+                    end
+                    ppthyidx = [min(tfbvarCont(tfbani).realfreq{ppthidx}); ...
+                        max(tfbvarCont(tfbani).realfreq{ppthidx})];
+                    ppthxidx = tfbvarCont(tfbani).time{ppthidx};
+                    xw = ppthxidx(2)-ppthxidx(1);
+                    yh = ppthyidx(2)-ppthyidx(1);
+                    cx = ppthxidx(1);
+                    cy = ppthyidx(1);
+                    rectangle('Position',[cx cy xw yh])
+                    hold on
+                end
+                hold off;
+                %%
             end
             %% super
             sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
-            sprtit = sprintf('meanpwrdiff %s-%s %s %s', expvarCatDiff(anidx).expvars{co}{1},...
-                expvarCatDiff(anidx).expvars{co}{2}, animal, Fp.epochEnvironment);
+            sprtit = sprintf('meanpwrdiff %s-%s %s %s', expvarCatMeanPwrDiff(anidx).expvars{co}{1},...
+                expvarCatMeanPwrDiff(anidx).expvars{co}{2}, animal, Fp.epochEnvironment);
             iStitle = text(.5, .98, {sprtit}, 'Parent', sprtitleax, 'Units', 'normalized');
             set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
                 'horizontalAlignment', 'center','FontSize', 16);
@@ -285,13 +265,12 @@ if plot_meanpwrDiff; Pp = load_plotting_params({'defaults', 'powerTFmap'});
                 close all
             end
             close all;
-            %                 end
         end
     end
 end
     % meanpower varCat TFzmap /nt
-if plot_meanpwr; Pp = load_plotting_params({'defaults', 'powerTFmap'});
-    animals = {meanpwr.animal};
+if plot_expvarCatMeanPwr; Pp = load_plotting_params({'defaults', 'powerTFmap'});
+    animals = {expvarCatMeanPwr.animal};
     for ian = 1:length(animals) % for each animal
         animal = animals{ian};
         aninfo = animaldef(animal);
@@ -300,8 +279,8 @@ if plot_meanpwr; Pp = load_plotting_params({'defaults', 'powerTFmap'});
         ntrodes = unique(ntrodes(:,3));
         den = cellfetch(ntinfo, 'area');
         matidx = unique(den.index(:,3));
-        anidx = find(strcmp({meanpwr.animal}, animal));
-        for co = 1:length(meanpwr(anidx).expvars)
+        anidx = find(strcmp({expvarCatMeanPwr.animal}, animal));
+        for co = 1:length(expvarCatMeanPwr(anidx).expvars)
             if savefigs && ~pausefigs
                 close all
                 ifig =figure('Visible','off','units','normalized','position', ...
@@ -334,9 +313,9 @@ if plot_meanpwr; Pp = load_plotting_params({'defaults', 'powerTFmap'});
                     subarea = num2str(subarea);
                 end
                 ntidx = find(matidx == nt);
-                idata2plot = squeeze(meanpwr(anidx).meandbpower{co}.pwr_mean_db(ntidx,:,:))';
+                idata2plot = squeeze(expvarCatMeanPwr(anidx).meandbpower{co}.pwr_mean_db(ntidx,:,:))';
                 idata2plot = trim2win(idata2plot, Fp.srate, Pp.pwin, ...
-                    'dsamp', meanpwr(anidx).wp.dsamp);
+                    'dsamp', expvarCatMeanPwr(anidx).wp.dsamp);
                 time = linspace(-Pp.pwin(1), Pp.pwin(2), length(idata2plot(1,:)));
                 contourf(sf, time, wp.frex, idata2plot, Pp.contourRes, ...
                     'linecolor','none');
@@ -348,8 +327,8 @@ if plot_meanpwr; Pp = load_plotting_params({'defaults', 'powerTFmap'});
                 
                 hold on
                 % thresholded single pix zmask
-                if ~isempty(fieldnames(meanpwr(anidx).meandbpower{co}.permt))
-                    zmask2plot = squeeze(meanpwr(anidx).meandbpower{co}.permt.threshmean(ntidx,:,:))'; 
+                if ~isempty(fieldnames(expvarCatMeanPwr(anidx).meandbpower{co}.permt))
+                    zmask2plot = squeeze(expvarCatMeanPwr(anidx).meandbpower{co}.permt.threshmean(ntidx,:,:))'; 
                     zmask2plot = trim2win(zmask2plot, Fp.srate, Pp.pwin, 'dsamp', wp.dsamp);
                     try
                         [~,h] = contour(sf, time, wp.frex, logical(zmask2plot), 1);
@@ -368,7 +347,7 @@ if plot_meanpwr; Pp = load_plotting_params({'defaults', 'powerTFmap'});
             end
             %% super
             sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
-            sprtit = sprintf('meanpwr %s %s %s', meanpwr(anidx).expvars{co}, animal, ...
+            sprtit = sprintf('meanpwr %s %s %s', expvarCatMeanPwr(anidx).expvars{co}, animal, ...
                 Fp.epochEnvironment);
             iStitle = text(.5, .98, {sprtit}, 'Parent', sprtitleax, 'Units', 'normalized');
             set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
@@ -388,7 +367,7 @@ if plot_meanpwr; Pp = load_plotting_params({'defaults', 'powerTFmap'});
     end
 end
     % corrpower varCont TFzmap /nt
-if plot_corrpwr; Pp = load_plotting_params({'defaults', 'powerTFmap'});
+if plot_varCont; Pp = load_plotting_params({'defaults', 'powerTFmap'});
     for ian = 1:numel(Fp.animals) % for each animal
         animal = Fp.animals{ian};
         aninfo = animaldef(animal);
@@ -463,7 +442,7 @@ if plot_corrpwr; Pp = load_plotting_params({'defaults', 'powerTFmap'});
 end
     % ITPC varCat TFzmap /nt
 if plot_itpc; Pp = load_plotting_params({'defaults', 'powerTFmap'});
-        animals = {itpc.animal};
+        animals = {expvarCatITPC.animal};
     for ian = 1:length(animals) % for each animal
         animal = animals{ian};
         aninfo = animaldef(animal);
@@ -472,8 +451,8 @@ if plot_itpc; Pp = load_plotting_params({'defaults', 'powerTFmap'});
         ntrodes = unique(ntrodes(:,3));
         den = cellfetch(ntinfo, 'area');
         matidx = unique(den.index(:,3));
-        anidx = find(strcmp({itpc.animal}, animal));
-        for co = 1:length(itpc(anidx).expvars)
+        anidx = find(strcmp({expvarCatITPC.animal}, animal));
+        for co = 1:length(expvarCatITPC(anidx).expvars)
             if savefigs && ~pausefigs
                 close all
                 ifig =figure('Visible','off','units','normalized','position', ...
@@ -506,9 +485,9 @@ if plot_itpc; Pp = load_plotting_params({'defaults', 'powerTFmap'});
                     subarea = num2str(subarea);
                 end
                 ntidx = find(matidx == nt);
-                idata2plot = squeeze(itpc(anidx).ITPC{co}.ITPC_db(ntidx,:,:))';
+                idata2plot = squeeze(expvarCatITPC(anidx).ITPC{co}.ITPC_db(ntidx,:,:))';
                 idata2plot = trim2win(idata2plot, Fp.srate, Pp.pwin, ...
-                    'dsamp', itpc(anidx).wp.dsamp);
+                    'dsamp', expvarCatITPC(anidx).wp.dsamp);
                 time = linspace(-Pp.pwin(1), Pp.pwin(2), length(idata2plot(1,:)));
                 contourf(sf, time, wp.frex, idata2plot, 40, ...
                     'linecolor','none');
@@ -520,8 +499,8 @@ if plot_itpc; Pp = load_plotting_params({'defaults', 'powerTFmap'});
                 
                 hold on
                 % thresholded single pix zmask
-                if ~isempty(fieldnames(itpc(anidx).ITPC{co}.permt))
-                    zmask2plot = squeeze(itpc(anidx).ITPC{co}.permt.threshmean(ntidx,:,:))'; 
+                if ~isempty(fieldnames(expvarCatITPC(anidx).ITPC{co}.permt))
+                    zmask2plot = squeeze(expvarCatITPC(anidx).ITPC{co}.permt.threshmean(ntidx,:,:))'; 
                     zmask2plot = trim2win(zmask2plot, Fp.srate, Pp.pwin, 'dsamp', wp.dsamp);
                     try
                         [~,h] = contour(sf, time, wp.frex, logical(zmask2plot), 1);
@@ -540,7 +519,7 @@ if plot_itpc; Pp = load_plotting_params({'defaults', 'powerTFmap'});
             end
             %% super
             sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
-            sprtit = sprintf('itpc %s %s %s', itpc(anidx).expvars{co}, animal, ...
+            sprtit = sprintf('itpc %s %s %s', expvarCatITPC(anidx).expvars{co}, animal, ...
                 Fp.epochEnvironment);
             iStitle = text(.5, .98, {sprtit}, 'Parent', sprtitleax, 'Units', 'normalized');
             set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
@@ -560,8 +539,8 @@ if plot_itpc; Pp = load_plotting_params({'defaults', 'powerTFmap'});
     end
 end
     % ITPCDiff varCat TFzmap /nt
-if plot_ITPCDiff; Pp = load_plotting_params({'defaults', 'powerTFmap'});
-    animals = {itpcdiff.animal};
+if plot_expvarCatITPCDiff; Pp = load_plotting_params({'defaults', 'powerTFmap'});
+    animals = {expvarCatITPCDiff.animal};
     for ian = 1:length(animals) % for each animal
         animal = animals{ian};
         aninfo = animaldef(animal);
@@ -570,8 +549,8 @@ if plot_ITPCDiff; Pp = load_plotting_params({'defaults', 'powerTFmap'});
         ntrodes = unique(ntrodes(:,3));
         den = cellfetch(ntinfo, 'area');
         matidx = unique(den.index(:,3));
-        anidx = find(strcmp({itpcdiff.animal}, animal));
-        for co = 1:length(itpcdiff(anidx).expvars)
+        anidx = find(strcmp({expvarCatITPCDiff.animal}, animal));
+        for co = 1:length(expvarCatITPCDiff(anidx).expvars)
             if savefigs && ~pausefigs
                 close all
                 ifig =figure('Visible','off','units','normalized','position', ...
@@ -604,9 +583,9 @@ if plot_ITPCDiff; Pp = load_plotting_params({'defaults', 'powerTFmap'});
                     subarea = num2str(subarea);
                 end
                 ntidx = find(matidx == nt);
-                idata2plot = squeeze(itpcdiff(anidx).ITPCDiff{co}.ITPC_diff(ntidx,:,:))';
+                idata2plot = squeeze(expvarCatITPCDiff(anidx).ITPCDiff{co}.ITPC_diff(ntidx,:,:))';
                 idata2plot = trim2win(idata2plot, Fp.srate, Pp.pwin, ...
-                    'dsamp', itpcdiff(anidx).wp.dsamp);
+                    'dsamp', expvarCatITPCDiff(anidx).wp.dsamp);
                 time = linspace(-Pp.pwin(1), Pp.pwin(2), length(idata2plot(1,:)));
                 contourf(sf, time, wp.frex, idata2plot, Pp.contourRes, ...
                     'linecolor','none');
@@ -618,8 +597,8 @@ if plot_ITPCDiff; Pp = load_plotting_params({'defaults', 'powerTFmap'});
                 
                 hold on
                 % thresholded single pix zmask
-                if ~isempty(fieldnames(itpcdiff(anidx).ITPCDiff{co}.permt))
-                    zmask2plot = squeeze(itpcdiff(anidx).ITPCDiff{co}.permt.threshmean(ntidx,:,:))'; 
+                if ~isempty(fieldnames(expvarCatITPCDiff(anidx).ITPCDiff{co}.permt))
+                    zmask2plot = squeeze(expvarCatITPCDiff(anidx).ITPCDiff{co}.permt.threshmean(ntidx,:,:))'; 
                     zmask2plot = trim2win(zmask2plot, Fp.srate, Pp.pwin, 'dsamp', wp.dsamp);
                     try
                         [~,h] = contour(sf, time, wp.frex, logical(zmask2plot), 1);
@@ -638,8 +617,8 @@ if plot_ITPCDiff; Pp = load_plotting_params({'defaults', 'powerTFmap'});
             end
             %% super
             sprtitleax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
-            sprtit = sprintf('itpcdiff %s-%s %s %s', itpcdiff(anidx).expvars{co}{1},...
-                itpcdiff(anidx).expvars{co}{2}, animal, Fp.epochEnvironment);
+            sprtit = sprintf('itpcdiff %s-%s %s %s', expvarCatITPCDiff(anidx).expvars{co}{1},...
+                expvarCatITPCDiff(anidx).expvars{co}{2}, animal, Fp.epochEnvironment);
             iStitle = text(.5, .98, {sprtit}, 'Parent', sprtitleax, 'Units', 'normalized');
             set(iStitle,'FontWeight','bold','Color','k', 'FontName', 'Arial', ...
                 'horizontalAlignment', 'center','FontSize', 16);
@@ -659,7 +638,7 @@ if plot_ITPCDiff; Pp = load_plotting_params({'defaults', 'powerTFmap'});
     end
 end
     % strips plot power heatRast /nt /freq
-if plot_pwr_timeXrip; Pp=load_plotting_params({'defaults','powerheatRast'});
+if plot_pwrStrips_timeXrip; Pp=load_plotting_params({'defaults','powerheatRast'});
     for ian = 1:numel(Fp.animals)
         animal = Fp.animals{ian};
         aninfo = animaldef(animal);
@@ -767,9 +746,8 @@ if plot_pwr_timeXrip; Pp=load_plotting_params({'defaults','powerheatRast'});
         end
     end
 end
-
-%% SwrDuration, SwrSTD corr mecRipPwr
-% lin fit corr coef plots... testing linear relationship
+%% Plot Stats 
+% varCont corr plots... testing linear fit
 if plot_ContFit; Pp = load_plotting_params({'defaults', 'powerTFmap'});
     for ian = 1:numel(Fp.animals) % for each animal
         animal = Fp.animals{ian};
@@ -813,6 +791,14 @@ if plot_ContFit; Pp = load_plotting_params({'defaults', 'powerTFmap'});
                 b(1).Marker = 'o';
                 b(1).MarkerSize = 1;
                 b(1).Color = [.8 .8 .8];
+                % conf bounds fill
+%                 x_axis = b(3).x_data';
+%                 x_plot =[x_axis, fliplr(x_axis)];
+%                 y_plot = [b(3).ydata', flipud(b(4).y_data)'];
+%                 y_plot=[CI(:,1)', flipud(CI(:,2))'];
+                hold on
+                plot(x_axis, mu_diff, 'black', 'linewidth', 1)
+                fill(x_plot, y_plot, 1,'facecolor', 'red', 'edgecolor', 'none', 'facealpha', 0.4);
                 if P < .05 && R < 0
                     b(2).Color = [0 0 1];
                     b(3).Color = [0 0 1];
@@ -851,15 +837,12 @@ if plot_ContFit; Pp = load_plotting_params({'defaults', 'powerTFmap'});
         end
     end
 end
-
-%% outbThetaPostPre VS inbThetaPostPre also distal vs proximal
-% Box whisker plots.. testing two distributions
-
+% expvarCatDiff Box whisker plots.. testing two distributions
 if plot_CatDiffBars; Pp = load_plotting_params({'defaults', 'powerTFmap'});
-    expvarCatDiff = struct;
+    expvarCatMeanPwrDiff = struct;
     for ian = 1:numel(Fp.animals) % for each animal
-        expvarCatDiff(ian).expvars = {'rewarded', 'inbound', 'proximal'};
-        expvarCatDiff(ian).dm = expvarCat(ian).dm(:,[2 4 6]);
+        expvarCatMeanPwrDiff(ian).expvars = {'rewarded', 'inbound', 'proximal'};
+        expvarCatMeanPwrDiff(ian).dm = expvarCat(ian).dm(:,[2 4 6]);
         animal = Fp.animals{ian};
         aninfo = animaldef(animal);
         ntinfo = loaddatastruct(aninfo{2}, animal, 'tetinfo');
@@ -893,7 +876,6 @@ if plot_CatDiffBars; Pp = load_plotting_params({'defaults', 'powerTFmap'});
                 sf = subaxis(numrows,numcols,ntp, 'SpacingVert', Pp.SpVt, 'SpacingHoriz', Pp.SpHz, ...
                     'MarginLeft', Pp.MgLt, 'MarginRight', Pp.MgRt, 'MarginTop', ...
                     Pp.MgTp, 'MarginBottom', Pp.MgBm);
-                
                 % i could either have both theta and gamma plots, or i
                 % could compute a xfc measure
                 prethetapwr = squeeze(tfbvarCont(ian).dm(:,3,nti));
@@ -932,13 +914,18 @@ if plot_CatDiffBars; Pp = load_plotting_params({'defaults', 'powerTFmap'});
         end
     end
 end
-
+%% NOTES
 %{
 %%%%%%%%%%%%%% TODO:
+
+- ?? add the single ripple loader and plotter to this.. need to print out all
+the individual rips again to comb through for noise debugging
+
 -- fix the expvarCont values.. they are wrong.. 
 -- the duration values look discrete.. is this bc rip chains?
 -- plot the pre and post TFboxes for the diff comparisons
-
+-- noise debugging.. fix references and exclude noise
+    
 -- need to choose ntrodes
     -- print out all the animals zmapXY
         -- outbrew-inbound thetapost-pre boxplots
@@ -1014,6 +1001,9 @@ Cat Mean
 
 
 %%%%%%%%%%% story: SWRS INTERACT WITH ONGOING MEMORY PROCESSING
+Part 1
+Hypothesis: TFcontext, expVar --> swrpropagation:(FastGamma, Ripple, MUspikesSWR)
+
 - MEC response during ca1 swrs changes depending on the state of MEC, and
 the state of the animal.
 

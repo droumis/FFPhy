@@ -11,7 +11,7 @@ function out = makeExpvarContDesignMat(lfpstack, Fp, varargin)
         assign(varargin{:})
     end
     outpath = [pconf.andef{2},outdir,'/'];    
-    expvars = {'speed','performance', 'learningrate', 'day'}; 
+    expvars = {'speed','performance', 'learningrate'}; 
     %,, 'epoch''ripnum',  'timeSinceDay', 'timeSinceEpoch','xpos', 'ypos', 'headdirection', 'timeSinceLastReward', 'timeUntilNextReward', 'ripnum'};
     
     
@@ -28,14 +28,14 @@ function out = makeExpvarContDesignMat(lfpstack, Fp, varargin)
         out(ian).dims = {'ripple', 'expvar'};
         out(ian).dm = nan(numrips,length(expvars));
         % timeSinceDay is just the ripstarttimes
-        out(ian).dm(:,1) = lfpstack(ian).ripStartTime;
+%         out(ian).dm(:,1) = lfpstack(ian).ripStartTime;
         % get position, speed vars
         dayeps = unique(out(ian).dayeps,'rows', 'stable');
         load(sprintf('%s/%sBehaveState.mat',andef{1,2}, animal));
         allbound = BehaveState.statespace.allbound;
-        out(ian).dm(:,9) = 1:numrips;
-        out(ian).dm(:,10) = lfpstack(ian).day;
-        out(ian).dm(:,11) = lfpstack(ian).epoch;
+%         out(ian).dm(:,9) = 1:numrips;
+%         out(ian).dm(:,10) = lfpstack(ian).day;
+%         out(ian).dm(:,11) = lfpstack(ian).epoch;
         for ide = 1:length(dayeps(:,1))
             day = dayeps(ide,1);
             epoch = dayeps(ide,2);
@@ -44,11 +44,11 @@ function out = makeExpvarContDesignMat(lfpstack, Fp, varargin)
             load(sprintf('%s%s%s%02d.mat',andef{1,2}, animal, 'pos', day));
             ripidx = knnsearch(pos{day}{epoch}.data(:,1), ideripstarts);
             % time since epoch
-            epochstartime = pos{day}{epoch}.data(1,1);
-            out(ian).dm(iderips,2) = ideripstarts - epochstartime;
+%             epochstartime = pos{day}{epoch}.data(1,1);
+%             out(ian).dm(iderips,2) = ideripstarts - epochstartime;
             
             % pos vars (x, y, hd, sp) ~ (6,7,8,9)
-            out(ian).dm(iderips,[3 4 5 6]) = pos{day}{epoch}.data(ripidx,[6 7 8 9]);
+            out(ian).dm(iderips,1) = pos{day}{epoch}.data(ripidx,9);
        
             % get performance and reward vars       
             allbound_inep_inds = ismember(allbound(:,[5 6]), [day epoch], 'rows');
@@ -60,8 +60,8 @@ function out = makeExpvarContDesignMat(lfpstack, Fp, varargin)
             end
             bsmode = allbound(allbound_inep_inds,1);
             bsmodediff = abs(diff(allbound(allbound_inep_inds,1)));
-            out(ian).dm(iderips,[7]) = interp1(bstimes, bsmode, ideripstarts);
-            out(ian).dm(iderips,[8]) = interp1(bstimes(2:end),bsmodediff,ideripstarts);
+            out(ian).dm(iderips,[2]) = interp1(bstimes, bsmode, ideripstarts);
+            out(ian).dm(iderips,[3]) = interp1(bstimes(2:end),bsmodediff,ideripstarts);
             % these have too many nans and trim the data too much
 %             % time since last reward
 %             iseidxrips = find(iderips);
