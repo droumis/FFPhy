@@ -5,7 +5,7 @@ function out = makeExpvarCatITPCDiff(expvarCat, phase, Fp, varargin)
 % wp = wave params (see getWaveParams)
 pconf = paramconfig;
 me = animaldef('Demetris');
-
+invalid_rips = struct;
 lfptype = 'eeg';
 expvars = {{'rewarded', 'unrewarded'},{'outbound', 'inbound'},{'distalWell', 'proximalWell'},...
     {'rewarded_outbound', 'rewarded_inbound'}};
@@ -25,12 +25,23 @@ for ian = 1:length(Fp.animals)
     den = cellfetch(tetinfo, '');
     ntrodes = unique(den.index(:,3));
     ITPCDiff = cell(1,length(expvars));
+    phaseanidx = find(strcmp({phase.animal}, animal));
+    if ~isempty(invalid_rips)
+        % exclude invalid rips
+        noiseanidx = find(strcmp({invalid_rips.animal}, animal));
+        invalidrips = invalid_rips(noiseanidx ).ripnums;
+        userips = ones(length(phase(phaseanidx).day),1);
+        userips(invalidrips) = 0;
+    end
+    
     for s = 1:length(expvars)
         stidx = find(strcmp(expvars{s}{1}, expvarCat(ian).expvars));
-        Aidx = find(expvarCat(ian).dm(:,stidx));
+        Aidx = expvarCat(ian).dm(:,stidx);
+        Aidx = find(all([Aidx, userips], 2));
         stidx = find(strcmp(expvars{s}{2}, expvarCat(ian).expvars));
-        Bidx = find(expvarCat(ian).dm(:,stidx));
-        ITPCDiff{s} = computeITPCDiff(phase(ian).ph, Aidx, Bidx, wp, 'dsamp', ...
+        Bidx = expvarCat(ian).dm(:,stidx);
+        Bidx = find(all([Bidx, userips], 2));
+        ITPCDiff{s} = computeITPCDiff(phase(phaseanidx).ph, Aidx, Bidx, wp, 'dsamp', ...
             wp.dsamp, 'run_permutation_test', run_perm);
     end
     out(ian).animal = animal;

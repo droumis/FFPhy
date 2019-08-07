@@ -41,7 +41,7 @@ for ian = 1:length(Fp.animals)
         fprintf('ripstate %s \n', expvars{stset});
         stidx = find(strcmp(expvars{stset}, expvarCat(ian).expvars));
             sripidx = expvarCat(ian).dm(:,stidx);
-            sripidx = all([sripidx, userips], 2);
+            sripidx(~userips) = 0;
             meandbpower{stset} = computePower(rawpwr(pwranidx).pwr(:,:,sripidx,:), wp, ...
                 'dsamp',wp.dsamp, 'run_permutation_test', run_perm);
     end

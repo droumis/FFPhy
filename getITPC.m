@@ -5,7 +5,7 @@ function out = getITPC(expvarCat, phase, Fp, varargin)
 
 pconf = paramconfig;
 me = animaldef('Demetris');
-
+invalid_rips = struct;
 lfptype = 'eeg';
 expvars = {'onlywdays','rewarded', 'unrewarded', 'inbound' , 'outbound', 'proximalWell', ...
     'distalWell'};
@@ -25,11 +25,21 @@ for ian = 1:length(Fp.animals)
     den = cellfetch(tetinfo, '');
     ntrodes = unique(den.index(:,3));
     ITPC = cell(1,length(expvarCat(ian).expvars));
+    phaseanidx = find(strcmp({phase.animal}, animal));
+    if ~isempty(invalid_rips)
+        % exclude invalid rips
+        noiseanidx = find(strcmp({invalid_rips.animal}, animal));
+        invalidrips = invalid_rips(noiseanidx ).ripnums;
+        userips = ones(length(phase(phaseanidx).day),1);
+        userips(invalidrips) = 0;
+    end
+    
     for stset = 1:length(expvars)
         fprintf('ripstate %s \n', expvars{stset});
         stidx = find(strcmp(expvars{stset}, expvarCat(ian).expvars));
-        sripidx = find(expvarCat(ian).dm(:,stidx));
-        ITPC{stset} = computeITPC(phase(ian).ph(:,:,sripidx,:), wp, ...
+        sripidx = expvarCat(ian).dm(:,stidx);
+        sripidx(~userips) = 0;
+        ITPC{stset} = computeITPC(phase(phaseanidx).ph(:,:,find(sripidx),:), wp, ...
             'dsamp',wp.dsamp, 'run_permutation_test', run_perm);
     end
     out(ian).animal = animal;

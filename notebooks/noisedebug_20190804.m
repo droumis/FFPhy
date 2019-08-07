@@ -1,5 +1,3 @@
-
-
 noiseyrips(1).animal = 'JZ3';
 noiseyrips(1).ripnums = [682:683  777:780 794:795 2924:2959 2963:3000 3013:3038 3054:3077 3083:3110 3157:3172 ...
     3184:3196 3235:3265 3269:3271 3278:3280 3345:3355 3359:3373 3378:3385 3391:3403 ...
@@ -9,14 +7,16 @@ noiseyrips(1).ripnums = [682:683  777:780 794:795 2924:2959 2963:3000 3013:3038 
     621:623 4001 4022 4025 4072 4258 4121 4281 4152:4581 563 1128 3079 4004 4074 3758 ...
     3759 3706 3707 237:239 3925:3927 3978:3981 3998:4000 4022:4024 4085:4088 4093:4100 ...
     4139:4143 4622:4626 4715:4718 4690:4694 4793:4795 4810:4815 4826:4828 5138:5142 ...
-    4106:4108 3989:3993 4981:4983 5004:5019 5162:5165 5172:5174 5478:5503];
+    4106:4108 3989:3993 4981:4983 5004:5019 5162:5165 5172:5174 5478:5503 3074:3081 ...
+    3000:3009 3138:3140 3980:3984];
 
+make_noiseEvents(noiseyrips, lfpstack);
 % LFP
 make_swrLFP = 0;
 save_swrLFP = make_swrLFP;
 load_swrLFP = 0;
 stack_swrLFP = make_swrLFP;
-load_swrLFPstack = 0;
+load_swrLFPstack = 1;
 % Raw Power Phase
 make_powerPhase = 0;
 load_rawpwr = 0;
@@ -33,11 +33,12 @@ load_swrvarCont = loadDesMats;
 make_tfbvarCont = makeDesMats;
 load_tfbvarCont = loadDesMats;
 % Mean Power, ITPC
-make_expvarCatMeanPwr = 0;
-make_expvarCatMeanPwrDiff = 1;
-make_varContPwrCorr = 0; % expvarCont, swrvarCont tfbvarCont
-make_expvarCatITPC = 0;
-make_expvarCatITPCDiff = 0;
+make_results = 0;
+make_expvarCatMeanPwr = make_results;
+make_expvarCatMeanPwrDiff = make_results;
+make_varContPwrCorr = make_results; % expvarCont, swrvarCont tfbvarCont
+make_expvarCatITPC = 0; %make_results;
+make_expvarCatITPCDiff = 0; %make_results;
 % load results
 load_results = 0;
 load_expvarCatMeanPwr = load_results;
@@ -46,13 +47,13 @@ load_varContPwrCorr = load_results;
 load_expvarCatITPC = load_results;
 load_expvarCatITPCDiff = load_results;
 % plot
-plot_expvarCatMeanPwr = 1;
-plot_expvarCatMeanPwrDiff = 1;
+plot_expvarCatMeanPwr = 0;
+plot_expvarCatMeanPwrDiff = 0;
 plot_varCont = 0;
-plot_pwrStrips_timeXrip = 1; % raw Strips
+plot_pwrStrips_timeXrip = 0; % raw power Strips
 plot_expvarCatITPC = 0;
 plot_expvarCatITPCDiff = 0;
-plot_phaseStrips_timeXrip = 0; % raw Strips
+plot_phaseStrips_timeXrip = 0; % raw phase Strips
 % plot 
 pausefigs = 0;
 savefigs = 1;
@@ -163,17 +164,21 @@ if make_expvarCatMeanPwrDiff
         noiseyrips); end
     % @corr (expvarCont tfbvarCont swrvarCont) /ntTF $swr
 if make_varContPwrCorr
-    expvarContPwrCorr = runDesignDataRegression(expvarCont,rawpwr,Fp,'outdir','expvarCont');
-    swrvarContPwrCorr = runDesignDataRegression(swrvarCont,rawpwr,Fp,'outdir','swrvarCont');
-    tfbvarContPwrCorr = runDesignDataRegression(tfbvarCont,rawpwr,Fp,'outdir','tfbvarCont');
+    expvarContPwrCorr = runDesignDataRegression(expvarCont,rawpwr,Fp,'outdir','expvarCont', ...
+        'invalid_rips', noiseyrips);
+    swrvarContPwrCorr = runDesignDataRegression(swrvarCont,rawpwr,Fp,'outdir','swrvarCont', ...
+        'invalid_rips', noiseyrips);
+    tfbvarContPwrCorr = runDesignDataRegression(tfbvarCont,rawpwr,Fp,'outdir','tfbvarCont', ...
+        'invalid_rips', noiseyrips);
 end
     % :expvarCat @itpc /ntTF $time
 if make_expvarCatITPC
-    expvarCatITPC = getITPC(expvarCat, phase, Fp,'run_perm', 0); end
+    expvarCatITPC = getITPC(expvarCat, phase, Fp,'run_perm', 0,'invalid_rips', noiseyrips);
+end
 %     :expvarCatDiff @ditpc /ntTF $var
 if make_expvarCatITPCDiff
-    expvarCatITPCDiff = makeExpvarCatITPCDiff(expvarCat, phase, Fp, 'run_perm', 1); end
-
+    expvarCatITPCDiff = makeExpvarCatITPCDiff(expvarCat, phase, Fp, 'run_perm', 1, ...
+        'invalid_rips', noiseyrips); end
 %% loading Mean, ITPC, Corr
 if load_expvarCatMeanPwr; outdir = 'expvarCatMeanPwr'; outpath = [pconf.andef{2},outdir,'/'];
     expvarCatMeanPwr = load_data(outpath, [outdir,'_', Fp.epochEnvironment] ,Fp.animals); end
@@ -767,12 +772,13 @@ if plot_pwrStrips_timeXrip; Pp=load_plotting_params({'defaults','powerheatRast'}
                 end
                 set(gcf,'color','white')
                 
-                for nti = 1:length(ntrodes)
+                for nti = 1:7%length(ntrodes)
                     ntrode = ntrodes(nti);
                     if ismember(ntrode, invalidtets)
                         continue
                     end
-                    sf = subaxis(2,ceil(max(ntrodes)/2), nti, 'SpacingVert', Pp.SpVt, ...
+%                     2,ceil(max(ntrodes)/2),
+                    sf = subaxis(1,7 ,nti, 'SpacingVert', Pp.SpVt, ...
                         'SpacingHoriz', Pp.SpHz, 'MarginLeft', Pp.MgLt, 'MarginRight', ...
                         Pp.MgRt, 'MarginTop', Pp.MgTp, 'MarginBottom', Pp.MgBm);
                     h = zoom;
@@ -1007,13 +1013,13 @@ if plot_ContFit; Pp = load_plotting_params({'defaults', 'powerTFmap'});
                 b(1).MarkerSize = 1;
                 b(1).Color = [.8 .8 .8];
                 % conf bounds fill
-%                 x_axis = b(3).x_data';
+%                 x_axis = b(3).XData';
 %                 x_plot =[x_axis, fliplr(x_axis)];
 %                 y_plot = [b(3).ydata', flipud(b(4).y_data)'];
 %                 y_plot=[CI(:,1)', flipud(CI(:,2))'];
-                hold on
-                plot(x_axis, mu_diff, 'black', 'linewidth', 1)
-                fill(x_plot, y_plot, 1,'facecolor', 'red', 'edgecolor', 'none', 'facealpha', 0.4);
+%                 hold on
+%                 plot(x_axis, mu_diff, 'black', 'linewidth', 1)
+%                 fill(x_plot, y_plot, 1,'facecolor', 'red', 'edgecolor', 'none', 'facealpha', 0.4);
                 if P < .05 && R < 0
                     b(2).Color = [0 0 1];
                     b(3).Color = [0 0 1];

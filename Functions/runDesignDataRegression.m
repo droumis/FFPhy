@@ -9,6 +9,7 @@ function PV = runDesignDataRegression(design, rawpwr, Fp, varargin)
 % realbeta for each nt, time, frex, expvar
 % zmap ""
 % zmapthresh ""
+invalid_rips = struct;
 pconf = paramconfig;
 saveout = 1;
 outdir = 'varCont';
@@ -27,6 +28,15 @@ for ian = 1:length(rawpwr)
     ntinfo = loaddatastruct(aninfo{2}, animal, 'tetinfo');
     ntrodes = evaluatefilter(ntinfo, 'strcmp($valid, ''yes'')');
     ntrodes = unique(ntrodes(:,3));
+    pwranidx = find(strcmp({rawpwr.animal}, animal));
+    if ~isempty(invalid_rips)
+        % exclude invalid rips
+        noiseanidx = find(strcmp({invalid_rips.animal}, animal));
+        invalidrips = invalid_rips(noiseanidx ).ripnums;
+        userips = ones(length(rawpwr(pwranidx).day),1);
+        userips(invalidrips) = 0;
+    end
+    
     PV(ian).animal = animal;
     PV(ian).designMat = design(desani);
     PV(ian).ntrodes = ntrodes;
@@ -38,6 +48,7 @@ for ian = 1:length(rawpwr)
     numvars = length(design(desani).expvars);
     if length(size(design(desani).dm)) == 2
         include_rips = all(~isnan(design(desani).dm),2);
+        include_rips(~userips) = 0;
         numrips = sum(include_rips(:,1));
         X = zscore(design(desani).dm(include_rips,:))';
         numrips = sum(include_rips(:,1));
@@ -50,6 +61,7 @@ for ian = 1:length(rawpwr)
         fprintf('nt %d \n',nti);
         if length(size(design(desani).dm)) == 3
             include_rips = squeeze(all(all(~isnan(design(desani).dm),2),3));
+            include_rips(~userips) = 0;
             numrips = sum(include_rips(:,1));
             X = zscore(squeeze(design(desani).dm(include_rips,:,nti)))';
         end
@@ -57,7 +69,7 @@ for ian = 1:length(rawpwr)
         %         [PV(ian).data(in,:,:,iv), PV(ian).zmap(in,:,:,iv), PV(ian).thresh(in,:,:,:)] = ...
         %             regress(designmat(ian).data(:,iv), rawpwr(ian).data(nt,win1:win2,:));
         % rotate to make time dim 2
-        data = permute(squeeze(rawpwr(ian).pwr(nti, :, include_rips,:)),[2 1 3]);
+        data = permute(squeeze(rawpwr(pwranidx).pwr(nti, :, include_rips,:)),[2 1 3]);
         data = trim2win(data, Fp.srate, Pp.pwin, 'dsamp', wp.dsamp);
         nTimepoints = size(data,2);
         data = permute(data, [3 2 1]); % rotate back to [freq time ripple]
