@@ -9,13 +9,14 @@ saveout = 1;
 if ~isempty(varargin)
     assign(varargin{:});
 end
-animals = {noizevents.animal};
+animals = {lfpstack.animal};
 for ian = 1:length(animals)
     animal = animals{ian};
     lfpanidx = find(strcmp({lfpstack.animal}, animal));
+    nzanidx = find(strcmp({noizevents.animal}, animal));
     out(ian).animal = animal;
     out(ian).dims = {'event', {'day', 'epoch', 'time'}};
-    r = noizevents(ian).ripnums;
+    r = noizevents(nzanidx).ripnums;
     out(ian).events = [lfpstack(lfpanidx).day(r) lfpstack(lfpanidx).epoch(r) ...
         lfpstack(lfpanidx).ripStartTime(r)];
     days = unique(out(ian).events(:,1))';

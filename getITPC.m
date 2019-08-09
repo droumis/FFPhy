@@ -7,8 +7,8 @@ pconf = paramconfig;
 me = animaldef('Demetris');
 invalid_rips = struct;
 lfptype = 'eeg';
-expvars = {'onlywdays','rewarded', 'unrewarded', 'inbound' , 'outbound', 'proximalWell', ...
-    'distalWell'};
+expvars = {'onlywdays'}; %,'rewarded', 'unrewarded', 'inbound' , 'outbound', 'proximalWell', ...
+%     'distalWell'};
 saveout = 1;
 run_perm = 1;
 outdir = 'expvarCatITPC';
@@ -16,34 +16,35 @@ if ~isempty(varargin)
     assign(varargin{:});
 end
 
-for ian = 1:length(Fp.animals)
+for ian = 1:length(phase)
     wp = getWaveParams(Fp.waveSet);
-    animal = Fp.animals{ian};
+    animal = phase(ian).animal;
     fprintf('animal %s \n', animal);
     andef = animaldef(animal);
     tetinfo = loaddatastruct(andef{2}, animal, 'tetinfo');
     den = cellfetch(tetinfo, '');
     ntrodes = unique(den.index(:,3));
-    ITPC = cell(1,length(expvarCat(ian).expvars));
-    phaseanidx = find(strcmp({phase.animal}, animal));
+    evCatanidx = find(strcmp({expvarCat.animal}, animal));
+    ITPC = cell(1,length(expvarCat(evCatanidx).expvars));
+    
     if ~isempty(invalid_rips)
         % exclude invalid rips
         noiseanidx = find(strcmp({invalid_rips.animal}, animal));
         invalidrips = invalid_rips(noiseanidx ).ripnums;
-        userips = ones(length(phase(phaseanidx).day),1);
+        userips = ones(length(phase(ian).day),1);
         userips(invalidrips) = 0;
     end
     
     for stset = 1:length(expvars)
         fprintf('ripstate %s \n', expvars{stset});
-        stidx = find(strcmp(expvars{stset}, expvarCat(ian).expvars));
-        sripidx = expvarCat(ian).dm(:,stidx);
+        stidx = find(strcmp(expvars{stset}, expvarCat(evCatanidx).expvars));
+        sripidx = expvarCat(evCatanidx).dm(:,stidx);
         sripidx(~userips) = 0;
-        ITPC{stset} = computeITPC(phase(phaseanidx).ph(:,:,find(sripidx),:), wp, ...
+        ITPC{stset} = computeITPC(phase(ian).ph(:,:,find(sripidx),:), wp, ...
             'dsamp',wp.dsamp, 'run_permutation_test', run_perm);
     end
     out(ian).animal = animal;
-    out(ian).dm = expvarCat;
+    out(ian).dm = expvarCat(evCatanidx);
     out(ian).expvars = expvars;
     out(ian).wp = wp;
     out(ian).Fp = Fp;

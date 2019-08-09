@@ -3,7 +3,7 @@ function save_data(F, filtOutputDirectory, filename, varargin)
 
 filetail = '';
 per_animal = 1;
-filetailpos = 0; % if 1, at end, if 0, at beginning. at end has leading underscore
+animpos = 1; % if 1, at end, if 0, at beginning. at end has leading underscore
 if ~isempty(varargin)
     assign(varargin{:});
 end
@@ -24,26 +24,28 @@ end
 tic
 if per_animal
     for an = 1:length(animals)
-        save_F(F(an), filtOutputDirectory, filename, animals{an}, 'filetailpos', filetailpos);
+        save_F(F(an), filtOutputDirectory, [filename filetail], animals{an}, ...
+            'animpos', animpos);
     end
 else
-    save_F(F, filtOutputDirectory, filename, strjoin(animals,'-'),'filetailpos', filetailpos);
+    save_F(F, filtOutputDirectory, [filename filetail], strjoin(animals,'-'), ...
+        'animpos', animpos);
 end
 fprintf('saving data took  %.03f sec \n', toc);
 end
 
-function save_F(F, filtOutputDirectory, filename, filetail, varargin)
-filetailpos = 0;
+function save_F(F, filtOutputDirectory, filename, animal, varargin)
+animpos = 1;
 if ~isempty(varargin)
     assign(varargin{:})
 end
 if ~isdir(filtOutputDirectory)
     mkdir(filtOutputDirectory);
 end
-if filetailpos % filterframework results format
-    savepath = sprintf('%s/%s_%s.mat',filtOutputDirectory, filename, filetail);
-else % filterframework data format
-    savepath = sprintf('%s/%s%s.mat',filtOutputDirectory, filetail, filename);
+if animpos % results format
+    savepath = sprintf('%s/%s_%s.mat',filtOutputDirectory, filename, animal);
+else % data format
+    savepath = sprintf('%s/%s%s.mat',filtOutputDirectory, animal, filename);
 end
 save(savepath, 'F', '-v7.3');
 fprintf('saved to %s \n', savepath)

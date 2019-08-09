@@ -62,6 +62,11 @@ for s = params
             daytype = 'wtrack';
             epochfilter = sprintf('(isequal($daytype,''%s'')) && (isequal($environment,''%s''))', ...
                 daytype, epochEnvironment);
+        case 'sleepwtrackdays'
+            epochEnvironment = 'sleep';
+            daytype = 'wtrack';
+            epochfilter = sprintf('(isequal($daytype,''%s'')) && (isequal($environment,''%s''))', ...
+                daytype, epochEnvironment);
         case 'openfield'
             epochEnvironment = 'openfield';
             epochfilter = sprintf('(isequal($environment,''%s''))', ...

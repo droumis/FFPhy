@@ -2,7 +2,7 @@
 
 function out = trim2win(data, srate, pwin, varargin)
 % data dim 2 must be time
-dsamp = 1; % 1 = not downsampled
+dsamp = 1; % downsampled multiplier.. 1 == not downsampled
 if ~isempty(varargin)
    assign(varargin{:}); 
 end

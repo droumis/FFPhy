@@ -28,7 +28,7 @@ for ian = 1:length(lfpstack)
     nsamps = size(dsampdata,2);
     nNtrodes = size(dsampdata,1);
     nData = nsamps*nevents*nNtrodes;
-%     timeWin = wp.win(1):1/(wp.srate/wp.dsamp):wp.win(2);
+    timeWin = wp.win(1):1/(wp.srate/wp.dsamp):wp.win(2);
     baseind(1,1) = dsearchn(timeWin',wp.basewin(1));
     baseind(1,2) = dsearchn(timeWin',wp.basewin(2));
     lenWave = length(timeWin);
@@ -98,17 +98,6 @@ for ian = 1:length(lfpstack)
 end
 end
 
-Thanks for taking the time and for the awesome response! I totally agree with your assessment about the paper. :)
-
-I like the idea of using FWHM to parameterize the wavelets, it is certainly more intuitive than ncycles, although I'm not sure I see understand how it resolves the issue of choosing the upper bound of of the param range.
-In your paper's code, you use 800:700ms
-fwhm = linspace(.8,.7,nfrex);
-, for frequencies 2:25Hz. I understand that 800ms is reasonable for the low end, but I'm curious why 700ms for 25Hz? Did I misunderstand something, and that this was analytically derived?
-
-To give a bit more context, I care about this is because (I think) using too narrow of a gaussian for the higher frequencies would penalize high frequency time-frequency-clusters more than lower frequency time-frequency-clusters during cluster size correction, since the the cluster size distribution is based on the entire time-frequency map. no?
-
-Thanks!
--Demetris
 function waveletFFT=createCMWfft(wp, nConv2pow)
 % create complex morlet wavelets and return FFT
 tic

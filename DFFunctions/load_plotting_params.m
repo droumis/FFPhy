@@ -29,6 +29,18 @@ for s = param_set
             FontNm = 'Arial';
             SupFontS = 12;
             tickSz = 8; % tick labels font size
+        case 'fitLM'
+            stitFsize = 16;
+            tickFsize = 8;
+            sfTitFsize = 14;
+            pwin = [1 1];
+            usecolormap = 'jet';
+            position = [.1 .1 1 1];
+            SpHz = 0.03; %spacing horizontal
+            SpVt = 0.05; % spacing vertical
+            MgLt = 0.04; % margin left
+            MgTp = 0.07; % margin top
+            MgBm =  0.04; % margin bottom
         case 'powerTFmap'
             stitFsize = 16;
             tickFsize = 8;
@@ -141,7 +153,7 @@ for s = param_set
         case 'powerheatRast'
             position = [.1 .1 .9 .9];
             pwin = [1 1];
-            plot_frex = 40; %[6 7 8 10 12 14 40 60 85 150 300];
+            plot_frex = [8 16 40 85 150 300];
             cmap = 'jet';
         case 'dataExplore'
             position = [.1 .1 .9 .9];

@@ -1,7 +1,7 @@
 
 
 function out = getPower(expvarCat, rawpwr, Fp, varargin)
-%
+% rawpwr is a struct array per animal 
 % Fp = filter params (see load_filter_params)
 % wp = wave params (see getWaveParams)
 
@@ -9,8 +9,8 @@ pconf = paramconfig;
 me = animaldef('Demetris');
 invalid_rips = struct;
 lfptype = 'eeg';
-expvars = {'onlywdays','rewarded', 'unrewarded', 'inbound' , 'outbound', 'proximalWell', ...
-    'distalWell'};
+expvars = {'onlywdays'}; %,'rewarded', 'unrewarded', 'inbound' , 'outbound', 'proximalWell', ...
+%     'distalWell'};
 saveout = 1;
 run_perm = 1;
 outdir = 'expvarCatMeanPwr';
@@ -18,7 +18,7 @@ if ~isempty(varargin)
     assign(varargin{:});
 end
 
-for ian = 1:length(Fp.animals)
+for ian = 1:length(rawpwr)
     wp = getWaveParams(Fp.waveSet);
     animal = Fp.animals{ian};
     fprintf('animal %s \n', animal);
@@ -28,26 +28,26 @@ for ian = 1:length(Fp.animals)
     ntrodes = unique(den.index(:,3));
     fprintf('lfptype %s \n', lfptype);
     meandbpower = cell(1,length(expvars));
-    pwranidx = find(strcmp({rawpwr.animal}, animal));
+    evcatanidx = find(strcmp({expvarCat.animal}, animal));
     if ~isempty(invalid_rips)
         % exclude invalid rips
         noiseanidx = find(strcmp({invalid_rips.animal}, animal));
         invalidrips = invalid_rips(noiseanidx ).ripnums;
-        userips = ones(length(rawpwr(pwranidx).day),1);
+        userips = ones(length(rawpwr(ian).day),1);
         userips(invalidrips) = 0;
     end
     % for each state/condition, compute dbpower, run timeshift permtest vs baseline
     for stset = 1:length(expvars)
         fprintf('ripstate %s \n', expvars{stset});
-        stidx = find(strcmp(expvars{stset}, expvarCat(ian).expvars));
-            sripidx = expvarCat(ian).dm(:,stidx);
+        stidx = find(strcmp(expvars{stset}, expvarCat(evcatanidx).expvars));
+            sripidx = expvarCat(evcatanidx).dm(:,stidx);
             sripidx(~userips) = 0;
-            meandbpower{stset} = computePower(rawpwr(pwranidx).pwr(:,:,sripidx,:), wp, ...
+            meandbpower{stset} = computePower(rawpwr(ian).pwr(:,:,find(sripidx),:), wp, ...
                 'dsamp',wp.dsamp, 'run_permutation_test', run_perm);
     end
     
     out(ian).animal = animal;
-    out(ian).dm = expvarCat;
+    out(ian).dm = expvarCat(evcatanidx);
     out(ian).expvars = expvars;
     out(ian).wp = wp;
     out(ian).Fp = Fp;

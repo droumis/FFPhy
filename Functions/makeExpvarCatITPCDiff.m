@@ -16,36 +16,36 @@ if ~isempty(varargin)
     assign(varargin{:});
 end
 
-for ian = 1:length(Fp.animals)
+for ian = 1:length(phase)
     wp = getWaveParams(Fp.waveSet);
-    animal = Fp.animals{ian};
+    animal = phase(ian).animal;
     fprintf('animal %s \n', animal);
     andef = animaldef(animal);
     tetinfo = loaddatastruct(andef{2}, animal, 'tetinfo');
     den = cellfetch(tetinfo, '');
     ntrodes = unique(den.index(:,3));
     ITPCDiff = cell(1,length(expvars));
-    phaseanidx = find(strcmp({phase.animal}, animal));
+    evcatanidx = find(strcmp({expvarCat.animal}, animal));
     if ~isempty(invalid_rips)
         % exclude invalid rips
         noiseanidx = find(strcmp({invalid_rips.animal}, animal));
         invalidrips = invalid_rips(noiseanidx ).ripnums;
-        userips = ones(length(phase(phaseanidx).day),1);
+        userips = ones(length(phase(ian).day),1);
         userips(invalidrips) = 0;
     end
     
     for s = 1:length(expvars)
-        stidx = find(strcmp(expvars{s}{1}, expvarCat(ian).expvars));
-        Aidx = expvarCat(ian).dm(:,stidx);
+        stidx = find(strcmp(expvars{s}{1}, expvarCat(evcatanidx).expvars));
+        Aidx = expvarCat(evcatanidx).dm(:,stidx);
         Aidx = find(all([Aidx, userips], 2));
-        stidx = find(strcmp(expvars{s}{2}, expvarCat(ian).expvars));
-        Bidx = expvarCat(ian).dm(:,stidx);
+        stidx = find(strcmp(expvars{s}{2}, expvarCat(evcatanidx).expvars));
+        Bidx = expvarCat(evcatanidx).dm(:,stidx);
         Bidx = find(all([Bidx, userips], 2));
-        ITPCDiff{s} = computeITPCDiff(phase(phaseanidx).ph, Aidx, Bidx, wp, 'dsamp', ...
+        ITPCDiff{s} = computeITPCDiff(phase(ian).ph, Aidx, Bidx, wp, 'dsamp', ...
             wp.dsamp, 'run_permutation_test', run_perm);
     end
     out(ian).animal = animal;
-    out(ian).dm = expvarCat;
+    out(ian).dm = expvarCat(evcatanidx);
     out(ian).expvars = expvars;
     out(ian).wp = wp;
     out(ian).Fp = Fp;

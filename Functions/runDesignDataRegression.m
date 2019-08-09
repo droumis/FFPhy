@@ -28,17 +28,16 @@ for ian = 1:length(rawpwr)
     ntinfo = loaddatastruct(aninfo{2}, animal, 'tetinfo');
     ntrodes = evaluatefilter(ntinfo, 'strcmp($valid, ''yes'')');
     ntrodes = unique(ntrodes(:,3));
-    pwranidx = find(strcmp({rawpwr.animal}, animal));
     if ~isempty(invalid_rips)
         % exclude invalid rips
         noiseanidx = find(strcmp({invalid_rips.animal}, animal));
         invalidrips = invalid_rips(noiseanidx ).ripnums;
-        userips = ones(length(rawpwr(pwranidx).day),1);
+        userips = ones(length(rawpwr(ian).day),1);
         userips(invalidrips) = 0;
     end
     
     PV(ian).animal = animal;
-    PV(ian).designMat = design(desani);
+    PV(ian).dm = design(desani);
     PV(ian).ntrodes = ntrodes;
     PV(ian).expvars = design(desani).expvars;
     PV(ian).frequency = wp.frex;
@@ -69,7 +68,7 @@ for ian = 1:length(rawpwr)
         %         [PV(ian).data(in,:,:,iv), PV(ian).zmap(in,:,:,iv), PV(ian).thresh(in,:,:,:)] = ...
         %             regress(designmat(ian).data(:,iv), rawpwr(ian).data(nt,win1:win2,:));
         % rotate to make time dim 2
-        data = permute(squeeze(rawpwr(pwranidx).pwr(nti, :, include_rips,:)),[2 1 3]);
+        data = permute(squeeze(rawpwr(ian).pwr(nti, :, include_rips,:)),[2 1 3]);
         data = trim2win(data, Fp.srate, Pp.pwin, 'dsamp', wp.dsamp);
         nTimepoints = size(data,2);
         data = permute(data, [3 2 1]); % rotate back to [freq time ripple]

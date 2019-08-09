@@ -36,7 +36,7 @@ exclusion_nevents = 0;    % number of tetrodes that must have ripple for exclusi
 exclusion2_eventconsname = '';
 minvelocity = 0;
 coherence_flag = 0;
-
+fprintf('%s getconstimes\n', animalprefix);
 optioninds = [];
 for aa = 1:length(varargin)
     if ischar(varargin{aa})
