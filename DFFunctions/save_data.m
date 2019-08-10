@@ -24,7 +24,13 @@ end
 tic
 if per_animal
     for an = 1:length(animals)
-        save_F(F(an), filtOutputDirectory, [filename filetail], animals{an}, ...
+        if strcmp(filtOutputDirectory, 'filterframework')
+            andef = animaldef(animals{an});
+            dirout = andef{2};
+        else
+            dirout = filtOutputDirectory;
+        end
+        save_F(F(an), dirout, [filename filetail], animals{an}, ...
             'animpos', animpos);
     end
 else

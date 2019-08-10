@@ -25,7 +25,12 @@ for ian = 1:length(data)
     for ide = 1:length(out(ian).dayeps(:,1)) % per epoch
         day = out(ian).dayeps(ide,1);
         epoch = out(ian).dayeps(ide,2);
+        try
         if isempty(data(ian).output{ide}.data)
+            fprintf('missing data %s %d %d \n', out(ian).animal, day, epoch);
+            continue
+        end
+        catch
             fprintf('missing data %s %d %d \n', out(ian).animal, day, epoch);
             continue
         end

@@ -16,7 +16,13 @@ end
 tic
 fprintf('loading %s\n', animals{:})
 for an = 1:length(animals)
-    andef = animaldef(animals{an});
+    animal = animals{an};
+    andef = animaldef(animal);
+    if strcmp(filtOutputDirectory, 'filterframework')
+        dirout = andef{2};
+    else
+        dirout = filtOutputDirectory;
+    end
     switch filtfunction
         case 'behavestate'
             tmp = load(sprintf('%s%sBehaveState.mat',andef{2}, andef{3}));
@@ -24,15 +30,11 @@ for an = 1:length(animals)
             data{an} = tmp.BehaveState;
         otherwise
             if animpos
-                tmp = load(sprintf('%s/%s%s_%s.mat',filtOutputDirectory, filename, filetail, ...
-                animals{an}));
-            fprintf('loaded: %s/%s%s_%s.mat \n',filtOutputDirectory, filename, filetail, ...
-                animals{an})
+                tmp = load(sprintf('%s/%s%s_%s.mat',dirout , filename, filetail, animal));
+                fprintf('loaded: %s/%s%s_%s.mat \n',dirout , filename, filetail, animal)
             else
-            tmp = load(sprintf('%s/%s%s%s.mat',animals{an}, filtOutputDirectory, filename, ...
-                filetail));
-            fprintf('loaded: %s/%s%s%s.mat \n',animals{an}, filtOutputDirectory, filename, ...
-                filetail)
+                tmp = load(sprintf('%s/%s%s%s.mat', dirout, animal, filename, filetail));
+                fprintf('loaded: %s/%s%s%s.mat \n',animal, dirout , filename, filetail)
             end
             data{an} = tmp.F;
             

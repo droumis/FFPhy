@@ -4,7 +4,6 @@ function PV = runDesignDataRegression(design, rawpwr, Fp, varargin)
 % inputs:
 % design struct containing design matrix
 % rawpwr struct with dims ntrode, time, rips, frex
-
 % outputs:
 % realbeta for each nt, time, frex, expvar
 % zmap ""
@@ -13,10 +12,10 @@ invalid_rips = struct;
 pconf = paramconfig;
 saveout = 1;
 outdir = 'varCont';
+tfboxes = []; 
 if ~isempty(varargin)
     assign(varargin{:})
 end
-outpath = [pconf.andef{2},outdir,'/'];
 tic
 Pp = load_plotting_params({'defaults', 'power'});
 wp = getWaveParams('4-300Hz');
@@ -31,11 +30,10 @@ for ian = 1:length(rawpwr)
     if ~isempty(invalid_rips)
         % exclude invalid rips
         noiseanidx = find(strcmp({invalid_rips.animal}, animal));
-        invalidrips = invalid_rips(noiseanidx ).ripnums;
+        invalidrips = invalid_rips(noiseanidx).events;
         userips = ones(length(rawpwr(ian).day),1);
         userips(invalidrips) = 0;
     end
-    
     PV(ian).animal = animal;
     PV(ian).dm = design(desani);
     PV(ian).ntrodes = ntrodes;
@@ -64,9 +62,6 @@ for ian = 1:length(rawpwr)
             numrips = sum(include_rips(:,1));
             X = zscore(squeeze(design(desani).dm(include_rips,:,nti)))';
         end
-        % get in,iv tfcorr for design vs data
-        %         [PV(ian).data(in,:,:,iv), PV(ian).zmap(in,:,:,iv), PV(ian).thresh(in,:,:,:)] = ...
-        %             regress(designmat(ian).data(:,iv), rawpwr(ian).data(nt,win1:win2,:));
         % rotate to make time dim 2
         data = permute(squeeze(rawpwr(ian).pwr(nti, :, include_rips,:)),[2 1 3]);
         data = trim2win(data, Fp.srate, Pp.pwin, 'dsamp', wp.dsamp);
@@ -74,15 +69,6 @@ for ian = 1:length(rawpwr)
         data = permute(data, [3 2 1]); % rotate back to [freq time ripple]
         powerreshaped = reshape(data, wp.numfrex*nTimepoints,numrips); % flatten [ripple timefreq]
         powerrank = tiedrank(powerreshaped'); % tiedrank on dim 1, across rips.
-        % powerrank (1168, 37525) numbers 1:1168
-        % X (25, 1168) numbers -2:16, mostly -2:4
-%         a = (X*X'); %not nan (25, 25) numbers tens to hundreds. thousand on diag
-%         b = powerrank; % b is not nan (25, 37525) numbers in the thousands, tens thousands
-%         realbeta = a\b; % EVERYTHING IS NAN.. are the b numbers too large as denominators?
-        % something is going on with the line above to make everything Nan... 
-%         realbeta = (X*X')\X; % aha!! this is nan.. so it's a design matrix issue
-        % aha! the issue was that i was using too many tfboxes.. since this
-        % is multiregression, it was making the beta's infinitely small
         realbeta = (X*X')\X*powerrank;
         realbeta = reshape(realbeta,numvars,wp.numfrex,nTimepoints);
         PV(ian).CorrVals(nti,:,:,:)  = realbeta;
@@ -98,12 +84,6 @@ for ian = 1:length(rawpwr)
             % compute beta-map of null hypothesis.. i.e. do the
             % multiregression on the ripple-shuffled design matrix and power
             fakebeta = (fakeX*fakeX')\fakeX*powerrank;
-%             a = fakeX*powerrank;
-%             b = fakebeta\a;
-%             if sum(sum(isnan(b)))
-%                 fprintf('nans in the pudding\n')
-% %                 pause
-%             end
             % reshape to 2D map for cluster-correction
             fakebeta = reshape(fakebeta,numvars,wp.numfrex,nTimepoints);
             % save all permuted values
@@ -150,9 +130,32 @@ for ian = 1:length(rawpwr)
             end
             PV(ian).clusterZmapThresh(nti,:,:,testi) = zmapthresh;
         end
+        if ~isempty(tfboxes)
+            
+%         % now compute correlation of the pwr mean of each tfbox and each
+%         % condition
+        tfbanim = strcmp({tfboxes.animal}, animal);
+        for ivar = 1:numvars
+            if length(size(design(desani).dm)) == 3
+                Xvar = design(desani).dm(include_rips,ivar,nti)';
+            else
+                Xvar = design(desani).dm(include_rips,ivar)';
+            end
+            for itfb = 1:length(tfboxes(tfbanim).expvars)
+                PV(ian).tfb{itfb} = tfboxes(tfbanim).expvars{itfb};
+                itfbpwr = squeeze(tfboxes.dm(include_rips, itfb, nti))';
+                tmp = fitlm(Xvar, itfbpwr);
+                PV(ian).fitlm{nti, itfb, ivar} = tmp;
+                PV(ian).P(nti, itfb, ivar) = tmp.coefTest;
+                PV(ian).R(nti, itfb, ivar) = tmp.Rsquared.Ordinary;
+                PV(ian).coef(nti, itfb, ivar) = tmp.Coefficients.Estimate(end);
+            end
+        end
+        end
     end
     
     if saveout
+        outpath = [pconf.andef{2},outdir,'/'];
         save_data(PV(ian), outpath, [outdir,'Corr_',Fp.epochEnvironment]);
     end
 end

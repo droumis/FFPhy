@@ -177,7 +177,7 @@ switch waveSet
         % baselineind = ([1 (srate*basedur)+1]);
         pval = 0.05;
         zval = abs(norminv(pval)); % convert p-value to Z value
-        n_permutes = 100; % number of permutations %1000 takes 24 hours for JZ1 wtrack days 1:6
+        n_permutes = 200; % number of permutations %1000 takes 24 hours for JZ1 wtrack days 1:6
         min_freq =  5;
         max_freq = 8;
         frexres = .5; %frequency resolution default 4

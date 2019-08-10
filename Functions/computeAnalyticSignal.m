@@ -1,5 +1,5 @@
 
-function [powerout, phaseout] = computeAnalyticSignal(lfpstack, varargin)
+function [powerout, phaseout] = computeAnalyticSignal(lfpstack, Fp, varargin)
 % compute the analytic signal for the input rip triggered LFP
 
 % lfpstack is a struct array per animal: data, ntrodes, lfptypes, animal
@@ -12,7 +12,7 @@ function [powerout, phaseout] = computeAnalyticSignal(lfpstack, varargin)
 saveOutput = 1;
 uselfptype = 'eeg';
 waveSet = '4-300Hz';
-
+epochEnvironment = 'ep';
 if ~isempty(varargin)
     assign(varargin{:});
 end
@@ -91,9 +91,9 @@ for ian = 1:length(lfpstack)
         fprintf('saving AS\n')
         andef = animaldef(lower('Demetris'));
         save_data(phaseout, sprintf('%s/analyticSignal/', andef{2}), ...
-            sprintf('AS_waveSet-%s_%s_phase', waveSet, uselfptype))
+            sprintf('AS_waveSet-%s_%s_%s_phase', waveSet, uselfptype, epochEnvironment))
         save_data(powerout, sprintf('%s/analyticSignal/', andef{2}), ...
-            sprintf('AS_waveSet-%s_%s_power', waveSet, uselfptype))
+            sprintf('AS_waveSet-%s_%s_%s_power', waveSet, uselfptype, epochEnvironment))
     end
 end
 end

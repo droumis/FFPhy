@@ -12,6 +12,7 @@ expvars = {{'rewarded', 'unrewarded'},{'outbound', 'inbound'},{'distalWell', 'pr
 saveout = 1;
 run_perm = 1;
 outdir = 'expvarCatMeanPwrDiff';
+tfboxes = [];
 if ~isempty(varargin)
     assign(varargin{:});
 end
@@ -19,17 +20,17 @@ for ian = 1:length(rawpwr)
     wp = getWaveParams(Fp.waveSet);
     animal = rawpwr(ian).animal;
     fprintf('animal %s \n', animal);
-    andef = animaldef(animal);
-    tetinfo = loaddatastruct(andef{2}, animal, 'tetinfo');
-    den = cellfetch(tetinfo, '');
-    ntrodes = unique(den.index(:,3));
+%     andef = animaldef(animal);
+%     tetinfo = loaddatastruct(andef{2}, animal, 'tetinfo');
+%     den = cellfetch(tetinfo, '');
+%     ntrodes = unique(den.index(:,3));
     fprintf('lfptype %s \n', lfptype);
     meandbpowerDiff = cell(1,length(expvars));
     evcatanidx = find(strcmp({expvarCat.animal}, animal));
     if ~isempty(invalid_rips)
         % exclude invalid rips
         noiseanidx = find(strcmp({invalid_rips.animal}, animal));
-        invalidrips = invalid_rips(noiseanidx ).ripnums;
+        invalidrips = invalid_rips(noiseanidx ).events;
         userips = ones(length(rawpwr(ian).day),1);
         userips(invalidrips) = 0;
     end
@@ -43,6 +44,32 @@ for ian = 1:length(rawpwr)
         Bidx = find(all([Bidx, userips], 2));
         meandbpowerDiff{s} = computePowerDiff(rawpwr(ian).pwr, Aidx, Bidx, wp, 'dsamp',wp.dsamp, ...
             'run_permutation_test', run_perm);
+        
+
+    if ~isempty(tfboxes)
+        tfbanim = strcmp({tfboxes.animal}, animal);
+        out(ian).tfboxes = tfboxes(tfbanim);
+        for nti = 1:length(rawpwr(ian).ntrode)
+            % sigtest pwr of each tfbox and each conditiondiff
+            for itfb = 1:length(tfboxes(tfbanim).expvars)
+                out(ian).tfb{itfb} = tfboxes(tfbanim).expvars{itfb};
+                itfbpwr = squeeze(tfboxes.dm(find(userips), itfb, nti))';
+                [~,P,kstat] = kstest2(itfbpwr(Aidx), itfbpwr(Bidx));
+%                 figure
+%                 histogram(itfbpwr(Aidx))
+%                 hold on
+%                 histogram(itfbpwr(Bidx))
+                out(ian).P(nti, itfb, s) = P;
+                out(ian).kstat(nti, itfb, s) = kstat;
+                out(ian).Avals{nti, itfb, s} = itfbpwr(Aidx);
+                out(ian).Bvals{nti, itfb, s} = itfbpwr(Bidx);
+%                 tmp = fitlm(Xvar, itfbpwr);
+%                 out(ian).fitlm{nti, itfb, s} = tmp;
+%                 out(ian).R(nti, itfb, ivar) = tmp.Rsquared.Ordinary;
+%                 out(ian).coef(nti, itfb, ivar) = tmp.Coefficients.Estimate(end);
+            end
+        end
+    end
     end
     
     out(ian).animal = animal;
@@ -50,8 +77,10 @@ for ian = 1:length(rawpwr)
     out(ian).expvars = expvars;
     out(ian).wp = wp;
     out(ian).Fp = Fp;
+    out(ian).ntrode = rawpwr(ian).ntrode;
     out(ian).lfptype = lfptype;
     out(ian).meandbpowerDiff = meandbpowerDiff;
+    
     
     if saveout
         save_data(out, [pconf.andef{2},outdir,'/'], [outdir, '_', Fp.epochEnvironment])

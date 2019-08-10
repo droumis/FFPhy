@@ -17,6 +17,11 @@ for ian = 1:length(animals)
     out(ian).animal = animal;
     out(ian).dims = {'event', {'day', 'epoch', 'time'}};
     r = noizevents(nzanidx).ripnums;
+    if isempty(r)
+        out(ian).events = [];
+        out(ian).perepoch = [];
+        continue
+    end
     out(ian).events = [lfpstack(lfpanidx).day(r) lfpstack(lfpanidx).epoch(r) ...
         lfpstack(lfpanidx).ripStartTime(r)];
     days = unique(out(ian).events(:,1))';
@@ -33,8 +38,9 @@ for ian = 1:length(animals)
             out(ian).perepoch{d}{e}{1}.starttime = out(ian).events(deridx,3);
         end
     end
-    if saveout
-        andef = animaldef(animal);
-        save_data(out(ian), andef{2}, 'noiseEvents');
-    end
+    
+end
+if saveout
+    save_data(out(ian), 'filterframework', 'noiseEvents', 'animpos', 0);
+end
 end
