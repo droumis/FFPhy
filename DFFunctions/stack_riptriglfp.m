@@ -1,11 +1,11 @@
-function out = stack_riptriglfp(data, varargin)
+function out = stack_riptriglfp(data, Fp, varargin)
 % make single data matrix per animal
 
 % compile results from F(anim).output{dayep}.data{lfptype}{ripN: ntXsamp}
 % into out(ian).data{lfptype}(ntrode x sample x ripple)
 
 % Demetris Roumis June 2019
-
+saveout = 1;
 if ~isempty(varargin)
     assign(varargin)
 end
@@ -27,11 +27,11 @@ for ian = 1:length(data)
         epoch = out(ian).dayeps(ide,2);
         try
         if isempty(data(ian).output{ide}.data)
-            fprintf('missing data %s %d %d \n', out(ian).animal, day, epoch);
+            fprintf('missing data %s %d %d\n', out(ian).animal, day, epoch);
             continue
         end
         catch
-            fprintf('missing data %s %d %d \n', out(ian).animal, day, epoch);
+            fprintf('missing data %s %d %d\n', out(ian).animal, day, epoch);
             continue
         end
         for t = 1:length(out(ian).lfptypes) % LFP type.. 
@@ -43,7 +43,6 @@ for ian = 1:length(data)
             else
                 out(ian).data{t}{1,ide} = cat(3,tmp{:}); % concat ripples into 3rd dim
             end
-            
         end
         % collect day/epoch level info
         out(ian).numrips_perep{ide,1} = length(out(ian).data{t}{ide}(1,1,:));
@@ -56,7 +55,6 @@ for ian = 1:length(data)
         out(ian).ripEndTime{ide,1} = data(ian).output{ide}.LFPtimes(...
             data(ian).output{ide}.eventEndIndices);
     end
-    
     % collapse data across collected epochs into one matrix
     for t = 1:length(out(ian).lfptypes) % LFP type
         out(ian).data{t} = cell2mat(permute(out(ian).data{t}, [1 3 2])); % stack all rips
@@ -72,4 +70,10 @@ for ian = 1:length(data)
     out(ian).ripStartTime = cell2mat(out(ian).ripStartTime);
     out(ian).ripEndTime = cell2mat(out(ian).ripEndTime);
 end
+if saveout
+    save_data(out, Fp.paths.resultsDirectory,['riptriglfpstack_',Fp.epochEnvironment]);
+end
+
+end
+
 

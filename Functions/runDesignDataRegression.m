@@ -1,6 +1,6 @@
 
 
-function PV = runDesignDataRegression(design, rawpwr, Fp, varargin)
+function out = runDesignDataRegression(design, rawpwr, Fp, varargin)
 % inputs:
 % design struct containing design matrix
 % rawpwr struct with dims ntrode, time, rips, frex
@@ -8,7 +8,7 @@ function PV = runDesignDataRegression(design, rawpwr, Fp, varargin)
 % realbeta for each nt, time, frex, expvar
 % zmap ""
 % zmapthresh ""
-invalid_rips = struct;
+noiseEvents = struct;
 pconf = paramconfig;
 saveout = 1;
 outdir = 'varCont';
@@ -27,18 +27,21 @@ for ian = 1:length(rawpwr)
     ntinfo = loaddatastruct(aninfo{2}, animal, 'tetinfo');
     ntrodes = evaluatefilter(ntinfo, 'strcmp($valid, ''yes'')');
     ntrodes = unique(ntrodes(:,3));
-    if ~isempty(invalid_rips)
+    userips = ones(length(rawpwr(ian).day),1);
+    if ~isempty(noiseEvents)
         % exclude invalid rips
-        noiseanidx = find(strcmp({invalid_rips.animal}, animal));
-        invalidrips = invalid_rips(noiseanidx).events;
-        userips = ones(length(rawpwr(ian).day),1);
-        userips(invalidrips) = 0;
+        noiseanidx = find(strcmp({noiseEvents.animal}, animal));
+        if ~isempty(noiseEvents(noiseanidx).events)
+            invalidrips = ismember([rawpwr(ian).day rawpwr(ian).epoch rawpwr(ian).ripStartTime], ...
+                noiseEvents(noiseanidx).events, 'rows');
+            userips(invalidrips) = 0;
+        end
     end
-    PV(ian).animal = animal;
-    PV(ian).dm = design(desani);
-    PV(ian).ntrodes = ntrodes;
-    PV(ian).expvars = design(desani).expvars;
-    PV(ian).frequency = wp.frex;
+    out(ian).animal = animal;
+    out(ian).dm = design(desani);
+    out(ian).ntrodes = ntrodes;
+    out(ian).expvars = design(desani).expvars;
+    out(ian).frequency = wp.frex;
     %         for iv = 1:length(designmat(ian).expvars)
     %             fprintf('expvar %d\n', iv);
     % only keep the rips that have non nan vals in all the vars
@@ -54,6 +57,7 @@ for ian = 1:length(rawpwr)
     %         expvarZ = expvarZ(~isnan(expvarZ));
     %             include_rips = ones(length(expvarrank),1);
     %         include_rips = find(~isnan(expvarZ));
+    
     for nti = 1:length(ntrodes)
         fprintf('nt %d \n',nti);
         if length(size(design(desani).dm)) == 3
@@ -69,10 +73,10 @@ for ian = 1:length(rawpwr)
         data = permute(data, [3 2 1]); % rotate back to [freq time ripple]
         powerreshaped = reshape(data, wp.numfrex*nTimepoints,numrips); % flatten [ripple timefreq]
         powerrank = tiedrank(powerreshaped'); % tiedrank on dim 1, across rips.
-        realbeta = (X*X')\X*powerrank;
+        realbeta = (X*X')\X*powerrank; % regression
         realbeta = reshape(realbeta,numvars,wp.numfrex,nTimepoints);
-        PV(ian).CorrVals(nti,:,:,:)  = realbeta;
-        PV(ian).time = linspace(-Pp.pwin(1),Pp.pwin(2),nTimepoints);
+        out(ian).CorrVals(nti,:,:,:)  = realbeta;
+        out(ian).time = linspace(-Pp.pwin(1),Pp.pwin(2),nTimepoints);
         % initialize null hypothesis matrices
         permuted_bvals  = zeros(wp.n_permutes,numvars,wp.numfrex,nTimepoints);
         %             max_pixel_rvals = zeros(wp.n_permutes,numvars);
@@ -113,7 +117,7 @@ for ian = 1:length(rawpwr)
             zmap = (squeeze(realbeta(testi,:,:))-...
                 squeeze(mean(permuted_bvals(:,testi,:,:),1))) ./ ...
                 squeeze(std(permuted_bvals(:,testi,:,:),[],1));
-            PV(ian).zmap(nti,:,:,testi) = zmap;
+            out(ian).zmap(nti,:,:,testi) = zmap;
             % apply cluster-level corrected threshold
             zmapthresh = zmap;
             % uncorrected pixel-level threshold
@@ -128,35 +132,36 @@ for ian = 1:length(rawpwr)
             for i=1:length(whichclusters2remove)
                 zmapthresh(clustinfo.PixelIdxList{whichclusters2remove(i)})=0;
             end
-            PV(ian).clusterZmapThresh(nti,:,:,testi) = zmapthresh;
+            out(ian).clusterZmapThresh(nti,:,:,testi) = zmapthresh;
         end
-        if ~isempty(tfboxes)
-            
-%         % now compute correlation of the pwr mean of each tfbox and each
-%         % condition
         tfbanim = strcmp({tfboxes.animal}, animal);
-        for ivar = 1:numvars
-            if length(size(design(desani).dm)) == 3
-                Xvar = design(desani).dm(include_rips,ivar,nti)';
-            else
-                Xvar = design(desani).dm(include_rips,ivar)';
+        if ~isempty(tfboxes)
+            out(ian).tfboxes = tfboxes(tfbanim);
+            %         % now compute correlation of the pwr mean of each tfbox and each
+            %         % condition
+            
+            for ivar = 1:numvars
+                if length(size(design(desani).dm)) == 3
+                    Xvar = design(desani).dm(include_rips,ivar,nti)';
+                else
+                    Xvar = design(desani).dm(include_rips,ivar)';
+                end
+                for itfb = 1:length(tfboxes(tfbanim).expvars)
+                    out(ian).tfb{itfb} = tfboxes(tfbanim).expvars{itfb};
+                    itfbpwr = squeeze(tfboxes(tfbanim).dm(include_rips, itfb, nti))';
+                    tmp = fitlm(Xvar, itfbpwr);
+                    out(ian).fitlm{nti, itfb, ivar} = tmp;
+                    out(ian).P(nti, itfb, ivar) = tmp.coefTest;
+                    out(ian).R(nti, itfb, ivar) = tmp.Rsquared.Ordinary;
+                    out(ian).coef(nti, itfb, ivar) = tmp.Coefficients.Estimate(end);
+                end
             end
-            for itfb = 1:length(tfboxes(tfbanim).expvars)
-                PV(ian).tfb{itfb} = tfboxes(tfbanim).expvars{itfb};
-                itfbpwr = squeeze(tfboxes.dm(include_rips, itfb, nti))';
-                tmp = fitlm(Xvar, itfbpwr);
-                PV(ian).fitlm{nti, itfb, ivar} = tmp;
-                PV(ian).P(nti, itfb, ivar) = tmp.coefTest;
-                PV(ian).R(nti, itfb, ivar) = tmp.Rsquared.Ordinary;
-                PV(ian).coef(nti, itfb, ivar) = tmp.Coefficients.Estimate(end);
-            end
-        end
         end
     end
     
     if saveout
         outpath = [pconf.andef{2},outdir,'/'];
-        save_data(PV(ian), outpath, [outdir,'Corr_',Fp.epochEnvironment]);
+        save_data(out(ian), outpath, [outdir,'Corr_',Fp.epochEnvironment]);
     end
 end
 fprintf('took %d sec\n', toc);

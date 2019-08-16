@@ -2,7 +2,7 @@ function out = makeTFBoxDesignMat(rawpwr, varargin)
 % makes a design matrix of time/frequency boxes' mean power per ripple
 
 pconf = paramconfig;
-tfboxlabels = {'ripple', 'fastGamma', 'slowGamma', 'theta'};
+tfboxlabels = {'Ripple', 'FastGamma', 'Theta'};
 epEnv = 'wtrack';
 saveout = 1;
 outdir = 'tfbvarCont';
@@ -12,7 +12,7 @@ frexlookup.SlowGamma = [25 55];
 % frexlookup.Beta = [12 20];
 frexlookup.Theta = [6 12];
 timelookup.baseline = [-1 -.5];
-timelookup.event = [0 .1];
+timelookup.event = [0 .15];
 timelookup.postEvent= [.5 1];
 
 if ~isempty(varargin)
@@ -23,22 +23,13 @@ animals = {rawpwr.animal};
 for ian = 1:length(animals)
     out(ian).freq = {}; out(ian).time = {};  out(ian).baseline = {};
     for i = 1:length(tfboxlabels)
-        if strfind(tfboxlabels{i},'ripple')
-            out(ian).freq{i} = frexlookup.Ripple;
-            out(ian).baseline{i} = timelookup.baseline;
-            out(ian).time{i} = timelookup.event;
-        elseif strfind(tfboxlabels{i},'fastGamma')
-            out(ian).freq{i} = frexlookup.FastGamma;
+        out(ian).freq{i} = eval(['frexlookup.', tfboxlabels{i}]);
+        if any(strfind(tfboxlabels{i},'FastGamma')) || any(strfind(tfboxlabels{i},'Theta'))
             out(ian).baseline{i} = timelookup.baseline;
             out(ian).time{i} = timelookup.postEvent;
-        elseif strfind(tfboxlabels{i},'slowGamma')
-            out(ian).freq{i} = frexlookup.SlowGamma;
+        elseif any(strfind(tfboxlabels{i},'SlowGamma')) || any(strfind(tfboxlabels{i},'Ripple'))
             out(ian).baseline{i} = timelookup.baseline;
             out(ian).time{i} = timelookup.event;
-        elseif strfind(tfboxlabels{i},'theta')
-            out(ian).freq{i} = frexlookup.Theta;
-            out(ian).baseline{i} = timelookup.baseline;
-            out(ian).time{i} = timelookup.postEvent;
         end
     end
     %     [out(ian).freq, out(ian).time out(ian).baseline] = tfboxlookup(tfboxlabels);
@@ -58,7 +49,7 @@ for ian = 1:length(animals)
         % rawpwr dims [ntrode time ripple freq].. take mean in time, frex ranges
         pwrtfb = rawpwr(ian).pwr(:,timeidx(1):timeidx(2),:,freqidx(1):freqidx(2));
         baselinepwrtfb = rawpwr(ian).pwr(:,baselidx(1):baselidx(2),:,freqidx(1):freqidx(2));
-        mpwrtfb = nanmean(nanmean(pwrtfb, 2), 4) -  nanmean(nanmean(baselinepwrtfb,2),4);
+        mpwrtfb = zscore(nanmean(nanmean(pwrtfb, 2), 4)-nanmean(nanmean(baselinepwrtfb,2),4),[],3);
         out(ian).dm(:,tfb,:) = squeeze(mpwrtfb)'; %reshape to [ripple ntrode]
         % dm dims [rip tfb ntrode]
     end

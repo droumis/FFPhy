@@ -5,7 +5,7 @@ function out = makeExpvarCatITPCDiff(expvarCat, phase, Fp, varargin)
 % wp = wave params (see getWaveParams)
 pconf = paramconfig;
 me = animaldef('Demetris');
-invalid_rips = struct;
+noiseEvents = struct;
 lfptype = 'eeg';
 expvars = {{'rewarded', 'unrewarded'},{'outbound', 'inbound'},{'distalWell', 'proximalWell'},...
     {'rewarded_outbound', 'rewarded_inbound'}};
@@ -26,12 +26,15 @@ for ian = 1:length(phase)
     ntrodes = unique(den.index(:,3));
     ITPCDiff = cell(1,length(expvars));
     evcatanidx = find(strcmp({expvarCat.animal}, animal));
-    if ~isempty(invalid_rips)
+    userips = ones(length(rawpwr(ian).day),1);
+    if ~isempty(noiseEvents)
         % exclude invalid rips
-        noiseanidx = find(strcmp({invalid_rips.animal}, animal));
-        invalidrips = invalid_rips(noiseanidx ).ripnums;
-        userips = ones(length(phase(ian).day),1);
-        userips(invalidrips) = 0;
+        noiseanidx = find(strcmp({noiseEvents.animal}, animal));
+        if ~isempty(noiseEvents(noiseanidx).events)
+            invalidrips = ismember([phase(ian).day phase(ian).epoch phase(ian).ripStartTime], ...
+                noiseEvents(noiseanidx).events, 'rows');
+            userips(invalidrips) = 0;
+        end
     end
     
     for s = 1:length(expvars)

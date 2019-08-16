@@ -41,12 +41,26 @@ for s = param_set
             MgLt = 0.04; % margin left
             MgTp = 0.07; % margin top
             MgBm =  0.04; % margin bottom
+        case 'combinedAreasTFstats'
+            stitFsize = 16;
+            tickFsize = 8;
+            sfTitFsize = 14;
+            pwin = [1 1];
+            usecolormap = 'bone';
+            contourRes = 40;
+            position = [.1 .1 .5 .7];
+            SpHz = 0.04; %spacing horizontal
+            SpVt = 0.06; % spacing vertical
+            MgLt = 0.02; % margin left
+            MgTp = 0.1; % margin top
+            MgBm =  0.06; % margin bottom
+            MgLt = 0.1; % margin left
         case 'powerTFmap'
             stitFsize = 16;
             tickFsize = 8;
             sfTitFsize = 14;
             pwin = [1 1];
-            usecolormap = 'jet';
+            usecolormap = 'bone';
             contourRes = 40;
             position = [.1 .1 1 1];
             SpHz = 0.02; %spacing horizontal
@@ -154,7 +168,7 @@ for s = param_set
             position = [.1 .1 .9 .9];
             pwin = [1 1];
             plot_frex = [8 16 40 85 150 300];
-            cmap = 'jet';
+            cmap = 'bone';
         case 'dataExplore'
             position = [.1 .1 .9 .9];
 %             SpHz = 0.005; %spacing horizontal

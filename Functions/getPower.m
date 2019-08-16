@@ -7,7 +7,7 @@ function out = getPower(expvarCat, rawpwr, Fp, varargin)
 
 pconf = paramconfig;
 me = animaldef('Demetris');
-invalid_rips = struct;
+noiseEvents = struct;
 lfptype = 'eeg';
 expvars = {'onlywdays'}; %,'rewarded', 'unrewarded', 'inbound' , 'outbound', 'proximalWell', ...
 %     'distalWell'};
@@ -29,21 +29,24 @@ for ian = 1:length(rawpwr)
     fprintf('lfptype %s \n', lfptype);
     meandbpower = cell(1,length(expvars));
     evcatanidx = find(strcmp({expvarCat.animal}, animal));
-    if ~isempty(invalid_rips)
+    userips = ones(length(rawpwr(ian).day),1);
+    if ~isempty(noiseEvents)
         % exclude invalid rips
-        noiseanidx = find(strcmp({invalid_rips.animal}, animal));
-        invalidrips = invalid_rips(noiseanidx ).ripnums;
-        userips = ones(length(rawpwr(ian).day),1);
-        userips(invalidrips) = 0;
+        noiseanidx = find(strcmp({noiseEvents.animal}, animal));
+        if ~isempty(noiseEvents(noiseanidx).events)
+            invalidrips = ismember([rawpwr(ian).day rawpwr(ian).epoch rawpwr(ian).ripStartTime], ...
+                noiseEvents(noiseanidx).events, 'rows');
+            userips(invalidrips) = 0;
+        end
     end
     % for each state/condition, compute dbpower, run timeshift permtest vs baseline
     for stset = 1:length(expvars)
         fprintf('ripstate %s \n', expvars{stset});
         stidx = find(strcmp(expvars{stset}, expvarCat(evcatanidx).expvars));
-            sripidx = expvarCat(evcatanidx).dm(:,stidx);
-            sripidx(~userips) = 0;
-            meandbpower{stset} = computePower(rawpwr(ian).pwr(:,:,find(sripidx),:), wp, ...
-                'dsamp',wp.dsamp, 'run_permutation_test', run_perm);
+        sripidx = expvarCat(evcatanidx).dm(:,stidx);
+        sripidx = find(all([sripidx, userips], 2));
+        meandbpower{stset} = computePower(rawpwr(ian).pwr(:,:,sripidx,:), wp, ...
+            'dsamp',wp.dsamp, 'run_permutation_test', run_perm);
     end
     
     out(ian).animal = animal;
@@ -74,20 +77,10 @@ srate = wp.srate/wp.dsamp;
 timeWin = wp.win(1):1/srate:wp.win(2);
 baseind(1,1) = dsearchn(timeWin',wp.basewin(1));
 baseind(1,2) = dsearchn(timeWin',wp.basewin(2));
-% preind(1,1) = dsearchn(timeWin',wp.prewin(1));
-% preind(1,2) = dsearchn(timeWin',wp.prewin(2));
-% postind(1,1) = dsearchn(timeWin',wp.postwin(1));
-% postind(1,2) = dsearchn(timeWin',wp.postwin(2));
 
 fprintf('event time 0\n');
 fprintf('win %.02f:%.02f sec\n',wp.win(1), wp.win(2));
 fprintf('baseline %.02f:%.02f sec \n', wp.basewin(1), wp.basewin(2));
-% fprintf('prewin %.02f:%.02f sec \n', wp.prewin(1), wp.prewin(2));
-% fprintf('postwin %.02f:%.02f sec \n', wp.postwin(1), wp.postwin(2));
-
-% pre and post mean per ntrode per event per freq
-% pout.premean = squeeze(nanmean(pwr(:,preind(1):preind(2),:,:),2));
-% pout.postmean = squeeze(nanmean(pwr(:,postind(1):postind(2),:,:),2));
 
 pout.bl_pwr_mean = mean(mean(pwr(:,baseind(1):baseind(2),:,:),2),3);
 pout.pwrmean = mean(pwr,3); % mean across events

@@ -1,11 +1,11 @@
 
 
-function out = getITPC(expvarCat, phase, Fp, varargin)
+function out = getITPC(expvarCat, , Fp, varargin)
 % Fp = filter params (see load_filter_params)
 
 pconf = paramconfig;
 me = animaldef('Demetris');
-invalid_rips = struct;
+noiseEvents = struct;
 lfptype = 'eeg';
 expvars = {'onlywdays'}; %,'rewarded', 'unrewarded', 'inbound' , 'outbound', 'proximalWell', ...
 %     'distalWell'};
@@ -26,13 +26,15 @@ for ian = 1:length(phase)
     ntrodes = unique(den.index(:,3));
     evCatanidx = find(strcmp({expvarCat.animal}, animal));
     ITPC = cell(1,length(expvarCat(evCatanidx).expvars));
-    
-    if ~isempty(invalid_rips)
+    userips = ones(length(rawpwr(ian).day),1);    
+    if ~isempty(noiseEvents)
         % exclude invalid rips
-        noiseanidx = find(strcmp({invalid_rips.animal}, animal));
-        invalidrips = invalid_rips(noiseanidx ).ripnums;
-        userips = ones(length(phase(ian).day),1);
-        userips(invalidrips) = 0;
+        noiseanidx = find(strcmp({noiseEvents.animal}, animal));
+        if ~isempty(noiseEvents(noiseanidx).events)
+            invalidrips = ismember([phase(ian).day phase(ian).epoch phase(ian).ripStartTime], ...
+                noiseEvents(noiseanidx).events, 'rows');
+            userips(invalidrips) = 0;
+        end
     end
     
     for stset = 1:length(expvars)

@@ -1,5 +1,5 @@
 
-function [powerout, phaseout] = computeAnalyticSignal(lfpstack, Fp, varargin)
+function [powerout, phaseout] = computeAnalyticSignal(lfpstack, varargin)
 % compute the analytic signal for the input rip triggered LFP
 
 % lfpstack is a struct array per animal: data, ntrodes, lfptypes, animal
@@ -44,7 +44,7 @@ for ian = 1:length(lfpstack)
     astmp = zeros(nConv2pow, wp.numfrex);
     as = zeros(nsamps, nNtrodes, nevents, wp.numfrex);
      % flatten all the data, then fft. i make time as dim 1 because rows stack first
-    dataFFT = fft(reshape(permute(dsampdata, [2 1 3]),[],1),nConv2pow);
+    dataFFT = fft(reshape(permute(dsampdata, [2 1 3]),nData,1),nConv2pow);
     astmp = bsxfun(@times,dataFFT,waveletFFT);% time convolution in freq domain
     astmp = ifft(astmp,nConv2pow);
     % trim length wavlet, padding and reshape to ntrode x sample x ripple x frequency

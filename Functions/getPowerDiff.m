@@ -5,7 +5,7 @@ function out = getPowerDiff(expvarCat, rawpwr, Fp, varargin)
 % wp = wave params (see getWaveParams)
 pconf = paramconfig;
 me = animaldef('Demetris');
-invalid_rips = struct;
+noiseEventss = struct;
 lfptype = 'eeg';
 expvars = {{'rewarded', 'unrewarded'},{'outbound', 'inbound'},{'distalWell', 'proximalWell'},...
     {'rewarded_outbound', 'rewarded_inbound'}};
@@ -27,12 +27,15 @@ for ian = 1:length(rawpwr)
     fprintf('lfptype %s \n', lfptype);
     meandbpowerDiff = cell(1,length(expvars));
     evcatanidx = find(strcmp({expvarCat.animal}, animal));
-    if ~isempty(invalid_rips)
+    userips = ones(length(rawpwr(ian).day),1);    
+    if ~isempty(noiseEvents)
         % exclude invalid rips
-        noiseanidx = find(strcmp({invalid_rips.animal}, animal));
-        invalidrips = invalid_rips(noiseanidx ).events;
-        userips = ones(length(rawpwr(ian).day),1);
-        userips(invalidrips) = 0;
+        noiseanidx = find(strcmp({noiseEvents.animal}, animal));
+        if ~isempty(noiseEvents(noiseanidx).events)
+            invalidrips = ismember([rawpwr(ian).day rawpwr(ian).epoch rawpwr(ian).ripStartTime], ...
+                noiseEvents(noiseanidx).events, 'rows');
+            userips(invalidrips) = 0;
+        end
     end
     % for each state/condition, compute dbpower, run timeshift permtest vs baseline
     for s = 1:length(expvars)
@@ -53,12 +56,10 @@ for ian = 1:length(rawpwr)
             % sigtest pwr of each tfbox and each conditiondiff
             for itfb = 1:length(tfboxes(tfbanim).expvars)
                 out(ian).tfb{itfb} = tfboxes(tfbanim).expvars{itfb};
-                itfbpwr = squeeze(tfboxes.dm(find(userips), itfb, nti))';
+                try
+                itfbpwr = squeeze(tfboxes(tfbanim).dm(:, itfb, nti))';
                 [~,P,kstat] = kstest2(itfbpwr(Aidx), itfbpwr(Bidx));
-%                 figure
-%                 histogram(itfbpwr(Aidx))
-%                 hold on
-%                 histogram(itfbpwr(Bidx))
+
                 out(ian).P(nti, itfb, s) = P;
                 out(ian).kstat(nti, itfb, s) = kstat;
                 out(ian).Avals{nti, itfb, s} = itfbpwr(Aidx);
@@ -67,6 +68,10 @@ for ian = 1:length(rawpwr)
 %                 out(ian).fitlm{nti, itfb, s} = tmp;
 %                 out(ian).R(nti, itfb, ivar) = tmp.Rsquared.Ordinary;
 %                 out(ian).coef(nti, itfb, ivar) = tmp.Coefficients.Estimate(end);
+                catch
+                    fprintf('skipping itfb %d\n',itfb);
+                    continue
+                end
             end
         end
     end

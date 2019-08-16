@@ -131,7 +131,10 @@ for s = params
             
         case 'excludeAfterLastWell'
             timefilter{end+1} = {'getpostlastwell', '($postlast == 0)'};            
-            
+        case 'referenced'
+            uselfptype = 'eeg';
+        case 'unreferenced'
+            uselfptype = 'eeggnd';
         case 'ripples'
             TF = 1;
             eventtype = 'rippleskons';
@@ -157,7 +160,7 @@ for s = params
             %% filter function specific params
         case 'wavelets4-300Hz'
             waveSet = '4-300Hz';
-
+            wp = getWaveParams(waveSet);
             
         case 'behavestate'
             
