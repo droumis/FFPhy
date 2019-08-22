@@ -1,4 +1,4 @@
-Fp.animals = {'D10', 'D12','D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'}; %, 'JZ4'}; %;{'D10'}; %
+Fp.animals = {'D10','D12', 'D13', 'JZ1', 'JZ3'}; %{'D10','D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'}; %, 'JZ4'}; %;{'D10'}; %
 Fp.filtfunction = 'dfa_riptriglfp';
 % Fp.add_params = {'sleepwtrackdays', 'excludeNoise', '<4cm/s', 'wavelets4-300Hz'};
 Fp.add_params = {'referenced','wtrackdays','excludeNoise','excludePriorFirstWell','<4cm/s', ...
@@ -71,8 +71,8 @@ plot_CombDiff = 1;
 % plot options
 usez = 1;
 pauseb4supertit = 0;
-pausefigs = 1;
-savefigs = 0;
+pausefigs = 0;
+savefigs = 1;
 
 %% ripLFP [ntrode time rip]
 if make_swrLFP

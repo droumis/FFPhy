@@ -7,9 +7,9 @@ animpos = 1; % if 1, at end, if 0, at beginning. at end has leading underscore
 if ~isempty(varargin)
     assign(varargin{:});
 end
-if ~isempty(filetail)
-    filename = [filename, filetail];
-end
+% if ~isempty(filetail)
+%     filename = [filename, filetail];
+% end
 % the animal field should either just be their name or the loaded content
 % of andef (currently 6 cell array)
 try

@@ -163,6 +163,25 @@ for s = params
             wp = getWaveParams(waveSet);
             
         case 'behavestate'
+        case 'dfa_getPeriEventVelocity'
+            win = [2 2];
+            eventtype = 'rippleskons';
+            eventSourceArea = 'ca1';
+            eventDataLabel = [eventSourceArea eventtype];
+            consensus_numtets = 2;   % minimum # of tets for consensus event detection
+            minstdthresh = 3;        % STD. how big your ripples are
+            exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
+            minvelocity = 0;
+            maxvelocity = 4;
+            
+            timefilter{end+1} = {'getconstimes', '($cons == 1)', ...
+                'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
+                'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
+                'minvelocity', minvelocity,'maxvelocity',maxvelocity};            
+            options = {'eventtype', [eventSourceArea eventtype], 'win', win};
+            filtfunction = 'dfa_getPeriEventVelocity';
+            iterator = 'singleepochanal';
+            datatypes = {[eventSourceArea eventtype], 'pos'};
             
         case 'dfa_riptriglfp'
 %             LFPtypes = {'eeggnd', 'eeg', 'theta', };
