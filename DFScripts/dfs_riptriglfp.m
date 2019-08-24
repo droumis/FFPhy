@@ -25,21 +25,8 @@ plotHilbertPower = 0;
 
 % indwin = plotwin*1500;
 %% ---------------- Data Filters --------------------------
-% animals = {'D10'};
-% days = [1:12]; % 1:12 
-% days = [1:12]; % 1:12
-% animals = {'D12'};
-% days = [1:7]; % 1:7
-% animals = {'D13'};
-% days = [1:10];
 animals = {'JZ1'};
 days = [1]; %1:14 1:9
-%  animals = {'JZ2'};
-%  days = [1:5];
-% animals = {'JZ3'};
-% days = [1 2 5:10]; %[1 2 5:10]
-% animals = {'JZ4'};
-% days = [1:10];%1:10
 filtfunction = 'riptriglfp';
 LFPtypes = {'eeg', 'ripple', 'theta', 'lowgamma', 'fastgamma'}; %
 LFPrangesHz = {'1-400', '140-250', '6-9', '20-50', '65 - 140'}; %need to make this a lookup from the filter mat
@@ -153,7 +140,7 @@ if plotfigs
 %                             plotwin = F(ianimal).output{day}(epoch).win;
                             indwin = plotwin*1500;
                             ntrodesIndices = F(ianimal).output{day}(epoch).index;
-                            %% ---- reorder the LFP traces by suparea|area|subarea tags (in that priority) ----
+                         %% ---- reorder the LFP traces by suparea|area|subarea tags (in that priority) ----
                             [~, tagIndMap] = ismember(ntrodesIndices,tetinfoAll.index, 'rows');
                             ntrodeTags = tetinfoAll.values(tagIndMap);
                             try

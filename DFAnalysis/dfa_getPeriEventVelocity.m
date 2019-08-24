@@ -20,15 +20,19 @@ if ~isempty(varargin)
     assign(varargin{:});
 end
 
-out.data = [];
+
 win = abs(win); % assert positive window duration
 day = idx(1,1);
 epoch = idx(1,2);
 
-out.velTimes = [];
-out.eventStartIdx = [];
-out.eventEndIdx = [];
-out.win = win;
+out.data = [];
+out.field = {};
+out.dims = {};
+out.time = [];
+out.eventStartTimes = [];
+out.eventEndTimes = [];
+out.win = [];
+out.excludeperiods = excludeperiods;
 out.index = idx;
 
 % check for events
@@ -65,13 +69,19 @@ w = win*samprate;
 % endtime = (num_samp/samprate) + starttime;
 
 %Remove events that are too close to the beginning or end
-while eventTime(1,1)<(starttime+win(1))
-    eventTime(1,:) = [];
+try
+    while eventTime(1,1)<(starttime+win(1))
+        eventTime(1,:) = [];
+    end
+    while eventTime(end,2)>(endtime-win(2))
+        eventTime(end,:) = [];
+    end
+catch
+   fprintf('no eventtimes %d %d\n',day, epoch) 
 end
-while eventTime(end,2)>(endtime-win(2))
-    eventTime(end,:) = [];
+if isempty(eventTime)
+    return
 end
-
 % epochtime=pos{day}{epoch}.data(:,timecol);
 % winStartIdx = lookup(eventtimes(:,1)-win(1),pos{day}{epoch}.data(:,timecol));
 % winEndIdx = lookup(eventtimes(:,2)+win(2),pos{day}{epoch}.data(:,timecol));

@@ -169,11 +169,16 @@ for s = param_set
             pwin = [1 1];
             plot_frex = [8 16 40 85 150 300];
             cmap = 'bone';
+        case 'riptrigvel'
+            position = [.1 .1 1 .5];
+            SpHz = 0.02;
+            SpVt = 0.08;
+            MgBm = .1;
         case 'dataExplore'
             position = [.1 .1 .9 .9];
 %             SpHz = 0.005; %spacing horizontal
-            SpVt = 0.00; % spacing vertical
-            MarginTop = 0.02;
+            SpVt = 0; % spacing vertical
+            MarginTop = 0.01;
             MarginLeft = 0.02;
         case 'riptriglfp_allLFPtype_perntrode'
             position = [.1 .1 .4 .7];

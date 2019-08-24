@@ -81,7 +81,7 @@ for s = params
             %                 eptypeEnv{:});
             %             epochfilter = epochfilter(4:end); %trim first ||
         case 'nonref_ntrodes'
-            ntAreas = {'ca1', 'mec', 'por', 'v2l', 'sub'};
+            ntAreas = {'ca1', 'mec', 'ref'}; %, 'por', 'v2l', 'sub'};
             tetfilter = sprintf(' || (isequal($area,''%s''))', ntAreas{:});
             tetfilter = tetfilter(4:end); %trim first ||
         case 'same tet for eeg'
@@ -163,6 +163,28 @@ for s = params
             wp = getWaveParams(waveSet);
             
         case 'behavestate'
+        case 'dfa_plotDataChunks'
+            splitSize = 10; % seconds
+            Yoffset = 600; 
+            eventtype = 'rippleskons';
+            eventSourceArea = 'ca1';
+            eventDataLabel = [eventSourceArea eventtype];
+            consensus_numtets = 2;   % minimum # of tets for consensus event detection
+            minstdthresh = 3;        % STD. how big your ripples are
+            exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
+            minvelocity = 0;
+            maxvelocity = 4;
+            
+            timefilter{end+1} = {'getconstimes', '($cons == 1)', ...
+                'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
+                'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
+                'minvelocity', minvelocity,'maxvelocity',maxvelocity};            
+            options = {'splitSize', splitSize, 'Yoffset', Yoffset};
+            filtfunction = 'dfa_plotDataChunks';
+            iterator = 'multitetrodeanal';
+            datatypes = {[eventSourceArea eventtype], 'pos', 'linpos', 'eeg', 'spikes', ...
+                'tetinfo', 'cellinfo'};
+            
         case 'dfa_getPeriEventVelocity'
             win = [2 2];
             eventtype = 'rippleskons';

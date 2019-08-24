@@ -61,16 +61,17 @@ axis tight
 %% Peri swr speed histogram
 subplot(2,2,4)
 %% ripLFP [ntrode time rip]
-Fp.animals = {'D10'}; %{'D10','D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'}; %, 'JZ4'}; %;{'D10'}; %
+Fp.animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'}; %, 'JZ4'}; %;{'D10'}; %
+% Fp.animals = {'JZ3'};
 Fp.filtfunction = 'dfa_getPeriEventVelocity';
 Fp.add_params = {'wtrackdays','excludeNoise','excludePriorFirstWell','<4cm/s', ...
     'excludeAfterLastWell'};
 Fp = load_filter_params(Fp, 'add_params', Fp.add_params);
 pconf = paramconfig;
 %%
-make_swrLFP = 1;
-save_swrLFP = 1;
-load_swrLFP = 0;
+make_swrLFP = 0;
+save_swrLFP = 0;
+load_swrLFP = 1;
 if make_swrLFP
     F = createfilter('animal', Fp.animals, 'epochs', Fp.epochfilter, ...
         'excludetime', Fp.timefilter, 'iterator', Fp.iterator);
@@ -82,23 +83,96 @@ if save_swrLFP
 if load_swrLFP
     F = load_data(Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, ...
         Fp.animals, 'filetail', sprintf('_%s', Fp.epochEnvironment)); end
+% %%
+% allrips = cell2mat(permute({F.output{1}.data},[3 1 2]));
+% velmean = squeeze(median(allrips(9,:,:),3));
+% velsem = squeeze(std(allrips(9,:,:),[],3))/sqrt(size(allrips,3));
 %%
-allrips = cell2mat(permute({F.output{1}.data},[3 1 2]));
-velmean = squeeze(mean(allrips(9,:,:),3));
-velsem = squeeze(std(allrips(9,:,:),[],3))/sqrt(size(allrips,3));
+% subplot(2,2,4)
+% shadedErrorBar(F.output{1}(1).time, velmean, velsem)
+% title('per-SWR velocity')
+% xlabel('time s')
+% ylabel('velocity')
+% set(gca, 'xscale', 'linear')
+% set(gca, 'yscale', 'linear')
+% % set(gca, 'xtick', [0 50 100 200])
+% yl = ylim;
+% % ylim([0,yl(2)])
+% axis tight
 %%
-subplot(2,2,4)
-shadedErrorBar(F.output{1}(1).time, velmean, velsem)
-title('per-SWR velocity')
-xlabel('time s')
-ylabel('velocity')
-set(gca, 'xscale', 'linear')
-set(gca, 'yscale', 'linear')
-% set(gca, 'xtick', [0 50 100 200])
-yl = ylim;
-% ylim([0,yl(2)])
-axis tight
+% - GOOD.. now do all the animals and make a per-SWR vel plot per animal
+% - then make a few plots of immobility time (with speed, pos) with MEC LFP
+% (sup, deep labled).. 
+plotout = 1;
+pausefigs = 0;
+savefigs = 1;
+if plotout; Pp=load_plotting_params({'defaults','riptrigvel'});
+    if savefigs && ~pausefigs; close all
+        ifig = figure('Visible','off','units','normalized','position', Pp.position);
+    else; ifig = figure('units','normalized','position',Pp.position); end
+    set(gcf,'color','white')
+        for ani = 1:length(F)
+            sf = subaxis(2,7,ani, 'SpacingVert', Pp.SpVt, 'SpacingHoriz', Pp.SpHz, ...
+                    'MarginLeft', Pp.MgLt, 'MarginRight', Pp.MgRt, 'MarginTop', Pp.MgTp, 'MarginBottom', Pp.MgBm);
+            allrips = cell2mat(permute({F(ani).output{1}.data},[3 1 2]));
+            velmean = squeeze(mean(allrips(9,:,:),3));
+            velstd = squeeze(std(allrips(9,:,:),[],3)); %
+            velsem = velstd/sqrt(size(allrips,3));
+%             shadedErrorBar(F(ani).output{1}(1).time, velmean, velstd)
+            hold on;
+            shadedErrorBar(F(ani).output{1}(1).time, velmean, velsem);%, {'color', [0 0 .2 .2]})
+            title(F(ani).animal{3});
+            if ani == 1
+                xlabel('time s')
+                ylabel('velocity mean, sem')
+            end
+            axis tight
+            yl = ylim;
+            ylim([0 yl(2)]);
+            xl = xlim;
+            line(xl, [4 4], 'color', [0 0 .5], 'linewidth', 2)
+            x = [-1 -.5 -.5 -1];
+            y = [yl(1) yl(1) yl(2) yl(2)];
+            patch(x,y,'black', 'FaceAlpha', .1, 'LineStyle','none')
+            x = [.5 1 1 .5];
+            y = [yl(1) yl(1) yl(2) yl(2)];
+            patch(x,y,'black', 'FaceAlpha', .1,'LineStyle','none')
+            axis tight
+            
+            % plot mean/std bars of pre (-1:-.5) and post (.5:1) and do ttest
+            sf = subaxis(2,7,ani+length(F), 'SpacingVert', Pp.SpVt, 'SpacingHoriz', Pp.SpHz, ...
+            'MarginLeft', Pp.MgLt, 'MarginRight', Pp.MgRt, 'MarginTop', Pp.MgTp, 'MarginBottom', Pp.MgBm);
+            t = knnsearch(F(ani).output{1}(1).time', [-1 -.5 .5 1]');    
+            preM = squeeze(mean(mean(allrips(9,t(1):t(2),:),2),3));
+            postM = squeeze(mean(mean(allrips(9,t(3):t(4),:),2),3));
+            preS = squeeze(std(mean(allrips(9,t(1):t(2),:),2),[],3));
+            postS = squeeze(std(mean(allrips(9,t(3):t(4),:),2),[],3));
+%             a = reshape(allrips(9,t(1):t(2),:),[],1);
+%             b = reshape(allrips(9,t(3):t(4),:),[],1);
+            
+            bar([1 2], [preM postM], 'facecolor', [.2 .2 .2])
+            hold on
+            snames={'pre'; 'post'};
+            set(gca,'xticklabel',snames)
+            er = errorbar([preM postM], [preS postS]);
+            er.Color = [0 0 0];                         
+            er.LineStyle = 'none';
+            hold off
+            if ani == 1
+                ylabel('velocity mean, std')
+            end
+        end
+        % ---- super axis -----
+        sprax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
+        sprtit = sprintf('Peri-SWR Velocity %s', Fp.epochEnvironment);
+        iStitle = text(.5, .98, {sprtit}, 'Parent', sprax, 'Units', 'normalized');
+        set(iStitle,'FontWeight','bold','FontName','Arial','horizontalAlignment','center','FontSize',12);
+        % ---- pause, save figs ----
+        if pausefigs; pause; end
+        if savefigs; save_figure([pconf.andef{4},'/' Fp.filtfunction '/'],sprtit); end
+end
 %%
+
 % swrstr.data = diff(swr{day}{epoch}{1}.starttime);
 % swrstr.descript = 'swrstarttime';
 % ac = acorr(swrstr, 10, 200);
