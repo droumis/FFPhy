@@ -1,4 +1,4 @@
-Fp.animals = {'D10','D12', 'D13', 'JZ1', 'JZ3'}; %{'D10','D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'}; %, 'JZ4'}; %;{'D10'}; %
+Fp.animals = {'JZ3'}; %{'D10','D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'}; %, 'JZ4'}; %;{'D10'}; %
 Fp.filtfunction = 'dfa_riptriglfp';
 % Fp.add_params = {'sleepwtrackdays', 'excludeNoise', '<4cm/s', 'wavelets4-300Hz'};
 Fp.add_params = {'referenced','wtrackdays','excludeNoise','excludePriorFirstWell','<4cm/s', ...
@@ -12,7 +12,7 @@ save_swrLFP = make_swrLFP;
 load_swrLFP = 0;
 stack_swrLFP = 0; %make_swrLFP;
 load_swrLFPstack = 0;
-makenoiseEvents = 0;
+makenoiseEvents = 1;
 % make.load Power, Phase
 make_powerPhase = 0;
 load_rawpwr = 0;
@@ -66,7 +66,7 @@ plot_ContFit = 0; % fitLM
 plot_CatDiffBars = 0; % KS
 plot_combined_animalsareas = 0;
 plot_CombCorr = 0;
-plot_CombDiff = 1;
+plot_CombDiff = 0;
 
 % plot options
 usez = 1;

@@ -43,7 +43,6 @@ if load_swrLFP
     F = load_data(Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, ...
         Fp.animals, 'filetail', sprintf('_%s', Fp.epochEnvironment)); end
 
-
 % for ade = 1:length([1])
 
 %% load data

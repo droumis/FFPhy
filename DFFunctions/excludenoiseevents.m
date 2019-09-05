@@ -1,14 +1,20 @@
-function out = excludenoiseevents(animaldir,animalprefix, epochs, eventconsname, varargin)
+function out = excludenoiseevents(animaldir,animal, epochs, eventconsname, varargin)
 
 tetfilter = 1;
 exclpad = 0; % in seconds. padding pre and post event start/end to also exclude
 stdthresh = 0;
+excludeman = 0;
 if ~isempty(varargin)
     assign(varargin{:})
 end
 
+if excludeman
+    fprintf('excludeman\n');
+    manNoiseEvents=load_data('filterframework','noiseEvents', animal, 'animpos', 0);
+end
+
 loaddays = unique(epochs(:,1));
-eventcons = loaddatastruct(animaldir, animalprefix, eventconsname, loaddays);
+eventcons = loaddatastruct(animaldir, animal, eventconsname, loaddays);
 
 for i = 1:size(epochs,1)
     
@@ -53,7 +59,16 @@ for i = 1:size(epochs,1)
     end
     
     times = ec.timerange(1):1/ec.samprate:ec.timerange(end);
-    ectimes = [ec.starttime(:)-exclpad ec.endtime(:)-exclpad];
+    if excludeman
+        if ~isempty(manNoiseEvents.events) && any(ismember(manNoiseEvents.events(:,[1 2]), epochs(i,[1 2]), 'rows'))
+            evidxEp = ismember(manNoiseEvents.events(:,[1 2]), epochs(i,[1 2]), 'rows');
+            manEvStart = manNoiseEvents.events(evidxEp, 3);
+            ec.starttime = unique([ec.starttime; manEvStart]);
+            ec.endtime = unique([ec.endtime; manEvStart]);
+        end
+        ec.excludeman = manNoiseEvents;
+    end
+    ectimes = [ec.starttime(:)-exclpad ec.endtime(:)+exclpad];
     noise = list2vec(ectimes,times)';
     noisetime = (sum(noise)/ec.samprate/60);
     totaltime = (ec.timerange(end) - ec.timerange(1))/60;
@@ -62,6 +77,7 @@ for i = 1:size(epochs,1)
     out{epochs(i,1)}{epochs(i,2)} = ec;
     out{epochs(i,1)}{epochs(i,2)}.time = times;
     out{epochs(i,1)}{epochs(i,2)}.noise = noise;
+    
 end
 
 end

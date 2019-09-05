@@ -16,7 +16,7 @@ set_filt_func = 1;
 % default_params = {'all_epoch_types'};
 
 if isa(params, 'string')
-    params = {params};
+    params = {params};valid_ntrodes
 elseif isa(params, 'struct')
     filter_params = params;
     try
@@ -80,10 +80,11 @@ for s = params
             %                 ' || ((isequal($type,''%s'')) && (isequal($environment,''%s'')))', ...
             %                 eptypeEnv{:});
             %             epochfilter = epochfilter(4:end); %trim first ||
-        case 'nonref_ntrodes'
-            ntAreas = {'ca1', 'mec', 'ref'}; %, 'por', 'v2l', 'sub'};
-            tetfilter = sprintf(' || (isequal($area,''%s''))', ntAreas{:});
-            tetfilter = tetfilter(4:end); %trim first ||
+        case 'valid_ntrodes'
+%             ntAreas = {'ca1', 'mec', 'ref'}; %, 'por', 'v2l', 'sub'};
+            tetfilter = 'isequal($valid,''yes'') && (isequal($area,''ca1'') || isequal($area,''mec''))';
+%             tetfilter = tetfilter(4:end); %trim first ||
+            
         case 'same tet for eeg'
             eegfilter = {'geteegtet', 'theta','sametet', 1};
         case 'nonMU_cells'
@@ -124,7 +125,7 @@ for s = params
             
         case 'excludeNoise'
             timefilter{end+1} = {'excludenoiseevents', '($noise == 0)', 'ca1noisekons', ...
-                'exclpad', 1, 'stdthresh', 15}; %15
+                'exclpad', 1, 'stdthresh', 15, 'excludeman', 1}; %15
             
         case 'excludePriorFirstWell'
             timefilter{end+1} = {'getpriortofirstwell', '($prefirst == 0)'};
@@ -166,9 +167,7 @@ for s = params
         case 'dfa_plotDataChunks'
             splitSize = 10; % seconds
             Yoffset = 600; 
-            eventtype = 'rippleskons';
-            eventSourceArea = 'ca1';
-            eventDataLabel = [eventSourceArea eventtype];
+            eventtype = 'ca1rippleskons';
             consensus_numtets = 2;   % minimum # of tets for consensus event detection
             minstdthresh = 3;        % STD. how big your ripples are
             exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
@@ -179,11 +178,12 @@ for s = params
                 'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
                 'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
                 'minvelocity', minvelocity,'maxvelocity',maxvelocity};            
-            options = {'splitSize', splitSize, 'Yoffset', Yoffset};
+            options = {'splitSize', splitSize, 'Yoffset', Yoffset, 'minstdthresh',...
+                minstdthresh, 'maxvelocity', maxvelocity};
             filtfunction = 'dfa_plotDataChunks';
             iterator = 'multitetrodeanal';
-            datatypes = {[eventSourceArea eventtype], 'pos', 'linpos', 'eeg', 'spikes', ...
-                'tetinfo', 'cellinfo'};
+            datatypes = {'ca1rippleskons', 'pos', 'linpos', 'eeg', 'spikes', ...
+                'tetinfo', 'cellinfo', 'ca1noisekons', 'ripple', 'theta'};
             
         case 'dfa_getPeriEventVelocity'
             win = [2 2];

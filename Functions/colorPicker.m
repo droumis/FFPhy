@@ -21,6 +21,9 @@ for intrpair = 1:size(areatags,2)
         end
     end
 end
+if length(rgbColor) == 1
+    rgbColor = rgbColor{1};
+end
 end
 
 %add custom color sets as cases below
@@ -29,15 +32,19 @@ function colorlist = setColors(colorSet)
 
 switch colorSet
     case 'DR1'
+        mecsupf = [0 .6 .2];
+        mecdeep = [.47 0 .7];
         colorlist = ...
-            {'ref', 'mec', [.5 .5 .5];
-            'ref', 'ca1', [.5 .5 .5];
-            'ca1', 'd', [.06 .07 .07];
-            'mec', 'supf', [.65 .22 .23]
-            'mec', 'deep', [.07 .10 .80];
+            {'ref', 'mec', [.9 .9 .9];
+            'ref', 'ca1', [.9 .9 .9];
+            'ca1', 'd', [.3 .3 .3];
+            'mec', 'supf', mecsupf;
+            'mec', 'deep', mecdeep;
             'ca1', 'nca1', [1 1 1];
-            'mec', 'nsupf', [.65 .22 .23];
-            'mec', 'ndeep', [.07 .10 .80]};
+            'mec', 'nsupf', mecsupf;
+            'mec', 'ndeep', mecdeep;
+            'well', 'input', [1 0 0];
+            'well', 'output', [0 0 1]};
     otherwise
         error('pick an existing colorset or make one')
 end
