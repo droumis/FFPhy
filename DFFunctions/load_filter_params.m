@@ -165,7 +165,7 @@ for s = params
             
         case 'behavestate'
         case 'dfa_plotDataChunks'
-            splitSize = 10; % seconds
+            splitSize = 20; % seconds
             Yoffset = 600; 
             eventtype = 'ca1rippleskons';
             consensus_numtets = 2;   % minimum # of tets for consensus event detection
@@ -173,17 +173,23 @@ for s = params
             exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
             minvelocity = 0;
             maxvelocity = 4;
+            skipNoRipChunks = 0;
+            skipExist = 0;
+            centerEvents = 0;
+            centerOn = 'ca1ripplekons';
             
             timefilter{end+1} = {'getconstimes', '($cons == 1)', ...
                 'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
                 'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
                 'minvelocity', minvelocity,'maxvelocity',maxvelocity};            
             options = {'splitSize', splitSize, 'Yoffset', Yoffset, 'minstdthresh',...
-                minstdthresh, 'maxvelocity', maxvelocity};
+                minstdthresh, 'maxvelocity', maxvelocity, 'skipNoRipChunks', ...
+                skipNoRipChunks, 'skipExist', skipExist, 'centerEvents', centerEvents, ...
+                'centerOn', centerOn};
             filtfunction = 'dfa_plotDataChunks';
             iterator = 'multitetrodeanal';
             datatypes = {'ca1rippleskons', 'pos', 'linpos', 'eeg', 'spikes', ...
-                'tetinfo', 'cellinfo', 'ca1noisekons', 'ripple', 'theta'};
+                'tetinfo', 'cellinfo', 'task', 'ca1noisekons', 'ripple', 'theta', 'DIO'};
             
         case 'dfa_getPeriEventVelocity'
             win = [2 2];

@@ -177,7 +177,7 @@ for s = param_set
         case 'dataExplore'
             position = [0 0 1 1];
             nrows = 15;
-            ripFAlpha = .4;
+            ripFAlpha = .3;
             threshFAlpha = .5;
             SUsize = 6;
             areaSepWidth = 2;
@@ -191,12 +191,16 @@ for s = param_set
             phaseCmap = 'pink';
             inputclr = colorPicker({'well'}, {'input'});
             outputclr = colorPicker({'well'}, {'output'});
-            dioEdgeAlpha = .2;
-            dioFaceAlpha = .2;
+            dioEAlpha = 0;
+            dioFAlpha = .25;
+            linposclr = [.3 .3 .3];
+            linposcmap = cbrewer('qual', 'Set2', 5);
 %             SpHz = 0.005; %spacing horizontal
             SpVt = 0; % spacing vertical
             MgTp = 0.04;
             MgLt = 0.06;
+            MgRt = 0.0;
+            MgBm = 0.05;
         case 'riptriglfp_allLFPtype_perntrode'
             position = [.1 .1 .4 .7];
             pwin = [1 1];
