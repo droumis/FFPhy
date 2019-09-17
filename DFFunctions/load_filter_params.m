@@ -62,6 +62,9 @@ for s = params
             daytype = 'wtrack';
             epochfilter = sprintf('(isequal($daytype,''%s'')) && (isequal($environment,''%s''))', ...
                 daytype, epochEnvironment);
+        case 'exemplar_wepochs'
+            epochEnvironment = 'wtrack';
+            epochfilter = sprintf('(isequal($exemplar,1)) && (isequal($environment,''wtrack''))');
         case 'sleepwtrackdays'
             epochEnvironment = 'sleep';
             daytype = 'wtrack';
@@ -80,6 +83,7 @@ for s = params
             %                 ' || ((isequal($type,''%s'')) && (isequal($environment,''%s'')))', ...
             %                 eptypeEnv{:});
             %             epochfilter = epochfilter(4:end); %trim first ||
+            
         case 'valid_ntrodes'
 %             ntAreas = {'ca1', 'mec', 'ref'}; %, 'por', 'v2l', 'sub'};
             tetfilter = 'isequal($valid,''yes'') && (isequal($area,''ca1'') || isequal($area,''mec''))';
@@ -142,7 +146,7 @@ for s = params
             eventSourceArea = 'ca1';
             eventDataLabel = [eventSourceArea eventtype];
             consensus_numtets = 2;   % minimum # of tets for consensus event detection
-            minstdthresh = 2;        % STD. how big your ripples are
+            minstdthresh = 3;        % STD. how big your ripples are
             exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
             minvelocity = 0;
             maxvelocity = 4;
@@ -164,12 +168,55 @@ for s = params
             wp = getWaveParams(waveSet);
             
         case 'behavestate'
+        case 'dfa_lickXCorrSpikes'
+            eventName = 'lick';
+            filtfunction = 'dfa_lickXCorrSpikes';
+            iterator = 'singlecellanal';
+            tmax = 1;
+            bin = .02;
+            eventName = 'lick';
+            datatypes = {'lick', 'spikes', 'cellinfo'};
+            options = {'savefigas', 'png', 'bin', bin, 'tmax',tmax,'eventName',eventName};
+            
+        case 'dfa_licktrigspiking'
+            window = [1 1];
+            binsize = .001;
+            eventName = 'lick';
+            options = {'savefigas', 'png', 'binsize', binsize, 'window', window, 'eventName', ...
+                eventName};
+            filtfunction = 'dfa_licktrigspiking';
+            iterator = 'singlecellanal';
+            datatypes = {'lick', 'task', 'DIO', 'spikes', 'cellinfo'};
+            
+        case 'dfa_lickswrcorr'
+           % /home/droumis/Src/Matlab/filterframework_dr/DFFunctions/dfa_lickswrcorr.m
+            eventtype = 'ca1rippleskons';
+            consensus_numtets = 2;   % minimum # of tets for consensus event detection
+            minstdthresh = 2;        % STD. how big your ripples are
+            exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
+            minvelocity = 0;
+            maxvelocity = 4;
+            
+            timefilter{end+1} = {'getconstimes', '($cons == 1)', ...
+                'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
+                'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
+                'minvelocity', minvelocity,'maxvelocity',maxvelocity};            
+            options = {'savefigas', 'png', 'bin', .02, 'tmax', 1};
+            filtfunction = 'dfa_lickswrcorr';
+            iterator = 'singleepochanal';
+            datatypes = {'ca1rippleskons','task', 'DIO'};
+        case 'savefigs'
+            savefigs = 1;
+            pausefigs = 0;
+        case 'pausefigs'
+            savefigs = 0;
+            pausefigs = 1;
         case 'dfa_plotDataChunks'
-            splitSize = 20; % seconds
+            splitSize = 30; % seconds
             Yoffset = 600; 
             eventtype = 'ca1rippleskons';
             consensus_numtets = 2;   % minimum # of tets for consensus event detection
-            minstdthresh = 3;        % STD. how big your ripples are
+            minstdthresh = 2;        % STD. how big your ripples are
             exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
             minvelocity = 0;
             maxvelocity = 4;
@@ -177,15 +224,18 @@ for s = params
             skipExist = 0;
             centerEvents = 0;
             centerOn = 'ca1ripplekons';
+            savefigas = {'mfig', 'png'};
             
             timefilter{end+1} = {'getconstimes', '($cons == 1)', ...
                 'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
                 'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
                 'minvelocity', minvelocity,'maxvelocity',maxvelocity};            
+            
             options = {'splitSize', splitSize, 'Yoffset', Yoffset, 'minstdthresh',...
                 minstdthresh, 'maxvelocity', maxvelocity, 'skipNoRipChunks', ...
                 skipNoRipChunks, 'skipExist', skipExist, 'centerEvents', centerEvents, ...
-                'centerOn', centerOn};
+                'centerOn', centerOn, 'savefigas', {'png', 'mfig'}};
+            
             filtfunction = 'dfa_plotDataChunks';
             iterator = 'multitetrodeanal';
             datatypes = {'ca1rippleskons', 'pos', 'linpos', 'eeg', 'spikes', ...

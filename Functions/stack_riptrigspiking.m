@@ -27,17 +27,17 @@ for ian = 1:numel(animals)
     ntrodes = unique(data_keys(:,3));
     Fout(ian).ntrodes = ntrodes;
     unq_DE_keys = unique(data_keys(:,[1:2]),'rows');
-    if animal == 'JZ1'
-        unq_DE_keys = unq_DE_keys(unq_DE_keys(:,1)<7,:);
-    elseif animal == 'D10'
-        unq_DE_keys = unq_DE_keys(unq_DE_keys(:,1)<9,:);
-    elseif animal == 'JZ3'
-        unq_DE_keys = unq_DE_keys(unq_DE_keys(:,1)<9,:);
-    elseif animal == 'D12'
-        unq_DE_keys = unq_DE_keys(unq_DE_keys(:,1)<7,:);
-    elseif animal == 'JZ4'
-        unq_DE_keys = unq_DE_keys(unq_DE_keys(:,1)<7,:);
-    end
+%     if animal == 'JZ1'
+%         unq_DE_keys = unq_DE_keys(unq_DE_keys(:,1)<7,:);
+%     elseif animal == 'D10'
+%         unq_DE_keys = unq_DE_keys(unq_DE_keys(:,1)<9,:);
+%     elseif animal == 'JZ3'
+%         unq_DE_keys = unq_DE_keys(unq_DE_keys(:,1)<9,:);
+%     elseif animal == 'D12'
+%         unq_DE_keys = unq_DE_keys(unq_DE_keys(:,1)<7,:);
+%     elseif animal == 'JZ4'
+%         unq_DE_keys = unq_DE_keys(unq_DE_keys(:,1)<7,:);
+%     end
     for ide = 1:length(unq_DE_keys(:,1))
         de = unq_DE_keys(ide,:);
         
@@ -45,8 +45,8 @@ for ian = 1:numel(animals)
         su_de_inds = find(ismember(data_keys, su_de_keys, 'rows'));
         mu_de_keys = mu_keys(find(ismember(mu_keys(:,1:2), de, 'rows')),:);
         mu_de_inds = find(ismember(data_keys,mu_de_keys, 'rows'));
-        Fout(ian).eventtimes{de(1)}{de(2)} = idata(mu_de_inds(1)).eventtags(:,2);
         if ~isempty(mu_de_inds) % combine the multi unit clusters per ntrode
+            Fout(ian).eventtimes{de(1)}{de(2)} = idata(mu_de_inds(1)).eventtags(:,2);
             R = {idata(mu_de_inds).psth};
             Fout(ian).muspikes{de(1)}{de(2)} = cat(3,R{:});
             R = {idata(mu_de_inds).frhist};

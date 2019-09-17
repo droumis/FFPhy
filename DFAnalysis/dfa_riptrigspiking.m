@@ -1,14 +1,9 @@
 function [out] = dfa_riptrigspiking(index, excludeperiods, varargin)
 
-% MS adapted 2016 from dfakk_geteventtriggeredspiking
+% DR 2019 adaptation of MS adapted 2016 from dfakk_geteventtriggeredspiking
 % This function finds spiking triggered to LFP events such as ripples.
 
 disp(sprintf('%d %d %d %d',index))
-
-% Note that event times are inherited from kk_getconstimes
-    % (thus kk_getconstimes is where you should specify minthresh (i.e. 3
-    % SD or 7 SD etc) - parameters can be entered in the DFScript
-
 %
 %   index [day epoch tetrode cell tetrode cell]
 %
@@ -36,6 +31,7 @@ disp(sprintf('%d %d %d %d',index))
 %                       each ripple
 
 % default options
+eventsName = '';
 spikes = {};
 eventscons = {};
 pos = {};
@@ -46,46 +42,25 @@ window = [0.5 0.5]; % in sec
 binsize = 0.001; % 1 ms for rasters
 frbinsize= 0.01; % 10 ms for population FR plotting
 TF = 1;
+
 % % Set options
 if (~isempty(varargin))
     assign(varargin{:});
 end
-% for option = 1:2:length(varargin)-1
-%     
-%     switch varargin{option}
-%         case 'window'
-%             window = varargin{option+1};
-%         case 'TF'                % identify tetrodes for detecting events if not using consensus
-%             TF = varargin{option+1};   
-%         case 'binsize'
-%             binsize = varargin{option+1};
-%         case 'frbinsize'
-%             frbinsize = varargin{option+1};
-%         case 'minthresh'
-%             minthresh = varargin{option+1};            
-%         case 'consensus_numtets'
-%             consensus_numtets = varargin{option+1};
-%         case 'maxvelocity'
-%             maxvelocity = varargin{option+1};
-%         case 'minvelocity',
-%             minvelocity = varargin{option+1};
-%         case 'welldist',
-%             welldist = varargin{option+1};            
-%         otherwise
-%             error(['Option ''', varargin{option}, ''' not defined']);
-%     end
-% end
 
 emptyoutput_flag = 0;
-
 day = index(1);
 epoch = index(2);
 
-% animaldir,animalprefix
-
-% if it came in as ca1rippleskons or something instead of eventcons
+% get events
 if isempty(eventscons)
-    evvar = varargin{find(cellfun(@(x) ~isempty(x), strfind(varargin(1:2:end), 'kons')))*2-1};
+    if any(eventName)
+        evvar = varargin{find(cellfun(@(x) ~isempty(x), ...
+            strfind(varargin(1:2:end), eventName)))*2-1};
+    else
+        evvar = varargin{find(cellfun(@(x) ~isempty(x), ...
+            strfind(varargin(1:2:end), 'kons')))*2-1};
+    end
     eventscons = eval(evvar);
 end
 % First receive valid event periods for the epoch's day.

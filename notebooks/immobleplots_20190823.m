@@ -53,7 +53,7 @@ if processData
     cellinfo = loaddatastruct(animdef{2}, animal, 'cellinfo', day);
     tetinfo = loaddatastruct(animdef{2}, animal, 'tetinfo', day);
     %% this is where the dfa starts
-    noiseEvents=load_data('filterframework','noiseEvents', Fp.animals, 'animpos', 0);
+%     noiseEvents=load_data('filterframework','noiseEvents', Fp.animals, 'animpos', 0);
     try
         excludeIntervals = F.excludetime{1}{ismember(F.epochs{1},[day epoch], 'rows')};
     catch

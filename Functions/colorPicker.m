@@ -1,40 +1,49 @@
+%{
+tags is a cell array of key names
+returns same size cell array of 3 element rgb arrays
+%}
 
+function clrOut = colorPicker(tags, varargin)
+colorSet = 'DR1'; subtags = {};
+if ~isempty(varargin); assign(varargin{:}); end
+if ~isa(tags, 'cell')
+    tags = num2cell(tags); end
 
-%DR March 2017. set custom colors
-
-function rgbColor = colorPicker(areatags, subareatags, varargin)
-colorSet = 'DR1';
-if ~isempty(varargin)
-    assign(varargin{:});
-end
-
-colorlist = setColors(colorSet);
-rgbColor = cell(size(areatags,1), size(areatags,2));
-for intrpair = 1:size(areatags,2)
-    for int = 1:size(areatags,1);
-        iareatag = areatags{int,intrpair};
-        isubareatag = subareatags{int,intrpair};
+clrdict = setColors(colorSet);
+clrOut = cell(size(tags,1), size(tags,2));
+for itagC = 1:size(tags,2)
+    for itagR = 1:size(tags,1)
+        itag = tags{itagR,itagC};
+        if ~isempty(subtags)
+            isubtag = subtags{itagR,itagC}; end
         try
-            rgbColor{int,intrpair} =  colorlist{find(strcmp(iareatag,colorlist(:,1)) & strcmp(num2str(isubareatag),colorlist(:,2))),3};
+            if ~isempty(subtags)
+            clrOut{itagR,itagC} =  clrdict{find(strcmp(num2str(itag),clrdict(:,1)) & ...
+                strcmp(num2str(isubtag),clrdict(:,2))),3}; 
+            else; clrOut{itagR,itagC} =  clrdict{find(strcmp(itag,clrdict(:,1)),1),3}; 
+            end
         catch
-            rgbColor{int,intrpair} = [.9 .9 .9];
+            fprintf('invalid tag entry at row%d col%d \n', itagR, itagC);
+            clrOut{itagR,itagC} = [.9 .9 .9];
         end
     end
 end
-if length(rgbColor) == 1
-    rgbColor = rgbColor{1};
+if length(clrOut) == 1
+    clrOut = clrOut{1};
 end
 end
 
 %add custom color sets as cases below
 
-function colorlist = setColors(colorSet)
+function clrdict = setColors(colorSet)
 
 switch colorSet
     case 'DR1'
         mecsupf = [0 .6 .2];
         mecdeep = [.47 0 .7];
-        colorlist = ...
+%         dio = lines(6);
+        dio = cbrewer('qual', 'Paired', 6);
+        clrdict = ...
             {'ref', 'mec', [.9 .9 .9];
             'ref', 'ca1', [.9 .9 .9];
             'ca1', 'd', [.3 .3 .3];
@@ -44,7 +53,13 @@ switch colorSet
             'mec', 'nsupf', mecsupf;
             'mec', 'ndeep', mecdeep;
             'well', 'input', [1 0 0];
-            'well', 'output', [0 0 1]};
+            'well', 'output', [0 0 1];
+            '1', [], dio(1,:);
+            '2', [], dio(2,:);
+            '3', [], dio(3,:);
+            '22', [], dio(4,:);
+            '23', [], dio(5,:);
+            '24', [], dio(6,:)};
     otherwise
         error('pick an existing colorset or make one')
 end

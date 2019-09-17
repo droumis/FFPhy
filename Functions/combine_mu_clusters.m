@@ -9,7 +9,7 @@ function Fout = combine_mu_clusters(F)
         cellinfo = loaddatastruct(andef{ian}{2}, andef{ian}{3}, 'cellinfo');
         animal = animals{ian};
         fprintf('%s\n',animal);
-        idata = Fout(ian).output{1};
+        idata = [Fout(ian).output{1}{:}];
         data_keys = cell2mat({idata.index}');
         mu_keys = evaluatefilter(cellinfo, 'isequal($tags, {''mua''})');
         mu_keys = mu_keys(find(ismember(mu_keys,data_keys, 'rows')),:);

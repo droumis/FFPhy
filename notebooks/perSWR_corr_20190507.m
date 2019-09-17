@@ -45,7 +45,6 @@ if loadFilterOutput == 1
 end
 
 if plotstuff
-    
     Pp = load_plotting_params('ripcorr_Xdays');
     % so now that i have a few measures of rip trig spike correlation, i
     % want to collect each into a distribution per day per pair.
