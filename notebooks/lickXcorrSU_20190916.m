@@ -17,8 +17,7 @@ saveplots = 1;
 %% data filter params
 Fp.animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ2', 'JZ4'};
 Fp.filtfunction = 'dfa_lickXCorrSpikes';
-Fp.add_params = {'savefigs', 'wtrackdays', 'valid_ntrodes', 'exemplar_wepochs', ...
-    'nonMU_cells'};
+Fp.add_params = {'savefigs', 'wtrackdays', 'valid_ntrodes', 'nonMU_cells'}; %'exemplar_wepochs'
 %% FF
 Fp = load_filter_params(Fp, 'add_params', Fp.add_params);
 if create_filter
@@ -38,8 +37,8 @@ if load_ffdata
 if make_licks
     for ani = 1:length(F)
         animdef = animaldef(F(ani).animal{3});
-        DIO = loaddatastruct(animdef{2}, Fp.animals{1}, 'DIO');
-        task = loaddatastruct(animdef{2}, Fp.animals{1}, 'task');
+        DIO = loaddatastruct(animdef{2}, F(ani).animal{3}, 'DIO');
+        task = loaddatastruct(animdef{2}, F(ani).animal{3}, 'task');
         get_licks(F(ani).animal{3}, F(ani).epochs{1}, DIO, task)
     end
 end
@@ -65,5 +64,4 @@ if pilotEpoch
             'tmax', Fp.tmax, 'bin', Fp.bin, 'plotfigs', plotfigs, 'saveplots', saveplots, ...
             'displayplots', displayplots, 'animal', animal);
     end
-    
 end

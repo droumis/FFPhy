@@ -47,7 +47,7 @@ function save_F(F, filtOutputDirectory, filename, animal, varargin)
 animpos = 1;
 varname = '';
 if ~isempty(varargin)
-    assign(varargin{:})
+    assign(varargin{:});
 end
 if ~isdir(filtOutputDirectory)
     mkdir(filtOutputDirectory);

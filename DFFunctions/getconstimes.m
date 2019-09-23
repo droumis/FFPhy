@@ -50,11 +50,11 @@ for option = optioninds
             minstdthresh = varargin{option+1};
 %         case 'maxstdthresh'
 %             maxstdthresh = varargin{option+1}; %DR added option for max std thresh in order to define a range of std
-        case 'exclusion_dur'                 % kk implemented 8.1.13 -- exclusion of chained events + enforces minimum # of tetrodes participating
-            exclusion_dur = varargin{option+1};     % duration after ripple within which start of any subsequent ripple is eliminated
+        case 'exclusion_dur' % kk implemented 8.1.13 -- exclusion of chained events + enforces minimum # of tetrodes participating
+            exclusion_dur = varargin{option+1}; % duration after ripple within which start of any subsequent ripple is eliminated
         case 'consensus_numtets'
             consensus_numtets = varargin{option+1};
-        case 'exclusion2'      % kk implemented 7.30.14, excludes events that overlap with primary event
+        case 'exclusion2' % kk implemented 7.30.14, excludes events that overlap with primary event
             exclusion2_eventconsname = varargin{option+1};
             exclusion2_tetfilter = varargin{option+2};
             exclusion2_consensus_numtets = varargin{option+3};
@@ -63,7 +63,7 @@ for option = optioninds
             exclusion2_maxvelocity = varargin{option+6};
         case 'minvelocity'
             minvelocity = varargin{option+1};
-        case 'maxvelocity'    % use this as a correct alternative to get2dstate .. so you don't get truncated filtered times..
+        case 'maxvelocity' % use this as a correct alternative to get2dstate .. so you don't get truncated filtered times..
             maxvelocity = varargin{option+1};
         case 'coherence'
             coherence_flag = 1;

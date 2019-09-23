@@ -168,13 +168,47 @@ for s = params
             wp = getWaveParams(waveSet);
             
         case 'behavestate'
+            
+        case 'dfa_lickBoutSpikeCorr'
+            
+            lickGap = 0.5;
+            boutNum = 10;
+
+            cellpairfilter = {'allcomb', ...
+                '($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))', ...
+                '($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))';};
+            filtfunction = 'dfa_lickBoutSpikeCorr';
+            eventName = 'lick';
+            iterator = 'singlecellanal';
+            datatypes = {'spikes'};
+            options = {'savefigas', 'png', 'eventName',eventName};
+            
+        case 'lickbouts'
+            % timefilt1: lick bouts, 
+            timefilter{end+1} = {'getLickBout', '($lickBout == 1)', 'lickGap', lickGap, ...
+                'boutNum', boutNum};
+            
+        case 'nolickbouts'
+            % timefilt: immoble not lick bout
+            lickGap = 0.5;
+            boutNum = 10;
+            timefilter{end+1} = {'getLickBout', ...
+                '(($lickBout == 0) & ($velocity < 1) & ($timeFromLick > .5))', ...
+                'lickGap', lickGap, 'boutNum', boutNum};
+                
+        case 'dfa_lickphaseSUclustering'
+            eventName = 'lick';
+            filtfunction = 'dfa_lickphaseSUclustering';
+            iterator = 'singlecellanal';
+            datatypes = {'lick', 'spikes', 'cellinfo', 'DIO', 'task'};
+            options = {'savefigas', 'png', 'eventName',eventName};
+            
         case 'dfa_lickXCorrSpikes'
             eventName = 'lick';
             filtfunction = 'dfa_lickXCorrSpikes';
             iterator = 'singlecellanal';
             tmax = 1;
             bin = .02;
-            eventName = 'lick';
             datatypes = {'lick', 'spikes', 'cellinfo'};
             options = {'savefigas', 'png', 'bin', bin, 'tmax',tmax,'eventName',eventName};
             

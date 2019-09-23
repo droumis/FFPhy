@@ -58,13 +58,15 @@ for an = 1:length(f)
                 try
                     d{day}{ep} = eval([f(an).function.loadvariables{i} '{day}{ep}']);
                     eval(['foptions = [foptions {f(an).function.loadvariables{i},d}];']);
-                    continue
+                catch
+%                     continue
+                    error('cant load f(an).function.loadvariables{i}\n')
                 end
             end
             for c = 1:numcells % can use parfor
                 tet = f(an).data{g}{e}(c,1);
                 clust = f(an).data{g}{e}(c,2);
-                tmpindex = [day ep tet clust];
+                cindex = [day ep f(an).data{g}{e}(c,:)];
                 %         foptions = [foptions {'an', an}]; %add the animal index to the varargins
                 %         if outputDayEpTetCells
                 %             eval(['f(an).output{' num2str(ep) '}{' num2str(tet) ...
@@ -76,7 +78,7 @@ for an = 1:length(f)
                     ep, tet, clust, f(an).function.name));
                         % run the specified filter function on this set of animal/epoch/ntrodes
                 foptions = [foptions {'animal',animal}];
-                fout{c} = feval(f(an).function.name, tmpindex, excludeperiods, foptions{:});
+                fout{c} = feval(f(an).function.name, cindex, excludeperiods, foptions{:});
                 %save the function output in the filter variable.  Allows numeric or struct outputs
 %                 if isstruct(fout)
 %                     if (isempty(f(an).output) | (length(f(an).output) < g))

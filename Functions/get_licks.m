@@ -26,7 +26,7 @@ F = struct;
 F(1).data = lick;
 F(1).animal = animal;
 if saveout
-    save_data(F, 'filterframework', 'lick', 'animpos', 0, 'varname', 'lick')
+    save_data(F, 'filterframework', 'lick', 'animpos', 0, 'varname', 'lick');
 end
 end
 
