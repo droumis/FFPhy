@@ -1,6 +1,6 @@
 
 create_filter = 0;
-run_ff = 0;
+run_ff = 1;
 save_ffdata = 0;
 load_ffdata = 0;
 stack_spikes = 0;

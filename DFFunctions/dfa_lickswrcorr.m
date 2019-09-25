@@ -25,9 +25,9 @@ bin = .01;
 tmax = 1;
 boutNum = 10;
 lickgap = .5;
-sw1 = bin*2;
+sw1 = bin*3;
 % sw1 = 0.005; 
-sw2 = .500;
+sw2 = .5;
 rmstmax = 0.1;
 rmsmincounts = 50;
 numshuffs = 1000;
@@ -72,21 +72,26 @@ meanMRVmagShuff = [];
 smthxcShuff = [];
 excorrShuff = [];
 phasemodShuff = [];
-r = randi([-shuffOffset shuffOffset],length(swrStart),numshuffs)/1e3;
+r = randi([-shuffOffset shuffOffset],length(swrinbouts),numshuffs)/1e3;
+swrStartShift = bsxfun(@plus,swrinbouts,r); % make shuffle array
 for i = 1:numshuffs
     % (mean/std xcorr norm smooth)
-    swrStartShift = sort(swrinbouts+r(i,:));    
-    xcSh = spikexcorr(swrStartShift,lickboutlicks, bin, tmax); 
+%     swrStartShift = sort(swrinbouts+r(:,i));
+    xcSh = spikexcorr(swrStartShift(:,i),lickboutlicks, bin, tmax); 
     normxc = xcSh.c1vsc2 ./ sqrt(xcSh.nspikes1 * xcSh.nspikes2); % normalize
     smthxcShuff(i,:) = smoothvect(normxc, g1);
     % excorr
     excorrShuff(i) = nanmean(excesscorr(xcSh.time, xcSh.c1vsc2, xcSh.nspikes1, ...
         xcSh.nspikes2, sw1, sw2)); %0 lag
     % MRVmag
-    [~,~,spbin] = histcounts(swrinbouts, lickboutlicks);
-    relswrtime = swrinbouts - lickboutlicks(spbin); % swrtime - the nearest preceding lick in bout
-    ili = lickboutlicks(spbin+1) - lickboutlicks(spbin);
-    useILI = all([ili > .1, ili < .2],2);
+    [~,~,spbin] = histcounts(swrStartShift(:,i), lickboutlicks);
+    % exclude swrs falling outside lickbouts
+    goodswr = swrStartShift(spbin>0,i);
+    spbin = spbin(spbin>0);
+    lickbinstart = lickboutlicks(spbin);
+    relswrtime = goodswr - lickbinstart; % swrtime - the nearest preceding lick in bout
+    ili = lickboutlicks(spbin+1) - lickbinstart; % inter lick interval
+    useILI = all([ili > .1, ili < .2],2); % include know lick bout intervals
     swrlickcylcephase = relswrtime(useILI) ./ ili(useILI);
     swrLickPhaseShift = 2*pi*(swrlickcylcephase);
     meanvec = mean(exp(1i*swrLickPhaseShift));
