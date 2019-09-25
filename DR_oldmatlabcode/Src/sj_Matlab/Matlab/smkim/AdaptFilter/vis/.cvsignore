@@ -1,0 +1,7 @@
+afMeshViewUI.cxx
+afMeshViewUI.h
+afViewUI.cxx
+afViewUI.h
+makedepend
+vis.mexglx
+*.mexglx

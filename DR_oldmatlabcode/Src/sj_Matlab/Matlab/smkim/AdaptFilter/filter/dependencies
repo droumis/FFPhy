@@ -1,0 +1,41 @@
+adaptFilter.o: adaptFilter.cc ../aux/defs.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h ../aux/hippoIO.h \
+  ../aux/TData.h ../aux/../aux/defs.h ../model/modelFactory.h \
+  ../model/../aux/defs.h ../model/AdaptModel.h ../model/../aux/TData.h \
+  ../model/../aux/hippoIO.h ../model/../aux/Grad.h \
+  ../model/../aux/../aux/numerics.h ../model/../aux/../aux/hippoIO.h \
+  ../model/VDynamics1d.h ../model/VDynamics.h ../model/../aux/numerics.h \
+  ../model/../aux/mexAux.h ../model/VDynamics2d.h \
+  ../filter/filterFactory.h ../filter/../aux/defs.h \
+  ../filter/../model/AdaptModel.h ../filter/../gen/VGenerator.h \
+  ../filter/../gen/../aux/defs.h ../filter/VFilter.h
+AscentFilter.o: AscentFilter.cc ../aux/hippoIO.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h AscentFilter.h \
+  VFilter.h ../aux/defs.h ../model/IsiModel.h \
+  ../model/../model/AdaptModel.h ../model/../model/../aux/defs.h \
+  ../model/../model/../aux/TData.h ../model/../model/../aux/../aux/defs.h \
+  ../model/../model/../aux/hippoIO.h ../model/../model/../aux/Grad.h \
+  ../model/../model/../aux/../aux/numerics.h \
+  ../model/../model/../aux/../aux/hippoIO.h \
+  ../model/../model/VDynamics1d.h ../model/../model/VDynamics.h \
+  ../model/../model/../aux/numerics.h ../model/../model/../aux/mexAux.h \
+  ../model/../model/VDynamics2d.h ../model/../aux/defs.h
+filterFactory.o: filterFactory.cc ../aux/hippoIO.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h filterFactory.h \
+  ../aux/defs.h ../model/AdaptModel.h ../model/../aux/defs.h \
+  ../model/../aux/TData.h ../model/../aux/../aux/defs.h \
+  ../model/../aux/hippoIO.h ../model/../aux/Grad.h \
+  ../model/../aux/../aux/numerics.h ../model/../aux/../aux/hippoIO.h \
+  ../gen/VGenerator.h ../gen/../aux/defs.h VFilter.h AscentFilter.h \
+  ../model/IsiModel.h ../model/../model/AdaptModel.h \
+  ../model/../model/VDynamics1d.h ../model/../model/VDynamics.h \
+  ../model/../model/../aux/defs.h ../model/../model/../aux/numerics.h \
+  ../model/../model/../aux/mexAux.h ../model/../model/../aux/hippoIO.h \
+  ../model/../model/../aux/TData.h ../model/../model/../aux/Grad.h \
+  ../model/../model/VDynamics2d.h

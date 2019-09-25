@@ -1,0 +1,25 @@
+
+eg.
+
+Create the analog input object ai and add four channels to it. ai = analoginput('nidaq',1);
+chans = addchannel(ai,0:3);
+Acquire 1 second of data and display the logged event types. start(ai)
+events = ai.EventLog;
+{events.Type}
+ans = 
+    'Start'    'Trigger'    'Stop
+To examine the data associated with the trigger event: events(2).Data
+ans = 
+      AbsTime: [1999 2 12 14 54 52.5456]
+    RelSample: 0
+      Channel: []
+      Trigger: 1
+
+
+To convert the clock vector to a more convenient form: t = fix(abstime);
+sprintf('%d:%d:%d', t(4),t(5),t(6))
+ans =
+13:26:20
+
+
+Events and CallbacksYou can enhance the power and flexibility of your analog input application by utilizing events. An event occurs at a particular time after a condition is met and might result in one or more callbacks. While the analog input object is running, you can use events to display a message, display data, analyze data, and so on. Callbacks are controlled through callback properties and callback functions. All event types have an associated callback property. Callback functions are M-file functions that you construct to suit your specific data acquisition needs. You execute a callback when a particular event occurs by specifying the name of the M-file callback function as the value for the associated callback property. Note that daqcallback is the default value for some callback properties

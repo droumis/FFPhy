@@ -1,0 +1,10 @@
+makedepend
+dependencies
+visModel.mexglx
+*.mat
+GUImain.h
+GUImain.cxx
+GUIMain.cxx
+tmpshow
+
+debug*

@@ -1,0 +1,27 @@
+/.cvsignore/1.1/Fri Oct 29 20:05:24 2004//
+/Hist2Stat.m/1.1/Thu May  4 00:45:46 2006//
+/MutualInfoDemo.m/1.1/Thu Oct 14 01:54:02 2004//
+/MutualInfoTest.m/1.2/Tue Apr  4 17:38:15 2006//
+/MutualInfoTest2.m/1.1/Thu Oct 14 01:54:03 2004//
+/MutualInfoTest3.m/1.1/Thu Oct 14 01:54:03 2004//
+/cellselect-test.mat/1.1/Thu Oct 14 01:54:03 2004//
+/cellselect-test2.mat/1.1/Thu Oct 14 01:54:03 2004//
+/genDynamic.m/1.1/Thu Oct 14 01:54:03 2004//
+/genMInfoDist.m/1.1/Thu Oct 14 01:54:03 2004//
+/genStatic.m/1.1/Thu Oct 14 01:54:03 2004//
+/getLocalFilterModel.m/1.1/Thu Oct 14 01:54:03 2004//
+/getLocalStatOpts.m/1.1/Thu Oct 14 01:54:03 2004//
+/mInfoAF.mat/1.1/Thu Oct 14 01:54:03 2004//
+/mInfoDist.mat/1.1/Thu Oct 14 01:54:03 2004//
+/mInfoGauss.m/1.1/Thu Oct 14 01:54:03 2004//
+/mfMInfoAF.m/1.1/Thu Oct 14 01:54:03 2004//
+/mfMInfoDist.m/1.1/Thu Oct 14 01:54:03 2004//
+/run.m/1.1/Thu Oct 14 01:54:03 2004//
+/select-100s.mat/1.1/Thu Oct 14 01:54:03 2004//
+/select-200s.mat/1.1/Thu Oct 14 01:54:03 2004//
+/select-400s.mat/1.1/Thu Oct 14 01:54:03 2004//
+/select-end.mat/1.1/Thu Oct 14 01:54:03 2004//
+/select-test.mat/1.1/Thu Oct 14 01:54:03 2004//
+/setAux.m/1.1/Thu Oct 14 01:54:03 2004//
+/setLocalOptions.m/1.2/Tue Oct 26 05:43:03 2004//
+D

@@ -1,0 +1,61 @@
+function runall(indir)
+adapt_dir= {indir};
+%adapt_dir= {
+%'discrete_28ms_xp4_t005',
+%};
+%adapt_dir= {'adapt_xp015_t015', 'adapt_xp2_t1', 'adapt_xp05_t015', ...
+%'adapt_xp015_t005', 'adapt_xp1_t015', 'adapt_xp2_t005'};
+%select_id= {'all-placefields-HomeArm'};
+%select_id= {'all-placefields-HomeArm'};
+%select_id= {'all-placefields3-HomeArm'};
+%select_id= {'placefields4-novel'};
+select_id= {
+%'placefields4-satellite',
+%'placefields4-fam',
+%'placefields4-train',
+'placefields4-novel',
+};
+%select_id= {'placefields4-satellite'};
+%select_id= {'placefields4'};
+%select_id= { 'placefields4-fam', 'placefields4-novel'};
+%select_id= {'placefields4-train', 'placefields4-satellite'};
+%select_id= {'placefields4-train', 'placefields4-satellite', 'placefields4-novel', 'placefields4-fam'};
+
+%forallrats('selectNovel(''satellite'')', 'placefields4', 'data2');
+
+
+
+tic
+for iS=1:length(select_id)
+    viol= []; vind= [];
+    for i=1:length(adapt_dir)
+        fprintf(1, '******* starting %s %s *******\n', select_id{iS}, adapt_dir{i});
+        % no reruns
+        forallrats('runAdaptFilter([], [], 1)', select_id{iS}, adapt_dir{i});
+        % run all 
+%        forallrats('runAdaptFilter', select_id{iS}, adapt_dir{i});
+
+% new version, using common stat options
+        forallrats('runStats2', select_id{iS}, adapt_dir{i});
+% old version, using local stat options
+%        forallrats('runStats', select_id{iS}, adapt_dir{i}); 
+
+        forallrats('showKSplot([],1,r);', select_id{iS}, adapt_dir{i});
+        [viol(:,2*i-1:2*i), vind]= showKSplot([],1,-1);
+%        save(['KStest-' select_id{iS} '-' adapt_dir{i}], 'adapt_dir',  'select_id',  'viol',  'vind')
+%        save(['KStest-' select_id{iS} ], 'adapt_dir',  'select_id',  'viol',  'vind')
+
+        %    collectAnaList(select_id, adapt_dir{i});
+
+        %    forallrats('cmpStats(''Integral2d'', ''LinCorr'', 0,r)', select_id{iS}, adapt_dir{i});
+%            forallrats('cmpStats(''Integral2d'', ''MutualInfo'', 0,r);', select_id{iS}, adapt_dir{i});
+%            sel= cmpStats;
+%            figname= ['asym-' select_id{iS} '-' adapt_dir{i}];
+%            save(figname, 'sel');
+%            disp('press key'); pause
+    end
+end
+%save  KStest_summary viol vind
+toc
+
+

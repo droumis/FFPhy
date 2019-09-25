@@ -1,0 +1,134 @@
+modelFactory.o: modelFactory.cc modelFactory.h ../aux/defs.h AdaptModel.h \
+  ../aux/TData.h ../aux/../aux/defs.h ../aux/hippoIO.h ../aux/Grad.h \
+  ../aux/../aux/numerics.h ../aux/../aux/hippoIO.h VDynamics1d.h \
+  VDynamics.h ../aux/numerics.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h VDynamics2d.h \
+  ../model/Pos_Isi.h ../model/../model/IsiModel.h \
+  ../model/../model/../model/AdaptModel.h \
+  ../model/../model/../model/VDynamics1d.h \
+  ../model/../model/../model/VDynamics2d.h \
+  ../model/../model/../aux/defs.h ../model/PosPhase_Isi.h \
+  ../model/PosXY_Isi.h ../model/Gauss.h ../model/../model/VDynamics2d.h \
+  ../model/Const.h ../model/../model/VDynamics1d.h \
+  ../model/../model/AdaptModel.h ../model/Operators.h \
+  ../model/../aux/numerics.h ../model/../aux/Grad.h ../model/CSplines.h \
+  ../model/VDynamics1d.h ../model/../aux/defs.h ../model/CSStorage.h \
+  ../model/CSplinesFct.h ../model/../aux/hippoIO.h ../model/CSFunction.h \
+  ../model/VDynamics.h ../model/CSplinesNorm.h ../model/CSplines.h \
+  ../model/CSplines2d.h ../model/VDynamics2d.h
+CSplines.o: CSplines.cc ../aux/hippoIO.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h CSplines.h \
+  VDynamics1d.h VDynamics.h ../aux/defs.h ../aux/numerics.h \
+  ../aux/hippoIO.h ../aux/TData.h ../aux/../aux/defs.h ../aux/Grad.h \
+  ../aux/../aux/numerics.h CSStorage.h CSplinesFct.h CSFunction.h \
+  Operators.h
+IsiModel.o: IsiModel.cc ../aux/hippoIO.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h modelFactory.h \
+  ../aux/defs.h AdaptModel.h ../aux/TData.h ../aux/../aux/defs.h \
+  ../aux/Grad.h ../aux/../aux/numerics.h ../aux/../aux/hippoIO.h \
+  VDynamics1d.h VDynamics.h ../aux/numerics.h VDynamics2d.h IsiModel.h \
+  ../model/AdaptModel.h ../model/VDynamics1d.h ../model/VDynamics2d.h
+eval2DModel.o: eval2DModel.cc ../aux/defs.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h ../aux/hippoIO.h \
+  ../model/modelFactory.h ../model/../aux/defs.h ../model/AdaptModel.h \
+  ../model/../aux/TData.h ../model/../aux/../aux/defs.h \
+  ../model/../aux/hippoIO.h ../model/../aux/Grad.h \
+  ../model/../aux/../aux/numerics.h ../model/../aux/../aux/hippoIO.h \
+  ../model/VDynamics1d.h ../model/VDynamics.h ../model/../aux/numerics.h \
+  ../model/../aux/mexAux.h ../model/VDynamics2d.h ../model/PosPhase_Isi.h \
+  ../model/../model/IsiModel.h ../model/../model/../model/AdaptModel.h \
+  ../model/../model/../model/VDynamics1d.h \
+  ../model/../model/../model/VDynamics2d.h \
+  ../model/../model/../aux/defs.h
+Operators.o: Operators.cc ../aux/hippoIO.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h ../aux/numerics.h \
+  ../aux/hippoIO.h AdaptModel.h ../aux/defs.h ../aux/TData.h \
+  ../aux/../aux/defs.h ../aux/Grad.h ../aux/../aux/numerics.h Operators.h
+AdaptModel.o: AdaptModel.cc ../aux/hippoIO.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h AdaptModel.h \
+  ../aux/defs.h ../aux/TData.h ../aux/../aux/defs.h ../aux/Grad.h \
+  ../aux/../aux/numerics.h ../aux/../aux/hippoIO.h
+CSplinesFct.o: CSplinesFct.cc ../aux/hippoIO.h ../aux/numerics.h \
+  ../aux/hippoIO.h CSplinesFct.h
+CSIncrement.o: CSIncrement.cc ../aux/hippoIO.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h CSIncrement.h \
+  ../aux/defs.h CSStorage.h ../aux/numerics.h ../aux/hippoIO.h \
+  CSplinesFct.h CSFunction.h VDynamics.h ../aux/TData.h \
+  ../aux/../aux/defs.h ../aux/Grad.h ../aux/../aux/numerics.h Operators.h
+CSIncRectify.o: CSIncRectify.cc CSIncRectify.h CSIncrement.h \
+  ../aux/defs.h CSStorage.h ../aux/numerics.h ../aux/hippoIO.h \
+  CSplinesFct.h ../aux/hippoIO.h CSFunction.h VDynamics.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h ../aux/TData.h \
+  ../aux/../aux/defs.h ../aux/Grad.h ../aux/../aux/numerics.h Operators.h
+CSCompress.o: CSCompress.cc ../aux/hippoIO.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h CSCompress.h \
+  ../aux/defs.h CSStorage.h ../aux/numerics.h ../aux/hippoIO.h \
+  CSplinesFct.h CSFunction.h VDynamics.h ../aux/TData.h \
+  ../aux/../aux/defs.h ../aux/Grad.h ../aux/../aux/numerics.h Operators.h
+CSFunction.o: CSFunction.cc ../aux/hippoIO.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h CSFunction.h \
+  ../aux/defs.h ../aux/numerics.h ../aux/hippoIO.h VDynamics.h \
+  ../aux/TData.h ../aux/../aux/defs.h ../aux/Grad.h \
+  ../aux/../aux/numerics.h CSplinesFct.h Operators.h CSIncrement.h \
+  CSStorage.h CSIncRectify.h CSCompress.h
+CSStorage.o: CSStorage.cc CSStorage.h ../aux/defs.h ../aux/numerics.h \
+  ../aux/hippoIO.h CSplinesFct.h ../aux/hippoIO.h CSFunction.h \
+  VDynamics.h ../aux/mexAux.h /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h ../aux/TData.h \
+  ../aux/../aux/defs.h ../aux/Grad.h ../aux/../aux/numerics.h Operators.h
+CSplines2d.o: CSplines2d.cc ../aux/hippoIO.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h CSplines2d.h \
+  ../aux/defs.h VDynamics2d.h ../aux/Grad.h ../aux/../aux/numerics.h \
+  ../aux/../aux/hippoIO.h VDynamics.h ../aux/numerics.h ../aux/TData.h \
+  ../aux/../aux/defs.h CSStorage.h CSplinesFct.h CSFunction.h Operators.h
+CSplinesNorm.o: CSplinesNorm.cc ../aux/hippoIO.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h CSplinesNorm.h \
+  ../aux/defs.h CSplines.h VDynamics1d.h VDynamics.h ../aux/numerics.h \
+  ../aux/hippoIO.h ../aux/TData.h ../aux/../aux/defs.h ../aux/Grad.h \
+  ../aux/../aux/numerics.h CSStorage.h CSplinesFct.h CSFunction.h \
+  Operators.h
+Gauss.o: Gauss.cc ../aux/hippoIO.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h Gauss.h \
+  ../model/VDynamics2d.h ../model/../aux/defs.h ../model/../aux/hippoIO.h \
+  ../model/../aux/Grad.h ../model/../aux/../aux/numerics.h \
+  ../model/../aux/../aux/hippoIO.h ../model/VDynamics.h \
+  ../model/../aux/numerics.h ../model/../aux/mexAux.h \
+  ../model/../aux/TData.h ../model/../aux/../aux/defs.h
+Const.o: Const.cc ../aux/hippoIO.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h Const.h \
+  ../model/VDynamics1d.h ../model/VDynamics.h ../model/../aux/defs.h \
+  ../model/../aux/numerics.h ../model/../aux/hippoIO.h \
+  ../model/../aux/mexAux.h ../model/../aux/hippoIO.h \
+  ../model/../aux/TData.h ../model/../aux/../aux/defs.h \
+  ../model/../aux/Grad.h ../model/../aux/../aux/numerics.h \
+  ../model/VDynamics2d.h ../model/AdaptModel.h Operators.h \
+  ../aux/numerics.h ../aux/Grad.h

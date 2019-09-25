@@ -1,0 +1,145 @@
+Warning: No display specified.  You will not be able to display graphics on the screen.
+
+                              < M A T L A B >
+                  Copyright 1984-2007 The MathWorks, Inc.
+                         Version 7.5.0.338 (R2007b)
+                               August 9, 2007
+
+ 
+  To get started, type one of these: helpwin, helpdesk, or demo.
+  For product information, visit www.mathworks.com.
+ 
+Hallo Sen! It's Thu Sep 11 20:45:37 PDT 2008
+adding your paths...
+Generating directory names...
+/home/chengs/theta/kyl/results/nonripple_xp001_t150  -- generating new files.
+/home/chengs/theta/ter/results/nonripple_xp001_t150  -- generating new files.
+/home/chengs/theta/sta/results/nonripple_xp001_t150  -- generating new files.
+/home/chengs/theta/fel/results/nonripple_xp001_t150  -- generating new files.
+/home/chengs/theta/kyl/results/nonripple_xp001_t180  -- using existing files.
+/home/chengs/theta/ter/results/nonripple_xp001_t180  -- using existing files.
+/home/chengs/theta/sta/results/nonripple_xp001_t180  -- using existing files.
+/home/chengs/theta/fel/results/nonripple_xp001_t180  -- using existing files.
+******* starting pf9-novel nonripple_xp001_t150 11-Sep-2008 20:45:39 *******
+cell [1 4 25 6], number 1
+/data17/chengs/kyl/nonripple_xp001_t150/adaptest01.mat does not exist yet...
+loading /home/chengs/theta/kyl/data2/behavdata01.mat ...
+loading /home/chengs/theta/kyl/data2/spikedata01.mat ...
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 748 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+... done with filter.
+cell [1 4 25 8], number 2
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 605 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+... done with filter.
+cell [1 4 25 12], number 3
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 1556 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+... done with filter.
+cell [1 4 27 2], number 4
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 643 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+... done with filter.
+cell [1 4 27 4], number 5
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 2559 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+... done with filter.
+cell [1 4 28 6], number 6
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 3455 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+... done with filter.
+cell [2 4 25 1], number 7
+saved
+/data17/chengs/kyl/nonripple_xp001_t150/adaptest02.mat does not exist yet...
+loading /home/chengs/theta/kyl/data2/behavdata02.mat ...
+loading /home/chengs/theta/kyl/data2/spikedata02.mat ...
+
+Running adaptive filtering ...
+Data initialized: 665978 timesteps, 1267 valid spikes
+Model initialized:  valid timesteps= 0 to 665977
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+... done with filter.
+cell [2 4 27 2], number 8
+
+Running adaptive filtering ...
+Data initialized: 665978 timesteps, 592 valid spikes
+Model initialized:  valid timesteps= 0 to 665977
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+... done with filter.
+cell [2 4 27 12], number 9
+
+Running adaptive filtering ...
+Data initialized: 665978 timesteps, 1207 valid spikes
+Model initialized:  valid timesteps= 0 to 665977
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+... done with filter.
+cell [2 4 28 3], number 10
+
+Running adaptive filtering ...
+Data initialized: 665978 timesteps, 2073 valid spikes
+Model initialized:  valid timesteps= 0 to 665977
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+... done with filter.
+cell [2 4 28 4], number 11
+
+Running adaptive filtering ...
+Data initialized: 665978 timesteps, 312 valid spikes
+Model initialized:  valid timesteps= 0 to 665977
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+... done with filter.
+cell [3 4 25 7], number 12
+saved
+/data17/chengs/kyl/nonripple_xp001_t150/adaptest03.mat does not exist yet...
+loading /home/chengs/theta/kyl/data2/behavdata03.mat ...
+loading /home/chengs/theta/kyl/data2/spikedata03.mat ...
+
+Running adaptive filtering ...
+Data initialized: 695961 timesteps, 2278 valid spikes
+Model initialized:  valid timesteps= 0 to 695960
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+... done with filter.
+cell [3 4 25 9], number 13
+
+Running adaptive filtering ...
+Data initialized: 695961 timesteps, 681 valid spikes
+Model initialized:  valid timesteps= 0 to 695960
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+... done with filter.
+cell [3 4 26 2], number 14
+
+Running adaptive filtering ...
+Data initialized: 695961 timesteps, 1027 valid spikes
+Model initialized:  valid timesteps= 0 to 695960
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 

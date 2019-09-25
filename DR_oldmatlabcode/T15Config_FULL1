@@ -1,0 +1,1560 @@
+nslaves	1
+master	snow	11031
+slave	hail	11026
+% The port numbers must be > 1024 and < 65335
+port	11001
+port	11002
+port	11003
+port	11004
+port	11005
+port	11006
+port	11007
+port	11008
+port	11009
+port	11010
+port	11011
+port	11012
+port	11013
+port	11014
+port	11015
+port	11016
+port	11017
+port	11018
+port	11019
+port	11020
+port	11021
+port	11022
+port	11023
+port	11024
+port	11025
+datatype	snow	CONTINUOUS	POSITION	DIGITALIO FSDATA
+datatype	hail	SPIKE
+datadirectory	snow	/data/demetris
+datadirectory	hail	/data/demetris
+audio	0	100	1000	0
+audio	1	100	0	0
+dspclock	1
+colorfile	/usr/local/nspike/nspike_rgbcolor
+posinput        -1
+trackdarkpixels	0
+posthresh	230
+posxflip	1
+posyflip	0
+mpegquality	80
+mpegslices	2
+videocodec      1
+videogopsize    0
+ndioports	4
+dioport	0	input
+dioport	1	output
+dioport	2	output
+dioport	3	output
+fsgui stim
+fsdata POSITION
+fsdata CONTINUOUS 3
+eegtracelength	2.000000
+calibrationfile	/usr/local/nspike/nspikecalfile
+
+%          dsp num    samplingrate     machine assigned to dsp
+dspinfo     0              1               snow
+dspinfo     1              1500               snow
+dspinfo     2              1500               snow
+dspinfo     3              30000              hail
+dspinfo     4              30000              hail
+dspinfo     5              30000              hail
+dspinfo     6              30000              hail
+dspinfo     7              30000              hail
+dspinfo     8              30000              hail
+
+%          electrode chan# dsp_channel
+electmap       1      0      112
+electmap       1      1      96
+electmap       1      2      64
+electmap       1      3      80
+electmap       2      0      48
+electmap       2      1      32
+electmap       2      2      0
+electmap       2      3      16
+electmap       3      0      113
+electmap       3      1      97
+electmap       3      2      65
+electmap       3      3      81
+electmap       4      0      49
+electmap       4      1      33
+electmap       4      2      1
+electmap       4      3      17
+electmap       5      0      114
+electmap       5      1      98
+electmap       5      2      66
+electmap       5      3      82
+electmap       6      0      50
+electmap       6      1      34
+electmap       6      2      2
+electmap       6      3      18
+electmap       7      0      115
+electmap       7      1      99
+electmap       7      2      83
+electmap       7      3      3
+electmap       8      0      116
+electmap       8      1      100
+electmap       8      2      68
+electmap       8      3      84
+electmap       9      0      52
+electmap       9      1      36
+electmap       9      2      4
+electmap       9      3      20
+electmap       10      0      117
+electmap       10      1      101
+electmap       10      2      69
+electmap       10      3      85
+electmap       13      0      54
+electmap       13      1      38
+electmap       13      2      6
+electmap       13      3      22
+electmap       14      0      119
+electmap       14      1      103
+electmap       14      2      87
+electmap       14      3      7
+electmap       16      0      56
+electmap       16      1      40
+electmap       16      2      8
+electmap       16      3      24
+electmap       18      0      57
+electmap       18      1      41
+electmap       18      2      9
+electmap       18      3      25
+electmap       19      0      122
+electmap       19      1      106
+electmap       19      2      74
+electmap       19      3      90
+electmap       20      0      58
+electmap       20      1      42
+electmap       20      2      10
+electmap       20      3      26
+electmap       22      0      124
+electmap       22      1      108
+electmap       22      2      76
+electmap       22      3      92
+electmap       23      0      60
+electmap       23      1      44
+electmap       23      2      12
+electmap       23      3      28
+electmap       24      0      125
+electmap       24      1      109
+electmap       24      2      77
+electmap       24      3      93
+electmap       25      0      61
+electmap       25      1      45
+electmap       25      2      13
+electmap       25      3      29
+electmap       26      0      126
+electmap       26      1      110
+electmap       26      2      78
+electmap       26      3      94
+electmap       27      0      62
+electmap       27      1      46
+electmap       27      2      14
+electmap       27      3      30
+electmap       28      0      79
+electmap       28      1      111
+electmap       28      2      95
+electmap       28      3      11
+electmap       29      0      63
+
+%EEG channels
+hostname   snow
+   channel 0
+       dspnum      1
+       dspchan     112
+       number      1
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       2
+   channel 1
+       dspnum      1
+       dspchan     48
+       number      2
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       1
+   channel 2
+       dspnum      1
+       dspchan     113
+       number      3
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       2
+   channel 3
+       dspnum      1
+       dspchan     49
+       number      4
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       1
+   channel 4
+       dspnum      1
+       dspchan     114
+       number      5
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       2
+   channel 5
+       dspnum      1
+       dspchan     50
+       number      6
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       1
+   channel 6
+       dspnum      1
+       dspchan     115
+       number      7
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       2
+   channel 7
+       dspnum      1
+       dspchan     116
+       number      8
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       1
+   channel 8
+       dspnum      1
+       dspchan     52
+       number      9
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       2
+   channel 9
+       dspnum      1
+       dspchan     117
+       number      10
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       1
+   channel 10
+       dspnum      1
+       dspchan     54
+       number      13
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       2
+   channel 11
+       dspnum      1
+       dspchan     119
+       number      14
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       1
+   channel 12
+       dspnum      1
+       dspchan     56
+       number      16
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       1
+   channel 13
+       dspnum      1
+       dspchan     57
+       number      18
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       1
+   channel 14
+       dspnum      1
+       dspchan     122
+       number      19
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       2
+   channel 15
+       dspnum      1
+       dspchan     58
+       number      20
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       1
+   channel 16
+       dspnum      2
+       dspchan     124
+       number      22
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       1
+   channel 17
+       dspnum      2
+       dspchan     60
+       number      23
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       2
+   channel 18
+       dspnum      2
+       dspchan     125
+       number      24
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       1
+   channel 19
+       dspnum      2
+       dspchan     61
+       number      25
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       2
+   channel 20
+       dspnum      2
+       dspchan     126
+       number      26
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       1
+   channel 21
+       dspnum      2
+       dspchan     62
+       number      27
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       2
+   channel 22
+       dspnum      2
+       dspchan     79
+       number      28
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  2000
+       filter      1 400
+       color       1
+   channel 23
+       dspnum      2
+       dspchan     63
+       number      29
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      10000
+       maxdispval  65500
+       filter      1 11000
+       color       1
+
+%Spike channels
+hostname   hail
+   channel 0
+       dspnum      3
+       dspchan     112
+       number      1
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       2
+   channel 1
+       dspnum      3
+       dspchan     96
+       number      1
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       2
+   channel 2
+       dspnum      3
+       dspchan     64
+       number      1
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       2
+   channel 3
+       dspnum      3
+       dspchan     80
+       number      1
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       2
+   channel 4
+       dspnum      3
+       dspchan     48
+       number      2
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       3
+   channel 5
+       dspnum      3
+       dspchan     32
+       number      2
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       3
+   channel 6
+       dspnum      3
+       dspchan     0
+       number      2
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       3
+   channel 7
+       dspnum      3
+       dspchan     16
+       number      2
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       3
+   channel 8
+       dspnum      3
+       dspchan     113
+       number      3
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       4
+   channel 9
+       dspnum      3
+       dspchan     97
+       number      3
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       4
+   channel 10
+       dspnum      3
+       dspchan     65
+       number      3
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       4
+   channel 11
+       dspnum      3
+       dspchan     81
+       number      3
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       4
+   channel 12
+       dspnum      3
+       dspchan     49
+       number      4
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       5
+   channel 13
+       dspnum      3
+       dspchan     33
+       number      4
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       5
+   channel 14
+       dspnum      3
+       dspchan     1
+       number      4
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       5
+   channel 15
+       dspnum      3
+       dspchan     17
+       number      4
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       5
+   channel 16
+       dspnum      4
+       dspchan     114
+       number      5
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       6
+   channel 17
+       dspnum      4
+       dspchan     98
+       number      5
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       6
+   channel 18
+       dspnum      4
+       dspchan     66
+       number      5
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       6
+   channel 19
+       dspnum      4
+       dspchan     82
+       number      5
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       6
+   channel 20
+       dspnum      4
+       dspchan     50
+       number      6
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       7
+   channel 21
+       dspnum      4
+       dspchan     34
+       number      6
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       7
+   channel 22
+       dspnum      4
+       dspchan     2
+       number      6
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       7
+   channel 23
+       dspnum      4
+       dspchan     18
+       number      6
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       7
+   channel 24
+       dspnum      4
+       dspchan     115
+       number      7
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       8
+   channel 25
+       dspnum      4
+       dspchan     99
+       number      7
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       8
+   channel 26
+       dspnum      4
+       dspchan     83
+       number      7
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       8
+   channel 27
+       dspnum      4
+       dspchan     3
+       number      7
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       8
+   channel 28
+       dspnum      4
+       dspchan     116
+       number      8
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       9
+   channel 29
+       dspnum      4
+       dspchan     100
+       number      8
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       9
+   channel 30
+       dspnum      4
+       dspchan     68
+       number      8
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       9
+   channel 31
+       dspnum      4
+       dspchan     84
+       number      8
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       9
+   channel 32
+       dspnum      5
+       dspchan     52
+       number      9
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       10
+   channel 33
+       dspnum      5
+       dspchan     36
+       number      9
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       10
+   channel 34
+       dspnum      5
+       dspchan     4
+       number      9
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       10
+   channel 35
+       dspnum      5
+       dspchan     20
+       number      9
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       10
+   channel 36
+       dspnum      5
+       dspchan     117
+       number      10
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       1
+   channel 37
+       dspnum      5
+       dspchan     101
+       number      10
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       1
+   channel 38
+       dspnum      5
+       dspchan     69
+       number      10
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       1
+   channel 39
+       dspnum      5
+       dspchan     85
+       number      10
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       1
+   channel 40
+       dspnum      5
+       dspchan     54
+       number      13
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       4
+   channel 41
+       dspnum      5
+       dspchan     38
+       number      13
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       4
+   channel 42
+       dspnum      5
+       dspchan     6
+       number      13
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       4
+   channel 43
+       dspnum      5
+       dspchan     22
+       number      13
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       4
+   channel 44
+       dspnum      5
+       dspchan     119
+       number      14
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       5
+   channel 45
+       dspnum      5
+       dspchan     103
+       number      14
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       5
+   channel 46
+       dspnum      5
+       dspchan     87
+       number      14
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       5
+   channel 47
+       dspnum      5
+       dspchan     7
+       number      14
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       5
+   channel 48
+       dspnum      6
+       dspchan     56
+       number      16
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       7
+   channel 49
+       dspnum      6
+       dspchan     40
+       number      16
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       7
+   channel 50
+       dspnum      6
+       dspchan     8
+       number      16
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       7
+   channel 51
+       dspnum      6
+       dspchan     24
+       number      16
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       7
+   channel 52
+       dspnum      6
+       dspchan     57
+       number      18
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       9
+   channel 53
+       dspnum      6
+       dspchan     41
+       number      18
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       9
+   channel 54
+       dspnum      6
+       dspchan     9
+       number      18
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       9
+   channel 55
+       dspnum      6
+       dspchan     25
+       number      18
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       9
+   channel 56
+       dspnum      6
+       dspchan     122
+       number      19
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       10
+   channel 57
+       dspnum      6
+       dspchan     106
+       number      19
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       10
+   channel 58
+       dspnum      6
+       dspchan     74
+       number      19
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       10
+   channel 59
+       dspnum      6
+       dspchan     90
+       number      19
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       10
+   channel 60
+       dspnum      6
+       dspchan     58
+       number      20
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       1
+   channel 61
+       dspnum      6
+       dspchan     42
+       number      20
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       1
+   channel 62
+       dspnum      6
+       dspchan     10
+       number      20
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       1
+   channel 63
+       dspnum      6
+       dspchan     26
+       number      20
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       1
+   channel 64
+       dspnum      7
+       dspchan     124
+       number      22
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       3
+   channel 65
+       dspnum      7
+       dspchan     108
+       number      22
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       3
+   channel 66
+       dspnum      7
+       dspchan     76
+       number      22
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       3
+   channel 67
+       dspnum      7
+       dspchan     92
+       number      22
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       3
+   channel 68
+       dspnum      7
+       dspchan     60
+       number      23
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       4
+   channel 69
+       dspnum      7
+       dspchan     44
+       number      23
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       4
+   channel 70
+       dspnum      7
+       dspchan     12
+       number      23
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       4
+   channel 71
+       dspnum      7
+       dspchan     28
+       number      23
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       4
+   channel 72
+       dspnum      7
+       dspchan     125
+       number      24
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       5
+   channel 73
+       dspnum      7
+       dspchan     109
+       number      24
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       5
+   channel 74
+       dspnum      7
+       dspchan     77
+       number      24
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       5
+   channel 75
+       dspnum      7
+       dspchan     93
+       number      24
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       5
+   channel 76
+       dspnum      7
+       dspchan     61
+       number      25
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       6
+   channel 77
+       dspnum      7
+       dspchan     45
+       number      25
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       6
+   channel 78
+       dspnum      7
+       dspchan     13
+       number      25
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       6
+   channel 79
+       dspnum      7
+       dspchan     29
+       number      25
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       6
+   channel 80
+       dspnum      8
+       dspchan     126
+       number      26
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       7
+   channel 81
+       dspnum      8
+       dspchan     110
+       number      26
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       7
+   channel 82
+       dspnum      8
+       dspchan     78
+       number      26
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       7
+   channel 83
+       dspnum      8
+       dspchan     94
+       number      26
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       7
+   channel 84
+       dspnum      8
+       dspchan     62
+       number      27
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       8
+   channel 85
+       dspnum      8
+       dspchan     46
+       number      27
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       8
+   channel 86
+       dspnum      8
+       dspchan     14
+       number      27
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       8
+   channel 87
+       dspnum      8
+       dspchan     30
+       number      27
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       8
+   channel 88
+       dspnum      8
+       dspchan     79
+       number      28
+       electchan   0
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       9
+   channel 89
+       dspnum      8
+       dspchan     111
+       number      28
+       electchan   1
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       9
+   channel 90
+       dspnum      8
+       dspchan     95
+       number      28
+       electchan   2
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       9
+   channel 91
+       dspnum      8
+       dspchan     11
+       number      28
+       electchan   3
+       depth       0
+       refelect    0
+       refchan     0
+       thresh      40
+       maxdispval  200
+       filter      300 6000
+       color       9

@@ -1,0 +1,10 @@
+#comps='aurora blizzard cyclone lightning monsoon sunshine tornado tsunami virga'
+comps='aurora blizzard cyclone monsoon sunshine tornado tsunami virga'
+
+for c in $comps; do
+    echo  ========= $c =========
+    # show matlab processes
+#    ssh -x $c ps aux | grep matlab | grep chengs
+#     show active processes
+    ssh -x $c  top -b -n1 | head -n11 | tail -n4
+done

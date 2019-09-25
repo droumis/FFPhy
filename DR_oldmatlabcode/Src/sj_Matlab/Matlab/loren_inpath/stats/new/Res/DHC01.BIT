@@ -1,0 +1,201 @@
+From:	IN%"mdlm@ai.mit.edu" 26-FEB-1994 08:38:42.19
+To:	IN%"Y8RES@ttacs.ttu.edu"
+CC:
+Subj:	DHC
+
+Return-path: <mdlm@ai.mit.edu>
+Received: from life.ai.mit.edu by ttacs.ttu.edu (PMDF V4.2-13 #5184) id
+ <01H9C2TJ2M5C9AMFBN@ttacs.ttu.edu>; Sat, 26 Feb 1994 08:38:34 CST
+Received: from great-grain (great-grain.ai.mit.edu) by life.ai.mit.edu
+ (4.1/AI-4.10) for Y8RES@ttacs1.ttu.edu id AA08844; Sat, 26 Feb 94 09:37:31 EST
+Received: by great-grain (4.1/AI-4.10) id AA20375; Sat, 26 Feb 94 09:37:30 EST
+Date: Sat, 26 Feb 1994 09:37:30 -0500 (EST)
+From: mdlm@ai.mit.edu (Michael de la Maza)
+Subject: DHC
+To: Y8RES@ttacs.ttu.edu
+Message-id: <9402261437.AA20375@great-grain>
+Content-transfer-encoding: 7BIT
+
+
+
+Richard Strauss,
+
+I've included a listing of DHC's inner loop below.  Is that enough?
+
+Please keep us up to date on your work with DHC.  I can be reached at
+(617) 253-6247 and Deniz Yuret can be reached at (617) 253-1299.
+
+Cheers,
+Michael de la Maza
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; DHC.LISP              ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Deniz Yuret 27-OCT-93 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; The following is an implementation of the dynamic hill climbing algorithm
+;;; in LISP.  The DHC procedure expects four arguments:
+;;;
+;;; >> func: Function from float vectors to float values to be minimized.
+;;; >> xini: A float vector specifying the initial starting point.
+;;; >> vmin: A float vector specifying the minimum step size in each dimension.
+;;;          This determines the precision of the search.
+;;;          Using a finer grained search usually helps but is more expensive.
+;;; >> vmax: A float vector specifying the maximum step size in each dimension.
+;;;          This determines how fast DHC can move in the search space.
+;;;          When DHC gets stuck in a maximum it will try expanding its steps
+;;;          to find a way out.  VMAX also determines when to stop trying.
+;;;
+;;; To achieve scale independence, DHC represents its steps in units of vmin.
+;;; The step array has the form: (u0 u1 u2 ... ud -ud ... -u1 -u0); where
+;;;   d is the number of dimensions,
+;;;   ui (0 < i <= d) is the step vector in the i'th dimension
+;;;   u0 is the incrementally adjusted gradient vector
+;;;   -ui is the step in the opposite direction to ui
+;;; A unit step corresponds to an actual step of vmin in the search space.
+;;;
+;;; When DHC gets stuck at an optimum, it returns the best point it has found.
+;;; This might be a local optimum.  Thus a global search strategy should be
+;;; used in conjunction with DHC for more reliable results.  DHC should be used
+;;; for efficient local optimization.
+;;;
+;;; Order of function evaluations made by DHC in the sphere function is
+;;;   O(DIMS*LOG(DIST)); where
+;;;   DIMS is the dimensionality of space
+;;;   DIST is the distance of initial point to global optimum in vmin units
+;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                                                ;;;
+(defun dhc                                      ;;;
+    (&key                                       ;;; >> PARAMETERS:
+     (func #'sphere)                   	  	;;; target function
+     (xini #(4.0 -5.0))                         ;;; initial starting point
+     (vmin #(0.01 0.01))    	                ;;; vector of minimum step size
+     (vmax #(5.12 5.12))                    	;;; vector of maximum step size
+     &aux			                ;;; >> LOCAL VARIABLES:
+     (dims (length xini))			;;; dimensionality of space
+     (imax (+ (* 2 dims) 1))                    ;;; index of last step vector
+     (fini (funcall func xini)) 		;;; value at initial point
+     (smax (concatenate '(vector single-float)  ;;; the array of max step size
+	     (map 'list #'/ vmax vmin)          ;;; is ratio of vmax to vmin
+	     (list -1.0))))                     ;;; plus a -1 for extra vector
+  (do     	       			        ;;; >> STATE VARIABLES:
+   ((stuck nil)     				;;; flag set when stuck
+    (xbst (copy-seq xini)) (fbst fini)  	;;; best point and its value
+    (xcur (copy-seq xini)) (fcur fini)		;;; current point and its value
+    (step (init-step smax))			;;; array of int step vectors
+    (xstep (init-step smax))			;;; step before last motion
+    (gradv (v0 dims)) (gradi -1)                ;;; gradient vec and its index
+    (last (v0 dims))				;;; last step taken
+    (i -1))					;;; index into step
+   ((progn				        ;;; >> TERMINATION TEST:
+      (if stuck					;;; if stuck flag set
+	  (setf i (argmin step smax))		;;;   choose the smallest step
+	  (setf i (argmax step)))		;;;   else choose the largest
+      (= i -1))			                ;;; if no more steps
+    xbst)                              	  	;;;   return the best point
+  						;;; >> MAIN LOOP:
+    (map-into xcur				;;; set xcur to the
+	      #'(lambda (x y z) (+ x (* y z)))	;;;   best point plus the
+	      xbst (aref step i) vmin)		;;;   step vector normalized
+    (setf fcur (funcall func xcur))		;;; set fcur to value at xcur
+    (cond					;;;
+      ((< fcur fbst)				;;; >> IF NEW POINT BETTER
+       (if stuck (setf stuck nil))              ;;; clear the stuck flag
+       (replace xbst xcur) (setf fbst fcur)	;;; update best point & val
+       (dotimes (j (1+ imax))			;;; since we have moved
+	 (replace (aref xstep j) (aref step j)));;;   record step in xstep
+       (map-into (aref step (- imax i))	        ;;; set opp step to -curr/2
+		 #'-half (aref step i))	        ;;;   not to retry same point
+       (when (equalp (aref step i) last)        ;;; if last step repeated
+	 (map-into (aref step i)		;;;   set the current step
+		   #'double (aref step i))	;;;   to double the size
+	 (replace (aref xstep i) (aref step i)));;;   update xstep as well
+       (replace last (aref step i))	        ;;; record the last step
+       (cond					;;; Update the grad vector:
+	 ((= gradi -1)				;;;   if gradv is empty
+	  (replace gradv (aref step i))		;;;     set gradv to curr step
+	  (setf gradi (min i (- imax i))))	;;;     record the index
+	 ((= gradi (min i (- imax i)))          ;;;   else if curr vec is ||
+	  (map-into gradv			;;;     add the curr vec
+		    #'+ gradv (aref step i)))	;;;       to the gradv
+	 (t					;;;   else update the extra vec
+	  (map-into (aref step dims)		;;;     set extra step to
+		    #'+ (aref step i) gradv)    ;;;	  gradv + curr vec
+	  (setf (aref smax dims)		;;;     set smax to the max of
+	    (max (aref smax (min i (- imax i))) ;;;       curr vec smax
+		 (aref smax gradi)))	        ;;;       and gradv smax
+	  (map-into (aref step (1+ dims))	;;;	set the opposite step
+		    #'- (aref step dims))	;;;       to minus extra step
+	  (setf gradi -1))))			;;;     erase the gradv
+      (stuck		    			;;; >> ELSE IF ALREADY STUCK
+       (map-into (aref step i)			;;; double the current step
+		 #'double (aref step i)))	;;;
+      ((>= (size (aref step i)) 1.0)		;;; >> ELSE IF STEP >= VMIN
+       (map-into (aref step i)			;;; half the current step
+		 #'half (aref step i)))         ;;;
+      (t                           		;;; >> ELSE IF STEP TOO SMALL
+       (setf stuck t)				;;; set the stuck flag
+       (dotimes (j (1+ imax))			;;; reset the step vectors to
+	 (map-into (aref step j)                ;;;   double the last recorded
+		   #'double (aref xstep j)))))));;;   step vectors
+                                                ;;;
+                                                ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Following is a list of definitions of the procedures called by DHC.
+;;; >> SQ        : returns the square of a number
+;;; >> V0        : takes # of dims and returns a zero vector
+;;; >> SIZE      : calculates the size of a vector
+;;; >> DOUBLE    : multiplies a number by two
+;;; >> HALF      : divides a number by two
+;;; >> -HALF     : minus the half of a number
+;;; >> INIT-STEP : initializes step to unit vectors
+;;; >> ARGMIN    : returns the minimum sized step within bounds in a step array
+;;; >> ARGMAX    : returns the maximum sized step in a step array
+;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defun sq (x) (* x x))
+
+(defun v0 (d) (make-array d :element-type 'single-float :initial-element 0.0))
+
+(defun size (vec) (sqrt (apply #'+ (map 'list #'sq vec))))
+
+(defun double (x) (* x 2))
+
+(defun half (x) (/ x 2))
+
+(defun -half (x) (- (half x)))
+
+(defun init-step (smax)
+  (let* ((dims (1- (length smax)))
+	 (imax (1+ (* 2 dims)))
+	 (step (make-array (* 2 (1+ dims)))))
+    (dotimes (i (length step) step)
+      (setf (aref step i) (v0 dims))
+      (cond ((< i dims) (setf (aref (aref step i) i) (aref smax i)))
+	    ((<= i (1+ dims)))
+	    (t (setf (aref (aref step i) (- imax i))
+		     (- (aref smax (- imax i)))))))))
+
+(defun argmin (step smax)
+  (let ((nstep (length step))
+	(imin -1) (min MOST-POSITIVE-SINGLE-FLOAT))
+    (dotimes (i nstep imin)
+      (let ((si (size (aref step i))))
+	(if (and (<= si (aref smax (min i (- nstep i 1)))) (< si min))
+	    (setf min si imin i))))))
+
+(defun argmax (step)
+  (let ((nstep (length step))
+	(imax -1) (max 0.0))
+    (dotimes (i nstep imax)
+      (let ((si (size (aref step i))))
+	(if (> si max)
+	  (setf max si imax i))))))
+

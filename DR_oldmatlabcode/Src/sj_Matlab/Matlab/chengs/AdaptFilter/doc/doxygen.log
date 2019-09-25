@@ -1,0 +1,15 @@
+/home/chengs/AdaptFilter/model/GaussMix.cc:46: Warning: no uniquely matching class member found for
+  void init(int _startindex, int _endindex, double *x, double *y, traj_type *id)
+Possible candidates:
+  virtual void AFilter::GaussMix::init(double *x, double *y, traj_type *id) at line 44 of file /home/chengs/AdaptFilter/model/GaussMix.h
+/home/chengs/AdaptFilter/model/GaussMix.cc:58: Warning: no uniquely matching class member found for
+  double eval(int t, double x, double y, double isi, traj_type traj) const
+Possible candidates:
+  virtual double AFilter::GaussMix::eval(int startindex, int endindex, int timeindex, double x, double y, double isi, traj_type traj) const  at line 47 of file /home/chengs/AdaptFilter/model/GaussMix.h
+  virtual double AFilter::GaussMix::eval(int startindex, int endindex, int timeindex, double x, double y, traj_type traj) const  at line 50 of file /home/chengs/AdaptFilter/model/GaussMix.h
+/home/chengs/AdaptFilter/model/GaussMix.cc:64: Warning: no uniquely matching class member found for
+  double eval(int t, double x, double y, traj_type traj) const
+Possible candidates:
+  virtual double AFilter::GaussMix::eval(int startindex, int endindex, int timeindex, double x, double y, double isi, traj_type traj) const  at line 47 of file /home/chengs/AdaptFilter/model/GaussMix.h
+  virtual double AFilter::GaussMix::eval(int startindex, int endindex, int timeindex, double x, double y, traj_type traj) const  at line 50 of file /home/chengs/AdaptFilter/model/GaussMix.h
+/home/chengs/AdaptFilter/aux/templ.h:25: Warning: argument `name' of command @param is not found in the argument list of templ::templ()

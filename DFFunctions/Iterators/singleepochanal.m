@@ -41,7 +41,11 @@ for an = 1:length(f)
     for idayep = 1:numepochs % cannot use parfor bc eval is used within loop
         day = f(an).epochs{1}(idayep,1);
         epoch = f(an).epochs{1}(idayep,2);
-        ntrodes = f(an).eegdata{1}{idayep};
+        try
+            ntrodes = f(an).eegdata{1}{idayep};
+        catch
+            ntrodes = [];
+        end
         excludeperiods = f(an).excludetime{1}{idayep};
         
         % for this day/epoch load the eeg data for selected ntrodes

@@ -1,0 +1,357 @@
+
+                        BarsP 1.0. 
+
+     Copyright (C) 2003 Garrick Wallstrom, Charles Kooperberg and
+     Robert E. Kass.
+
+
+
+This file contains instructions for the use of BarsP. 
+Licensing information is in the README file.
+
+These instructions are divided into 7 sections.
+
+-- General
+-- Files
+-- Compilation
+-- Execution
+-- Data File
+-- Parameters File
+-- Prior File
+
+*** General ***
+
+BarsP 1.0 uses BARS to estimate a mean function from Poisson count
+data. In neuron-firing examples, it estimates the neuron-firing
+intensity function. 
+
+*** End General ***
+
+*** Files ***
+
+The files contained in the BarsP package are described below.
+
+
+barsP.c: Source code for the executable barsP.
+barsP_funcs.c: The main collection of functions used in barsP.
+barsP_funcs.h: The associated header file for barsP_funcs.c
+barsP_funcs1.h: The header file used by internally by barsP_funcs.c
+barsP_utils.c: Source code for various utility functions.
+barsP_utils.h: The associated header file for barsP_utils.c.
+
+ranlibsub.c: Source code for RANLIB.
+com.c: Additional source code for RANLIB.
+ranlib.h: Header file for RANLIB.
+
+logspline.c: Source code for Logspline.
+logspline.h: Header fiel for Logspline.
+
+example.data: Example data file.
+example.params: Example parameters file.
+example.prior: Example prior file.
+
+INSTRUCTIONS: This file.
+README: Text file that contains licensing information.
+
+Makefile: An example Makefile used for compilation.
+
+barsP_wrapper: An S-wrapper for use with this program.
+
+*** End Files ***
+
+
+*** Compilation ***
+
+A Makefile has been provided to illustrate compilation. BarsP 1.0
+requires the LAPACK and BLAS libraries, both publicly available and
+free of charge. You may need to edit the Makefile depending on your
+operating system and location of the LAPACK and BLAS libraries.
+
+To use the Makefile as provided, type "make barsP.out" from the linux
+prompt in the barsP directory.
+
+*** End Compilation ***
+
+
+
+
+
+*** Execution ***
+
+To run BarsP using the data in example.data and default parameter
+settings:
+
+> barsP.out example.data
+
+To run BarsP using the data in example.data and parameters specified in
+example.params:
+
+> barsP.out example.data example.params
+
+To run BarsP using the data in example.data, parameters specified in
+example.params, and a user-defined prior on the number of knots
+specified in example.prior:
+
+> barsP.out example.data example.params example.prior
+
+
+*** End Execution ***
+
+
+
+
+
+*** Data File ***
+
+The data file takes the form of:
+
+110 60
+0.000 0 
+0.010 0
+0.020 0
+0.030 0
+0.040 0
+(and so on...)
+
+The first row specifies the number of bins (110) and
+the number of trials (60). 110 rows follow with, for each, the bin
+center and the bin count.
+
+*** End Data File ***
+
+
+
+*** Parameters File ***
+
+The user may set various parameters by specifying
+their values in the optional parameters file.
+To set the value of a parameter 'foo' to 'bar',
+include the following line in the parameters file.
+
+SET foo = bar
+
+
+The following parameters are allowed.
+
+parameter: burn-in_iterations
+  The number of burn-in MCMC iterations.
+  Default value = 0.
+
+parameter: sample_iterations
+  The number of sample MCMC iterations
+  Default value = 2000.
+
+parameter: Use_Logspline
+  "true" or "false" to indicate whether Logspline is used for
+  the initial knots. If Logspline is not used, evenly spaced knots are used.
+  Default value = true.
+
+parameter: initial_number_of_knots
+  The number of initial interior knots used. This only
+  has an affect if Logspline is not used.
+  Default value = 3.
+
+parameter: beta_iterations
+  Number of iterations for the independence chain on beta for a
+  particular set of knots. It only runs a chain if the initial
+  beta variate is suspect. In this case, the independence chain is
+  run starting from the mle and only the last variate is used. If
+  no beta candidates were accepted, no beta is used although the
+  knot set is not rejected.  
+  Default value = 3.
+
+parameter: beta_threshhold
+  Threshhold for determining whether the initial beta variate is
+  suspect. It is suspect if the log acceptance probability is
+  less than the threshhold. 
+  Default value = -10.0.
+
+parameter: prior_form
+  Default value = Uniform.
+  Possible values: Uniform, Poisson, User.
+
+  related parameter: Uniform_parameter_L
+    Default value = 1.
+  related parameter: Uniform_parameter_U
+    Default value = MAXKNOTS = 60.
+  related parameter: Poisson_parameter_lambda
+    Default value = 6.0.
+
+  For k ~ Uniform(L,..,U)
+    SET prior_form = Uniform
+    SET Uniform_parameter_L = L
+    SET Uniform_parameter_U = U
+
+  For k ~ Poisson(M) 
+    SET prior_form = Poisson
+    SET Poisson_parameter_lambda = M
+
+parameter: proposal_parameter_tau
+  Parameter that controls the spread for the knot proposal
+  distribution. A candidate knot is generated by first
+  selecting a current knot t, 0 < t < 1, and then selecting
+  candidate knot ~ beta(t * tau, (1-0) * tau).
+  Default value = 50.
+ 
+parameter: reversible_jump_constant_c
+  Parameter that controls the probability of 
+  birth and death candidates. It may be at most
+  0.5.  Larger values increase the probability for birth
+  death candidates. Smaller values increase the probability
+  for knot relocation.
+  Default value = 0.40.
+
+parameter: confidence_level
+  The confidence level for parameter intervals.
+  Default value = 0.95.
+
+parameter: number_of_grid_points
+  The number of evenly spaced points for the grid.
+  Default value = 500.
+
+parameter: sampled_knots_file
+  The name of the output file for the sampled knot locations.
+  Format is 
+  [iteration number] [number of interior knots] [knots...]
+  Note that the number of entries per line will vary.
+  Use "none" to indicate no file.
+  Default value = none.
+
+parameter: sampled_mu_file
+  The name of the output file for sampled values of mu 
+  on the design points. 
+  Use "none" to indicate no file.
+  Default value = samp_mu.
+
+parameter: sampled_mu-grid_file
+  The name of the output file for sampled values of mu
+  on the evenly spaced grid points. 
+  Use "none" to indicate no file.
+  Default value = none.
+
+parameter: sampled_params_file
+  The name of the output file for sampled values of
+  various parameters. The parameters given are
+  iteration number, BIC, log likelihood, location of peak, height at
+  peak, number of interior knots.
+  Use "none" to indicate no file.
+  Default value = samp_params. 
+
+parameter: summary_mu_file
+  The name of the output file for summary values of mu
+  on the design points. Three rows are given with
+  the x values, posterior mean, and posterior mode,
+  respectively.
+  Use "none" to indicate no file.
+  Default value = summ_mu.
+
+parameter: summary_mu-grid_file
+  The name of the output file for summary values of mu
+  on the evenly spaced grid points. Three rows are given with
+  the x values, posterior mean, and posterior mode,
+  respectively.
+  Use "none" to indicate no file.
+  Default value = none.
+
+parameter: summary_params_file
+  The name of the output file for summary values of
+  certain parameters. The first row is for the location of the
+  peak, and the second is for the height, and the third is for the
+  number of interior knots. The first two columns are quantiles giving
+  a confidence interval for the specified confidence level (see
+  parameter confidence_level). The third column is the posterior mean,
+  and the fourth is the posterior mode.
+  Use "none" to indicate no file.
+  Default value = summ_params.
+
+parameter: verbose
+  "true" or "false" to indicate verbose output.
+  Default value = false.
+
+An example parameters file may contain the following lines of text.
+
+# Start of Example Parameters File
+
+SET burn-in_iterations = 200
+SET sample_iterations = 20000
+SET initial_number_of_knots = 3
+SET beta_iterations = 3
+SET beta_threshhold = -10.0
+#SET prior_form = Poisson
+#SET Poisson_parameter_lambda = 6.0
+SET prior_form = Uniform
+SET Uniform_parameter_L = 2
+SET Uniform_parameter_U = 10
+SET proposal_parameter_tau = 50.0
+SET reversible_jump_constant_c = 0.40
+SET confidence_level = 0.95
+SET number_of_grid_points = 150
+SET sampled_mu_file = samp_mu
+SET sampled_mu-grid_file = none
+SET sampled_params_file = samp_params
+SET summary_mu_file = summ_mu
+SET summary_mu-grid_file = summ_mugrid
+SET summary_params_file = summ_params
+SET Use_Logspline = true
+SET verbose = true
+
+END
+
+# End of Example Parameters File
+
+*** End Parameters File ***
+
+
+*** Prior File ***
+
+The prior file is only used if prior_form is set to 'User'.  The file
+takes the form of:
+
+2 0.05
+3 0.15
+4 0.30
+5 0.30
+6 0.10
+7 0.10
+
+which indicates that Pr(k=2) = 0.05, .., Pr(k=7) = 0.10. All zero
+probabilities that appear between the smallest k having non-zero
+probability and the largest k having non-zero probability are changed
+to an epsilon > 0. The probabilities are then scaled to sum to one. Be
+aware that very low prior probabilites may make it difficult for the
+chain to explore some posterior regions that have high posterior
+probability. For example, consider Pr(k = 2) = Pr(k=4) = 0.499999, 
+Pr(k=3) = 0.000002. The resulting chain would generally get stuck in
+either the k = 2 region of the posterior, or the k = 4 region of the posterior.
+
+*** End Prior File ***
+
+
+*** S wrapper ***
+
+To use the S wrapper included with the program:
+
+First, be sure to compile the barsP program as before, using the
+command "make barsP.out".  Next, enter the following commands at the
+unix prompt:
+
+> Splus CHAPTER barsP.c
+
+> Splus make
+
+After entering S-plus, type the following commands:
+
+> dyn.open("S.so")
+
+> source("barsP_wrapper")
+
+One also has the option of copying the function directly into S-plus.
+
+The name of the function is barsP.fun.
+
+For precise instructions on using the S wrapper, including inputs and
+outputs, please read the comments at the beginning of the file barsP_wrapper.
+
+*** End S wrapper ***
+
+

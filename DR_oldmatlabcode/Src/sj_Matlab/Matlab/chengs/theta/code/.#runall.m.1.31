@@ -1,0 +1,64 @@
+function runall(indir, inSelId)
+
+if nargin>=1 
+    if ~iscell(indir)
+        adapt_dir= {indir};
+    else
+        adapt_dir= indir;
+    end
+else
+    adapt_dir= {
+    'nonripple_x2_t005';
+    'nonripple_x2_t001';
+    'nonripple_x05_t005';
+    'nonripple_x05_t001';
+    };
+end
+
+if nargin>=2
+    if ~iscell(inSelId)
+        select_id= {inSelId};
+    else
+        select_id= inSelId;
+    end
+else
+    select_id= {
+    'pf9-novel',
+    'pf9-fam',
+    %'pf9-novelArm',
+    %'pf9-famArm',
+    };
+end
+
+% check whether all directories exist
+for i=1:length(adapt_dir)
+    for iS=1:length(select_id)
+        forallrats('disp(''dir check'')', select_id{iS}, adapt_dir{i});
+    end
+end
+
+for i=1:length(adapt_dir)
+    for iS=1:length(select_id)
+        fprintf(1, '******* starting %s %s %s *******\n', ...
+            select_id{iS}, adapt_dir{i}, datestr(clock));
+        t0= clock;
+        % no reruns
+        forallrats('runAdaptFilter([], [], 1)', select_id{iS}, adapt_dir{i});
+
+%         run all 
+%        forallrats('runAdaptFilter', select_id{iS}, adapt_dir{i});
+
+        forallrats('showKSplot([],1,r);', select_id{iS}, adapt_dir{i});
+        fprintf(1, 'KS test %s %s: ', select_id{iS}, adapt_dir{i});
+        showKSplot([],1,-1); % show summary across all animals
+
+%         get stats, using common stat options
+%        forallrats('runStats2', select_id{iS}, adapt_dir{i});
+
+        fprintf(1, '******* done with %s %s %s *******\n', ...
+            select_id{iS}, adapt_dir{i}, datestr(clock));
+        et= etime(clock, t0);
+        eh= floor(et/3600); em= floor((et-3600*eh)/60);  es= et-3600*eh-60*em;
+        fprintf(1, 'runtime: %d h %d min %.1f sec\n', eh, em, es);
+    end
+end

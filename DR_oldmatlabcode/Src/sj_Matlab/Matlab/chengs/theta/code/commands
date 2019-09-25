@@ -1,0 +1,20 @@
+nohup /usr/local/matlab-2008a-32/bin/matlab -nosplash -nojvm -r "runall; quit;"
+&
+
+nohup nice -n 10 matlab6.5 -nodisplay -nojvm -nosplash -r " ; quit" >> out.AF
+
+forallrats('cmpStats(''Integral2d'', ''LinCorr'', 0,r)','all-placefields-ProRetro', 'adapt')
+
+forallrats('cmpStats(''Integral2d'', ''MutualInfo'', 0,r)','all-placefields-ProRetro', 'adapt')
+
+cmpStats('Integral2d', 'LinCorr',0,-1)
+cmpStats('Integral2d', 'MutualInfo',0,-1)
+
+forallrats('runAdaptFilter', 'all', 'adapt')
+forallrats('runStats', 'all-placefields-ProRetro', 'adapt')
+
+export MPATH=/usr/local/matlab
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MPATH/bin/glnx86/:$MPATH/extern/lib/glnx86/:$MPATH/sys/os/glnx86/
+export LD_RUN_PATH=$LD_RUN_PATH:$MPATH/bin/glnx86/:$MPATH/extern/lib/glnx86/:$MPATH/sys/os/glnx86/
+
+debugFilter AF  kyl 4 4 28 6 10

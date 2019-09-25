@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of clusterXT</title>
+  <meta name="keywords" content="clusterXT">
+  <meta name="description" content="clusterXT  temporary utility to show clusters">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">chronux_1_50</a> &gt; <a href="index.html">spikesort</a> &gt; clusterXT.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for chronux_1_50\spikesort&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>clusterXT
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>clusterXT  temporary utility to show clusters</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function clusterXT(spikes, useassigns, show, threed); </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment">    clusterXT  temporary utility to show clusters
+       clusterXT(SPIKES, [USEASSIGNS], [SHOW], [THREE_D]);</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="Clgy.html" class="code" title="function color = Clgy">Clgy</a>	Clgy              Light gray color vector.</li><li><a href="errorarea.html" class="code" title="function [linehandles, patchhandles] = errorarea(x,y,l,u)">errorarea</a>	ERRORAREA         Plot with confidence region.</li><li><a href="jetm.html" class="code" title="function map = jetm(m)">jetm</a>	JETM              Muted jet colormap.</li><li><a href="mplot.html" class="code" title="function h = mplot(t, matrix, varargin)">mplot</a>	MPLOT             Plot rows of a data matrix.</li><li><a href="raise_me.html" class="code" title="function raise_me (hObject, event, me)">raise_me</a>	Pulls the clicked object to the top of the ui stack; useful</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="SpikeSortingDemo.html" class="code" title="">SpikeSortingDemo</a>	% Demonstration code for the spike sorter derived from the Fee et al.</li><li><a href="SpikeSortingQuickReference.html" class="code" title="">SpikeSortingQuickReference</a>	%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SORTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</li></ul>
+<!-- crossreference -->
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function clusterXT(spikes, useassigns, show, threed);</a>
+0002 <span class="comment">%    clusterXT  temporary utility to show clusters</span>
+0003 <span class="comment">%       clusterXT(SPIKES, [USEASSIGNS], [SHOW], [THREE_D]);</span>
+0004 
+0005 <span class="comment">%   Last Modified By: sbm on Wed Aug 10 22:15:26 2005</span>
+0006 
+0007 <span class="keyword">if</span> (nargin &lt; 2 || isempty(useassigns)),  useassigns = spikes.overcluster.assigns;  cmap = spikes.overcluster.colors;  <span class="keyword">end</span>;
+0008 <span class="keyword">if</span> (nargin &lt; 3 || isempty(show)),  show = unique(useassigns);  <span class="keyword">end</span>;
+0009 <span class="keyword">if</span> (nargin &lt; 4),  threed = 0; <span class="keyword">end</span>;
+0010 
+0011 <span class="keyword">if</span> (nargin &gt; 1),
+0012     <span class="keyword">if</span> (isfield(spikes, <span class="string">'overcluster'</span>) &amp;&amp; all(ismember(useassigns, unique(spikes.overcluster.assigns))))
+0013         cmap = spikes.overcluster.colors;
+0014     <span class="keyword">else</span>
+0015         cmap = <a href="jetm.html" class="code" title="function map = jetm(m)">jetm</a>(length(show));
+0016     <span class="keyword">end</span>
+0017 <span class="keyword">end</span>
+0018 
+0019 show(show == 0) = [];
+0020 
+0021 clustlist = unique(useassigns);
+0022 t = ([0:size(spikes.waveforms,2)-1]-spikes.threshT)./spikes.Fs;
+0023 
+0024 <span class="comment">%%%%%%%%%%%%%%%</span>
+0025 cla reset; hold on;
+0026 <span class="keyword">for</span> j = 1:length(clustlist)
+0027     k = clustlist(j);
+0028     members = find(useassigns == k);
+0029     waves = spikes.waveforms(members,:);
+0030 
+0031     <span class="keyword">if</span> (k == 0),                color = [0 0 0];
+0032     <span class="keyword">elseif</span> (ismember(k,show)),  color = cmap(k,:);
+0033     <span class="keyword">else</span>,                       color = <a href="Clgy.html" class="code" title="function color = Clgy">Clgy</a>;
+0034     <span class="keyword">end</span>
+0035     
+0036     <span class="keyword">if</span> (~isempty(members))
+0037         <span class="keyword">if</span> (~threed)
+0038             h = <a href="mplot.html" class="code" title="function h = mplot(t, matrix, varargin)">mplot</a>(t, waves, <span class="string">'Color'</span>, color);
+0039             set(h, <span class="string">'ButtonDownFcn'</span>, {@<a href="raise_me.html" class="code" title="function raise_me (hObject, event, me)">raise_me</a>, h});
+0040             <span class="keyword">if</span> (k == 0), hout = h;
+0041             <span class="keyword">else</span>,        hndl(k) = h;
+0042             <span class="keyword">end</span>
+0043         <span class="keyword">else</span>
+0044             [lh,ph] = <a href="errorarea.html" class="code" title="function [linehandles, patchhandles] = errorarea(x,y,l,u)">errorarea</a>(mean(waves,1), std(waves,1,1));
+0045             set(lh, <span class="string">'Color'</span>, brighten(color, -0.6), <span class="string">'ZData'</span>, repmat(k, size(get(lh,<span class="string">'XData'</span>))));
+0046             set(ph, <span class="string">'FaceColor'</span>, color, <span class="string">'ZData'</span>, repmat(k, size(get(ph,<span class="string">'XData'</span>))), <span class="string">'FaceAlpha'</span>, 0.8);
+0047         <span class="keyword">end</span>
+0048     <span class="keyword">end</span>
+0049 <span class="keyword">end</span>
+0050 hold off; axis tight; xlabel(<span class="string">'Time (samples)'</span>);  ylabel(<span class="string">'Voltage (A/D Levels)'</span>);
+0051 
+0052 <span class="keyword">if</span> (~threed),  uistack(hndl(show), <span class="string">'top'</span>);
+0053 <span class="keyword">else</span>, cameratoolbar(<span class="string">'SetCoordSys'</span>, <span class="string">'y'</span>);
+0054 <span class="keyword">end</span>
+0055 
+0056 <span class="keyword">if</span> ((length(show) &lt; 33) &amp;&amp; ~threed)
+0057     leg = cell(length(show),1);
+0058     <span class="keyword">for</span> k = 1:length(show),  leg{k} = num2str(sort(show(k)));  <span class="keyword">end</span>;
+0059     <span class="keyword">if</span> (any(useassigns == 0))
+0060         legend([hout, hndl(show)], cat(1, {<span class="string">'Outliers'</span>}, leg), 0);
+0061     <span class="keyword">else</span>
+0062         legend(hndl(show),leg,0);
+0063     <span class="keyword">end</span>
+0064 <span class="keyword">end</span>
+0065</pre></div>
+<hr><address>Generated on Mon 09-Oct-2006 00:54:52 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+</body>
+</html>

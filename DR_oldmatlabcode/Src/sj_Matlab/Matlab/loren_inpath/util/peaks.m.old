@@ -1,0 +1,28 @@
+function t = peaks(x, varargin)
+% peaks -- find peaks
+%
+%	T = PEAKS(X) returns the indices of peaks in the vector X.
+%
+%	OPTIONS:
+%
+%	'threshold'	- peak must be greater than this value to be observed
+%
+%	See Also: 
+
+usage = char([9 'PEAKS(X, options...)' 10 ...
+	      9 'options: threshold']);
+
+% Copyright (c) 1997 Maneesh Sahani (maneesh@caltech.edu)
+
+% check and default inputs
+if (nargin < 1) disp (usage); return; end
+
+threshold = [];
+assign(varargin{:});
+
+d = diff(x);
+t = find (d(1:end-1) > 1 & d(2:end)< 1) + 1;
+
+if ~isempty(threshold)
+  t = t(find(x(t) > threshold));
+end

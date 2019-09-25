@@ -1,0 +1,79 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of tokenize</title>
+  <meta name="keywords" content="tokenize">
+  <meta name="description" content="TOKENIZE          Break string into tokens.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">chronux_1_50</a> &gt; <a href="index.html">spikesort</a> &gt; tokenize.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for chronux_1_50\spikesort&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>tokenize
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>TOKENIZE          Break string into tokens.</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function T = tokenize(S,D) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment">TOKENIZE          Break string into tokens.
+   T = TOKENIZE(S) returns a cell array T containing the tokens of S,
+   delimited by white space.
+
+   T = TOKENIZE(S,D) uses the characters of D as delimiters.
+
+   Either syntax ignores any leading delimiters.
+
+   Example:
+      TOKENIZE('  The quick brown') gives {'The','quick','brown'}.
+      TOKENIZE('1;20;300',';') gives {'1','20','300'}.
+
+   See also STRTOK.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function T = tokenize(S,D)</a>
+0002 <span class="comment">%TOKENIZE          Break string into tokens.</span>
+0003 <span class="comment">%   T = TOKENIZE(S) returns a cell array T containing the tokens of S,</span>
+0004 <span class="comment">%   delimited by white space.</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%   T = TOKENIZE(S,D) uses the characters of D as delimiters.</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">%   Either syntax ignores any leading delimiters.</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">%   Example:</span>
+0011 <span class="comment">%      TOKENIZE('  The quick brown') gives {'The','quick','brown'}.</span>
+0012 <span class="comment">%      TOKENIZE('1;20;300',';') gives {'1','20','300'}.</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">%   See also STRTOK.</span>
+0015 
+0016 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%% Parse Inputs %%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0017 <span class="keyword">if</span> (nargin &lt; 2), D = sprintf(<span class="string">' \t\r\n\f'</span>);  <span class="keyword">end</span>;
+0018 
+0019 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Processing %%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0020 T = {};
+0021 <span class="keyword">while</span> (~isempty(S)),  [T{end+1},S] = strtok(S,D);   <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Mon 09-Oct-2006 00:54:52 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+</body>
+</html>

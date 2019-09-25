@@ -1,0 +1,26 @@
+
+
+Configure property values -- Define a 10-second acquisition, set up the plot, and store the plot handle in the variable P. The amount of data to display is given by preview. duration = 10; % Ten second acquisition
+set(AI,'SampleRate',8000)
+ActualRate = get(AI,'SampleRate');
+set(AI,'SamplesPerTrigger',duration*ActualRate)
+preview = duration*ActualRate/100;
+subplot(211)
+set(gcf,'doublebuffer','on')
+P = plot(zeros(preview,1)); grid on
+title('Preview Data')
+xlabel('Samples')
+ylabel('Signal Level (Volts)')
+Acquire data -- Start AI and update the display using peekdata every time an amount of data specified by preview is stored in the engine by polling SamplesAcquired. The drawnow command forces MATLAB to update the plot. After all data is acquired, it is extracted from the engine. Note that whenever peekdata is used, all acquired data might not be displayed. start(AI)
+while AI.SamplesAcquired < preview
+end
+while AI.SamplesAcquired < duration*ActualRate
+   data = peekdata(AI,preview);
+   set(P,'ydata',data)
+   drawnow
+end
+Extract all the acquired data from the engine, and plot the data. data = getdata(AI);
+subplot(212), plot(data), grid on
+title('All Acquired Data')
+xlabel('Samples')
+ylabel('Signal level (volts)')

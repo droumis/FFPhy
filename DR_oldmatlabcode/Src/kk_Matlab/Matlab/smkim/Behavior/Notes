@@ -1,0 +1,22 @@
+
+
+If the EM fails to converge it may be:
+
+1. poor starting value - change parameter sige
+
+2. too stringent convergence criterion - increase 
+   parameter  cvgce_crit
+   and check that newsigsq has converged by
+   >> plot(newsigsq)
+
+3. there is not enough data/information to estimate
+   the hidden process
+
+4. need to increase number of EM iterations by
+   increasing num_steps
+
+
+
+
+
+

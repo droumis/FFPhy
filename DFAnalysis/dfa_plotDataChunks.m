@@ -5,12 +5,7 @@
 compatible with multitetrode anal
 - multitetrode anal feeds all data in as varargins
 
-TODO:
-- add consensus ripple filtered LFP band
-- add single unit spikes colored, organized, by subarea
-
 LATER
-- add multiunit spikes, color, organized by subarea
 - add clusterless decode
 - add clustered decode
 %}
@@ -25,6 +20,8 @@ savefigas = 'png';
 centerEvents = 0;
 splitSize = 30;
 Yoffset = 600;
+skipNoRipChunks = 0;
+skipNoEventChunks = 0;
 if ~isempty(varargin)
     assign(varargin{:});
 end
@@ -51,7 +48,7 @@ catch
     return
 end
 eventTime = eventTime(~isExcluded(eventTime(:,1),excludeIntervals),:);
-% data intervals
+% data intervals for tetrode already filtered for inclusion
 validnt = find(cell2mat(cellfun(@(x) ~isempty(x), eeg{day}{epoch}, 'un', 0)));
 % get start end of epoch from lfp starttime, endtime
 % create an array of start, end intervals
@@ -78,10 +75,12 @@ end
 srate = eeg{day}{epoch}{validnt(1)}.samprate;
 nsamps = length(eeg{day}{epoch}{validnt(1)}.data);
 lfptime = [(0:nsamps-1)/srate+startTime]'; %repmat([,1,length(ntrodes));
+
 % pos time
 timecol = find(strcmp(strsplit(pos{day}{epoch}.fields,' '), 'time'));
 postime = pos{day}{epoch}.data(:,timecol);
 linpostime = linpos{day}{epoch}.statematrix.time;
+
 % stack lindist outer arm
 lindist1D = linpos{day}{epoch}.statematrix.linearDistanceToWells(:,1);
 outerIdx = ismember(linpos{day}{epoch}.statematrix.segmentIndex,[4,5]);
@@ -91,8 +90,8 @@ if isempty(centermax)
     centermax = 0;
 end
 lindist1D(outerIdx) = lindist1D(outerIdx)+(innermax-centermax);
+% get lindist segments start, end
 segSE = []; c = 0;
-% get bounds of lindist segments
 for iseg = 1:length(unique(linpos{day}{epoch}.statematrix.segmentIndex))
     segstart = min(lindist1D(linpos{day}{epoch}.statematrix.segmentIndex == iseg));
     segend = max(lindist1D(linpos{day}{epoch}.statematrix.segmentIndex == iseg));
@@ -102,14 +101,17 @@ for iseg = 1:length(unique(linpos{day}{epoch}.statematrix.segmentIndex))
         segSE(c,2) = segend;
     end
 end
-% rip zpwr
+
+% lfp ripple zcored pwr
 zrippwr = ((events{day}{epoch}{1}.powertrace-nanmean(events{day}{epoch}{1}.powertrace))...
     ./nanstd(events{day}{epoch}{1}.powertrace))';
+% 4:12Hz filtered ripple zcored pwr
 bpzpwr = zscore(bpfilt(events{day}{epoch}{1}.powertrace,4, 12, 1500, 0));
 %     bpzpwr = bandpass(zrippwr,[4 12],1500);
 %     zNoiseRipRatio = ((noise{day}{epoch}{1}.powertrace-nanmean(noise{day}{epoch}{1}.powertrace))...
 %         ./nanstd(noise{day}{epoch}{1}.powertrace))';
-% get nt's for each area
+
+% process ntinfo ino nt's for each area 
 andef = animaldef(animal);
 ntinfo = loaddatastruct(andef{2}, andef{3}, 'tetinfo');
 %     reftet_keys = evaluatefilter(ntinfo, 'isequal($area, ''ref'')');
@@ -121,8 +123,9 @@ arTag = cellfun(@(x) ntinfo{day}{epoch}{x}.area,num2cell(validnt),'un',0)';
 sbTag = cellfun(@(x) ntinfo{day}{epoch}{x}.subarea,num2cell(validnt),'un',0)';
 ordernts = {'ca1', 'd'; ...
     'mec', 'deep'; 'mec', 'ndeep'; ...
-    'mec', 'supf'; 'mec', 'nsupf'};
-%         'ref', 'ca1'; 'ref', 'mec'};
+    'mec', 'supf'; 'mec', 'nsupf'; ...
+    'ref', 'ca1'; 'ref', 'mec'};
+% determine the order of areas
 ntsort = []; areaid = {};
 for i = 1:size(ordernts,1)
     ntinArea = find(all([ismember(arTag, ordernts{i,1}) ismember(sbTag, ...
@@ -130,15 +133,17 @@ for i = 1:size(ordernts,1)
     ntsort = [ntsort; ntinArea];
     areaid = [areaid; repmat(ordernts(i,:), length(ntinArea),1)];
 end
+
 ca1s = cellfun(@(x) any(strcmp(x,'d')), areaid(:,2),'un', 1);
 dmecs = cellfun(@(x) any(strfind(x,'deep')), areaid(:,2),'un', 1);
 smecs = cellfun(@(x) any(strfind(x,'supf')), areaid(:,2),'un', 1);
 areaids = sum([1.*ca1s 2*dmecs 3*smecs],2);
 ntsort = flipud(ntsort);
+
 % sorted colors
 icolors = colorPicker(arTag, 'subtags', sbTag); icolors = icolors(ntsort);
 
-% GET SU (ntrode, cluster, spiketime, cellnum)
+% Process SU into sustack (ntrode, cluster, spiketime, cellnum)
 su_f = 'all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''),$tags,''un'',0))))';
 su_keys = evaluatefilter(cellinfo{day}{epoch}, su_f);
 su_keys = su_keys(ismember(su_keys(:,1), validnt),:);
@@ -154,7 +159,8 @@ supspikes = cellfun(@(x,y) [...
     num2cell(1:size(sortsukeys,1))', 'un', 0);
 sustack = cell2mat(supspikes(find(cell2mat(cellfun(@(x) ~isempty(x),supspikes,'un',0)))));
 sustack = sortrows(sustack,3);
-% Get MU (ntrode, cluster, spiketime)
+
+% Process MU into mustack (ntrode, cluster, spiketime)
 mu_keys = evaluatefilter(cellinfo{day}{epoch}, 'isequal($tags,{''mua''})');
 mupspikes = cellfun(@(x) [...
     repmat(x(1),length(spikes{day}{epoch}{x(1)}{x(2)}.data),1) ...
@@ -168,8 +174,15 @@ if ~isempty(mustack)
     mustack = sortrows(mustack,3);
 end
 
-Pp=load_plotting_params({'defaults','dataExplore'});
-Pp.nrows = Pp.nrows;
+%% proces to get lick bout intervals
+lickboutvec = getLickBout(andef{2}, animal, [day epoch]);
+bouts = evaluatefilter2(lickboutvec, '($lickBout == 1)');
+nobouts = evaluatefilter2(lickboutvec, '(($lickBout == 0) & ($velocity < 1) & ($timeFromLick > .5))');
+boutIntvs = vec2list(bouts{day}{epoch}(:,2), bouts{day}{epoch}(:,1));
+noboutIntvs = vec2list(nobouts{day}{epoch}(:,2), nobouts{day}{epoch}(:,1));
+
+%% plot
+Pp=load_plotting_params({'defaults','dfa_plotDataChunks'});
 for ts = 1:length(timeSplits(:,1))
     tstart = timeSplits(ts,1);
     tend = timeSplits(ts,2);
@@ -287,6 +300,7 @@ for ts = 1:length(timeSplits(:,1))
         xlim([tstart tend]); xl = xlim; xticks(ceil(xl(1)):2:floor(xl(2)));
         [yt, ydx] = unique(suCh(:,4)); yticks(yt); yticklabels(suCh(ydx,1));
     end
+    
     %% Plot MU spikes
     if any(mustack)
         muCh = mustack(all([mustack(:,3)>tstart mustack(:,3)<tend],2),:);
@@ -303,6 +317,7 @@ for ts = 1:length(timeSplits(:,1))
         xlim([tstart tend]); xl = xlim; xticks(ceil(xl(1)):1:floor(xl(2)))
         [yt, ydx] = unique(muCh(:,4)); yticks(yt); yticklabels(muCh(ydx,1));
     end; end
+
     %% plot velocity, pos, hd
     sf8= subaxis(Pp.nrows,1,14);
     velcol = find(strcmp(strsplit(pos{day}{epoch}.fields,' '), 'vel-loess'));
@@ -404,7 +419,6 @@ for ts = 1:length(timeSplits(:,1))
         if skipNoRipChunks; fprintf('skipping\n');
             continue;
         end
-        fprintf('not skipping\n');
     end
     if any(swrInWinIdx)
         swrInWin = eventTime(swrInWinIdx,:);
@@ -416,7 +430,7 @@ for ts = 1:length(timeSplits(:,1))
                 continue;
             end
             try
-%                 disp(ax(ix).Tag)
+                %                 disp(ax(ix).Tag)
                 yl = ylim(ax(ix));
                 if strcmp(ax(ix).Tag, 'zrippwr')
                     hold(ax(ix),'on')
@@ -429,6 +443,44 @@ for ts = 1:length(timeSplits(:,1))
             catch
                 continue
             end; end; end
+    
+    %% plot lick bout patches
+    evs.bouts = boutIntvs;
+    evs.nobouts = noboutIntvs;
+    fns = fieldnames(evs);
+    for ev = 1:length(fns)
+        fieldn = fns{ev};
+        eventIntervals = evs.(fieldn);
+        eventsInWinIdx = all([eventIntervals(:,1)>tstart eventIntervals(:,2)<tend],2);
+        if any(eventsInWinIdx)
+            eventInWin = eventIntervals(eventsInWinIdx,:);
+            xs = eventInWin(:,1);
+            xe = eventInWin(:,2);
+            ax = get(ifig, 'children');
+            for ix = 1:length(ax)
+                if strcmp(ax(ix).Tag, 'image')
+                    continue;
+                end
+                try
+                    hold(ax(ix),'on')
+                    yl = ylim(ax(ix));
+                    if strcmp(ax(ix).Tag, 'zrippwr')
+                        s = scatter(ax(ix), xs,repmat(yl(2),size(xs,1),1),30,'filled',...
+                            'marker','*', 'markerfacecolor', Pp.([fieldn 'clr']), 'markeredgecolor','k');
+                    end
+                    patch(ax(ix), [xs'; xe'; xe'; xs'],repmat([yl(1) yl(1) yl(2) yl(2)]',1,...
+                        length(xe)),Pp.([fieldn 'clr']), 'FaceAlpha',Pp.([fieldn 'alpha']), 'edgecolor','none');
+                    hold(ax(ix),'off')
+                catch
+                    continue
+                end; end
+        else
+            fprintf('no %s in win %1.f : %1.f\n', fns{ev}, tstart, tend);
+            if skipNoEventChunks; fprintf('skipping\n');
+                continue;
+            end
+        end
+    end
     %% ----- link x axis -----
     allAxesInFigure = findall(ifig,'type','axes'); linkaxes(allAxesInFigure, 'x');
     % ---- super axis -----

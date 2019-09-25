@@ -1,0 +1,33 @@
+%% this isn't really working at this point
+
+
+
+% clear all
+cd /data19/droumis/bob/bobstim_proc/EEG/
+a = load('bobeeg25-4-08');
+a = a.eeg{25}{4}{8}.data;
+
+b = load('bobripple25-4-08');
+b = b.ripple{25}{4}{08}.data;
+c = double(b(:,3));
+
+xinseconds = (0:1/1500:((max(size(c)))/1500)-1/1500);
+subplot(2,1,1); plot(xinseconds,c, 'Color', 'g'); hold on;
+
+for i = 1:max(size(event.excludetimes));
+line([event.excludetimes(i,1) event.excludetimes(i,1)], [-70 70], 'Color', 'r')
+end
+for i = 1:max(size(event.excludetimes));
+line([event.excludetimes(i,2) event.excludetimes(i,2)], [-50 50], 'Color', 'k')
+end
+title('rippleband')
+hold on;
+
+subplot(2,1,2); plot(xinseconds,a, 'Color', 'b'); hold on;
+for i = 1:max(size(event.excludetimes));
+line([event.excludetimes(i,1) event.excludetimes(i,1)], [-70 70], 'Color', 'r')
+end
+for i = 1:max(size(event.excludetimes));
+line([event.excludetimes(i,2) event.excludetimes(i,2)], [-50 50], 'Color', 'k')
+end
+title('unfiltered')

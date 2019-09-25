@@ -1,0 +1,47 @@
+function chr_clean_mic09recsite1(filename);
+%    SHOWCLUST  temporary utility to show clusters
+%       SHOWCLUST(SPIKES, [USEASSIGNS], [SHOW]);
+
+load filename
+spktimes=session.site1.spktimes;
+neurons=session.site1.neurons;
+
+
+%%%%%% CLEAN %%%%%%%%%%%%%%
+
+for clust = 1:length(spktimes)
+    if neurons{2}(clust)=='U'
+
+        membertimes = spktimes{clust};
+        name=neurons{1}(clust);
+                isis = diff(membertimes);              
+        tmin=1;      %ms
+        tref = 2;
+      
+        bin1 = (find ((isis <= tmin) & (isis>0))); % number of coincident spikes
+        bin2 = (find ((isis <= tref) & (isis>tmin)));
+
+        d=randperm(length(bin2)); d=d(1:floor(length(d)/2));
+        discard2 = bin2 (d) ;
+        
+        d=randperm(length(bin1)); d=d(1:floor(length(d)/2));
+        discard1 = bin1 (d) ;
+     
+        discard = unique([discard1;discard2]);
+        
+%         bin1 = (find ((isis <= tref) & (isis>0))); 
+%         d=randperm(length(bin1)); d=d(1:floor(length(d)/2));
+%         discard1 = bin1(d) ;
+         
+        session.site1.spktimes{clust}(discard)=[];
+%         session.site1.spktimes{clust}(discard2)=[];
+
+    end
+end
+
+savename1=[filename '-cl'];
+save(savename1,'session');
+
+spkdata.psktimes=spktimes;
+spkdata.neurons
+

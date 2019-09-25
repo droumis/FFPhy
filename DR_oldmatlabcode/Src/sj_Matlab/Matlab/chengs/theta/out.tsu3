@@ -1,0 +1,178 @@
+Warning: No display specified.  You will not be able to display graphics on the screen.
+
+                              < M A T L A B >
+                  Copyright 1984-2007 The MathWorks, Inc.
+                         Version 7.5.0.338 (R2007b)
+                               August 9, 2007
+
+ 
+  To get started, type one of these: helpwin, helpdesk, or demo.
+  For product information, visit www.mathworks.com.
+ 
+Hallo Sen! It's Tue Nov 11 20:53:06 PST 2008
+adding your paths...
+Generating directory names...
+/home/chengs/theta/gen/results/gen_longISI_x1_t0004  -- generating new files.
+/home/chengs/theta/gen/results/gen_longISI_x2_t0004  -- generating new files.
+/home/chengs/theta/gen/results/gen_longISI_x3_t0004  -- generating new files.
+/home/chengs/theta/gen/results/gen_longISI_x4_t0004  -- generating new files.
+/home/chengs/theta/gen/results/gen_longISI_x6_t0004  -- generating new files.
+/home/chengs/theta/gen/results/gen_longISI_x8_t0004  -- generating new files.
+/home/chengs/theta/gen/results/gen_longISI_x10_t0004  -- generating new files.
+/home/chengs/theta/gen/results/gen_longISI_x14_t0004  -- generating new files.
+******* starting gen gen_longISI_x1_t0004 11-Nov-2008 20:53:11 *******
+cell [1 4 27 1], number 1
+/data17/chengs/gen/results/gen_longISI_x1_t0004/adaptest01.mat does not exist yet...
+loading /home/chengs/theta/gen/behavdata01.mat ...
+loading /home/chengs/theta/gen/spikedata01.mat ...
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 684 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+store->getMin(op)= 0, CSFunction.cc, l. 282
+store->getMax(op)= 15.5346, CSFunction.cc, l. 283
+store->getMin(op)= 0.33775, CSFunction.cc, l. 282
+store->getMax(op)= 10.9506, CSFunction.cc, l. 283
+... done with filter.
+cell [1 4 27 2], number 2
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 712 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+store->getMin(op)= 0, CSFunction.cc, l. 282
+store->getMax(op)= 14.5625, CSFunction.cc, l. 283
+store->getMin(op)= 0.0506051, CSFunction.cc, l. 282
+store->getMax(op)= 11.9204, CSFunction.cc, l. 283
+... done with filter.
+cell [1 4 27 3], number 3
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 736 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+store->getMin(op)= 0, CSFunction.cc, l. 282
+store->getMax(op)= 17.4833, CSFunction.cc, l. 283
+store->getMin(op)= 0.100862, CSFunction.cc, l. 282
+store->getMax(op)= 11.9598, CSFunction.cc, l. 283
+... done with filter.
+cell [1 4 27 4], number 4
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 785 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+store->getMin(op)= 0, CSFunction.cc, l. 282
+store->getMax(op)= 13.9316, CSFunction.cc, l. 283
+store->getMin(op)= 0.21315, CSFunction.cc, l. 282
+store->getMax(op)= 11.5616, CSFunction.cc, l. 283
+... done with filter.
+cell [1 4 27 5], number 5
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 783 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+store->getMin(op)= 0, CSFunction.cc, l. 282
+store->getMax(op)= 17.4875, CSFunction.cc, l. 283
+store->getMin(op)= 0.10485, CSFunction.cc, l. 282
+store->getMax(op)= 12.3003, CSFunction.cc, l. 283
+... done with filter.
+cell [1 4 27 6], number 6
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 808 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+store->getMin(op)= 0, CSFunction.cc, l. 282
+store->getMax(op)= 14.6509, CSFunction.cc, l. 283
+store->getMin(op)= 0.226416, CSFunction.cc, l. 282
+store->getMax(op)= 13.2378, CSFunction.cc, l. 283
+... done with filter.
+cell [1 4 27 7], number 7
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 771 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+store->getMin(op)= 0, CSFunction.cc, l. 282
+store->getMax(op)= 14.492, CSFunction.cc, l. 283
+store->getMin(op)= 1.72795e-18, CSFunction.cc, l. 282
+store->getMax(op)= 12.5271, CSFunction.cc, l. 283
+... done with filter.
+cell [1 4 27 8], number 8
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 664 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+store->getMin(op)= 0, CSFunction.cc, l. 282
+store->getMax(op)= 15.5712, CSFunction.cc, l. 283
+store->getMin(op)= 0.24994, CSFunction.cc, l. 282
+store->getMax(op)= 10.0311, CSFunction.cc, l. 283
+... done with filter.
+cell [1 4 27 9], number 9
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 720 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+store->getMin(op)= 0, CSFunction.cc, l. 282
+store->getMax(op)= 19.2495, CSFunction.cc, l. 283
+store->getMin(op)= 0.17943, CSFunction.cc, l. 282
+store->getMax(op)= 10.7496, CSFunction.cc, l. 283
+... done with filter.
+cell [1 4 27 10], number 10
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 673 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+store->getMin(op)= 0, CSFunction.cc, l. 282
+store->getMax(op)= 13.3459, CSFunction.cc, l. 283
+store->getMin(op)= 0.337408, CSFunction.cc, l. 282
+store->getMax(op)= 9.75762, CSFunction.cc, l. 283
+... done with filter.
+cell [1 4 27 11], number 11
+saved
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 773 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+store->getMin(op)= 0, CSFunction.cc, l. 282
+store->getMax(op)= 21.1133, CSFunction.cc, l. 283
+store->getMin(op)= 0.0991721, CSFunction.cc, l. 282
+store->getMax(op)= 12.6048, CSFunction.cc, l. 283
+... done with filter.
+cell [1 4 27 12], number 12
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 779 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+store->getMin(op)= 0, CSFunction.cc, l. 282
+store->getMax(op)= 15.4443, CSFunction.cc, l. 283
+store->getMin(op)= 0.208076, CSFunction.cc, l. 282
+store->getMax(op)= 12.3884, CSFunction.cc, l. 283
+... done with filter.
+cell [1 4 27 13], number 13
+
+Running adaptive filtering ...
+Data initialized: 747484 timesteps, 644 valid spikes
+Model initialized:  valid timesteps= 0 to 747483
+Filter: 'AscentFilter
+iteration 1 

@@ -1,0 +1,996 @@
+%function showCorrel(selectid, pairsel) 
+%function showCorrel(pairsel, spsel) 
+function showCorrel
+%  Show correlations between cells with overlapping placefields
+
+plotall= 0;
+selectid= 'pf8-fam';
+pairsel= 'overlap';  % 'none', 'overlap', 'all'
+spsel= 'placefield';   % spike selection {'all', 'traj', 'sat', 'traj_sat', 'run'}
+%                 'traj_sat2', 'placefield', 'ripple', 'non_run'
+opt.scaling= 'coef';
+opt.dt= 0.002;      % [sec] timestep
+opt.T= 2;         % [sec] +/- width of CCG window
+opt.cutfreq= 40;    % cutoff frequency [Hz] 
+opt.minspikes= 40;  % minimum number of spikes to include
+opt.ref= 1;
+
+%novelDay=3;
+%sel{1}.selectid= 'pf7-novelArm';
+%sel{1}.pairsel= 'overlap';
+%sel{1}.spsel= 'non_ripple_non_run';
+%sel{1}.label= sel{1}.spsel;
+%sel{1}.novelDay= novelDay;
+
+%sel{2}.selectid= 'pf7-novelArm';
+%sel{2}.pairsel= 'overlap';
+%sel{2}.spsel= 'non_run';
+%sel{2}.label= sel{2}.spsel;
+%sel{2}.novelDay= novelDay;
+
+%sel{1}.selectid= 'pf7-famArm';
+%sel{1}.pairsel= 'non_overlap';
+%sel{1}.spsel= 'all';
+%sel{1}.label= 'fam overlap, all';
+
+
+if(1)
+sel{1}.selectid= selectid;
+sel{1}.pairsel= pairsel;
+sel{1}.spsel= 'run2';
+sel{1}.label= 'run2';
+
+sel{2}.selectid= selectid;
+sel{2}.pairsel= pairsel;
+sel{2}.spsel= 'all';
+sel{2}.label= 'all';
+
+sel{3}.selectid= selectid;
+sel{3}.pairsel= pairsel;
+sel{3}.spsel= 'non_run';
+sel{3}.label= 'non-run';
+
+%sel{4}.selectid= selectid;
+%sel{4}.pairsel= pairsel;
+%sel{4}.spsel= 'ripple';
+%sel{4}.label= 'ripple';
+
+%sel{5}.selectid= selectid;
+%sel{5}.pairsel= pairsel;
+%sel{5}.spsel= 'non_ripple_non_run';
+%sel{5}.label= 'non-ripple-non-run';
+
+%sel{6}.selectid= selectid;
+%sel{6}.pairsel= pairsel;
+%sel{6}.spsel= 'non_ripple_non_run2';
+%sel{6}.label= 'non_ripple_non_run2';
+
+%sel{7}.selectid= selectid;
+%sel{7}.pairsel= pairsel;
+%sel{7}.spsel= 'non_ripple';
+%sel{7}.label= 'non_ripple';
+if strfind(selectid, 'Arm')
+    for is=1:length(sel)
+        sel{is}.novelDay= 1;
+    end
+end
+
+end
+
+if(0)
+
+sel{1}.selectid= 'pf8-fam';
+sel{1}.pairsel= pairsel;
+sel{1}.spsel= spsel;
+sel{1}.label= 'fam';
+
+
+sel{2}.selectid= 'pf8-novelArm';
+sel{2}.pairsel= pairsel;
+sel{2}.spsel= spsel;
+sel{2}.novelDay= 1;
+sel{2}.label= 'day-1';
+
+sel{3}.selectid= 'pf8-novelArm';
+sel{3}.pairsel= pairsel;
+sel{3}.spsel= spsel;
+sel{3}.novelDay= 2;
+sel{3}.label= 'day-2';
+
+sel{4}.selectid= 'pf8-novelArm';
+sel{4}.pairsel= pairsel;
+sel{4}.spsel= spsel;
+sel{4}.novelDay= 3;
+sel{4}.label= 'day-3';
+
+sel{5}.selectid= 'pf8-famArm';
+sel{5}.pairsel= pairsel;
+sel{5}.spsel= spsel;
+%sel{5}.novelDay= 3;
+sel{5}.label= 'fam-arm';
+
+%sel{6}.selectid= 'pf7-in-novelArm';
+%sel{6}.pairsel= 'non_overlap';
+%sel{6}.spsel= spsel;
+%sel{6}.label= 'novel non-overlap';
+
+if(0)
+sel{3}.selectid= 'pf7-in-novelArm';
+%sel{3}.selectid= 'placefields4-novel2';
+sel{3}.pairsel= pairsel;
+sel{3}.spsel= 'placefield-2nd';
+sel{3}.novelDay= 1;
+sel{3}.label= 'day-1-2nd';
+
+
+sel{2}.selectid= 'pf7-in-novelArm';
+%sel{2}.selectid= 'placefields4-novel2';
+sel{2}.pairsel= pairsel;
+sel{2}.spsel= 'placefield-1st';
+sel{2}.novelDay= 1;
+sel{2}.label= 'day-1-1st';
+
+sel{4}.selectid= 'pf7-in-famArm';
+sel{4}.pairsel= pairsel;
+sel{4}.spsel= 'placefield-1st';
+sel{4}.label= 'fam-1st';
+
+sel{5}.selectid= 'pf7-in-famArm';
+sel{5}.pairsel= pairsel;
+sel{5}.spsel= 'placefield-2nd';
+sel{5}.label= 'fam-2nd';
+
+sel{6}.selectid= 'pf7-in-fam';
+%sel{1}.selectid= 'placefields4-train2';
+sel{6}.pairsel= pairsel;
+sel{6}.spsel= 'placefield-2nd';
+sel{6}.label= 'fam-2nd';
+
+end
+
+end
+
+setRoot;
+olddir= pwd;
+cd([root '/work']);
+opt.root= root;
+nsel=length(sel);
+
+for is=1:nsel
+    [XC{is}, AUX{is}]= getCCG(sel{is}, opt);
+end
+
+%fprintf(1, 'Analyzing pairs=''%s'', spikes=''%s'', scaling=''%s'', dt= %dms, T=
+%ds\n', pairsel, spsel, opt. scaling, round(dt*1000), round(T*1000));
+
+load ccg_filter
+B= ccg_filter.tf.num;
+A= ccg_filter.tf.den;
+%B= fir1(4, opt.cutfreq*2*opt.dt);
+%A= 1;
+for is=1:nsel
+    FXC{is}= filtfilt(B, A, XC{is});
+    fprintf(1, 'number of pairs %s: %d used, %d rejected (%d total)\n', ...
+            sel{is}.label, AUX{is}.npairs-AUX{is}.nrej, AUX{is}.nrej, AUX{is}.npairs);
+%    DT= AUX{is}.lags*opt.dt;
+%    ind= find(DT>=-.070 & DT<=.070);
+%    FXC{is}= FXC{is}(ind,:);
+end
+
+%keyboard
+%freqz(B,A,100,1/opt.dt);
+
+if(0)
+% find maximum correlation
+maxy= 0; mXC= {};
+for is=1:nsel
+    DT= AUX{is}.lags*opt.dt;
+    ind= find(DT>=-.070 & DT<=.070);
+%    ind=[1:length(AUX{is}.lags)];
+    mtmax= max(FXC{is}(ind,:))';
+    maxy= max([maxy; mtmax]);
+    mtmin= min(FXC{is}(ind,:))';
+%    mXC{is}= mtmin;
+%    mXC{is}= mtmax;
+%    mXC{is}= (mtmax-mtmin);
+     ind= mtmax>1e-6;
+    mXC{is}= (mtmax(ind)-mtmin(ind))./mtmax(ind);
+%    mXC{is}= (mtmax(ind)-mtmin(ind))./(mtmax(ind)+mtmin(ind));
+%    mXC{is}= (mtmax-mtmin)./mtmax;
+%    mXC{is}= mtmin(ind);
+end
+%for is=1:nsel
+%    mean(mXC{is})
+%end
+auxCmpDist(mXC, sel, 'height central peak', opt);
+auxPlotCDF(mXC, sel, 'height central peak', opt.scaling)
+%title([pairsel '-' spsel])
+%set(gcf, 'Name', [pairsel '-' spsel])
+end
+
+% area under CCG
+%area= auxCalcCCGArea(FXC, opt, AUX);
+%auxCmpDist(area, sel, 'area', opt);
+%auxPlotCDF(area, sel, 'area', '')
+
+% regression slope 
+%rs= auxCalcRegSlope(FXC, opt, AUX);
+%for is=1:nsel
+%    tmp= auxGetDistancePF(AUX{is}.pairlist, opt);
+%    tmp= auxGetOverlapPF(AUX{is}.pairlist, opt);
+%    tmp= tmp(AUX{is}.ix);
+%    ind= find(tmp<15);
+%    rs2{is}= rs{is}(ind);
+%end
+%auxCmpDist(rs, sel, 'slope', opt);
+%auxPlotCDF(rs, sel, 'slope', '')
+%keyboard
+
+if(0)
+
+
+% calculated distance between placefields
+global lp dPF
+dPF= {};
+for is=1:nsel
+    tmp= auxGetDistancePF(AUX{is}.pairlist, opt);
+    dPF{is}= tmp(AUX{is}.ix);
+end
+%auxCmpDist(dPF, sel, 'distance', opt);
+%auxPlotCDF(dPF, sel, 'distance', opt.scaling)
+
+% location of center peak 
+[lp]= auxCalcPeakLoc(FXC, opt, AUX, dPF);
+[lp, dPF]= auxCalcPeakLoc(FXC, opt, AUX, dPF);
+%auxCmpDist(lp, sel, 'PeakLoc', opt);
+%auxPlotCDF(lp, sel, 'PeakLoc', '')
+%auxHist(lp, sel, 'PeakLoc', '')
+
+for is=1:nsel
+    ind= find(isfinite(lp{is}));
+    dPF2{is}= dPF{is}(ind);
+    lp2{is}= lp{is}(ind);
+end
+
+opt.xvar= 'distance';
+opt.xstr= 'COM distance (cm)';
+%opt.xstr= 'centroid distance (ms)';
+
+%opt.yvar= 'CCGmax';
+%opt.ystr= 'max. correlation';
+%auxPlotTwoVar(dPF, mXC, opt)
+
+opt.yvar= 'PeakSep';
+opt.ystr= 'CCG peak (ms)';
+auxPlotTwoVar(dPF2, lp2, opt, sel)
+
+% firing asymmetry
+%asym= auxCalcAsym(XC, opt, AUX);
+%opt.yvar= 'Asym';
+%opt.ystr= 'firing asym.';
+%auxPlotTwoVar(dPF, asym, opt)
+
+%for is=1:nsel
+%    ind= find(dPF{is}<0 & isfinite(asym{is}));
+%    asym2{is}= asym{is}(ind);
+%end
+
+%auxCmpDist(asym2, sel, 'Asym', opt);
+%auxPlotCDF(asym2, sel, 'Asym', '')
+end
+
+% ratio of center peak to average of side peaks
+pr= auxCalcPeakRatios(FXC, opt.dt, AUX{is}.lags);
+for is=1:nsel
+    fprintf(1, '  %s: peak ratio identified in %d/%d pairs\n', ...
+            sel{is}.spsel, length(pr{is}), AUX{is}.npairs-AUX{is}.nrej);
+end
+auxCmpDist(pr, sel, 'PeakRatio', opt);
+auxPlotCDF(pr, sel, 'PeakRatio', opt.scaling)
+
+%figname= ['PeakRatio-' pairsel '-' spsel];
+%figname= ['PeakRatio-' selectid '-' pairsel '-' spsel];
+%set(gcf, 'Name', figname)
+%set(gca, 'xlim', [0,10]); 
+%myprint('large', figname);
+
+% max of power spectrum
+%[m,f]= auxCalcPSMax(XC, opt);
+%auxCmpDist(f, sel, 'MaxFreq', opt);
+%auxPlotCDF(f, sel, 'MaxFreq', opt.scaling)
+%auxCmpDist(m, sel, 'MaxPower', opt);
+%auxPlotCDF(m, sel, 'MaxPower', opt.scaling)
+
+%m= auxCalcPS(XC, opt);
+%auxCmpDist(m, sel, 'power', opt);
+%auxPlotCDF(m, sel, 'power', opt.scaling)
+
+% plot all CCG
+if(plotall)
+    auxPlotCCG(XC, FXC, AUX, opt, sel);
+end
+
+
+%keyboard
+
+
+function [t,rej]= auxSelectSpikes(sd, be, spsel, pl, ip, opt)
+global minspikes
+burstdiff= 0.020;
+rej= 0; t= {};
+if strfind(spsel, 'traj') 
+    if ~isfield(spsel{1}, 'traj')
+        error('requested traj selection but traj was not given');
+    end
+    trajs= pl.traj{ip};
+end
+for i=1:length(sd)
+    ndata= length(be.time);
+    % select only spikes on traj and on satellite arms
+    switch spsel
+    case 'sat'
+        spind= find(75<sd{i}.linpos & sd{i}.linpos < 150);
+    case 'traj_end'
+        spind= find(ismember(be.traj(sd{i}.index),trajs) & sd{i}.linpos>75);
+    case {'traj_sat', 'traj_sat2'}
+        spind= find(ismember(be.traj(sd{i}.index),trajs) & 75<sd{i}.linpos & sd{i}.linpos < 150);
+    case {'traj_nosat'}
+        spind= find(ismember(be.traj(sd{i}.index),trajs) & (sd{i}.linpos<75 | sd{i}.linpos>150));
+    case 'traj'
+        spind= find(ismember(be.traj(sd{i}.index),trajs));
+    case 'run'
+        spind= find(be.traj(sd{i}.index)>=0);
+    case {'run2', 'non_ripple_run2', 'non_ripple_non_run2', 'non_run2'}
+        % extend non_run time by +/- tExt [sec]
+        tExt= 0.500;
+
+        traj= be.traj;
+        ind= find(traj<0);
+        [lo,hi]= findcontiguous(ind);
+        n= round(tExt/(be.time(2)-be.time(1)));
+        lo= lo-n; hi= hi+n;
+        traj(makecontiguous(lo,hi,[1,ndata]))=-1;
+
+        switch spsel
+        case 'run2'
+            spind= find(traj(sd{i}.index)>=0);
+        case 'non_run2'
+            spind= find(traj(sd{i}.index)<0);
+        case 'non_ripple_run2'
+            spind= find(~be.ripple(sd{i}.index)& traj(sd{i}.index)>=0);
+        case 'non_ripple_non_run2'
+            spind= find(~be.ripple(sd{i}.index)& traj(sd{i}.index)<0);
+        end
+    case 'non_run'
+        spind= find(be.traj(sd{i}.index)<0);
+    case {'ripple', 'non_ripple', 'ripple_non_run', 'ripple_run', 'non_ripple_run', 'non_ripple_non_run'}
+        % extend non_run time by +/- tExt [sec]
+%        tExt= 0.1;
+
+%        ind= find(be.ripple);
+%        [lo,hi]= findcontiguous(ind);
+%        n= round(tExt/(be.time(2)-be.time(1)));
+%        lo= lo-n; hi= hi+n;
+%        ind= makecontiguous(lo,hi,[1,ndata]);
+%        be.ripple(ind)=1;
+
+        switch spsel
+        case 'ripple'
+            spind= find(be.ripple(sd{i}.index));
+        case 'ripple_run'
+            spind= find(be.ripple(sd{i}.index)& be.traj(sd{i}.index)>=0);
+        case 'ripple_non_run'
+            spind= find(be.ripple(sd{i}.index)& be.traj(sd{i}.index)<0);
+        case 'non_ripple_run'
+            spind= find(~be.ripple(sd{i}.index)& be.traj(sd{i}.index)>=0);
+        case 'non_ripple_non_run'
+            spind= find(~be.ripple(sd{i}.index)& be.traj(sd{i}.index)<0);
+        case 'non_ripple'
+            spind= find(~be.ripple(sd{i}.index));
+        end
+    case {'run_sat', 'run_sat_burst'}
+        spind= find(75<sd{i}.linpos & sd{i}.linpos < 150 & be.traj(sd{i}.index)>=0);
+    case {'all', 'all_burst'}
+        spind= 1:length(sd{i}.index);
+    case {'placefield', 'placefield-1st', 'placefield-2nd'}
+        x= be.linpos(sd{i}.index);
+        npf= size(pl.pf{ip}, 2);
+        spind= [];
+        for ipf=1:npf
+            minx= min(pl.pf{ip}(:,ipf)); maxx= max(pl.pf{ip}(:,ipf));
+            tmp= find(be.traj(sd{i}.index)==pl.traj{ip}(ipf) & minx<x & x<maxx);
+            spind= [spind; tmp];
+        end
+        spind= sort(spind);
+%        spind= spind(1:ceil(length(spind)/3));%@@
+        if strcmp(spsel, 'placefield-1st')
+            halftime= (be.time(1)+be.time(end))/2;
+            spind= spind(sd{i}.time(spind)<=halftime);
+        elseif strcmp(spsel, 'placefield-2nd')
+            halftime= (be.time(1)+be.time(end))/2;
+            spind= spind(sd{i}.time(spind) >halftime);
+        end
+
+    otherwise
+        error(['Unknown spike selection filter "' spsel '".']);
+    end
+
+    % check number of spikes in selection
+%    switch spsel
+%    case 'placefield'
+%        if length(spind)<20; rej=1;  return; end
+%    case 'traj_sat2'
+%        if length(spind)<100; rej=1;  return; end
+%    case 'traj_nosat'
+%        if length(spind)<10; rej=1;  return; end
+%    case 'ripple'
+%        if length(spind)<10; rej=1;  return; end
+%    otherwise
+        if length(spind)<opt.minspikes; 
+            warning(sprintf('Reject pair with only  %d spikes!',length(spind))); 
+            rej=1;
+        end
+%    end
+    t{i}= sd{i}.time(spind);
+    if strfind(spsel, 'burst')
+        d= diff(t{i});
+        ind= find(d>burstdiff);
+        t{i}= [t{i}(1);t{i}(ind+1)];
+    end
+end
+
+function auxCmpDist(x, sel, var, opt)
+fprintf(1, '\ncomparing %s\n', var);
+nsel= length(x);
+for is=1:nsel
+    if is==opt.ref | isempty(x{is}); continue; end
+    p= ranksum(x{opt.ref}, x{is});
+    fprintf(1, 'Ranksum test %s vs. %s p=%.3g.\n', sel{opt.ref}.label, sel{is}.label, p);
+    [h,p]= kstest2(x{opt.ref}, x{is});
+    fprintf(1, 'KS test %s vs. %s p=%.3g.\n', sel{opt.ref}.label, sel{is}.label, p);
+end
+
+function auxHist(x, sel, var, outname)
+nsel= length(x);
+minx=1e10; maxx= -1e10;
+for is=1:nsel; maxx= max([x{is}, maxx]); minx= min([x{is}, minx]); end
+b= linspace(minx, maxx, 11);
+lstr= {};
+for is=1:nsel
+    h(:,is)= histc(x{is}', b);
+    h(:,is)= h(:,is)/sum(h(:,is));
+    lstr{is}= sel{is}.label;
+end
+figure
+%plot(b(1:end-1)+(b(2)-b(1))/2, h(1:end-1,:));
+bar(b+(b(2)-b(1))/2,h);
+legend(lstr, 0);
+xlabel(var);
+myprint('large', ['hist_' var '_' outname]);
+
+function auxPlotCDF(x, sel, var, outname)
+figure
+plotcol= {'k', 'r', 'b', 'g', 'm', 'y', 'c'};
+lstr= {};
+nsel= length(x);
+il= 0;
+for is=1:nsel
+    if isempty(x{is}); continue; end
+    h= cdfplot(x{is});
+    set(h, 'Color', plotcol{is});
+    il=il+1;
+    lstr{il}= sel{is}.label;
+    hold on
+end
+legend(lstr, 0);
+xlabel(var);
+ylabel('cum. fraction');
+title('');
+%if strfind(var, 'PeakRatio') set(gca, 'xlim', [0,10]); end
+%figname= ['cdf_' var '_' outname];
+figname= [var '_' outname];
+set(gcf, 'Name', figname);
+myprint(2.5*[1 2/3], figname);
+
+function asym= auxCalcAsym(x, opt, aux)
+nsel= length(x);
+for is=1:nsel
+    np= size(x{is}, 2);
+    for ip=1:np
+        y= x{is}(:,ip);
+        t= aux{is}.lags*opt.dt;
+        ind= find(t>-0.07 & t<=0);
+        r1= sum(y(ind));
+
+        ind= find(t>0 & t<=0.07);
+        r2= sum(y(ind));
+
+        asym{is}(ip,:)= (r2-r1)/(r1+r2);
+    end
+end
+%keyboard
+
+function [lp,dPF]= auxCalcPeakLoc(x, opt, aux, dPF)
+nsel= length(x);
+traj_fac=-[1 -1 1 -1];
+fct= inline('b(1)*exp(-0.5*(x-b(2)).^2/b(3))', 'b', 'x');
+for is=1:nsel
+    M= (length(aux{is}.lags)-1)/2;
+    np= size(x{is}, 2);
+    for ip=1:np
+
+        y= x{is}(:,ip);
+        t= aux{is}.lags*opt.dt;
+
+%        d= dPF{is}(ip)*traj_fac(aux{is}.pairlist.traj{ip}+1);
+
+%        b= nlinfit(t,y, fct, [1 0 1]);
+%        [mbig,i]= max(fct(b,t));
+%        dPF{is}(ip)= 1000*t(i);
+%        d= dPF{is}(ip);
+
+
+%        if d>=0
+%            ind= find(t>-0.01 & t<=0.130)';
+%            fac=1;
+%        else
+%            ind= find(t>-0.13 & t<0.01)';
+%            fac=-1;
+%        end
+
+        ind= find(t>=-0.10 & t<=0.10)';
+%        ind= find(t>-0.07 & t<=0.07)';
+        fac=1;
+
+%        [m,i]= max(y(ind));
+%        lp{is}(ip)= 1000*t(ind(i));
+
+        % find peaks
+        ipeaks= ind(findPeaks(y(ind)'));
+        if isempty(ipeaks); 
+            lp{is}(ip)= nan; %%@@
+        else
+            [m,i]= max(y(ipeaks));
+            lp{is}(ip)= (ipeaks(i)-M-1)*opt.dt*1000;
+        end
+
+
+%            fprintf(1, 'dPF %.1f, d= %.1f, traj= %d\n', ...
+%                dPF{is}(ip), d,aux{is}.pairlist.traj{ip});
+%            plot(t, y);
+%            hold on
+%            plot(lp{is}(ip)/1000, m, 'bo');
+%            plot(t, fct(b,t),'r');
+%            plot(dPF{is}(ip)/1000, mbig,'ro');
+%            hold off
+%            set(gca,'xlim', [-.13 .13]);
+%            pause
+
+%        dPF{is}(ip)= abs(d);
+%        lp{is}(ip)= abs(lp{is}(ip));
+%        dPF{is}(ip)= fac*(d);
+        lp{is}(ip)= fac*(lp{is}(ip));
+    end
+end
+%keyboard
+
+function pr= auxCalcPeakRatios(x, dt, lags)
+M= (length(lags)-1)/2;
+% interval of preceding, central, and following theta cycle
+tb=[-.1875, -.0625, .0625, .1875];
+ti= floor(tb/dt)+M+1;
+for j=1:3
+    ind{j}= [ti(j):ti(j+1)];
+end
+nsel= length(x);
+for is=1:nsel
+    np= size(x{is}, 2);
+    pr{is}= [];
+    for ip=1:np
+        % find peaks
+        for j=1:3
+            [m(j), l(j)]= max(x{is}(ind{j},ip));
+        end
+        if all(m<10e-4)
+            pr{is}(ip)= nan;
+        elseif m(1)+m(3)<10e-10
+%                pr{is}(ip)= nan;
+                pr{is}(ip)= 10;
+        else
+            pr{is}(ip)= 2*m(2)/(m(1)+m(3));
+        end
+    end
+%    pr{is}(isnan(pr{is}))= max(pr{is});
+%    pr{is}(isnan(pr{is}))= 10;
+    
+    pr{is}= pr{is}(isfinite(pr{is}));
+end
+
+
+function pr= auxCalcPeakIndex(x, dt, lags)
+M= (length(lags)-1)/2;
+% interval of preceding, central, and following theta cycle
+tb=[-.1875, -.0625, .0625, .1875];
+ti= floor(tb/dt)+M+1;
+for j=1:3
+    ind{j}= [ti(j):ti(j+1)];
+end
+nsel= length(x);
+for is=1:nsel
+    np= size(x{is}, 2);
+    for ip=1:np
+        % find peaks
+        for j=1:3
+            [m(j), l(j)]= max(x{is}(ind{j},ip));
+        end
+        av= (m(1)+m(3))/2;
+        pr{is}(ip)= (m(2)-av)/(m(2)+av);
+    end
+end
+
+function auxCut(x, sel, cut, var)
+nsel= length(x);
+n= zeros(nsel, 2);
+frac= zeros(nsel, 2);
+for is=1:nsel
+    n(is,1)= sum(x{is}<cut);
+    n(is,2)= sum(x{is}>cut);
+    frac(is,:)= n(is,:)/sum(n(is,:));
+end
+frac
+
+% bootstrap analysis
+reps= 10000;
+ref= 1;
+n1= length(x{ref});
+f1= zeros(reps, 2);
+for r=1:reps
+    ind= floor(n1*rand(n1,1))+1;
+    xb= x{ref}(ind);
+    tmp(1)= sum(xb<cut);
+    tmp(2)= sum(xb>=cut);
+    f1(r,:)= tmp/n1;
+end
+
+for is=1:nsel
+    p= sum(f1(:,2)>= frac(is,2))/reps;
+    fprintf(1, 'bootstrap test %s vs. %s p=%.3f.\n', sel{1}.label, sel{is}.label, p);
+end
+
+function auxPlotCCG(xc, fxc, aux, opt, sel)
+figure
+nsel= length(xc);
+olddir= pwd;
+
+for is=1:nsel
+    workdir= sprintf('%s/work/CCG/%s/%s/%s', ...
+        opt.root, sel{is}.pairsel, sel{is}.spsel, sel{is}.selectid);
+    cd(workdir)
+    np= size(xc{is},2);
+    pl= aux{is}.pairlist;
+    T= aux{is}.lags(end)*opt.dt;
+    t= opt.dt*aux{is}.lags';
+    nt= length(t);
+    for ix=1:np
+        ip= aux{is}.ix(ix);
+
+%        if(ip~=67); continue; end %%@@
+%            ix
+
+%        if ~((is==1 & ip==12) | (is==2 & ip==5)); continue; end
+
+%        plot(t, [xc{is}(:,ix),fxc{is}(:,ix)]);
+        plot(t, fxc{is}(:,ix));
+
+%        [b,bint,r,rint,stats]= regress(xc{is}(:,ix), [t ones(nt,1)]);
+%        hold on
+%        plot(t,b(1)*t+b(2), 'k');
+%        hold off
+
+
+        set(gca, 'XLim', [-T, T]);
+        set(gca, 'YLim', [0 max(fxc{is}(:,ix))]);
+        num= pl.cellnum(ip,:);
+        tstr= sprintf('%s: %d %d %d %d', pl.rat{ip}, num(1:4));
+        fnstr= sprintf('%s-%d-%s-%d-%d-%d-%d', sel{is}.label, ip, pl.rat{ip}, num(1:4));
+        if(length(num)>4)
+            tstr= sprintf('%s, %d %d', tstr, num(7:8));
+            fnstr= sprintf('%s__%d-%d', fnstr, num(7:8));
+            ylabel('cross correl.');
+        else
+            ylabel('auto correl.');
+        end
+        if isfield(pl, 'traj')
+            tstr= [tstr '; traj '];
+            trajs=  pl.traj{ip};
+            for itraj=1:length(trajs)
+                tstr= sprintf('%s %d', tstr, trajs(itraj));
+            end
+        end
+%        title(tstr);
+        xlabel('time lag (sec)');
+        myprint('mini', fnstr);
+    end
+end
+cd(olddir)
+
+function [m,f]= auxCalcPSMax(x, opt)
+nsel= length(x);
+for is=1:nsel
+    np= size(x{is}, 2);
+    for ip=1:np
+        y= x{is}(:,ip);
+%        y= y-mean(y);
+        % normalize
+%        if mean(y.^2) > 0
+%            y= y/sqrt(mean(y.^2));
+%        end
+%        if mean(y) > 0
+%            y= y/mean(y);
+%        end
+%        [Px,freq] = pwelch(y,ip),[],[],[],1/opt.dt);
+        [Px, freq] = pmtm(y,[],[],1/opt.dt,'eigen');
+        % find peaks
+        i= findPeaks(Px');
+        [tmp, imin]= min(abs(freq(i)-8));
+        m{is}(ip)= Px(i(imin));
+        f{is}(ip)= freq(i(imin));
+    end
+end
+
+function m= auxCalcPS(x, opt)
+nsel= length(x);
+for is=1:nsel
+    disp(is);
+    np= size(x{is}, 2);
+%    for ip=[27,35]  % 27, 35
+    for ip=1:np
+        y= x{is}(:,ip);
+%        if sum(y) > 1e-2
+%            y= y/mean(y);
+%        end
+%        y= y-mean(y);
+        % normalize
+%        if mean(y.^2) > 0
+%            y= y/sqrt(mean(y.^2));
+%        end
+%        [Px,freq] = pwelch(x{is}(:,ip),[],[],[],1/opt.dt);
+        [Px, freq] = pmtm(y,[],[],1/opt.dt,'eigen');
+
+%        hold off
+%        semilogy(freq, Px);
+%        set(gca, 'XLim', [0,100]);
+%        i= findPeaks(Px');
+%        hold on
+%        semilogy(freq(i), Px(i), '.');
+%        pause
+
+        % normalize
+%        ind= find(1<freq & freq<100);
+%        if sum(Px(ind))>0;
+%            Px= Px/sum(Px(ind));
+%        end
+
+        % get power in theta band
+%        ind= find(freq<6);
+        ind= find(6<freq & freq<10);
+%        ind= find(11<freq & freq<100);
+        m{is}(ip)= sum(Px(ind));
+    end
+end
+
+function [ccg, aux]= getCCG(sel, opt)
+
+selectid= sel.selectid;
+spsel= sel.spsel;
+pairsel= sel.pairsel;
+workdir= sprintf('%s/work/CCG/%s/%s/%s', ...
+    opt.root, pairsel, spsel, selectid);
+fname= sprintf('%s/XC_%s_%dms.mat', workdir, opt.scaling, 1000*opt.dt);
+
+if ~exist(fname, 'file')
+%    test whether directory exists
+    if ~exist(workdir); error(['directory ' workdir ' does not exist']); end
+    M= ceil(opt.T/opt.dt);
+    aux.lags= [-M:M];
+    scale= 0; pairs= 1;
+    if strcmp(opt.scaling, 'coef'); scale=1 ; end
+    if strcmp(sel.pairsel, 'none'); pairs=0 ; end
+    aux.nrej= 0;
+
+    fprintf(1, 'Calculating cell select ''%s'', spike select= ''%s''...\n', ...
+        selectid, spsel);
+    [cl, nc]= collectCellList(selectid);
+    if(pairs) 
+        [pl, np]= collectPairs(cl, pairsel, 0, strfind(spsel, 'placefield'));
+    else
+        pl= cl; np= nc;
+    end
+    aux.pairlist= pl; 
+    ccg= nan*zeros(2*M+1,np);
+
+    oldrat= ''; oldd= -1; 
+    for ip=1:np
+
+        % load spike times of 1st cell
+        rat= pl.rat{ip};
+        num= pl.cellnum(ip,:); d=num(1); e=num(2); tet=num(3); c=num(4);
+        if ~strcmp(rat, oldrat) | oldd~= d
+            oldrat= rat; oldd= d;
+            load(sprintf('%s/%s/data2/spikedata%.2d.mat', opt.root, rat, d));
+            load(sprintf('%s/%s/data2/behavdata%.2d.mat', opt.root, rat, d));
+        end
+        sd{1}= spikedata{d}{e}{tet}{c};
+
+        if(pairs)
+            % load spike times of 2nd cell
+            num2= pl.cellnum(ip,5:8); 
+            d=num2(1); e=num2(2); tet=num2(3); c=num2(4);
+            sd{2}= spikedata{d}{e}{tet}{c};
+        end
+
+        [t, rej]= auxSelectSpikes(sd, behavdata{d}{e}, spsel, pl, ip, opt);
+        if(rej) continue; end
+        ccg(:,ip)= spikeCCG(t, M, opt.dt, scale)';
+        
+        fprintf(1, '  %3d/%3d\n', ip, np);
+    end
+    aux.nrej= sum(isnan(ccg(1,:)));
+    aux.npairs= np;
+    save(fname, 'ccg', 'aux');
+else
+load(fname);
+end
+
+if isfield(sel, 'novelDay') & sel.novelDay
+     ind= find(aux.pairlist.day==sel.novelDay);
+    aux.npairs= length(ind);
+else
+    ind=[1:aux.npairs];
+end
+
+% clean-up
+ind= ind(isfinite(ccg(1,ind)));
+aux.ix= ind;
+aux.nrej= aux.npairs-length(ind);
+ccg= ccg(:,ind);
+%keyboard
+
+function d= auxGetDistancePF(pl,opt)
+np= length(pl.rat);
+d= zeros(np,1);
+traj_fac=-[1 -1 1 -1];
+
+if(1)
+    for ip=1:np
+%        d(ip)= abs(mean(pl.pf{ip}(1:2))- mean(pl.pf{ip}(3:4)));
+        d(ip)= mean(pl.pf{ip}(3:4))- mean(pl.pf{ip}(1:2));
+        d(ip)= traj_fac(pl.traj{ip}+1)*d(ip);
+    end
+else 
+    olddir= pwd;
+    ind=[1:4; 5:8];
+    indPF=[1:2; 3:4];
+    for ip=1:np
+        if ip==1 | ~strcmp(pl.rat{ip}, pl.rat{ip-1})
+            cd(sprintf('%s/%s/data2/', opt.root, pl.rat{ip}));
+            load rate
+            setLocalOptions
+        end
+        for j=1:2
+            num= pl.cellnum(ip,ind(j,:));
+            rdata= rate{num(1)}{num(2)}{num(3)}{num(4)}.data;
+            traj= pl.traj{ip};
+            x= pl.pf{ip}(indPF(j,1)):1:pl.pf{ip}(indPF(j,2));
+            r= interp1(rdata(:,1), rdata(:,traj+2), x, 'linear');
+            cent(j)= sum(r.*x)/sum(r);
+        end
+%        d(ip)= abs(diff(cent));
+        d(ip)= traj_fac(pl.traj{ip}+1)*diff(cent);
+    end
+    cd(olddir);
+end
+
+
+function auxPlotTwoVar(x,y,opt,sel)
+nx= length(x);
+if nx~= length(y); 
+    error('  The two variables have different number of sets.');
+end
+plotcol= {'k', 'r', 'b', 'g', 'm', 'y', 'c'};
+figure
+for i=1:nx
+        figure
+    fprintf(1, '%s, \t', sel{i}.label);
+    [p(i), r(i), n(i)]= linrel(x{i}, y{i}, opt, 0.05, plotcol{i});
+    hold on
+    myprint([2 1.3], ['seq_comp_' sel{i}.label]);
+end
+%myprint('small', [opt.yvar '-vs-' opt.xvar]);
+
+z= 0.5*log((1+r)./(1-r));
+
+if n(opt.ref)<4; error('need more than 3 data points for testing corr'); end
+for i=1:nx
+    if i== opt.ref; continue; end
+    if n(i)<4; warning('skipping test (less than 4 datapoints)'); end
+    Z= (z(i)-z(opt.ref))/sqrt(1/(n(i)-3)+1/(n(opt.ref)-3));
+    if Z>0; Z=-Z; end
+    pval= normcdf(Z)*2;
+    fprintf(1, '  "%s" vs. "%s": p=%.3f\n',  sel{opt.ref}.label, sel{i}.label, pval);
+end
+
+
+function d= auxGetOverlapPF(pl,opt)
+np= length(pl.rat);
+d= zeros(np,1);
+for ip=1:np
+    x= reshape(pl.pf{ip},2,2);
+    ol= [max(x(1,:)) min(x(2,:))];
+%    d(ip)= 2*diff(ol)/(sum(diff(x)));
+    d(ip)= diff(ol);
+
+%    d(ip)= abs(diff(mean(x))); % distance between centers
+%    d(ip)= diff(x(1,:)); % distance between centers
+
+%    d(ip)= abs(diff(mean(x))) / mean(diff(x)); % distance between centers, norm
+%    by width
+end
+
+function [rs, Rsq]= auxCalcRegSlope(x, opt, aux)
+nsel= length(x);
+for is=1:nsel
+    t= aux{is}.lags'*opt.dt;
+    nt=length(t);
+    np= size(x{is}, 2);
+    for ip=1:np
+        [b,bint,r,rint,stats]= regress(x{is}(:,ip), [t ones(nt,1)]);
+%        fprintf(1,'%.4g\n', stats(3));
+%        rs{is}(ip,:)= abs(b(1));
+        rs{is}(ip,:)= b(1);
+        Rsq{is}(ip,:)= stats(1);
+
+%        plot(t,x{is}(:,ip))
+%        hold on
+%        plot(t,b(1)*t+b(2), 'k');
+%        hold off
+%        pause
+    end
+end
+
+%function [rs, Rsq]= auxCalcRegSlope(x, opt, aux)
+%figure
+%nsel= length(x);
+%for is=1:nsel
+%    t= aux{is}.lags'*opt.dt;
+%    nt=length(t);
+%    np= size(x{is}, 2);
+%    for ip=1:np
+%        y= x{is}(:,ip);
+%        i=findPeaks(-y');
+%        n=length(i);
+%        [b,bint,r,rint,stats]= regress(y(i), [t(i) ones(n,1)]);
+%        rs{is}(ip,:)= abs(b(1));
+%        rs{is}(ip,:)= b(1);
+%        Rsq{is}(ip,:)= stats(1);
+
+%        plot(t,y);
+%        hold on
+%        plot(t,b(1)*t+b(2), 'k');
+%        plot(t(i), y(i), 'ro');
+%        hold off
+%        pause
+%    end
+%end
+
+function area= auxCalcCCGArea(x, opt, aux)
+nsel= length(x);
+for is=1:nsel
+    np= size(x{is}, 2);
+    dt= aux{is}.lags*opt.dt;
+    ind= find(dt>-0.7 & dt<0.7);
+    for ip=1:np
+        area{is}(ip,:)= sum(x{is}(ind,ip))*opt.dt;
+    end
+end
+

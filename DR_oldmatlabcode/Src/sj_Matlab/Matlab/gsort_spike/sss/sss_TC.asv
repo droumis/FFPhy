@@ -1,0 +1,72 @@
+function sss_TC(spikes, show_clu)
+
+spktimes=spikes.ftimes;
+assigns=spikes.hierarchy.assigns;
+unqstim=unique(spikes.igorstim);
+stimonset=stimonset*10;  %% Convert to 0.1ms resolution
+
+onset_res=zeros(length(show_clu),length(unqstim))
+for plot_clu=1:length(show_clu)
+    for stim=1:length(unqstim)
+        sweep_idxs=find((assigns==unqcs)&(spikes.igorstim==unqstim));
+        clu_spktimes=spktimes(sweep_idxs);
+        onsettimes=clu_spktimes(find ((clu_spktimes>=stimonset) & (clu_spktimes<=stimonset+1000)));  
+        
+onset_res(plot_clu,stim)
+        
+
+
+for i=1:9
+    filename = [ [spec] '_Ch' num2str(i-1) '_TC.txt'];
+    if exist([ [spec] '_Ch' num2str(i-1) '_TC.txt'],'file')==2
+        sweepandtimes=load(filename);
+        onsettimes=mod(sweepandtimes,10000);
+        onsettimes=onsettimes(find ((onsettimes>=2000) & (onsettimes<=3000)));  
+        TC_onset(i)=length(onsettimes);
+        ch_onset(i)=TC_onset(i);
+        TC_all(i)=length(sweepandtimes);
+        ch_all(i)=TC_all(i);
+        clear sweepandtimes onsettimes
+        x=1;
+    end
+end
+ch_onset_prob=ch_onset/max(ch_onset);
+ch_all_prob=ch_all/max(ch_all);
+
+if x==1;
+    if figopt==1
+% figure; hold on;
+% 
+% % subplot(1,2,1)
+% plot(1:length(TC_onset),TC_onset(1:end),'b.-');
+% title ([ [cluster] '-Tuning Curve: Onset Response ' num2str(nsweepsTC) ' Sweeps' ]);
+% set(gca, 'Xtick', [1 2 3 4 5 6 7 8 9])
+% 
+% % subplot(1,2,2)
+% figure; hold on;
+%  plot(1:length(TC_all),TC_all(1:end),'k.-');
+%  title ('Entire Sweep');
+%  set(gca, 'Xtick', [1 2 3 4 5 6 7 8 9])
+% hold off;
+
+figure; hold on;
+
+% subplot(1,2,1)
+plot(1:length(ch_onset_prob),ch_onset_prob(1:end),'b.-');
+title ([ 'Onset Prob ' num2str(nsweepsTC) ' Sweeps' ]);
+set(gca, 'Xtick', [1 2 3 4 5 6 7 8 9])
+
+% subplot(1,2,2)
+figure; hold on;
+ plot(1:length(ch_all_prob),ch_all_prob(1:end),'k.-');
+ title ('Entire Sweep Prob');
+ set(gca, 'Xtick', [1 2 3 4 5 6 7 8 9])
+hold off;
+
+
+    end
+end
+
+    
+
+

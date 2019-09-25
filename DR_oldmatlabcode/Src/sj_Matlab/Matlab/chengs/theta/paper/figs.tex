@@ -1,0 +1,175 @@
+%% $Id: figs.tex,v 1.2 2007/05/15 20:06:02 chengs Exp $
+%% notes.tex, Sen Cheng, 2004
+%%
+%% Notes for my own reference.
+
+
+\documentclass[11pt]{article}
+\usepackage{pslatex}
+
+%\documentclass[rmp,preprintnumbers,twocolumn,floatfix]{revtex4}
+\usepackage{graphicx,amsmath,amsfonts}
+
+\usepackage{rotating}
+% keyboard macros
+\renewcommand{\eqref}[1]{Eq.~\ref{#1}}
+\newcommand{\eqsref}[2]{Eqs.~\ref{#1}~and~\ref{#2}}
+\newcommand{\figref}[1]{Fig.~\ref{#1}}
+\newcommand{\de}[1]{\,{\rm d}#1}
+\newcommand{\DD}[1]{\frac{d}{d #1}}
+\newcommand{\dd}[1]{\frac{\partial}{\partial #1}}
+\newcommand{\ddz}[2]{\frac{\partial #1}{\partial #2}}
+
+\setlength{\parindent}{0mm}
+
+\setlength{\voffset}{-1.5in} 
+\setlength{\hoffset}{-1in}
+\setlength{\evensidemargin}{15mm} 
+\setlength{\oddsidemargin}{15mm} 
+\setlength{\topmargin}{15mm} 
+
+\setlength{\textwidth}{183mm} 
+\setlength{\textheight}{247mm} 
+
+\graphicspath{{/home/chengs/figs/papers/07-MemoryDynamics-Nature/}{/home/chengs/figs/papers/}}
+
+\newlength{\fourth}
+\setlength{\fourth}{1.8in}
+\newlength{\third}
+\setlength{\third}{2.4in}
+\newlength{\twothirds}
+\setlength{\twothirds}{2\third}
+\newlength{\half}
+\setlength{\half}{3.6in}
+\newlength{\whole}
+\setlength{\whole}{7.2in}
+
+%\bibliographystyle{apalike} % has to come before \begin{document} in revtex4
+
+%\pagestyle{empty} %% @@
+
+\begin{document}
+
+
+{\Large\bf Figures} %%@@
+
+
+% all figure produced with   pf9, xp6,t005 , 
+
+%\clearpage %%@@
+
+\begin{figure}[htbp]
+    \parbox[t]{6.3in} {
+    \parbox[t]{1.5in} { {\sf a} \\
+        \includegraphics{setup_train}
+    } 
+    \parbox[t]{1.5in} { {\sf b} \\
+        \includegraphics{setup_scale30cm_novel}
+    }
+    \parbox[t]{1.5in} { {\sf c} \\
+        \includegraphics{ripple-snippet}
+    }
+    \\ \vskip 12pt
+    \parbox[t]{4.4in} {
+        \rule{1.5in}{1pt} \hfill
+        {\sf place field arm }
+        \hfill \rule{1.5in}{1pt} \\
+        \parbox[t]{1.4in} { {\sf d}\\
+            \includegraphics{bar_activation_pf_pf9} 
+        } \hfill
+        \parbox[t]{1.4in} { {\sf e}\\
+            \includegraphics{bar_ripCoincFrac_overlap_pf_pf9_2} \hfill
+        } \hfill
+        \parbox[t]{1.4in} { {\sf f}\\
+            \includegraphics{bar_z_overlap_pf_pf9_2}
+        } \hfill
+    } \\
+    \parbox[t]{4.4in} {
+        \rule{1.4in}{1pt} \hfill
+        {\sf non-place-field arm }
+        \hfill \rule{1.4in}{1pt} \\
+        \parbox[t]{1.4in} { {\sf g}\\
+            \includegraphics{bar_activation_nonpf_pf9} 
+        } \hfill
+        \parbox[t]{1.4in} { {\sf h}\\
+            \includegraphics{bar_ripCoincFrac_overlap_nonpf_pf9_2} \hfill
+        } \hfill
+        \parbox[t]{1.4in} { {\sf i}\\
+            \includegraphics{bar_z_overlap_nonpf_pf9_2}
+        } \hfill
+    }
+    }
+    \caption{ } %%@@
+\end{figure}
+
+%\clearpage %%@@
+
+\begin{figure}[htbp]
+    \parbox[t]{1.5in} { {\sf a} \\
+        \includegraphics{famArm-83-sta-7-4-23-4_27-14}
+\vskip-6.1mm
+        \includegraphics{novel-1-111-ter-8-4-24-7_25-4}
+    }
+    \parbox[t]{2.5in} { {\sf b} \\
+        \includegraphics{cdf-p_excessCorr_pf9_overlap_all_famArm123}
+    }
+    \parbox[t]{2.5in} { {\sf c} \\
+    \includegraphics{cdf-p_2nd_pf9_overlap_ripple_famArm123}
+    }
+    \caption{ } %%@@
+\end{figure}
+
+%\clearpage %%@@
+
+\begin{figure*}[htbp]
+    \parbox[t]{1.5in} { {\sf a} \\
+        \includegraphics{AF-pf9-novelArm-100-20occ_colorbar}
+    } \hskip-2mm
+    \parbox[t]{2.2in} { {\sf b} \\
+        \includegraphics{AF-pf9-novelArm-100-150occ_colorbar}
+    } \hskip-2mm
+    \parbox[t]{2in} { {\sf c} \\
+%        \includegraphics{coefAbs_pf9_day1_single_101_40}
+        \includegraphics{coefAbs_pf9_novel1_100}
+    }
+    \\
+    \parbox[t]{2in} { {\sf d} \\
+        \includegraphics{coefAbs_pf9_day1}
+    } %\hskip5mm
+    \parbox[t]{2in} { {\sf e} \\
+        \includegraphics{coefAbs_pf9_day2}
+    } %\hskip5mm
+    \parbox[t]{2in} { {\sf f} \\
+        \includegraphics{coefAbs_pf9_day3}
+    }
+    \caption{ } %%@@
+\end{figure*}
+
+%\clearpage %%@@
+
+\begin{figure}[htbp]
+    \parbox[t]{1.5in} { {\sf a}\\
+        \includegraphics{SeqCompression}
+    }
+    \parbox[t]{1.5in} { {\sf b} \\
+        \includegraphics{fam-3-11-kyl-3-4-25-9_28-3}
+    }
+    \parbox[t]{1.5in} { {\sf c} \\
+        \includegraphics{seq_comp_pf9_famArm_redux}
+    }\\
+    \parbox[t]{1.5in} { {\sf d} \\
+        \includegraphics{seq_comp_pf9_novel-1_redux}
+    }
+    \parbox[t]{1.5in} { {\sf e} \\
+        \includegraphics{seq_comp_pf9_novel-2_redux}
+    }
+    \parbox[t]{1.5in} { {\sf f} \\
+        \includegraphics{seq_comp_pf9_novel-3_redux}
+    }
+    \caption{ } %%@@
+\end{figure}
+
+
+
+\end{document}
+

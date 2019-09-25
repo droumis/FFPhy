@@ -1,0 +1,447 @@
+function spectra = spike_phase_spectrogram(unit,lfp,params)
+%SPIKE_PHASE_SPECTROGRAM Compute short-segment spike phase spectrogram of single-unit spike train (as well as shuffled surrogate spike trains) with respect to cycles of LFP oscillation
+%
+%   SPECTRA = SPIKE_PHASE_SPECTROGRAM(UNIT,LFP,PARAMS) takes a struct UNIT
+%   containing single-unit spike data (of the type which validates with IS_UNIT)
+%   and oscillatory LFP data containing filtered LFP data (of the type which
+%   validates with IS_CONTINUOUS, and with a 'phase' field that contains phase
+%   values in radians) and computes the "spike phase spectrum" (Mizuseki et al.,
+%   2009) of the spike train in short snippets of a fixed number of oscillatory
+%   cycles using the parameters specified in PARAMS. This procedure is repeated
+%   for shuffled spike trains which are generated using LOCAL_ISI_SHUFFLE.
+%
+%   PARAMS must be a scalar struct with the following fields:
+%     'bins_per_cycle': a real positive integer scalar, specifying the number 
+%         of phase bins to discretize the LFP cycle. This should be a large
+%         number.
+%     'window_size': a real finite floating-point scalar, specifying the
+%         duration of the short time windows, expressed in units of cycles.
+%         (Windows are all the same number of oscillatory LFP cycles, but *not*
+%         the same duration in time.) window_size/TW is the halfwidth of
+%         frequency resolution of the spectral estimate.
+%     'TW': positive real scalar >= 1, specifying the time-bandwidth product.
+%         Larger values give lower variance at the expense of spectral
+%         resolution. floor(2*TW - 1) Slepian tapers are applied to the data
+%         and the resulting spectral estimates are averaged.
+%     'nfft': a finite positive real integer, specifying the number of points
+%         in the FFT. The computation is fastest when nfft is a power of two,
+%         and slowest when nfft has large prime factors.
+%     'frequency_band': a 2-element row vector containing positive real
+%         floating-point values, specifying the range of frequencies (in units
+%         of 1/cycle) at which the spectral estimate is to be computed.
+%         frequency_band(2) must be greater than frequency_band(1) and less than
+%         or equal to the Nyquist frequency (= 0.5*bins_per_cycle). An error
+%         will be raised if the band is narrower than the spacing of the
+%         frequency grid that is specified by nfft.
+%     'window_centers': a cell array of the same size as UNIT, in which each
+%         cell contains a vector of uint32 timestamps that specify the
+%         center-times of the short time windows. An error will be raised if
+%         these times are not compatible with window_size and the available
+%         timerange of the spike data. If UNIT is a scalar struct, then the
+%         packaging cell can be omitted and window_centers can simply be a
+%         uint32 vector.
+%     'num_shuffles': a real positive integer, the number of shuffles to perform
+%     'shuffle_window': a 2-element row vector [a, b], where a < b and both
+%         elements are expressed in units of seconds. These specify the size of
+%         the local windows in which the spike trains are shuffled
+%
+%   SPECTRA is a struct of the same size as UNIT with the following fields:
+%       'uid': inherited from UNIT
+%       'subject': inherited from UNIT
+%       'day': inherited from UNIT
+%       'epoch': inherited from UNIT
+%       'environment': inherited from UNIT
+%       'tetrode': inherited from UNIT
+%       'depth': inherited from UNIT
+%       'hemisphere': inherited from UNIT
+%       'region': inherited from UNIT
+%       'reference': inherited from UNIT
+%       'passbands': inherited from UNIT
+%       'thresholds': inherited from UNIT
+%       'clustnum': inherited from UNIT
+%       'cluster_quality': inherited from UNIT
+%       'lfp_oscillation': struct containing various metadata fields inherited
+%           from LFP
+%       'bins_per_cycle': inherited from PARAMS
+%       'window_size': inherited from PARAMS
+%       'nfft': inherited from PARAMS
+%       'TW': inherited from PARAMS
+%       'num_tapers': equal to (2*TW - 1)
+%       'shuffle_window': inherited from PARAMS
+%       'num_shuffles': inherited from PARAMS
+%       'timestamp': vector of uint32 timestamps, equal to PARAMS.window_centers
+%       'relative_frequency': vector of real nonnegative floating-point values,
+%           specifying the frequency grid of the spectral estimates, expressed
+%           in units of inverse cycles 
+%       'power_spectral_density': a matrix of size 
+%           [numel(timestamp), numel(frequency)], containing estimated power
+%           spectral density for each time window, expressed in spikes/second.
+%       'shuffled_power_spectral_density': a 3-dimensional array of size
+%           [numel(timestamp), numel(frequency), params.num_shuffles], where
+%           each slice along the third dimension is a spectrogram for a shuffled
+%           spike train
+%       'spike_count': vector whose size is [numel(timestamp) 1], counting the
+%           number of spikes that contribute to the spectral esimate for each
+%           short window of oscillatory cycles
+%
+%   References:
+%   [1] Mizuseki K., Sirota A., Pastalkova E., Buzsaki G. (2009) Theta
+%       oscillations provide temporal windows for local circuit computation in
+%       the entorhinal-hippocampal loop. _Neuron_ 64:267-280.
+%   [2] Rivlin-Etzion M., Ritov Y., Heimer G., Bergman H., Bar-Gad I. (2006)
+%       Local shuffling of spike trains boosts the accuracy of spike train
+%       spectral analysis. _Journal of Neurophyiology_ 95:3245-3256.
+%
+%Depends on:
+%   LOCAL_ISI_SHUFFLE (written by SMK)
+%   IS_UNIT (written by SMK)
+%   IS_CONTINUOUS (written by SMK)
+%   STRUCT_CMP (written by SMK)
+%   IS_INTERVALS (written by SMK)
+%   DIFF_INTERVALS (written by SMK)
+%   ISMEMBER_INTERVALS (written by SMK)
+%   DPSS (MATLAB Signal Processing toolbox)
+%
+%Written by SMK, 2010 January 30.
+%
+
+TS_PER_SEC = 1e4;
+
+if (exist('local_isi_shuffle') ~= 2)
+  error(['SPIKE_PHASE_SPECTROGRAM depends on m-file LOCAL_ISI_SHUFFLE ' ...
+      '(written by smk)']);
+end
+if (exist('is_unit') ~= 2)
+  error(['SPIKE_PHASE_SPECTROGRAM depends on m-file IS_UNIT ' ...
+      '(written by smk)']);
+end
+if (exist('is_continuous') ~= 2)
+  error(['SPIKE_PHASE_SPECTROGRAM depends on m-file IS_CONTINUOUS ' ...
+      '(written by smk)']);
+end
+if (exist('struct_cmp') ~= 2)
+  error(['SPIKE_PHASE_SPECTROGRAM depends on m-file STRUCT_CMP ' ...
+      '(written by smk)']);
+end
+if (exist('is_intervals') ~= 2)
+  error(['SPIKE_PHASE_SPECTROGRAM depends on m-file IS_INTERVALS ' ...
+      '(written by smk)']);
+end
+if (exist('diff_intervals') ~= 2)
+  error(['SPIKE_PHASE_SPECTROGRAM depends on m-file DIFF_INTERVALS ' ...
+      '(written by smk)']);
+end
+if (exist('ismember_intervals') ~= 2)
+  error(['SPIKE_PHASE_SPECTROGRAM depends on m-file ISMEMBER_INTERVALS ' ...
+      '(written by smk)']);
+end
+if (exist('dpss') ~= 2)
+  error(['SPIKE_PHASE_SPECTROGRAM depends on m-file DPSS ' ...
+      '(MATLAB Signal Processing toolbox)']);
+end
+
+if ~is_unit(unit)
+  error('UNIT is not a valid struct containing single-unit spike data');
+end
+if ~is_continuous(lfp) || ~isfield(lfp,{'phase'}) || ...
+    ~all(arrayfun(@(l) isvector(l.phase) && isfloat(l.phase) && ...
+    isreal(l.phase) && all((l.phase >= -pi) & (l.phase <= +pi)),lfp))
+  error(['LFP is not a valid struct containing continuous LFP data with ' ...
+      'an instantaneous phase field']);
+end
+if ~all(struct_cmp(lfp(1),lfp, ...
+    {'subject','electrode','reference','depth','region','hemisphere', ...
+    'Fs','environment'}))
+  error(['Elements of LFP must correspond to the same single electrode ' ...
+      'and environment and must have the same sampling rate and filter ' ...
+      'specifications']);
+end
+if ~isequal(size(unit),size(lfp)) || ~all(arrayfun(@(u,l) ...
+    struct_cmp(u,l,{'subject','day','epoch','environment','hemisphere'}), ...
+    unit,lfp))
+  error(['UNIT, LINEARIZED and LFP must match in size and must have ' ...
+      'matching ''subject'',''day'',''epoch'',''environment'', ' ...
+      '''hemisphere'' metadata']);
+end
+if ~all(arrayfun(@(u,l) isempty(diff_intervals( ...
+    u.timerange,[l.timestamp(1), l.timestamp(end)])),unit,lfp))
+  error(['Timestamps of LFP samples in LFP must span the timerange of ' ...
+      'spike data in the corresponding element of UNIT']);
+end
+
+if ~isstruct(params) || ~isscalar(params) || ~all(isfield(params, ...
+    {'bins_per_cycle', 'window_size', 'TW', 'nfft', ...
+    'frequency_band', 'window_centers', 'num_shuffles', 'shuffle_window'}))
+  error('PARAMS is not a scalar struct with the required fields');
+end
+if ~isscalar(params.bins_per_cycle) || ~isreal(params.bins_per_cycle) || ...
+    ~isfinite(params.bins_per_cycle) || ~(params.bins_per_cycle > 0) || ...
+    (params.bins_per_cycle ~= round(params.bins_per_cycle))
+  error(['PARAMS.bins_per_cycle must be a real positive integer scalar']);
+end
+if ~isscalar(params.window_size) || ~isreal(params.window_size) || ...
+    ~isfloat(params.window_size) || ~isfinite(params.window_size) || ...
+    ~(params.window_size > 0)
+  error(['PARAMS.window_size must be a real finite positive floating-point ' ...
+      'scalar']);
+end
+if ~isscalar(params.TW) || ~isnumeric(params.TW) || ~isreal(params.TW) || ...
+    ~isfinite(params.TW) || ~(params.TW >= 1)
+  error('PARAMS.TW must be a real finite positive scalar');
+end
+if ~isscalar(params.nfft) || ~isreal(params.nfft) || ...
+    ~isfinite(params.nfft) || (params.nfft < 2) || ...
+    ~(round(params.nfft) == params.nfft)
+  error('PARAMS.nfft must be a real finite integer-valued scalar >1');
+end
+if ~isequal(size(params.frequency_band),[1 2]) || ...
+    ~is_intervals(params.frequency_band) || ...
+    ~all(params.frequency_band >= 0) || ...
+    ~all(params.frequency_band < params.bins_per_cycle/2)
+  error(['PARAMS.frequency_band must be a 2-element row vector which ' ...
+      'specifies a frequency interval between 0 and Nyquist']);
+end
+
+% Repackage params.window_centers as a cell scalar if necessary
+if isscalar(unit) && ~iscell(params.window_centers)
+  params.window_centers = {params.window_centers};
+end
+if ~iscell(params.window_centers) || ...
+    ~isequal(size(unit),size(params.window_centers)) || ...
+    ~all(cellfun(@(c) isvector(c) && isa(c,'uint32') && ...
+    (size(c,1) >= 1) && (size(c,2) == 1),params.window_centers))
+  error(['PARAMS.window_centers must be a cell array whose size matches ' ...
+      'that of UNIT and LFP, in which each cell is a column vector of ' ...
+      'uint32 timestamps']);
+end
+for i = 1:numel(unit)
+  if ~all(ismember_intervals(params.window_centers{i},unit(i).timerange))
+    error(['Elements in PARAMS.window_centers lie outside the timerange ' ...
+        'of the data in the corresponding element of UNIT']);
+  end
+end
+
+if ~isscalar(params.num_shuffles) || ~isreal(params.num_shuffles) || ...
+    ~isfinite(params.num_shuffles) || ~(params.num_shuffles > 0) || ...
+    (round(params.num_shuffles) ~= params.num_shuffles)
+  error(['PARAMS.num_shuffles must be a positive real integer']);
+end
+if ~isvector(params.shuffle_window) || ...
+    ~isequal(size(params.shuffle_window),[1 2]) || ...
+    ~isreal(params.shuffle_window) || ~isfloat(params.shuffle_window) || ...
+    ~all(isfinite(params.shuffle_window)) || ...
+    ~all(params.shuffle_window > 0) || ...
+    ~(diff(params.shuffle_window) > 0)
+  error(['PARAMS.shuffle_window must be a 2-element row vector with ' ...
+      'real finite positive floating-point elements, such that the ' ...
+      'second element is larger than the first element']);
+end
+
+% Unwrap oscillatory phase at each LFP sample
+unwrapped_cycle = arrayfun(@(l) unwrap(l.phase)/(2*pi),lfp, ...
+    'UniformOutput',false);
+% Warn if vectors in unwrapped_cycle are not monotonicallly increasing (this can
+% happen depending on the method for assigning instantaneus phase)
+monotonicity_violation_fraction = ...
+    sum(cellfun(@(c) nnz(diff(c) <= 0),unwrapped_cycle)) / ...
+    sum(cellfun(@(c) numel(c) - 1, unwrapped_cycle));
+if (monotonicity_violation_fraction > 0)
+  warning(['%f of consecutive LFP samples do not exhibit strictly ' ...
+      'monotonically increasing phase'],monotonicity_violation_fraction);
+end
+
+% Interpolate LFP phase at spike times and window centers, and check that all
+% windows lie entirely within the available range of unwrapped cycles
+spike_cycle = cell(size(unit));
+shuffled_spike_cycle = cell(size(unit));
+window_cycle = cell(size(unit));
+for i = 1:numel(unit) 
+  % shuffle unit spike data
+  shuffled_unit = local_isi_shuffle(unit(i), ...
+      params.shuffle_window,params.num_shuffles);
+  shuffled_spike_cycle{i} = cell([params.num_shuffles, 1]);
+  for j = 1:params.num_shuffles
+    shuffled_spike_cycle{i}{j} = interp1(double(lfp(i).timestamp), ...
+        unwrapped_cycle{i},double(shuffled_unit(j).timestamp));
+  end
+  spike_cycle{i} = interp1(double(lfp(i).timestamp),unwrapped_cycle{i}, ...
+      double(unit(i).timestamp));
+  window_cycle{i} = interp1(double(lfp(i).timestamp),unwrapped_cycle{i}, ...
+      double(params.window_centers{i}));
+  % Unwrapped cycle at the start and end of the spike data timerange
+  start_cycle = interp1(double(lfp(i).timestamp),unwrapped_cycle{i}, ...
+      double(unit(i).timerange(1)));
+  end_cycle = interp1(double(lfp(i).timestamp),unwrapped_cycle{i}, ...
+      double(unit(i).timerange(end)));
+  if (start_cycle > min(window_cycle{i}) - params.window_size/2) || ...
+      (end_cycle < max(window_cycle{i}) + params.window_size/2)
+    error(['PARAMS.window_centers and PARAMS.window_size are together ' ...
+        'not compatible with the available data timerange']);
+  end
+end
+% Sanity checks
+assert(all(cellfun(@(x) ...
+    all(cellfun(@(y) isvector(y) && all(isfinite(y)),x)), ...
+    shuffled_spike_cycle)));
+assert(all(cellfun(@(x) all(isfinite(x(:))),spike_cycle)));
+assert(all(cellfun(@(x) all(isfinite(x(:))),window_cycle)));
+
+% Bin edges for discretizing spike phases relative to window center, expressed
+% in cycles
+bins_per_window = round(params.window_size * params.bins_per_cycle);
+bin_edges = linspace(-params.window_size/2,+params.window_size/2, ...
+    bins_per_window+1);
+
+% For a given TW, there exist 2*TW-1 Slepian tapers whose spectral
+% concentration is close to optimal
+num_tapers = round(2*params.TW - 1);
+% Construct Slepian tapers at resolution that matches the discretization of
+% spike times
+[tapers, eigenweights] = dpss(bins_per_window,params.TW,num_tapers);
+% Normalize tapers to unit impulse, and permute dimensions for later
+% computational convenience (with bsxfun)
+tapers = sqrt(params.bins_per_cycle) .* permute(tapers,[3 1 4 2]);
+if (num_tapers > 1)
+  assert(isequal(size(tapers),[1, bins_per_window, 1, num_tapers]));
+else
+  assert(isequal(size(tapers),[1, bins_per_window]));
+end
+% Compute FFT of the tapers
+tapers_fft = fft(tapers,params.nfft,2);
+
+% FFT frequency grid
+frequency = linspace(0,params.bins_per_cycle,1+params.nfft);
+frequency(end) = [];
+% subset of the FFT frequencies that span the desired frequency band
+f_idx = find(ismember_intervals(frequency,params.frequency_band));
+if (f_idx(1) > 1)
+  f_idx = [f_idx(1)-1, f_idx];
+end
+if (f_idx(end) < numel(frequency))
+  f_idx = [f_idx, f_idx(end)+1];
+end
+
+% allocate output struct
+FIELDS_TO_INHERIT = { ...
+    'uid'             , ...
+    'subject'         , ...
+    'day'             , ...
+    'epoch'           , ...
+    'environment'     , ...
+    'tetrode'         , ...
+    'depth'           , ...
+    'hemisphere'      , ...
+    'region'          , ...
+    'reference'       , ...
+    'passbands'       , ...
+    'thresholds'      , ...
+    'clustnum'        , ...
+    'cluster_quality' };
+fn = fieldnames(unit);
+spectra = rmfield(unit,fn(~ismember(fn,FIELDS_TO_INHERIT)));
+LFP_FIELDS_TO_INHERIT = { ...
+    'electrode'       , ...
+    'channel'         , ...
+    'depth'           , ...
+    'hemisphere'      , ...
+    'region'          , ...
+    'reference'       , ...
+    'passband'        , ...
+    'Fs'              , ...
+    'filter_object'   };
+lfp_fn = fieldnames(lfp);
+[spectra(:).lfp_oscillation] = deal( ...
+      rmfield(lfp(i),lfp_fn(~ismember(lfp_fn,LFP_FIELDS_TO_INHERIT))));
+[spectra(:).bins_per_cycle] = deal(params.bins_per_cycle);
+[spectra(:).window_size] = deal(params.window_size);
+[spectra(:).nfft] = deal(params.nfft);
+[spectra(:).TW] = deal(params.TW);
+[spectra(:).num_tapers] = deal(num_tapers);
+[spectra(:).num_shuffles] = deal(params.num_shuffles);
+[spectra(:).shuffle_window] = deal(params.shuffle_window);
+[spectra(:).timestamp] = deal(params.window_centers{:});
+[spectra(:).relative_frequency] = deal(frequency(f_idx));
+
+for i = 1:numel(spectra)
+  num_windows = numel(params.window_centers{i});
+  % Count the spikes that occur within each phase bin. The first dimension of
+  % spike_counts corresponds to short time windows; the second dimension of
+  % spike_counts corresponds to phase bin within the respective window, and the
+  % third dimension corresponds to the (shuffled) spike train.
+  % The slice spike_counts(:,:,num_shuffles+1) corresponds to the original spike
+  % train; all other slices correspond to shuffled spike trains. We assume that
+  % the spike count per bin can always be contained in a uint8.
+  spike_counts = zeros([num_windows, bins_per_window, ...
+      1+params.num_shuffles],'uint8');
+  tmp = histc(bsxfun(@minus,spike_cycle{i},window_cycle{i}'), ...
+      bin_edges)';
+  assert(all(tmp(:) <= intmax('uint8')));
+  % HISTC counts out-of-bounds elements in the last position, which we don't
+  % need.
+  spike_counts(:,:,end) = uint8(tmp(:,1:end-1));
+  for j = 1:params.num_shuffles
+    tmp = histc(bsxfun(@minus,shuffled_spike_cycle{i}{j},window_cycle{i}'), ...
+        bin_edges)';
+    assert(all(tmp(:) <= intmax('uint8')));
+    spike_counts(:,:,j) = uint8(tmp(:,1:end-1));
+  end
+  clear('tmp');
+  % Allocate array for power spectral density estimates. To save memory, this is
+  % restricted only to the frequencies of interest.
+  S = nan([num_windows, numel(f_idx), 1+params.num_shuffles, num_tapers]);
+  % Process each short time window one-at-a-time; this is slow, but we don't
+  % have enough memory to vectorize over multiple time windows.
+  for j = 1:num_windows
+    %disp(sprintf('%d/%d',j,num_windows));
+    % For each short time window, compute FFT of the projections of the data
+    % onto the Slepian tapers and subtract DC component.
+    % Convert uint8 spike count to double for computations.
+    d = double(spike_counts(j,:,:));
+    tmp = fft(bsxfun(@times,d,tapers),params.nfft,2) - ...
+        bsxfun(@times,mean(d,2),tapers_fft); ...
+    % Select only the subset of frequencies of interest; otherwise we quickly
+    % exceed available memory. Power is the squared modulus of the Fourier
+    % transform
+    tmp = tmp(:,f_idx,:);
+    S(j,:,:) = tmp .* conj(tmp);
+    clear('tmp');
+  end
+  if (num_tapers > 1)
+    assert(isequal(size(S), ...
+        [num_windows, numel(f_idx), 1+params.num_shuffles, num_tapers]));
+  else
+    assert(isequal(size(S), ...
+        [num_windows, numel(f_idx), 1+params.num_shuffles]));
+  end
+  % Average the per-taper estimates to get the multitaper estimate. Remember
+  % that the last slice along the third dimension corresponds to the
+  % original (unshuffled) spike train
+  spectra(i).power_spectral_density = mean(S(:,:,end,:),4);
+
+  %{
+  % Leave one out to compute jackknife estimates - do this only for the original
+  % spike train, not the shuffles
+  if (num_tapers > 1)
+    spectra(i).jackknife_power_spectral_density = ...
+        nan([size(S,1), size(S,2), size(S,4)]);
+    for j = 1:num_tapers
+      spectra(i).jackknife_power_spectral_density(:,:,j) = ...
+          mean(S(:,:,end,~ismember(1:num_tapers,j)),4);
+    end
+  else
+    % empty array
+    spectra(i).jackknife_power_spectral_density = ...
+        nan([size(S,1), size(S,2), 0]);
+  end
+  %}
+
+  % Multitaper estimates for the shuffled spike trains
+  spectra(i).shuffled_power_spectral_density = ...
+      nan([size(S,1), size(S,2), params.num_shuffles]);
+  for j = 1:params.num_shuffles
+    spectra(i).shuffled_power_spectral_density(:,:,j) = mean(S(:,:,j,:),4);
+  end
+  % Spike count per window for the original spike train
+  spectra(i).spike_count = sum(spike_counts(:,:,end),2);
+end
+

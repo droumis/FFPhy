@@ -1,0 +1,637 @@
+STRAUSS MATLAB FUNCTIONS AND SCRIPT FILES:
+
+CONSTANTS
+phi -          the golden proportion
+
+CREATION OF SPECIAL MATRICES
+design -       creates GLM design matrix
+makegrps -     compose a group-membership vector from group labels and frequencies
+
+KINDS OF MATRICES
+isblank -      determines whether character matrix consists of all blanks
+iscorr -       determines whether matrix is in form of a correlation matrix
+iscov -        determines whether matrix is in form of a covariance matrix
+iseven -       determines whether matrix elements are even
+isin -         finds elements of matrix A contained within matrix B
+isintegr -     determines whether matrix is all integers
+ismatrix -     determines whether matrix is at least 2-dimensional
+ismonotonic -  determines whether cols of matrix are monotonic
+isodd -        determines whether matrix elements are odd
+isposdef -     determines whether square-symmetric matrix is positive-definite
+isscalar -     determines whether matrix is a scalar
+issorted -     determines whether matrix cols are sorted
+issqsym -      determines whether matrix is square-symmetric
+isvector -     determines whether matrix is a vector; also returns size
+
+NUMERICAL OPERATIONS
+baseconv -     convert numeric vector to single base-10 values
+complex -      convert two-column real matrix to complex
+distance -     convert points to distances, given specifications
+grpcentr -     zero-center the columns of data matrix, by group
+logtimesample - log-uniform series of sampling dates
+makerepeatseqs - generates vector of [1,2,...,n, 1,2,...,n, ...]'
+meanwtcenter - weighted mean of X based on deviations from center of y
+prbcount -     vector of counts from a vector of probabilities
+rankdistmean - ranks of absolute deviations from the mean, by group
+ranks -        ranks of data by column, invoking midrank ties
+reassign -     reassign labels of vector to maximize matches with second vector
+rowmean -      returns column vector of row means, optionally ignoring missing data
+rowsum -       returns column vector of row sums, optionally ignoring missing data
+setrange -     rescales ranges, by column, given min and max values
+subgrpadj -    adjust subgroup means to grand mean within group
+sumsqscale -   scales columns so that the squared elements sum to unity
+sweep -        sweep operator for symmetric matrices
+todegs -       converts radians to degrees
+torads -       converts degrees to radians
+zcenter -      zero-centers data matrix by column
+zscore -       standardizes columns of data matrix
+
+UNIVARIATE STATISTICAL ANALYSES
+absdev -       converts data matrix to absolute deviations from mean or median
+anova -        one-way unbalanced fixed-effects ANOVA, with variance components
+  anovaf -     objective function for 'anova'
+anovanst -     two-level nested random-effects ANOVA, with variance components
+  anovanstf -  objective function for 'anovanst'
+  anovanstg -  design matrices for 'anovanst'
+anovaparam -   one-way unbalanced anova, given only means, stdevs, and sample sizes
+anovast -      one-way unbalanced ANOVA of statistic estimates & stderrs
+asymmeas -     Palmer-Strobeck anova model for fluctuating asymmetry
+censoredregr - Tobit model for censored regression
+censoredstats - mean, stdev and their standard errors for censored data
+chi2comb -     combines chi-squared values to give a single p-value
+chi2corr -     chi-square distances among columns of contingency table
+cisignif -     pairwise differences based on means and confidence intervals only
+contin1 -      randomized 1-way chi-square goodness-of-fit test
+contin2 -      randomized 2-way contingency-table analysis, fixed or free marginals
+continex -     Fisher's exact test for [2x2] contingency table
+cummean -      cumulative means and variances
+fratio -       randomized F-ratio test for equal variances
+goodfit -      power divergence chi-squared goodness-of-fit test
+goodfitp -     Edgington's permutation least-squares goodness-of-fit test
+gtest -        2-way log-likelihood contingency-table test
+histplot -     matrix of histograms
+homosub -      homogeneous subsets from a symmetric binary matrix of signif diffs
+kruskwal -     randomized Kruskal-Wallace (& Mann-Whitney) test for 2+ samples
+ksprob -       calculate significance level of Kolmogorov-Smirnov test
+kstest1 -      1-sample randomized Kolmogorov-Smirnov test
+  kstest1f -   objective function for kstest1
+kstest2 -      2-sample randomized Kolmogorov-Smirnov test
+  kstest2f -   objective function for kstest2
+kwcrit -       critical values for the Kruskal-Wallace statistic, given sample sizes
+kwstat -       Kruskal-Wallace test-statistic value
+levene -       Levene's test: anova of absolute deviations from the means
+logb -         logarithm of x to base b
+mannprob -     tail probability for the Mann-Whitney statistic
+mannwhit -     2-group 2-tailed Mann-Whitney test for group differences
+  mannwhf -    objective function for mannwhit
+means -        means by column (even for row vectors), optionally by group
+meanwt -       weighted mean, variance, skewness, kurtosis
+medians -      medians by column (even for row vectors), optionally by group
+mode -         finds mode by over-binning
+negbino -      fits negative binomial distribution to matrix of quadrat counts
+normaltest -   Shapiro-Francia test for normality
+nscores -      normal (phi) scores
+orderstats -   means and covar matrix of normal order statistics
+pairwise -     overall and pairwise anova/Kruskal-Wallace tests, randomized
+prctilerange - percentile range
+prctiles -     find percentiles of a distribution by linear interpolation
+probdetect -   estimates prob of detecting one or more binomial events
+probzero -     probability of observing 0 of N 'successes'
+propdiff -     tests for difference in two proportions
+rankasgn -     ranks of single data vector, invoking midrank ties
+rankits -      expected normal scores for an ordered random sample
+ranks -        ranks of data by column, optionally within-group
+ratioprob -    tests a sex ratio against the null of unity
+seqbonf -      sequential Bonferroni test on a set of probabilities
+subgrpadj -    adjust subgroup means to grand mean within group
+subgrpmeans -  tables of cell sample sizes and means for subgroups within groups
+sums -         sums by column (even for row vectors), optionally by group
+trimmean -     trimmed mean as function of trimming proportion
+truncate -     truncates (fixes) a matrix to a specified number of decimal places
+ttest -        pairwise unbalanced t-tests among two or more groups
+ttestpr -      paired t-test, with control as covariate
+ttestparam -   unbalanced t-test, given only means, stdevs, and sample sizes
+tval -         2-sample t statistic, unequal sample sizes
+varcomp -      variance components from a nested ANOVA, unequal sample sizes
+univar -       moment and median statistics, allowing for missing data
+wilcoxon -     Wilcoxon 1-sample signed-ranks test
+
+REGRESSION
+accumcurve -   accumulation curve and predicted saturation asymptote
+ancovpred -    predicted values per group under a common-slope ancova model
+bilinear -     fits a bilinear segmented regression model
+  bilinearf -  objective function for 'bilinear'
+bilintrans -   fits a transitional bilinear segmented regression model
+  bilintransf - objective function for 'bilintrans'
+charshape -    bivariate shape scores for characters
+growth -       fits one or more growth models
+  growthfn -   objective function for 'growth'
+lineeqn -      slope and intercept from two points
+linregr -      predictive bivariate linear regression
+logistic -     logistic regression
+  logistf -    objective function for 'logistic'
+ltsregr -      least trimmed squares bivariate regression
+mse -          MSE and adjusted R2 for regression
+orthogpolyintgerp - visually interpret variation in orthog poly coefficients
+orthogpolyregr - orthogonal polynomial regression
+  orthogpolyregre - sums of squares for orthogonal polynomial regression
+  orthogpolyregrf - objective function for orthogonal polynomial regression
+  orthogpolyregrp - predicted values for orthogonal polynomial regression
+probit -       probit regression of binary response on continuous 'dose' variable
+  probitf -    objective function for 'probit'
+quadratic -    quadratic regression
+r2adj -        adjusted squared multiple correlation
+regrcompare -  randomized comparison of two or more linear regression lines
+regrnull -     significance of bivariate regressions, given null beta0 & beta1
+sweepreg -     multiple regression via the sweep operator, given means & covars
+trajectory -   fits and evaluates 1-5 parameter models of segmented trajectories
+
+MULTIVARIATE STATISTICAL ANALYSES
+allom -        convert size-vector loadings to multivariate allometric coeffs
+allomtst -     test for heterogeneity among within-group size vectors
+autocorr -     lagged autocorrelations along matrix columns
+autorank -     Spearman rank autocorrelations along a vector or matrix columns
+brokestk -     number of significant eigenvalues based on broken-stick model
+cancorr -      canonical correlation analysis
+charshape -    bivariate shape scores for characters
+classify -     reclassify obs or classify unknowns, based on Mahalanobis distances
+corr -         Pearson correlations among variables or between sets of variables
+  corrf -      objective function for 'corr'
+corrci -       simultaneous confidence intervals for Pearson correlation
+corrcmpl -     distances (1-corrcoef) among columns
+corresp -      correspondence analysis of tables of counts
+corrplot -     correlation-style matrix of bivariate plots
+corrpool -     pooled within-group correlation matrix
+corrprci -     individual probs and confidence intervals for correlation matrix
+corrprob -     test of correlation matrix against H0:diagonal matrix
+corrz -        Fisher's z-transform (w/ Hotelling's correction) for correlations
+covcorr -      rescale covariance matrix to correlation matrix + vector of stdevs
+covpairwise -  covariance matrix when data matrix contains missing values
+covpool -      pooled within-group covariance matrix
+discrdet -     determinant and rank of B matrix as function of number of vars
+discrim -      bootstrapped discriminant analysis
+  discrimb -   bootstrap objective function for 'discrim'
+  discrimf -   calculating function for 'discrim'
+distdiff -     test for within- vs among-group pairwise distances or similarities
+eigen -        sorted, directed eigenvectors and eigenvalues of symmetric matrix
+friedraf -     randomized Friedman-Rafesky test for unequal multivariate distribs
+geneigen -     generalized eigen analysis for two square matrices
+henze -        Henze nearest-neighbor test for unequal multivariate distribs
+homogen -      measures the homogeneity among variables for a data matrix
+hullpeel -     finds percentiles of 2D data from nested sets of convex hulls
+jaccard -      Jaccard measure of association (similarity)
+jaccardd -     Jaccard distance
+krige -        predict missing values in a spatial matrix using universal kriging
+loadscrs -     calculate loadings and scores
+mahal -        bootstrapped Mahalanobis distances
+mahaldist -    Mahalanobis distances of observations from a group centroid
+mahalsf -      size-free Mahalanobis distances
+majaxis -      major-axis regression
+manova -       one-way multivariate analysis of variance
+  manovaf -    objective function for manova
+mantel -       Mantel's test for association between symmetric distances matrices
+  mantelb -    returns bootstrapped distance matrix
+matcond -      matrix condition based on rarification of vars or obs
+condfactor -   modified condition factor of correlation or covariance matrix
+morisita -     Morisita's measure of dissimilarity between communities
+morphint -     measures and assesses morphological integration (character suites)
+mosimann -     calculates Mossiman ratio-independent size vector
+partcorm -     partials a covariate from a correlation matrix
+partcorr -     calculates partial correlations, or possible ranges of correlations
+pcaconstr -    PCA, constrained to be independent of a set of independent variables
+pcacorr -      bootstrapped PCA using correlation matrix
+pcacov -       bootstrapped PCA using covariance matrix
+  pcacovb -    bootstrap objective function for 'pcacov'
+pcoa -         principal coordinates analysis of a distance matrix
+percdist -     percent-similarity distance measure
+posdef -       if matrix isn't positive definite, finds closest corresponding matrix
+rankcorr -     rank correlation (Pearson correlation of ranks)
+renkonen -     Renkenon's percent-similarity distance measure
+score -        unstandardized factor scores for a subset of factors
+sfresids -     size-invariant residuals
+sizefree -     size-invariant discriminant analysis
+  sizefref -   objective function for sizefree()
+  sizefrep -   parse matrix output from sizefref
+sizevect -     within-group size vectors (PC1 coefficients)
+spearman -     Spearman's rank correlation, adj for ties, for two variables
+stepdisc -     stepwise discriminant or size-free discriminant analyses
+  lawley -     objective function for stepdisc()
+stepmano -     stepwise MANOVA probabilities of the results of 'stepdisc'
+steprank -     finds the best subset of variables to reduce a singular matrix
+sumsqdiff -    pairwise sum-of-squares distances, bootstrapped
+varcomb -      with missing data, finds best combinations of vars and observations
+vectcorr -     vector correlations among vectors or matrix columns
+wright -       Wright-style factor analysis of covariance/correlation matrix
+  factorp -    least-squares fit of general/primary factor
+  factorpf -   objective function for 'factorp'
+  factors -    least-squares fit of secondary factors
+  factorsp -   objective function for 'factors'
+wright -       Wright-style factor analysis
+  partial -    extracts 1 or 2 factors from a corr/cov matrix
+  submatrx -   extracts a submatrix from a corr/cov matrix
+wrightbt -     bootstrap of Wright-style factor analysis from data matrix
+
+MISSING DATA
+krige -        predict missing values in a spatial matrix using universal kriging
+misscheck -    checks for missing (non-finite) values in matrices
+missem -       estimates missing values, means, and covariances via EM algorithm
+misseval -     evaluate the effect of missing-value estimation on a matrix
+misspc  -      estimates missing values via multiple regression on PCs
+missim -       simulate effects of groups and suites on missing-value estimation
+randmiss -     random missing values inserted into a matrix
+missrandmeas - measures nonrandom (binomial) distribs of missing data within matrix
+varcomb -      with missing data, finds best combinations of vars and observations
+
+COMBINATORICS
+allgrps -      returns a list of all possible groupings of N objects into k groups
+  allgrpf -      list all possible groupings of N objects into k grps
+allsizes -     returns list of sample-size decompositions of N into k groups
+binmatno -     number of possible (0,1)-element matrices, given row & col sums
+catalan -      Catalan numbers
+comb -         number of combinations of n objects taken r at a time
+combvals -     returns matrix containing all combinations of nCr
+nndeterm -     training vectors/degree of determination of FF neural network
+partion -      returns list of partitions of N linearly-spaced objects into k groups
+  partf -        recursive function to find partitions
+permlist -     returns matrix containing all permutations
+permnext -     returns lexicographically next permutation
+
+TREES, GRAPHS AND CLUSTER ANALYSIS
+addtree -      neighbor-joining additive tree from a distance matrix
+  reroot -     reroots an additive tree to a specified outgroup
+  treeroot -   reroots an additive tree by the 'min var of patristic distance' criterion
+    treerf -   finds optimal root position, given the tree and the outgroup
+allclade -     probabilities of all possible clade sizes for rooted tree
+ancestorfunction - converts from one type anc fn to another, andfixes problems
+ancmove -      move ancestor to final position in ancestor function
+chi2clst -     chi-squared clustering of rows of 2-way contingency table
+cladeprb -     probability of sampling a tree containing an observed clade
+clstsupt -     finds cluster-support matrix from dendrogram topology matrix
+cluster -      boostrap UPGMA dendrogram, giving measures of cluster support
+clustnum -     determine number of partition clusters based on Gabriel graphs
+contmap -      least-squares mapping of continuous chars onto a tree
+  contmape -   exact mapping (topology only, or topology + nonzero branch lengths)
+  contmapi -   iterative mapping (topology + one or more zero branch lengths)
+    contmapf - objective function for iterative mapping
+contmapdists - mapping of frequency distribs of a single characters onto a tree
+dendline -     allows the plotting of vertical lines connecting taxa on a dendrogram
+dendplot -     plots dendrogram from topology matrix
+gaptest -      gap test for difference between two or more convex clusters
+kmeangrp -     vary k and evaluate k-means clustering for number of groups
+kmeans -       k-means clustering of n points into k clusters by min(sse)
+knnclust -     k-nearest neighbor hierarchical clustering
+knnplot -      plots scatterplot or dendrogram for k-nearest neighbor clustering
+lnktoanc -     coverts list of links (internodes) to ancestor function
+minkvary -     maps continuous character onto a tree for varying Minkowski k
+mstree -       finds and plots the minimum spanning tree
+mstclust -     finds 'significant' clusters based on randomized min-span trees
+mstgrp -       finds groups by deleting longest edges of min-span tree
+nngrp -        nearest-neighbor (single-linkage) distances among groups
+natclust -     finds "natural" clusters (Carmichael et al. 1968)
+patrist -      calculates step-distance and patristic-distance matrices of dendrogram
+phyliptree -   plots maximum likelihood tree based on Phylip output
+randindx -     adjusted Rand index for comparison of different data partitions
+topoanc -      converts dendrogram topology matrix to cladogram ancestor function
+topotips -     finds the terminal taxa within clusters from a topology matrix
+treenum -      number of possible unrooted binary trees for N taxa
+treeasym -     calculates Colless' I (asymmetry) for trees specified by Rohlf's M
+treecoli -     calculates Colless' I (asymmetry) from the ancestor function
+treedivd -     find links and levels on tree, given the ancestor function
+treelen -      Minkowski tree lengths
+treemanc -     recovers ancestor function from Rohlf's M
+treeplot -     plots a tree given an ancestor function and optional branch lengths
+treespace -    plots a tree topology on a 2D space
+treetips -     finds the terminal taxa within a clade from an ancestor function
+treevect -     recovers N-tuple from Rohlf's M
+upgma -        UPGMA hierarchical cluster analysis of a distance matrix
+  dendhier -   finds links on a dendrogram, given the topology matrix
+  dendplot -   plots a dendrogram from a topology matrix
+visitadj -     visit connected vertices of graph via an adjacency matrix
+
+GEOMETRIC OBJECTS
+circcrds -     returns plotting coords for a specified circle
+circdraw -     plots a circle of specified radius
+circfit -      fits a circle to a scatter of points
+  circfitf -   objective function for 'circfit'
+conic -        generate plots of conics
+ellipsebound - generate points along boundary of an ellipse
+ellipsesize -  area and perinmeter of an ellipse
+  ellipsesizef - objective function for integration
+lgspiral -     generate plots of logarithmic spirals
+polygon -      area, perimeter, and length of side of a regular polygon
+
+DISTRIBUTIONS
+bimodal -      coefficient of bimodality of a distribution, based on kurtosis
+  bimodalf -   objective function for 'bimodal'
+binofit -      fits binomial distribution by minimizing the mean squared error
+  binofitf -   objective function for 'binofit'
+boxcox -       Box-Cox transformation to symmetry
+  boxcoxb -      objective function for 'boxcox'
+boxcoxinv -    inverse of Box-Cox transformation
+boxcoxnorm -   modified Box-Cox transformation to normality
+  boxcoxnormf -  objective function for 'boxcoxnorm'
+cauchyrnd -    random sample from a Cauchy distribution
+centdist -     finds limits for a specified central portion of a distribution
+cdfdata -      produces a cumulative distribution function from a data vector
+cumstep -      converts discrete pdf into cumulative relative cdf for KS test
+fdistnc -      cdf for noncentral F distribution
+finvnc -       inverse cdf for noncentral F distribution
+  finvncob -   objective function for 'finvnc'
+PearsonFitData - fit continuous Pearson distribution function to a histogram
+  PearsonFitDataF -   objective function for 'histfit'
+PearsonFitMoments - fit Pearson distribution function to first four moments
+kurtosis -     unbiased estimate and standard error of kurtosis
+gammalog -     log of the gamma function
+meanwt -       weighted mean and variance
+minkpdf -      pdf of a Minkowski distribution
+minksamp -     random or systematic sample from a Minkowski distribution
+moments -      first r moments, by column
+multnormpdf -  multivariate-normal probability density function
+nscores -      transforms data to nscores
+poissci -      central confidence interval from Poisson distribution
+poisfit -      fits Poisson distribution by minimizing a KS-statistic
+  poisfitf -   objective function for 'poisfit'
+plotnorm -     draw normal distributions
+rankits -      expected normal scores for an ordered random sample
+skewness -     unbiased estimate of skewness and standard error
+unidsvar -     variance of uniform interval [p,q]
+
+BOOTSTRAPPING AND RANDOMIZATION
+bootbal -      randomized observation-indices for a balanced bootstrap
+bootci -       confidence limits from a bootstrap distribution
+bootprob -     probability levels from bootstrap distributions
+bootsamp -     randomly sample rows of matrix, optionally within groups
+bootstrp -     generalized bootstrap function
+iterations -   min number of iterations for given confidence about p-value
+iterconf -     confidence interval about p-value, given number of iterations
+randprob -     right-tailed probability from a randomized distribution
+
+GENERATING RANDOM OBJECTS
+continrn -     random contingency table with fixed or floating totals
+mvngrps -      groups of MVN data for testing other procedures
+prbcount -     random vector of counts from a vector of probabilities
+randauto -     random vector of autocorrelated uniform random numbers
+  randautp -   predicts parameter c from autocorrelation coefficient
+randbinm -     random binary matrix
+randcirc -     random points within a circle
+randcnvx -     random points within a specified convex polygon
+randcorr -     random correlation/covariance matrix
+randcova -     random points for an ANCOVA model, allowing unequal slopes
+randmink -     random values from a Minkowski pdf with parameter k
+randmvn -      random sample of multivariate-normal data
+randnt -       random sample from truncated normal distribution
+randpath -     random points along a specified line-segment path
+randpermg -    randomly permuted matrix, optionally by groups
+randpoly -     random points within a specified polygon
+randprop -     random proportions
+randstrb -     random sample from distrib with specified moment statistics
+  kurtopt -    objective function for 'randkurt'
+  kurttran -   power-transform of kurtosis of a distribution
+  momopt -     objective function for 'randstrb'
+  randkurt -   optimize kurtosis
+  randskew -   optimize skewness
+  randsplt -   plotting version of 'randstrb'
+  skewopt -    objective function for 'randskew'
+  skewtran -   power-transform of skewness of a distribution
+randsuit -     random data matrix for multiple groups of obs and suites of vars
+randtree -     ancestor function for random tree based on Rohlf's M
+walkdist -     models random walk of taxa from common ancestor in 2 dimensions
+walkrand -     random walk in p dimensions from origin of coordinate system
+
+MANIPULATION OF MATRICES
+bintostr -     converts binary matrix to character equivalent
+commonsize -   determines whether matrices have same size, or expand a scalar
+complset -     given list of variables, finds obs having complete data
+exchange -     exchanges two values
+extrcols -     extract cols of matrix into separate col vectors
+findmatch -    finds values in common between two vectors
+getobs -       extract subset of observations based on group identifiers
+isoutofbounds - finds subscripts that are out of bounds
+labtoval -     converts character-string label matrix to numeric vector
+minsize -      finds groups having at least a minimum sample size
+misscheck -    checks for missing (non-finite) values in matrices
+padcols -      pads narrower matrix with columns of NaN's (or other value)
+padrows -      pads shorter matrix with rows of NaN's (or other value)
+putdiag -      put diagonal elements in a square matrix
+randpermcols - randomly permute columns of a matrix
+replace -      replacement of numeric values within a matrix
+rescale -      centers and rescales data by pooled within-group stdev
+reshapei -     maps subscripts from a matrix to a reshaped matrix (both 2D)
+rowtoval -     converts rows of matrix to vector of scalar values
+samelength -   determines whether matices have same number of rows; expands scalars
+sortmat -      sorts key vector, resequences other matrices to corresponding order
+splitgrp -     splits data matrix into separate group matrices
+str2int -      converts strings to integers
+submatrows -   subsets of corresponding matrices by row
+switchem -     switches contents of two matrices
+trilow -       extracts lower triangular matrix (w/o diag) as column vector
+trisqmat -     stashes triangular-matrix vectors + diagonal into square matrix
+truncate -     truncates (fixes) a matrix to a specified number of decimal places
+uniquef -      list of unique group labels and corresponding frequencies
+valtolab -     converts numeric values to character labels
+wrap -         returns modified modulus for wrap-around arrays
+
+BOUNDARIES & PATHS
+cubespln -     fits a cubic-splined boundary to a closed polygon
+fourier -      Fourier fitting of a quadratic-splined boundary
+hausdorf -     Hausdorff fractal dimension of a path
+pathlen -      finds length of path connecting a set of points
+pathmax -      finds longest path connecting a set of points
+pathmin -      finds shortest path connecting a set of points (TSP)
+pathnn -       finds the nearest-neighbor path(s) connecting a set of points
+pathplot -     plots a path + nodes, with equal axes
+pathpts -      evenly distributes points along a path
+pathseg -      finds line-segment length to exactly step of a given number of steps
+pathsegf -     residual after stepping off a given number of steps
+pathsegr -     residual distance after stepping off line segment along path
+pathstat -     descriptors of a path
+quadspline -   fits quadratic-splined (Oberhauser) boundary to an open/closed path
+radiusfn -     finds and plots a radius function
+randpath -     random points along a specified line-segment path
+steplength -   step lengths along a path
+tangentfn -    finds and plots a quadratically-smoothed tangent-angle function
+
+MANIPULATION OF POINT CONFIGURATIONS
+angl -         angle made by three points
+angledev -     signed angular deviations of points from reference ray
+anglerotation - find angle of rotation between two line segments with common vertex
+areainpoly -   finds grid-cell areas lying within a polygon
+  areainpoly1 -  finds area for grid cell with 1 vertex within or without polygon
+  areainpoly2 -  finds area for grid cell with 2 vertices within polygon
+asympoly -     minimum bilateral asymmetry (area, perimeter) of a polygon
+  refldiff -   finds difference between lateral boundaries
+  reflplot -   plots mirror images
+  reflstat -   finds lateral differences in area and perimeter
+centroid -     robust estimate of centroid and median for 2D data
+centsize -     centroid size of a point configuration
+coeffdispersion - finds coefficient of dispersion of points on grid
+digitize -     get point coordinates from image
+distptsline -  distances from a set of points to a line
+eucl -         euclidean distances among points
+gabriel -      Gabriel connectivity graph among planar points
+geogdist -     great-circle arc distance between two geographic sites (lat/long)
+geogkmns -     modification of the k-means procedure to cluster geographic localities
+geomsize -     geometric-mean size of a point configuration
+getaxes -      recover axis tickmark positions from digitized scatterplot
+getcoord -     recover point coordinates from digitized scatterplot
+getpolyg -     get polygons from graphics window via mouse input
+getptid -      determine point identifications from plot
+getpts -       get points from graphics window via mouse input
+hull -         convex hull
+hullpeel -     finds percentiles of 2D data from nested sets of convex hulls
+intrsect -     determines whether and where two line segments intersect
+isinpoly -     determines whether a point lies within a polygon
+isonline -     determines whether a point lies on a line, within tolerance
+linecrds -     find line coordinates given two points or slope and intercept
+linextnd -     extends a line (specified by two points) by a given distance
+lstra -        orthogonal least-squares theta-rho (Procrustes) analysis
+makepolygon -  forms polygon-vertex list from set of points
+mds -          multidimensional scaling 
+  mdsfunc -    objective function for multidimensional scaling
+nearestline -  finds the nearest line segment for one or more points
+nndist -       nearest-neighbor distances
+ntscrds -      converts point coords from NTS format (from TPSDIG) to [n x 2] matrix form
+plotdist -     plots a set of landmarks and interpoint distances
+polarcrd -     convert polar coordinates to rectangular, or vice versa
+polyangl -     resample polygon boundary by equal angular deviations
+polyarea -     area, centroid, and perimeter of a closed polygon
+polyaxes -     major and minor axes of polygon
+polystrn -     anisotropy and direction of a polygon
+project -      projects points onto line
+ptdir -        determines direction of path thru 3 points
+randwalk -     generates and analyzes random walk in p dimensions
+reflectpt -    reflects a point about a line
+regrot -       registers and rotates a point configuration
+rotate -       rotates point configuration about the centroid by a specified angle
+runavg -       vectors smoothed by running average
+spacecls -     randomized k-means clustering for spatial distributions
+theta -        value proportional to angular deviation of a point from horizontal
+thinplat -     thin-plate splines
+triallom -     fits predicted triangles from regressions of sides on size
+triangpt -     triangulate a point, given distances to two reference points
+trusgrow -     grow a truss allometrically and plot the MDS stress function
+unplot -       recover data values from previously imaged scatterplot
+
+MANIPULATION OF IMAGES
+getavgcolor -  gets median color parameters within polygon
+imagebox -     extracts rectangle within image
+
+
+GRAPHICS
+alloplot -     plots allometric coefficients as a horizontal bar chart
+arrow -        draws arrow on current plot
+arrowdwn -     downward arrow to mark positions on histograms
+boxplot -      box plots
+  boxplotb -   draws individual box plot
+circcrds -     returns plotting coords for a specified circle
+circdraw -     draws a circle of given radius
+colrname -     returns name of color given RGB specification
+conic -        generate plots of conics
+corrcirc -     portrays correlation coefficient & CI in circular form
+corrmap -      plots a color-patch representation of correlation matrix
+corrplot -     correlation-style matrix of bivariate plots
+densplot -     scatterplot for two discrete variables
+distfig -      plot figures of distances among landmarks, given crds and specs
+ellips -       computes boundary of ellipse (centered, rotated)
+getchild -     lists handle & color of each child of current plot
+getptid -      determine point identifications from plot
+histgram -     histogram with continuous colored bars
+  histarw -    returns position of arrow and adjusted axis ranges
+  histbins -   puts data vector into bins for histogram
+  histpltb -   plots histogram bars
+histgramb -    plot histogram, given midpoints and heights of bars
+histplot -     matrix of histograms of columns (variables) of a data matrix
+interpt -      plot landmarks and interpoint distances
+lgspiral -     generate plots of logarithmic spirals
+linelabl -     prints a label next to a line, based on line orientation
+loadfig -      restores a figure from characteristics saved by savefig()
+lollipop -     3D lollipop scatter plot with points anchored by stem
+pcontour -     prepares MATLAB contour output for plotting with SIGMAPLOT
+plotbern -     plots a Bernoulli distribution, for X={0,1}
+plotbino -     plots binomial distribution, given N,p
+plotgrps -     plot for several groups, with optional hulls, centroids, etc.
+  pltgrpch -   plot convex hulls
+  pltgrpcn -   plot group centroids
+  pltgrpma -   plot major axes and confidence ellipses
+  pltgrpmd -   plot group medians via hull peeling
+  pltgrpop -   set option flags
+  pltgrppp -   plot points
+  pltgrppr -   plot regression lines
+  pltgrpse -   plot standard-error bars
+plotjoin -     connect pairs of points on scatterpoints
+plotlabl -     plot corresponding labels rather than symbols
+plotnorm -     draw normal distributions
+plotnum -      plot observation numbers rather than symbols
+plotpt -       add single point to existing plot, extending axes if necessary
+plotrect -     plots rectangle, given opposing corners
+plotsurface -  plots a mesh or surface plot
+plotxyerror -  scatterplot of data +/- horizontal & vertical error bars
+plotyerror -   scatterplot of data +/- vertical error bars
+plotvert -     plots vertical lines for multiple y's per x
+ptscale -      scale point coordinates to proportions along current axes
+puttext -      puts text on figure using proportional coords
+puttitle -     puts title on figure with larger-than-default font
+putbnd -       for 2D plot, changes scales of axes to 5% beyond range of data
+putbnd3 -      for 3D plot, changes scales of axes to 5% beyond range of data
+putlegnd -     puts a legend of character strings onto a plot
+putregrline -  add regression line to current plot
+puttick -      changes the tick marks and labels of a plot
+putxbnd -      changes min,max of x-axis without changing y-axis
+putybnd -      changes min,max of y-axis without changing x-axis
+putxlab -      puts xlabel on figure with larger-than-default font
+putylab -      puts ylabel on figure with larger-than-default font
+putzlab -      puts ylabel on figure with larger-than-default font
+savefig -      saves figure properties for later reconstruction
+scatter -      simple unlabeled scatter plot of first two cols of a matrix
+sqplot -       returns axis bounds for a square plot with equal-unit axes
+vectplot -     produces vector plots of multivariate loadings (biplots)
+  vectplot1 -  one-dimensional vector plots
+  vectplot2 -  two-dimensional vector plots
+wordplot -     resets line widths for plots to be copied to Word documents
+
+INPUT/OUTPUT
+loadfig -      restores a figure from characteristics saved by savefig()
+savefig -      saves figure properties for later reconstruction
+tofile -       writes matrix to a specified file, in ascii
+
+UTILITY
+boottime -     elapsed time of a bootstrapped analysis
+degday -       convert temperature measurements to accum degree-days
+julian -       Julian date (day of year, 1-365)
+loadchar -     loads a character matrix from an ascii text file
+testans -      generate random answers for a multiple-choice test
+
+ECOLOGY
+coeffdispersion - finds coefficient of dispersion of points on grid
+diverdiff -    significance of difference in diversity between assemblages
+diversity -    diversity and evenness indices
+  diversf -    objective function for diversity()
+jaccard -      Jaccard measure of association (similarity)
+jaccardd -     Jaccard distance
+percdist -     percent-similarity distance measure
+rarefact -     rarefaction analysis of assemblage
+renkonen -     Renkenon's percent-similarity distance measure
+
+
+GENETICS
+allelefreq -   allele frequencies and heterozygosity estimates
+basediff -     proportional difference in base sequences between two taxa
+  basediffp -  creates pairwise contrasts from matrix of sequence data
+distdiff -     test for within- vs among-group pairwise distances or similarities
+fstat -        Wright's F-statistics, bootstrapped
+fstatcum -     accumulation curves for F-statistics across populations 
+hetcum -       heterozygosity accumulation curves among popls
+heterozyg -    heterozygosity estimates HI, HS, HT
+hwexact -      exact Hardy-Weinberg probabilities (1 locus, 2 alleles)
+hwmult -       asymptotic or permutation G-test for multiple alleles
+  hwmultll -   log-likelihood G-statistic for multiple-allele test
+micsatfs -     measures of population subdivision based on microsatellite loci
+  micsatvs -   variance statistics I,S,T
+micsatgd -     genetic distances based on microsatellite loci
+  micsatfr -   allele frequencies from data on individuals
+  micsatds -   genetic distance matrix
+mindetect -    minimum sample size needed to detect a given allele frequency
+  mindetectf - randomization function for mindetect()
+repeats -      test statistical significance of tandem repeats
+
+

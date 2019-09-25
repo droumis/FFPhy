@@ -1,0 +1,49 @@
+Warning: No display specified.  You will not be able to display graphics on the screen.
+
+                              < M A T L A B >
+                  Copyright 1984-2007 The MathWorks, Inc.
+                         Version 7.5.0.338 (R2007b)
+                               August 9, 2007
+
+Warning: Function /home/chengs/theta/code/diff.m has the same name as a MATLAB
+builtin. We suggest you rename the function to avoid a potential name conflict.
+ 
+  To get started, type one of these: helpwin, helpdesk, or demo.
+  For product information, visit www.mathworks.com.
+ 
+Hallo Sen! It's Sun Aug 24 16:42:48 PDT 2008
+adding your paths...
+Warning: Function /home/chengs/theta/code/diff.m has the same name as a MATLAB
+builtin. We suggest you rename the function to avoid a potential name conflict.
+> In path at 110
+  In addpath at 89
+  In startup at 8
+  In matlabrc at 251
+******* starting pf9-novel nonripple_xp6_t005 *******
+Warning: Function /home/chengs/theta/code/diff.m has the same name as a MATLAB
+builtin. We suggest you rename the function to avoid a potential name conflict.
+> In path at 110
+  In addpath at 89
+  In setLocalOptions at 6
+  In forallrats at 33
+  In runall at 32
+??? Error using ==> load
+Unable to read file /data17/chengs/kyl/data2/select-pf9-novel: No such file or
+directory.
+
+Error in ==> resetCellList at 5
+load(fmaux.select);
+
+Error in ==> startCellList at 3
+ncells= resetCellList;
+
+Error in ==> runAdaptFilter at 27
+    [d,e,t,c,ncells]= startCellList;
+
+Error in ==> forallrats at 40
+    eval(fctname);
+
+Error in ==> runall at 32
+        forallrats('runAdaptFilter', select_id{iS}, adapt_dir{i});
+
+>> 

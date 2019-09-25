@@ -1,0 +1,52 @@
+function valid= auxSelectSpikes2(sd, be, spsel, pl, ip, opt);
+
+ind= findstr(spsel, '_');
+ncrit= length(ind)+1;
+ind= [0, ind, length(spsel)+1];
+crit= {};
+for ic=1:ncrit
+    crit{ic}= spsel(ind(ic)+1:ind(ic+1)-1);
+end
+
+N= length(be.time);
+
+if nargin<6; opt= []; end
+if isfield(opt, 'timeid')
+    tm= getTimes(opt.timeid, pl.rat{ip}, pl.cellnum(ip,1), ...
+        pl.cellnum(ip,2), pl.traj{ip}); 
+    if isfinite(opt.t(end))
+        tb= minmax(tm(opt.t));
+    else
+        tb= minmax(tm(opt.t(1):end));
+    end
+    valid= be.time>tb(1) & be.time<tb(end);
+else
+    valid= ones(N,1);
+end
+
+
+for ic=1:ncrit
+    switch crit{ic}
+    case 'run'
+        valid= valid & (be.traj>=0);
+    case 'nonrun'
+        valid= valid & (be.traj<0);
+    case 'ripple'
+        valid= valid & be.ripple2;
+    case 'nonripple'
+        valid= valid & ~be.ripple2;
+    case {'placefield'}
+        x= be.linpos;
+        npf= size(pl.pf{ip}, 2);
+        within= zeros(N,1);
+        for ipf=1:npf
+            minx= min(pl.pf{ip}(:,ipf)); maxx= max(pl.pf{ip}(:,ipf));
+            within= within | (be.traj==pl.traj{ip}(ipf) & minx<x & x<maxx);
+        end
+        valid= valid & within;
+    case {'min'}
+    otherwise
+        error(['Unknown spike selection filter "' spsel '".']);
+    end
+
+end

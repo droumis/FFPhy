@@ -1,5 +1,5 @@
 
-function filter_params = load_filter_params(params, varargin)
+function Fp = load_filter_params(Fp, varargin)
 % ex. filter_params = load_filter_params(Fp, 'add_params', {'ripples', 'wtrack'});
 % loads filter parameter variables from group keyword as a convenience
 
@@ -13,30 +13,8 @@ function filter_params = load_filter_params(params, varargin)
 
 add_paths = 1;
 set_filt_func = 1;
-% default_params = {'all_epoch_types'};
-
-if isa(params, 'string')
-    params = {params};valid_ntrodes
-elseif isa(params, 'struct')
-    filter_params = params;
-    try
-        params = {filter_params.filtfunction};
-    catch
-        params = {};
-    end
-end
-% 
-% if ~isempty(default_params)
-%     params = {default_params{:}, params{:}};
-% end
-
-add_params = {};
 if ~isempty(varargin)
     assign(varargin{:})
-end
-if ~isempty(add_params)
-    % add more params on top of filtfunction defaults
-    params = {params{:}, add_params{:}};
 end
 
 epochfilter = '';
@@ -45,7 +23,7 @@ cellfilter = '';
 timefilter = {};
 options = {};
 sysDateTime = clock;
-for s = params
+for s = Fp.params
     fprintf('%s\n', s{:})
     switch s{1}
         %% EPOCH TETRODE CELL RIPPLE filters
@@ -86,7 +64,7 @@ for s = params
             
         case 'valid_ntrodes'
 %             ntAreas = {'ca1', 'mec', 'ref'}; %, 'por', 'v2l', 'sub'};
-            tetfilter = 'isequal($valid,''yes'') && (isequal($area,''ca1'') || isequal($area,''mec''))';
+            tetfilter = '(isequal($valid,''yes'') && (isequal($area,''ca1'') || isequal($area,''mec'')))';
 %             tetfilter = tetfilter(4:end); %trim first ||
             
         case 'same tet for eeg'
@@ -170,9 +148,6 @@ for s = params
         case 'behavestate'
             
         case 'dfa_lickBoutSpikeCorr'
-            
-            lickGap = 0.5;
-            boutNum = 10;
 
             cellpairfilter = {'allcomb', ...
                 '($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))', ...
@@ -184,6 +159,8 @@ for s = params
             options = {'savefigas', 'png', 'eventName',eventName};
             
         case 'lickbouts'
+            lickGap = 0.5;
+            boutNum = 10;
             % timefilt1: lick bouts, 
             timefilter{end+1} = {'getLickBout', '($lickBout == 1)', 'lickGap', lickGap, ...
                 'boutNum', boutNum};
@@ -230,15 +207,15 @@ for s = params
             exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
             minvelocity = 0;
             maxvelocity = 4;
-            
             timefilter{end+1} = {'getconstimes', '($cons == 1)', ...
                 'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
                 'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
                 'minvelocity', minvelocity,'maxvelocity',maxvelocity};            
-            options = {'savefigas', 'png', 'bin', .02, 'tmax', 1};
+            options = {'savefigas', 'png', 'bin', .02, 'tmax', 1, 'savefigs', savefigs, ...
+                'pausefigs', pausefigs};
             filtfunction = 'dfa_lickswrcorr';
             iterator = 'singleepochanal';
-            datatypes = {'ca1rippleskons','task', 'DIO'};
+            datatypes = {'ca1rippleskons','task', 'lick'};
         case 'savefigs'
             savefigs = 1;
             pausefigs = 0;
@@ -401,11 +378,11 @@ for s = params
 end
 w = whos;
 for a = 1:length(w)
-    filter_params.(w(a).name) = eval(w(a).name);
+    Fp.(w(a).name) = eval(w(a).name);
 end
 if add_paths
     try
-        filter_params.paths = make_paths(filter_params.filtfunction);
+        Fp.paths = make_paths(Fp.filtfunction);
     catch
         disp('could not generate paths');
     end

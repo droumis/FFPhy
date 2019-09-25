@@ -1,0 +1,8 @@
+% plot locations belonging to one segment on the track
+
+day=6;
+epoch=2;
+segment=1;
+
+
+segindex=

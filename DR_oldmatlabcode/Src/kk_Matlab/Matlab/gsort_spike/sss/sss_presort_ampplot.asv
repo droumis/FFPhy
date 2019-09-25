@@ -1,0 +1,162 @@
+function sss_ampplot(spikes, nch, dopca)
+% Amp plots AND PC PLOTS for diff channels of tetrode: before Sorting
+
+%   Last Modified By: sbm on Wed Aug 17 18:29:18 2005
+
+if (nargin < 2), nch=4; end
+if (nargin < 3), dopca=1; end
+
+%%numclusts = length(clusters);
+%numclusts = length(show);   %%%% MY CHANGE: SHANTANU FEB 2006
+
+
+%%%%%
+%data=spikes.pca.scores;
+
+% SVD the data because we want to use the PCs as axes.
+% [pca.scores,pca.u,pca.s,pca.v] = pcasvd(spikes.waveforms);
+% spikes.pca = pca;
+% data = pca.scores;
+
+
+if nch==2
+
+    for nch=1:2     %2 channels for stereotrode
+        cmd=sprintf('ampl(:,nch)=abs(max(spikes.waveforms_ch%d,[],2)) + abs(min(spikes.waveforms_ch%d,[],2));',nch,nch); eval(cmd);
+    end
+
+
+    afig=figure; hold on;
+    %    redimscreen; orient(gcf,'landscape');
+    set(gcf, 'PaperPositionMode', 'auto');
+    set(0,'defaultaxesfontsize',14);set(0,'defaultaxesfontweight','bold');
+    ylabel('Electrode 2' ,'FontSize', 14, 'FontWeight', 'bold');
+    xlabel('Electrode 1','FontSize', 14, 'FontWeight', 'bold');
+
+    hndl = plot(ampl(:,1), ampl(:,2), '.');
+    %set(hndl, 'ButtonDownFcn', {@raise_me, hndl});
+    title('AMP PLOTS')
+    hold off;
+
+    set(afig, 'ButtonDownFcn', {@make_density, ampl});
+    figure(afig);
+
+    return
+end
+
+% Make Ampl_plot
+
+for nch=1:4     %4 channels for tetrode
+    cmd=sprintf('ampl(:,nch)=abs(max(spikes.waveforms_ch%d,[],2)) + abs(min(spikes.waveforms_ch%d,[],2));',nch,nch); eval(cmd);
+end
+
+% Make the plot.
+figure;  hfig = gcf;  hax = gca;    hold on; redimscreen100(100);
+%    redimscreen; orient(gcf,'landscape');
+set(gcf, 'PaperPositionMode', 'auto');
+set(0,'defaultaxesfontsize',14);set(0,'defaultaxesfontweight','bold');
+
+%whitebg(hfig);
+
+subplot(3,2,1); hold on;
+hndl = plot(ampl(:,1), ampl(:,2), '.');
+%set(hndl, 'ButtonDownFcn', {@raise_me, hndl});
+
+title('AMP PLOTS','FontSize', 14, 'FontWeight', 'bold');
+ylabel('Electrode 2' ,'FontSize', 14, 'FontWeight', 'bold');
+xlabel('Electrode 1','FontSize', 14, 'FontWeight', 'bold');
+
+subplot(3,2,2); hold on;
+ylabel('Electrode 3' ,'FontSize', 14, 'FontWeight', 'bold');
+xlabel('Electrode 1','FontSize', 14, 'FontWeight', 'bold');
+hndl = plot(ampl(:,1), ampl(:,3), '.');
+%set(hndl, 'ButtonDownFcn', {@raise_me, hndl});
+
+
+subplot(3,2,3); hold on;
+ylabel('Electrode 4' ,'FontSize', 14, 'FontWeight', 'bold');
+xlabel('Electrode 1','FontSize', 14, 'FontWeight', 'bold');
+hndl = plot(ampl(:,1), ampl(:,4), '.');
+%set(hndl, 'ButtonDownFcn', {@raise_me, hndl});
+
+
+subplot(3,2,4); hold on;
+ylabel('Electrode 3' ,'FontSize', 14, 'FontWeight', 'bold');
+xlabel('Electrode 2','FontSize', 14, 'FontWeight', 'bold');
+hndl = plot(ampl(:,2), ampl(:,3), '.');
+%set(hndl, 'ButtonDownFcn', {@raise_me, hndl});
+
+
+subplot(3,2,5); hold on;
+ylabel('Electrode 4' ,'FontSize', 14, 'FontWeight', 'bold');
+xlabel('Electrode 2','FontSize', 14, 'FontWeight', 'bold');
+hndl = plot(ampl(:,2), ampl(:,4), '.');
+%set(hndl, 'ButtonDownFcn', {@raise_me, hndl});
+
+
+subplot(3,2,6); hold on;
+ylabel('Electrode 4' ,'FontSize', 14, 'FontWeight', 'bold');
+xlabel('Electrode 3','FontSize', 14, 'FontWeight', 'bold');
+hndl = plot(ampl(:,3), ampl(:,4), '.');
+%set(hndl, 'ButtonDownFcn', {@raise_me, hndl});
+
+
+
+if dopca==1,
+    % Make the PCA plot.
+    figure;  hfig = gcf;     hax = gca;    hold on; redimscreen100(100);
+    %whitebg(hfig);
+    %    redimscreen; orient(gcf,'landscape');
+    set(gcf, 'PaperPositionMode', 'auto');
+    set(0,'defaultaxesfontsize',14);set(0,'defaultaxesfontweight','bold');
+
+
+    subplot(3,2,1); hold on;
+    ylabel('PCA 2' ,'FontSize', 14, 'FontWeight', 'bold');
+    xlabel('PCA 1','FontSize', 14, 'FontWeight', 'bold');
+    hndl = plot(data(:,1), data(:,2), '.');
+    %set(hndl, 'ButtonDownFcn', {@raise_me, hndl});
+    title('PCA PLOTS')
+
+    subplot(3,2,2); hold on;
+    ylabel('PCA 3' ,'FontSize', 14, 'FontWeight', 'bold');
+    xlabel('PCA 1','FontSize', 14, 'FontWeight', 'bold');
+    hndl = plot(data(:,1), data(:,3), '.');
+    %set(hndl, 'ButtonDownFcn', {@raise_me, hndl});
+
+
+    subplot(3,2,3); hold on;
+    ylabel('PCA 4' ,'FontSize', 14, 'FontWeight', 'bold');
+    xlabel('PCA 1','FontSize', 14, 'FontWeight', 'bold');
+    hndl = plot(data(:,1), data(:,4), '.');
+    %set(hndl, 'ButtonDownFcn', {@raise_me, hndl});
+
+
+    subplot(3,2,4); hold on;
+    ylabel('PCA 3' ,'FontSize', 14, 'FontWeight', 'bold');
+    xlabel('PCA 2','FontSize', 14, 'FontWeight', 'bold');
+    hndl = plot(data(:,2), data(:,3), '.');
+    %set(hndl, 'ButtonDownFcn', {@raise_me, hndl});
+
+
+    subplot(3,2,5); hold on;
+    ylabel('PCA 4' ,'FontSize', 14, 'FontWeight', 'bold');
+    xlabel('PCA 2','FontSize', 14, 'FontWeight', 'bold');
+    hndl = plot(data(:,2), data(:,4), '.');
+    %set(hndl, 'ButtonDownFcn', {@raise_me, hndl});
+
+
+    subplot(3,2,6); hold on;
+    ylabel('PCA 4' ,'FontSize', 14, 'FontWeight', 'bold');
+    xlabel('PCA 3','FontSize', 14, 'FontWeight', 'bold');
+    hndl = plot(data(:,3), data(:,4), '.');
+    %set(hndl, 'ButtonDownFcn', {@raise_me, hndl});
+end
+
+%%%%%%%%%%% Density Plot for Stereotrode Amplitude  %%%%%%%%%%%%%%%%
+
+function make_density(afig,event,ampl)
+figure; hdens = gca;
+histxy(ampl(:,1),ampl(:,2),250,1);
+%set(gca,properties2d{:},'Color',[0 0 0.508]);
+HGlogmenu(findobj(gca,'Type','Image'));

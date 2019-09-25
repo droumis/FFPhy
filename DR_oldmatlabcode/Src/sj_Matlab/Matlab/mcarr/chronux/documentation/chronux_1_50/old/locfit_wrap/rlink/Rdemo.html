@@ -1,0 +1,69 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of Rdemo</title>
+  <meta name="keywords" content="Rdemo">
+  <meta name="description" content="% Connecting MATLAB to R">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../../../index.html">Home</a> &gt;  <a href="../../../index.html">chronux_1_50</a> &gt; <a href="../../index.html">old</a> &gt; <a href="../index.html">locfit_wrap</a> &gt; <a href="index.html">rlink</a> &gt; Rdemo.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../../../index.html"><img alt="<" border="0" src="../../../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for chronux_1_50\old\locfit_wrap\rlink&nbsp;<img alt=">" border="0" src="../../../../right.png"></a></td></tr></table>-->
+
+<h1>Rdemo
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../../../up.png"></a></h2>
+<div class="box"><strong>% Connecting MATLAB to R</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../../../up.png"></a></h2>
+<div class="box"><strong>This is a script file. </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment">% Connecting MATLAB to R 
+ The statistical programming language R has a COM interface. We can use
+ this to execute R commands from within MATLAB.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../../../matlabicon.gif)">
+<li><a href="closeR.html" class="code" title="function [status,msg] = closeR(handle)">closeR</a>	CLOSER Close connection to R server process</li><li><a href="evalR.html" class="code" title="function [result,status,msg] = evalR(command,noreturn)">evalR</a>	EVALR Run an R command.</li><li><a href="getRdata.html" class="code" title="function [data,status,msg] = getRdata(varname)">getRdata</a>	GETRDATA Copies an R variable to MATLAB.</li><li><a href="openR.html" class="code" title="function [status ,msg, handle] = openR">openR</a>	OPENR Connect to an R server process.</li><li><a href="putRdata.html" class="code" title="function [status,msg] = putRdata(varname,data)">putRdata</a>	PUTRDATA Copies MATLAB data to an R variable.</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">%% Connecting MATLAB to R</span>
+0002 <span class="comment">% The statistical programming language R has a COM interface. We can use</span>
+0003 <span class="comment">% this to execute R commands from within MATLAB.</span>
+0004 
+0005 <span class="comment">%% Connect to an R Session</span>
+0006 <a href="openR.html" class="code" title="function [status ,msg, handle] = openR">openR</a>
+0007 
+0008 <span class="comment">%% Push data into R</span>
+0009 a = 1:10;
+0010 <a href="putRdata.html" class="code" title="function [status,msg] = putRdata(varname,data)">putRdata</a>(<span class="string">'a'</span>,a)
+0011 
+0012 <span class="comment">%% Run a simple R command</span>
+0013 b = <a href="evalR.html" class="code" title="function [result,status,msg] = evalR(command,noreturn)">evalR</a>(<span class="string">'a^2'</span>);
+0014 
+0015 <span class="comment">%% Run a series of commands and grab the result</span>
+0016 <a href="evalR.html" class="code" title="function [result,status,msg] = evalR(command,noreturn)">evalR</a>(<span class="string">'b &lt;- a^2'</span>);
+0017 <a href="evalR.html" class="code" title="function [result,status,msg] = evalR(command,noreturn)">evalR</a>(<span class="string">'c &lt;- b + 1'</span>);
+0018 c = <a href="getRdata.html" class="code" title="function [data,status,msg] = getRdata(varname)">getRdata</a>(<span class="string">'c'</span>);
+0019 
+0020 <span class="comment">%% Close the connection</span>
+0021 <a href="closeR.html" class="code" title="function [status,msg] = closeR(handle)">closeR</a></pre></div>
+<hr><address>Generated on Mon 09-Oct-2006 00:54:52 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+</body>
+</html>

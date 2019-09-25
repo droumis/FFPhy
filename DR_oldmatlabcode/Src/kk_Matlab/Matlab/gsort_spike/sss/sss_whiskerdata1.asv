@@ -1,0 +1,179 @@
+
+function sss_whiskerdata1(spec,spkfile,whisfilespec)
+load cal.dat;
+files = dir(spec);
+whis=[];
+
+%% Filter high-pass at 2 Hz: Nyquist = Fs/2=4000/2=2000Hz
+[b,a]=cheby1(3,5,2/2000,'high');
+
+%%%%%% 1. Load whisker data from individual files and save in %%%%%%%%
+%%%%%% 'whiskerdata' file %%%%%%%%%%%%%%%
+
+h = waitbar(0,'Loading Whisker Data');
+for i=1:length(files)
+    w=load(files(i).name);
+    w=w';
+    w(:,1)=w(:,1)+1000;     %%% Push time by 1000ms; Columns > 2 are whisker data   
+    w(:,2) = cal(1)*w(:,2).^3+cal(2)*w(:,2).^2+cal(3)*w(:,2) + cal(4);
+    if size(w,2)>2,
+        w(:,3) = cal(1)*w(:,3).^3+cal(2)*w(:,3).^2+cal(3)*w(:,3) + cal(4);
+    end
+    %%% Round whisker data to 10 um
+    %w(:,2)=roundn(w(:,2),-2);  w(:,3)=roundn(w(:,3),-2);
+    
+    %%% Round whisker data to 1 um
+    w(:,2)=roundn(w(:,2),-3);  
+     if size(w,2)>2, w(:,3)=roundn(w(:,3),-3); end
+    
+    %%%% FILTER DATA %%%%%%%%%
+    %w(:,2)=filtfilt(b,a,w(:,2)); w(:,3)=filtfilt(b,a,w(:,3));
+    %%%% FILTER DATA %%%%%%%%%
+    
+    whis{i}=w;
+    waitbar(i/length(files),h)
+end
+close(h);
+whisfile=[whisfilespec '_calwhiskerdata'];
+%save (whisfile, 'whis');
+
+%%%%%%%%%%%%%%%%%%%
+
+%%%%%% 2. Bring together Spike and Whisker data; and save 2 files %%%%%%%%
+%%%%%% One is a structure file with data in cell arrays,
+%%%%%% and another is a sparse-matrix-spike file, with data in 3-dim arrays %%%%%%%%%%%%%%%
+
+
+load(spkfile);
+assigns = spikes.hierarchy.assigns;
+clusters = unique(spikes.hierarchy.assigns);
+clusters(find(clusters==0))=[];
+
+%%% Stimulus Information for each cluster
+for nclu=1:length(clusters)
+    spktimes = spikes.fstimes(find(spikes.hierarchy.assigns==clusters(nclu)));
+    h = waitbar(0,['Neuron' num2str(clusters(nclu)) ': Saving Spike and Whisker Data']);
+    for trials=1:size(whis,2)
+        stiminfo=whis{trials};
+        spkinfo=spktimes(find ( spktimes>=stiminfo(1,1) & spktimes<=stiminfo(end,1) ));
+        tmax=stiminfo(end,1)-stiminfo(1,1);
+        control_spks_pre=spktimes(find( spktimes<stiminfo(1,1) & spktimes>=stiminfo(1,1)-tmax));
+        control_spks_post=spktimes(find( spktimes>stiminfo(end,1) & spktimes<=stiminfo(end,1)+tmax));
+        alldata_str.stim{trials,1}=stiminfo; 
+        alldata_str.spks{trials,nclu}=spkinfo; 
+        alldata_str.control_spks_pre{trials,nclu}=control_spks_pre;
+        alldata_str.control_spks_post{trials,nclu}=control_spks_post;
+        
+        
+        waitbar(trials/size(whis,2),h)
+        
+        %%%  SPARSE MATRICES FOR RASTER PLOT: 1MS RESOLUTION OF SPIKES
+        %%%  STARTING RELATIVE TO WHISKER DATA ACQUISITION
+        
+        whistimes=stiminfo(:,1); 
+        spks=spkinfo-whistimes(1)+1; whisks=whistimes-whistimes(1)+1; % Start spk and whisktimes from 1, relative to whisktimes 
+        tmax=max(floor(whisks));
+        %control_spks_pre=spktimes(find( spktimes>stiminfo(end,1) & spktimes<=stiminfo(end,1)+tmax));
+        spks_pre=whistimes(1)-control_spks_pre+1;
+        spks_post=control_spks_post-whistimes(1)+1; spks_post=spks_post-tmax;
+        %alldata.spks(trials,:,nclu) = int8(time2event(spks,tmax));
+        alldata.spks(trials,:,nclu) = (time2event(spks,tmax));
+        alldata.controlspks_pre(trials,:,nclu) = (time2event(spks_pre,tmax));
+        alldata.controlspks_post(trials,:,nclu) = (time2event(spks_post,tmax));
+        alldata.stim(trials,:,1)=whisks;
+        alldata.stim(trials,:,2)=stiminfo(:,2);
+        if size(stiminfo,2)>2, alldata.stim(trials,:,3)=stiminfo(:,3); end      
+        clear stiminfo spkinfo        
+%         whistimes=alldata.stim{trials}(:,1);
+%         spktimes=alldata.spk{nclu,trials};
+    end
+    close (h);   
+end
+
+allfilestr=[whisfilespec '_calalldata_str']; allfilesp=[whisfilespec '_calalldata_sp'];
+save (allfilestr, 'alldata_str');
+save (allfilesp, 'alldata');    
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%% 3. Compressing whisker data to 1ms resolution and save  %%%%%%%%
+%%%%%% in a sparse-matrix-spike file, with data in 3-dim arrays %%%%%%%%%%%%%%%
+
+whiskt=zeros(size(alldata.spks,1),size(alldata.spks,2)-1);
+whiskd1=zeros(size(alldata.spks,1),size(alldata.spks,2)-1);
+whiskd2=zeros(size(alldata.spks,1),size(alldata.spks,2)-1);
+h=waitbar(0,'Compressing Whisker Data');
+for n=1:size(alldata.spks,2)-1
+    xwhiskt=alldata.stim(:,:,1); xwhiskd1=alldata.stim(:,:,2);
+    if size(alldata.stim,3)>2,
+        xwhiskd2=alldata.stim(:,:,3); 
+        whiskd2(:,n)=mean(xwhiskd2(:,4*(n-1)+1:4*(n-1)+4),2);
+    end
+    whiskt(:,n)=mean(xwhiskt(:,4*(n-1)+1:4*(n-1)+4),2);
+    whiskd1(:,n)=mean(xwhiskd1(:,4*(n-1)+1:4*(n-1)+4),2);
+    
+    waitbar(n/(size(alldata.spks,2)-1),h);
+end
+close(h);
+alldatan.spks=alldata.spks(:,1:size(alldata.spks,2)-1,:);
+alldatan.controlspks_pre=alldata.controlspks_pre(:,1:size(alldata.spks,2)-1,:);
+alldatan.controlspks_post=alldata.controlspks_post(:,1:size(alldata.spks,2)-1,:);
+alldatan.stim(:,:,1)=whiskt; alldatan.stim(:,:,2)=whiskd1; 
+if size(alldata.stim,3)>2, alldatan.stim(:,:,3)=whiskd2; end
+nfilename=[whisfilespec '_calalldata_sp_compress'];
+save (nfilename, 'alldatan');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%% 4. Compress trials and put whisker and spike data in vectors %%%%%%%%%%%%%%%
+
+spks=zeros(size(alldatan.spks,1)*size(alldatan.spks,2),size(alldatan.spks,3));
+whiskt=[];
+whiskd1=[];
+whiskd2=[];
+%h=waitbar(0,'Vectorising Whisker and Spike Data')
+for n=1:size(alldatan.spks,1)
+    whiskt=[whiskt; alldatan.stim(n,:,1)'];
+    whiskd1=[whiskd1; alldatan.stim(n,:,2)'];
+    if size(alldata.stim,3)>2, whiskd2=[whiskd2; alldatan.stim(n,:,3)']; end
+    for nclu=1:size(alldatan.spks,3)
+        spks(size(alldatan.spks,2)*(n-1)+1:size(alldatan.spks,2)*n,nclu)=alldatan.spks(n,:,nclu);
+        controlspks_pre(size(alldatan.controlspks_pre,2)*(n-1)+1:size(alldatan.controlspks_pre,2)*n,nclu)=alldatan.controlspks_pre(n,:,nclu);
+        controlspks_post(size(alldatan.controlspks_post,2)*(n-1)+1:size(alldatan.controlspks_post,2)*n,nclu)=alldatan.controlspks_post(n,:,nclu);
+    end
+%    waitbar(h,n/size(alldata.spks,2)-1);
+end
+%close(h);
+alldatavec.spks=spks; alldatavec.controlspks_pre=controlspks_post; alldatavec.controlspks_post=controlspks_post;
+alldatavec.stim(:,1)=whiskt; alldatavec.stim(:,2)=whiskd1; 
+if size(alldata.stim,3)>2, alldatavec.stim(:,3)=whiskd2; end
+nfilename=[whisfilespec '_calalldata_sp_vec'];
+save (nfilename, 'alldatavec');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%% PLOTTING %%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% for nclu=1:length(clusters)
+%     figure; title(['Cluster' num2str(clusters(nclu))]); hold on;
+%     %redimscreen_halfvert(0); orient(gcf,'portrait'); set(gcf, 'PaperPositionMode', 'auto');
+%     set(0,'defaultaxesfontsize',14);set(0,'defaultaxesfontweight','bold');
+% 
+%     spy(alldata.spks(:,:,nclu),'k.',8);  %CAN USE SPY OR STR_RASTERCELL FOR RASTER PLOT
+%     axis fill; axis xy; axis([0, size(alldata.spks(:,:,nclu),2),(-1/8)*size(alldata.spks(:,:,nclu),1), size(alldata.spks(:,:,nclu),1)]);
+%     plot(1:size(alldata.spks(:,:,nclu),2), zeros(size(alldata.spks(:,:,nclu),2)),'b.','MarkerSize',2);
+%     xspot=window*0.1; yspot=size(alldata.spks(:,:,nclu),1);
+%     %PSTH:  METHOD1
+%     del_y = (1/8)* size(alldata.spks(:,:,nclu),1);   %SCALE DOWN PSTH TO 1/8(SIZE RASTER)
+%     psth_win1=sum(alldata.spks(:,:,nclu),1);
+%     psth_win1 = psth_win1*(del_y/max(psth_win1));
+%     psth_win1=psth_win1-max(psth_win1);
+%     stairs(psth_win1);
+% end
+% 
+
+
+% 

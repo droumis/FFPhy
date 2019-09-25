@@ -1,0 +1,30 @@
+TARGETS=  .mexglx
+SRCS = 
+MEX_OBJS= 
+
+CC=g++
+LFLAGS= -I/usr/local/matlab-6.5/extern/include/
+CFLAGS = -g -Wall -DDEBUG $(LFLAGS)
+
+MDIR=/usr/local/matlab-6.5
+MLIB_DIR=$(MDIR)/extern/lib
+MEX_LFLAGS=-Wl,--version-script,$(MLIB_DIR)/glnx86/mexFunction.map \
+ --rpath-link,$(MDIR)/bin/glnx86 -L$(MDIR)/bin/glnx86 -lmx -lmex -lm
+#	--rpath-link,$(MLIB_DIR)/glnx86,--rpath-link,$(MDIR)/bin/glnx86 -L$(MDIR)/bin/glnx86 -lmx -lmex -lm
+
+
+all: $(TARGETS)
+clean:
+	rm -f $(TARGETS) *.o *~
+depend:
+	makedepend -- $(CFLAGS) -- $(SRCS)
+
+.mexglx: $(MEX_OBJS)
+	$(CC) -g -shared  $(MEX_LFLAGS) $(MEX_OBJS)  -o .mexglx
+
+mexversion.o:
+	g++ -c -g -I/usr/local/matlab-6.5/extern/include -I/usr/local/matlab-6.5/simulink/include -DMATLAB_MEX_FILE -fPIC -ansi -D_GNU_SOURCE -pthread  -O -DNDEBUG /usr/local/matlab-6.5/extern/src/mexversion.c
+
+
+# DO NOT DELETE
+

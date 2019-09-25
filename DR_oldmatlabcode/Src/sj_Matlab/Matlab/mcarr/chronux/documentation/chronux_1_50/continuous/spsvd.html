@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of spsvd</title>
+  <meta name="keywords" content="spsvd">
+  <meta name="description" content="Space frequency SVD of input data - continuous processes">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">chronux_1_50</a> &gt; <a href="index.html">continuous</a> &gt; spsvd.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for chronux_1_50\continuous&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>spsvd
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>Space frequency SVD of input data - continuous processes</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [sv,sp,fm] = spsvd(data,params,mdkp) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> Space frequency SVD of input data - continuous processes
+ Usage: [sv,sp,fm] = spsvd(data,params,mdkp)
+ Inputs:
+ data       (data matrix in timexchannels form)-required
+       params      structure containing parameters - params has the
+       following fields: tapers, Fs, fpass, pad
+            tapers         (parameters for calculating tapers [NW,K]) - optional. Defaults to [3 5]
+            Fs             (sampling frequency) -- optional. Defaults to 1.
+           fpass       (frequency band to be used in the calculation in the form
+                                   [fmin fmax])- optional. 
+                                   Default all frequencies between 0 and Fs/2
+            pad            (padding factor for the FFT) - optional (can take values -1,0,1,2...). 
+                    -1 corresponds to no padding, 0 corresponds to padding
+                    to the next highest power of 2 etc.
+                       e.g. For N = 500, if PAD = -1, we do not pad; if PAD = 0, we pad the FFT
+                       to 512 points, if pad=1, we pad to 1024 points etc.
+                       Defaults to 0.
+ mdkp       (number of dimensions to be kept)-optional. Default is the
+               maximum possible modes determined by taper parameters
+
+ Outputs:
+ sv sp fm  : singular values, space modes, frequency modes</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="../../chronux_1_50/helper/dpsschk.html" class="code" title="function [tapers,eigs]=dpsschk(tapers,N,Fs)">dpsschk</a>	Helper function to calculate tapers and, if precalculated tapers are supplied,</li><li><a href="../../chronux_1_50/helper/getfgrid.html" class="code" title="function [f,findx]=getfgrid(Fs,nfft,fpass)">getfgrid</a>	Helper function that gets the frequency grid associated with a given fft based computation</li><li><a href="../../chronux_1_50/helper/getparams.html" class="code" title="function [tapers,pad,Fs,fpass,err,trialave,params]=getparams(params)">getparams</a>	Helper function to convert structure params to variables used by the</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [sv,sp,fm] = spsvd(data,params,mdkp)</a>
+0002 <span class="comment">% Space frequency SVD of input data - continuous processes</span>
+0003 <span class="comment">% Usage: [sv,sp,fm] = spsvd(data,params,mdkp)</span>
+0004 <span class="comment">% Inputs:</span>
+0005 <span class="comment">% data       (data matrix in timexchannels form)-required</span>
+0006 <span class="comment">%       params      structure containing parameters - params has the</span>
+0007 <span class="comment">%       following fields: tapers, Fs, fpass, pad</span>
+0008 <span class="comment">%            tapers         (parameters for calculating tapers [NW,K]) - optional. Defaults to [3 5]</span>
+0009 <span class="comment">%            Fs             (sampling frequency) -- optional. Defaults to 1.</span>
+0010 <span class="comment">%           fpass       (frequency band to be used in the calculation in the form</span>
+0011 <span class="comment">%                                   [fmin fmax])- optional.</span>
+0012 <span class="comment">%                                   Default all frequencies between 0 and Fs/2</span>
+0013 <span class="comment">%            pad            (padding factor for the FFT) - optional (can take values -1,0,1,2...).</span>
+0014 <span class="comment">%                    -1 corresponds to no padding, 0 corresponds to padding</span>
+0015 <span class="comment">%                    to the next highest power of 2 etc.</span>
+0016 <span class="comment">%                       e.g. For N = 500, if PAD = -1, we do not pad; if PAD = 0, we pad the FFT</span>
+0017 <span class="comment">%                       to 512 points, if pad=1, we pad to 1024 points etc.</span>
+0018 <span class="comment">%                       Defaults to 0.</span>
+0019 <span class="comment">% mdkp       (number of dimensions to be kept)-optional. Default is the</span>
+0020 <span class="comment">%               maximum possible modes determined by taper parameters</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% Outputs:</span>
+0023 <span class="comment">% sv sp fm  : singular values, space modes, frequency modes</span>
+0024 
+0025 
+0026 <span class="keyword">if</span> nargin &lt; 1; error(<span class="string">'Need data'</span>); <span class="keyword">end</span>;
+0027 <span class="keyword">if</span> nargin &lt; 2 || isempty(params); params=[]; <span class="keyword">end</span>;
+0028 [tapers,pad,Fs,fpass,err,trialave,params]=<a href="../../chronux_1_50/helper/getparams.html" class="code" title="function [tapers,pad,Fs,fpass,err,trialave,params]=getparams(params)">getparams</a>(params);
+0029 clear err trialave params
+0030 [N,NCHAN]=size(data);
+0031 tapers=<a href="../../chronux_1_50/helper/dpsschk.html" class="code" title="function [tapers,eigs]=dpsschk(tapers,N,Fs)">dpsschk</a>(tapers,N,Fs);
+0032 nfft=max(2^(nextpow2(N)+pad),N);<span class="comment">% number of points in fft</span>
+0033 [N,K]=size(tapers);
+0034 <span class="keyword">if</span> nargin&lt;3 || isempty(mdkp); mdkp=min(K,NCHAN);
+0035 <span class="keyword">elseif</span> mdkp &gt; min(K,NCHAN); error(<span class="string">'mdkp has to be less than both K and NCHAN'</span>);<span class="keyword">end</span>;
+0036 
+0037 tvec=(1:N)';
+0038 tvec=repmat(tvec,[1 K]);
+0039 tvec=tvec*2*pi*i;
+0040 f=<a href="../../chronux_1_50/helper/getfgrid.html" class="code" title="function [f,findx]=getfgrid(Fs,nfft,fpass)">getfgrid</a>(Fs,nfft,fpass);
+0041 nf=length(f);
+0042 sp=zeros(NCHAN,nf,mdkp);
+0043 sp=sp+i*sp;
+0044 fm=zeros(K,nf,mdkp);
+0045 fm=fm+i*fm;
+0046 sv=zeros(nf,min([K,NCHAN]));
+0047 <span class="keyword">for</span> j=1:nf 
+0048 <span class="comment">%     for k=1:K</span>
+0049 <span class="comment">%       proj(:,k)=tapers(:,k).*exp(-f0*tvec');</span>
+0050 <span class="comment">%     end</span>
+0051     proj=tapers.*exp(-f(j)*tvec);
+0052     tmp=data'*proj; <span class="comment">% projected data</span>
+0053     [u,s,v]= svd(tmp,0); <span class="comment">% svd</span>
+0054     <span class="keyword">for</span> mk=1:mdkp, 
+0055       sp(:,j,mk)=u(:,mk)';
+0056       fm(:,j,mk)=v(:,mk)';
+0057     <span class="keyword">end</span>  
+0058     sv(j,:)=diag(s);
+0059 <span class="keyword">end</span>;</pre></div>
+<hr><address>Generated on Mon 09-Oct-2006 00:54:52 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+</body>
+</html>

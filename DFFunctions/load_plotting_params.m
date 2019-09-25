@@ -42,7 +42,7 @@ for s = param_set
             MgTp = 0.07; % margin top
             MgBm =  0.04; % margin bottom
         case 'dfa_lickswrcorr'
-            position = [.1 .1 .3 .3];
+            position = [.1 .1 .5 .5];
         case 'dfa_lickXCorrSpikes'
             position = [.1 .1 .3 .5];
             MgBm =  0.07; % margin bottom
@@ -183,7 +183,7 @@ for s = param_set
             SpHz = 0.02;
             SpVt = 0.08;
             MgBm = .1;
-        case 'dataExplore'
+        case 'dfa_plotDataChunks'
             position = [0 0 1 1];
             nrows = 15;
             ripFAlpha = .4;
@@ -194,6 +194,11 @@ for s = param_set
             rippwrcmap = 'hot';
             thetapwrcmap = 'parula';
             ripclr = 'y';
+            noboutsclr = 'b';
+            boutsclr = 'r';
+            noboutsalpha = .05;
+            boutsalpha = .05;
+            
             c1clr = colorPicker({'ca1'},'subtags', {'d'});
             dmclr = colorPicker({'mec'},'subtags', {'deep'});
             smclr = colorPicker({'mec'},'subtags', {'supf'});

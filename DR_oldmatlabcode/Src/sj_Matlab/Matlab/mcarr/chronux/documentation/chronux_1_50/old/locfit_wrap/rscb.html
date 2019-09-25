@@ -1,0 +1,196 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of rscb</title>
+  <meta name="keywords" content="rscb">
+  <meta name="description" content="RSCB Runs locfit scb using R on a passed row array using the given parameters">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../../index.html">Home</a> &gt;  <a href="../../index.html">chronux_1_50</a> &gt; <a href="../index.html">old</a> &gt; <a href="index.html">locfit_wrap</a> &gt; rscb.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../../index.html"><img alt="<" border="0" src="../../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for chronux_1_50\old\locfit_wrap&nbsp;<img alt=">" border="0" src="../../../right.png"></a></td></tr></table>-->
+
+<h1>rscb
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box"><strong>RSCB Runs locfit scb using R on a passed row array using the given parameters</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box"><strong>function [smooth,values,upper,lower]=rscb(in,w,nn,pts,lo,hi,pl) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment">RSCB Runs locfit scb using R on a passed row array using the given parameters
+ 
+ RSCB( in, w, nn, pts, lo, hi )
+ 
+ Requires windows since R-(D)COM is windows-specific
+  I am working on a platform-independent replacement
+
+ Requires that Matlab-R link Matlab package be installed from
+ http://www.mathworks.com/matlabcentral/fileexchange/loadFile.do?objectId=5051&amp;objectType=file   
+ file MATLAB_RLINK.zip
+
+ Requires that R be installed see http://r-project.org first
+ file rw1091.exe
+
+ Requires that R locfit package be installed first
+ From within R in menu do &quot;Packages&quot; then &quot;Install from CRAN&quot;
+
+ Requires that R-(D)COM be installed first from  
+ http://lib.stat.cmu.edu/R/CRAN/contrib/extra/dcom/
+ (get latest EXE file approx 3 MB)
+ file RSrv135.exe
+
+ The above packages should come bundled with this software for convenience
+ with the exception of locfit which is easiest to install from within R
+
+
+
+ In values:
+ 
+ in: the input row array to smooth, contains a set of values 
+ w: the smoothing width
+ nn: nearest neighbor fraction for smoothing (0.1 is good)
+ pts: number of evaluation points
+ lo: lowest value to consider
+ hi: highest value to consider
+ pl: optional argument - make a plot if present and greater than zero
+ 
+ Out Values:
+
+ smooth: a smoothed histogram of in, evaluated at the values points below
+ values: the evaluation point values
+ upper: the upper 95% confidence intervals for each point
+ lower: the upper 95% confidence intervals for each point</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../../matlabicon.gif)">
+<li><a href="../../../chronux_1_50/old/locfit_wrap/rlink/evalR.html" class="code" title="function [result,status,msg] = evalR(command,noreturn)">evalR</a>	EVALR Run an R command.</li><li><a href="../../../chronux_1_50/old/locfit_wrap/rlink/getRdata.html" class="code" title="function [data,status,msg] = getRdata(varname)">getRdata</a>	GETRDATA Copies an R variable to MATLAB.</li><li><a href="../../../chronux_1_50/old/locfit_wrap/rlink/openR.html" class="code" title="function [status ,msg, handle] = openR">openR</a>	OPENR Connect to an R server process.</li><li><a href="../../../chronux_1_50/old/locfit_wrap/rlink/putRdata.html" class="code" title="function [status,msg] = putRdata(varname,data)">putRdata</a>	PUTRDATA Copies MATLAB data to an R variable.</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [smooth,values,upper,lower]=rscb(in,w,nn,pts,lo,hi,pl)</a>
+0002 <span class="comment">%RSCB Runs locfit scb using R on a passed row array using the given parameters</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% RSCB( in, w, nn, pts, lo, hi )</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% Requires windows since R-(D)COM is windows-specific</span>
+0007 <span class="comment">%  I am working on a platform-independent replacement</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% Requires that Matlab-R link Matlab package be installed from</span>
+0010 <span class="comment">% http://www.mathworks.com/matlabcentral/fileexchange/loadFile.do?objectId=5051&amp;objectType=file</span>
+0011 <span class="comment">% file MATLAB_RLINK.zip</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% Requires that R be installed see http://r-project.org first</span>
+0014 <span class="comment">% file rw1091.exe</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% Requires that R locfit package be installed first</span>
+0017 <span class="comment">% From within R in menu do &quot;Packages&quot; then &quot;Install from CRAN&quot;</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% Requires that R-(D)COM be installed first from</span>
+0020 <span class="comment">% http://lib.stat.cmu.edu/R/CRAN/contrib/extra/dcom/</span>
+0021 <span class="comment">% (get latest EXE file approx 3 MB)</span>
+0022 <span class="comment">% file RSrv135.exe</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% The above packages should come bundled with this software for convenience</span>
+0025 <span class="comment">% with the exception of locfit which is easiest to install from within R</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% In values:</span>
+0030 <span class="comment">%</span>
+0031 <span class="comment">% in: the input row array to smooth, contains a set of values</span>
+0032 <span class="comment">% w: the smoothing width</span>
+0033 <span class="comment">% nn: nearest neighbor fraction for smoothing (0.1 is good)</span>
+0034 <span class="comment">% pts: number of evaluation points</span>
+0035 <span class="comment">% lo: lowest value to consider</span>
+0036 <span class="comment">% hi: highest value to consider</span>
+0037 <span class="comment">% pl: optional argument - make a plot if present and greater than zero</span>
+0038 <span class="comment">%</span>
+0039 <span class="comment">% Out Values:</span>
+0040 <span class="comment">%</span>
+0041 <span class="comment">% smooth: a smoothed histogram of in, evaluated at the values points below</span>
+0042 <span class="comment">% values: the evaluation point values</span>
+0043 <span class="comment">% upper: the upper 95% confidence intervals for each point</span>
+0044 <span class="comment">% lower: the upper 95% confidence intervals for each point</span>
+0045 <span class="comment">%</span>
+0046 
+0047 <span class="comment">% Minimal input validation</span>
+0048 <span class="keyword">if</span> nargin &lt; 6
+0049    error( <span class="string">'Not enough input arguments passed'</span> );
+0050 <span class="keyword">end</span>
+0051 
+0052 
+0053 <span class="comment">%</span>
+0054 <span class="comment">% Connect to R only if not done so already, never disconnect</span>
+0055 <span class="keyword">global</span> RCONNECTED;
+0056 <span class="keyword">if</span> isempty( RCONNECTED )
+0057   <span class="comment">% Try the open command</span>
+0058   [status,msg] = <a href="../../../chronux_1_50/old/locfit_wrap/rlink/openR.html" class="code" title="function [status ,msg, handle] = openR">openR</a>;
+0059   <span class="keyword">if</span> status ~= 1
+0060     disp([<span class="string">'Problem connecting to R: '</span> msg]);
+0061   <span class="keyword">end</span>
+0062   <a href="../../../chronux_1_50/old/locfit_wrap/rlink/evalR.html" class="code" title="function [result,status,msg] = evalR(command,noreturn)">evalR</a>(<span class="string">'library(&quot;locfit&quot;)'</span>) <span class="comment">% attach locfit library</span>
+0063   RCONNECTED = 1;
+0064 <span class="keyword">end</span>
+0065 
+0066 <span class="comment">% Put fitting parameters into R</span>
+0067 <a href="../../../chronux_1_50/old/locfit_wrap/rlink/putRdata.html" class="code" title="function [status,msg] = putRdata(varname,data)">putRdata</a>( <span class="string">'width'</span>, w' );
+0068 <a href="../../../chronux_1_50/old/locfit_wrap/rlink/putRdata.html" class="code" title="function [status,msg] = putRdata(varname,data)">putRdata</a>( <span class="string">'nn'</span>, nn' );
+0069 <a href="../../../chronux_1_50/old/locfit_wrap/rlink/putRdata.html" class="code" title="function [status,msg] = putRdata(varname,data)">putRdata</a>( <span class="string">'evalpts'</span>, pts );        
+0070 <a href="../../../chronux_1_50/old/locfit_wrap/rlink/evalR.html" class="code" title="function [result,status,msg] = evalR(command,noreturn)">evalR</a>( sprintf( <span class="string">'flim=c(%f,%f)'</span>, lo, hi ) );
+0071 <span class="comment">% bandwidth: variable and constant terms.  0.75*width/2 is how density.lf does it for a gaussian kernel</span>
+0072 <a href="../../../chronux_1_50/old/locfit_wrap/rlink/evalR.html" class="code" title="function [result,status,msg] = evalR(command,noreturn)">evalR</a>( <span class="string">'alpha=c(nn,0.75*width/2)'</span> ); 
+0073 
+0074 <span class="comment">% send the data to R, transposed</span>
+0075 <a href="../../../chronux_1_50/old/locfit_wrap/rlink/putRdata.html" class="code" title="function [status,msg] = putRdata(varname,data)">putRdata</a>(<span class="string">'data'</span>,in');
+0076 
+0077 
+0078 <span class="comment">% set up for locfit.raw</span>
+0079 <a href="../../../chronux_1_50/old/locfit_wrap/rlink/evalR.html" class="code" title="function [result,status,msg] = evalR(command,noreturn)">evalR</a>( <span class="string">'data &lt;- sort( data )'</span> );
+0080 <a href="../../../chronux_1_50/old/locfit_wrap/rlink/evalR.html" class="code" title="function [result,status,msg] = evalR(command,noreturn)">evalR</a>( <span class="string">'r &lt;- range( data )'</span> );        
+0081 <span class="comment">%evalR( 'flim=c(r[1.]-width*0.75,r[2]+width*0.75) ); % alternative, data-derived limits - not based upon 'high' above</span>
+0082 
+0083 <span class="comment">% run locfit.raw just like density.lf() and scb does</span>
+0084 <a href="../../../chronux_1_50/old/locfit_wrap/rlink/evalR.html" class="code" title="function [result,status,msg] = evalR(command,noreturn)">evalR</a>( <span class="string">'fit &lt;- scb( data, ev=&quot;grid&quot;, mg=evalpts, flim=flim, alpha=alpha, kern=&quot;gauss&quot;, deg=0, link=&quot;ident&quot;, family=&quot;density&quot;, type=0 )'</span> );
+0085 <span class="comment">% pull evaluation points into matlab</span>
+0086 <a href="../../../chronux_1_50/old/locfit_wrap/rlink/evalR.html" class="code" title="function [result,status,msg] = evalR(command,noreturn)">evalR</a>( <span class="string">'values = fit$xev'</span> );
+0087 values = <a href="../../../chronux_1_50/old/locfit_wrap/rlink/getRdata.html" class="code" title="function [data,status,msg] = getRdata(varname)">getRdata</a>( <span class="string">'values'</span> );
+0088 
+0089 <span class="comment">% pull smoothed data into matlab</span>
+0090 <a href="../../../chronux_1_50/old/locfit_wrap/rlink/evalR.html" class="code" title="function [result,status,msg] = evalR(command,noreturn)">evalR</a>( <span class="string">'smooth = fit$trans(fit$coef)'</span> );
+0091 smooth = <a href="../../../chronux_1_50/old/locfit_wrap/rlink/getRdata.html" class="code" title="function [data,status,msg] = getRdata(varname)">getRdata</a>( <span class="string">'smooth'</span> );
+0092 
+0093 <span class="comment">% pull lower limits into matlab</span>
+0094 <a href="../../../chronux_1_50/old/locfit_wrap/rlink/evalR.html" class="code" title="function [result,status,msg] = evalR(command,noreturn)">evalR</a>( <span class="string">'lower = fit$trans(fit$lower)'</span> );
+0095 lower = <a href="../../../chronux_1_50/old/locfit_wrap/rlink/getRdata.html" class="code" title="function [data,status,msg] = getRdata(varname)">getRdata</a>( <span class="string">'lower'</span> );
+0096 
+0097 <span class="comment">% pull upper limits into matlab</span>
+0098 <a href="../../../chronux_1_50/old/locfit_wrap/rlink/evalR.html" class="code" title="function [result,status,msg] = evalR(command,noreturn)">evalR</a>( <span class="string">'upper = fit$trans(fit$upper)'</span> );
+0099 upper = <a href="../../../chronux_1_50/old/locfit_wrap/rlink/getRdata.html" class="code" title="function [data,status,msg] = getRdata(varname)">getRdata</a>( <span class="string">'upper'</span> );
+0100     
+0101 <span class="keyword">if</span> nargin &gt; 6 &amp;&amp; pl &gt; 0
+0102     <span class="comment">% plot up results in matlab</span>
+0103     clf <span class="comment">% clear figure to prevent overplotting!</span>
+0104     plot( values, smooth, <span class="string">'k-'</span>, values, [lower;upper], <span class="string">'r:'</span> );
+0105     title( sprintf( <span class="string">'Smoothed Results'</span> ) );
+0106     xlabel( <span class="string">'time (ms)'</span> );
+0107     ylabel( <span class="string">'Proportion'</span> );
+0108 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Mon 09-Oct-2006 00:54:52 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+</body>
+</html>

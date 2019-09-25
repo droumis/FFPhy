@@ -1,0 +1,16 @@
+function [out] = getriptimes(animaldir,animalprefix, epochs, t)
+% out = getriptimes(animaldir,animalprefix,epochs, tetrode)
+%
+% Produces a cell structure with a time field indicating the times to exclude
+% to remove non-ripple events based on the LFP of the specified tetrode.
+
+loaddays = unique(epochs(:,1));
+rip = loaddatastruct(animaldir, animalprefix, 'ripples', loaddays);
+for i = 1:size(epochs,1)
+    r = rip{epochs(i,1)}{epochs(i,2)}{t};
+    etimes = [r.timerange(1) reshape(r.data(:,1:2)', 1, ...
+		    2*length(r.data(:,1))) r.timerange(2)];
+    out{epochs(i,1)}{epochs(i,2)} = reshape(etimes, 2, size(etimes,2)/2)';
+
+end
+%--------------------------------------------------------------------------

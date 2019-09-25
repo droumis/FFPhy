@@ -1,0 +1,16 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  Rdemo -> closeR;
+  Rdemo -> evalR;
+  Rdemo -> getRdata;
+  Rdemo -> openR;
+  Rdemo -> putRdata;
+
+  Contents [URL="Contents.html"];
+  Rdemo [URL="Rdemo.html"];
+  closeR [URL="closeR.html"];
+  evalR [URL="evalR.html"];
+  getRdata [URL="getRdata.html"];
+  openR [URL="openR.html"];
+  putRdata [URL="putRdata.html"];
+}

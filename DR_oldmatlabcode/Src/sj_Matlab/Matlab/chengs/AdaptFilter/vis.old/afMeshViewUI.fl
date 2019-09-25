@@ -1,0 +1,40 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0105 
+header_name {.h} 
+code_name {.cxx}
+class AFMeshViewUI {open
+} {
+  Function {AFMeshViewUI()} {open
+  } {
+    Fl_Window mainWindow {
+      label afvis open
+      private xywh {569 188 530 375} type Double box UP_BOX color 0 labelsize 12 resizable visible
+    } {
+      Fl_Group MainView {open
+        xywh {10 10 510 355}
+      } {
+        Fl_Box cframe {
+          xywh {10 10 510 355} box DOWN_FRAME color 4 selection_color 69
+        }
+        Fl_Box viewWindow {
+          label viewWindow
+          xywh {10 10 510 355} align 16
+          code0 {\#include "meshWindow.h"}
+          class MeshWindow
+        }
+      }
+    }
+  }
+  Function {show(int argc, char **argv)} {open
+  } {
+    code {mainWindow->show(argc, argv);} {}
+  }
+  Function {show()} {open
+  } {
+    code {mainWindow->show();} {}
+  }
+  Function {setDataModelAndTrajectory(AFDataModel *dataModel, int trajectory)} {open selected return_type void
+  } {
+    code {viewWindow->setDataModelAndTrajectory(dataModel,trajectory);} {}
+  }
+} 

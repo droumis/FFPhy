@@ -1,0 +1,6 @@
+#!/bin/bash
+# kill remote processes
+host=$1
+shift
+ssh -x $host  kill -9 $@
+

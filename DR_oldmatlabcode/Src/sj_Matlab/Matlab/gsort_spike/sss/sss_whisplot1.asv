@@ -1,0 +1,150 @@
+
+%function sss_whisplot1(filename)
+
+%%%%  TRIALWISE PLOTTING
+%for nclu=1:size(alldata.spk,3)
+
+% for nclu=1:1
+%     cluspks=alldata.spks(:,:,nclu); cluspks2=alldata.spks(:,:,nclu+1);
+%     for tr=20:size(alldata.stim,1)-60
+%         xwhist=alldata.stim(tr,:,1)';xwhisd=alldata.stim(tr,:,2)';
+%         %vel=smooth(diff(xwhisd(2:end)));
+%         figure; hold on; plot(xwhist,xwhisd);
+%         xspk=double(cluspks(tr,:))'; xspk2=double(cluspks2(tr,:))';
+%         plot(1:size(alldata.spks,2),xspk*15,'r.','markersize',16); plot(1:size(alldata.spks,2),xspk2*17.5,'g.','markersize',16);
+%         %         plot(1:size(alldata.spks,2),xspk*200,'r.','markersize',16);
+%         %         plot(1:size(alldata.spks,2),xspk*100,'r.','markersize',16);
+%     end
+% end
+%alldata=alldatan;
+
+for nclu=1:1
+    cluspks=alldata.spks(:,:,nclu); cluspks2=alldata.spks(:,:,nclu+1);  cluspks3=alldata.spks(:,:,nclu+2);
+    for tr=size(alldata.stim,1)-26:size(alldata.stim,1)
+        
+        xwhist=alldata.stim(tr,:,1)';xwhisd=alldata.stim(tr,:,2)';
+        xwhist=xwhist(1:3200); xwhisd=xwhisd(1:3200);
+        xspk=double(cluspks(tr,:))'; xspk2=double(cluspks2(tr,:))'; xspk3=double(cluspks3(tr,:))';
+        xspk=xspk(1:800);  xspk2=xspk2(1:800);  xspk3=xspk3(1:800);
+        
+        dc=find ( ((xwhisd(2:end-1)- xwhisd(1:end-2)) ==0) & ((xwhisd(3:end)- xwhisd(1:end-2)) ==0));
+        dc=[1;dc;length(xwhisd)];
+        dctimes=unique(floor(xwhist(dc)));
+        
+        xwhist(dc)=[]; xwhisd(dc)=[]; 
+        xtimes=unique(floor(xwhist));
+        xspk(dctimes)=[]; xspk2(dctimes)=[]; xspk3(dctimes)=[];
+        
+        % xwhisd=roundn(xwhisd,-2);
+        
+        %[b,a]=cheby1(3,1,20/500,'low');  xwhisd=filtfilt(b,a,xwhisd);
+        
+        vel=smooth ((diff(xwhisd(2:end))),5);
+        acc=smooth ((diff(vel(1:end))),5);
+        figure; hold on; 
+        %subplot(2,1,1); hold on;
+        plot(xwhist,xwhisd,'b.'); 
+        plot(xwhist(3:end),(vel*100),'r'); %plot(xwhist(4:end),(acc*100),'c');
+
+        plot(xtimes(1:length(xspk)),xspk*10,'k.','markersize',16); 
+        plot(xtimes(1:length(xspk)),xspk2*15,'g.','markersize',16);
+        plot(xtimes(1:length(xspk)),xspk3*20,'m.','markersize',16);
+        
+%         subplot(2,1,2); hold on;
+%         plot(xwhist(3:end),abs(vel*1000),'r');
+%         plot(1:size(alldata.spks,2),xspk*15,'r.','markersize',16); plot(1:size(alldata.spks,2),xspk2*17.5,'g.','markersize',16);
+%         
+        %         plot(1:size(alldata.spks,2),xspk*200,'r.','markersize',16);
+        %         plot(1:size(alldata.spks,2),xspk*100,'r.','markersize',16);
+    end
+end
+
+
+% 
+% plot(1:size(alldatavec.stim,1),alldatavec.stim(:,2),'b');
+% plot(1:size(alldatavec.stim,1),alldatavec.stim(:,3),'r');
+% plot(1:size(alldatavec.spks,1),15*alldatavec.spks(:,1),'k.','markersize',16); 
+% plot(1:size(alldatavec.spks,1),25*alldatavec.spks(:,2),'g.','markersize',16); 
+% plot(1:size(alldatavec.spks,1),30*alldatavec.spks(:,3),'m.','markersize',16); 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% %%%%% Cross-corrleation: Vector
+% [b,a]=cheby1(3,1,2/500,'high');
+% whisk=alldatavec.stim(:,2); spks=alldatavec.spks(:,1);
+% filtwhisk=filtfilt(b,a,whisk);
+% figure; hold on; plot(1:size(whisk,1),whisk,'b');  plot(1:size(whisk,1),filtwhisk,'r');
+% 
+% %cross1=xcorr(filtwhisk,spks,25,'coeff'); cross2=xcorr(filtwhisk,spks,10,'coeff');
+% [cross1, lags1]=xcorr(spks,filtwhisk,100,'coeff'); 
+% [cross2, lags2]=xcorr(spks,filtwhisk,50,'coeff'); 
+% [cross3, lags3]=xcorr(spks,filtwhisk,25,'coeff');
+% [cross4,lags4]=xcorr(spks,filtwhisk,10,'coeff');
+% %figure; hold on; plot(cross1);  plot(cross2,'r'); 
+% 
+% figure; hold on;
+% subplot(1,4,1); hold on; plot(lags1,cross1,'LineWidth',3); max(cross1)/50;plot(0*(1:51),0:max(cross1)/50:max(cross1),'k.'); 
+% subplot(1,4,2); hold on; plot(lags2,cross2,'LineWidth',3); max(cross2)/50;plot(0*(1:51),0:max(cross2)/50:max(cross2),'k.'); 
+% subplot(1,4,3); hold on; plot(lags3,cross3,'LineWidth',3); max(cross3)/50;plot(0*(1:51),0:max(cross3)/50:max(cross3),'k.'); 
+% subplot(1,4,4); hold on; plot(lags4,cross4,'LineWidth',3);max(cross4)/50;plot(0*(1:51),0:max(cross4)/50:max(cross4),'k.'); 
+
+
+%%%%% Cross-corrleation: Trials
+% [b,a]=cheby1(3,1,2/500,'high');
+% for nclu=1:3
+%     whisk=alldatan.stim(:,:,2); spks=alldatan.spks(:,:,nclu); totalspikes=zeros(5,1);totalspks=0;
+% 
+%     for tr=1:size(whisk,1)
+%         whisktr=whisk(tr,:);
+%        whisktr=filtfilt(b,a,whisktr);
+%         vel=smooth(diff(whisktr(2:end)));
+%         acc=smooth(diff(vel(:)));
+%         whisktr=vel;
+%         peak_vel(tr,:)=imregionalmax(vel);
+%         peak_acc(tr,:)=imregionalmax(acc);
+%         [cross1(tr,:), lags1]=xcorr(spks(tr,3:end),whisktr,50,'coeff');
+%         autocorr(tr,:)=xcorr(whisktr,50,'coeff')';
+%         %cross1(tr,:)=cross1(tr,:)/sum( spks(tr,:));
+%         %cross1(tr,:)=cross1(tr,:)/autocorr;
+%         %totalspks(nclu,1)= totalspks(nclu,1)+sum( spks(tr,:));
+%         totalspks= totalspks + sum(spks(tr,:));
+%     end
+% 
+%     mcross1=mean(cross1,1); %lags1=[-100:1:100];
+%     mauto1=mean(autocorr,1);
+%     mncross1=mcross1./mauto1;
+%     figure; hold on;  
+%     subplot(3,1,1); hold on; 
+%     plot(lags1,mncross1,'k','LineWidth',3); 
+%     max(mncross1)/50;plot(0*(1:51),min(mncross1):(max(mncross1)-min(mncross1))/50:max(mncross1),'k.');
+%     text(5,0,['STA: Nspks: ' num2str(totalspks)]);
+%     subplot(3,1,2); hold on; 
+%     plot(lags1,mcross1,'b','LineWidth',3); 
+%     max(mcross1)/50;plot(0*(1:51),min(mcross1):(max(mcross1)-min(mcross1))/50:max(mcross1),'k.');
+%     text(5,0,['STA: Nspks: ' num2str(totalspks)]);
+%     subplot(3,1,3); hold on; 
+%     plot(lags1,mauto1,'r','LineWidth',3); 
+%     max(mauto1)/50;plot(0*(1:51),min(mauto1):(max(mauto1)-min(mauto1))/50:max(mauto1),'k.');
+%     text(5,5,['Autocorr: Nspks: ' num2str(totalspks)]);
+% end
+
+
+%%%%%%%%%%%%%%%%%% PLOT VELOCITY %%%%%%%%%%%%%%%%%%%%
+
+% figure; hold on;
+% plot(1:size(alldatan.spks,2),alldatan.spks(1,:,1)*10,'r.','markersize',16);
+% plot(1:size(alldatan.spks,2),alldatan.spks(1,:,2)*9,'g.','markersize',16);
+% plot(1:size(peak_vel,2),peak_vel(1,:)*9.5,'kx','markersize',12);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% for nclu=1:1
+%     cluspks=alldata.spks(:,:,nclu); cluspks2=alldata.spks(:,:,nclu+1);
+%     allspks1=[];allspks2=[];
+%     for tr=1:size(alldata.stim,1)
+%         xwhist=alldata.stim(tr,:,1)';xwhisd=alldata.stim(tr,:,2)';
+%         xspks1=double(cluspks(tr,:))'; allspks1=[allspks1;xspks1];
+%         xspks2=double(cluspks2(tr,:))';  allspks2=[allspks2;xspks2];
+%     end
+% end

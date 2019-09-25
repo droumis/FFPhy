@@ -1,0 +1,67 @@
+% KERNDEN: Kernel density functions f(x) for 2D x, given a set of observed 2D 
+%          data points xi and corresponding values of h, the smoothing 
+%          parameter.  The kernal density estimator is bivariate normal.
+%
+%     Usage: fx = kernden(x,xi,h)
+%
+%         x =   [m x 2] matrix of coordinates for points at which function 
+%                 is to be evaluated.
+%         xi =  [n x 2] matrix of observed point coordinates.
+%         h  =  smoothing parameter, either as a scalar (for a single 
+%                 global value) or as an [n x 1] vector corresponding to xi.
+%         ------------------------------------------------------------------
+%         fx =  [m x 1] vector of density estimates corresponding to x.
+%
+
+% Worton, BJ. 1989. Kernel methods for estimating the utilization distribution 
+%   in home-range studies. Ecology 70:164-168.
+% Brunsdon, C. 1995. Estimating probability surfaces for geographic point data: 
+%   an adaptive kernel algorithm. Computers & Geosciences 21:877-894.
+
+% RE Strauss, 5/7/00
+
+function fx = kernden(x,xi,h)
+  [m,pm] = size(x);
+  [n,pn] = size(xi);
+
+  fx = zeros(m,1);                        % Allocate output matrix
+
+%  if (isscalar(h))
+%    h = h*ones(n,1);
+%  end;
+
+%  h2 = h.*h;
+
+%  hh = [h h];
+%  const = 1./(2*pi*h.*h);
+
+  for i = 1:m                             % Evaluate at each point
+%    dev = ((ones(n,1)*x(i,:) - xi)./hh)';
+%    sumdev2 = sum(dev.^2)';
+%%f = const.*exp(-0.5*sumdev2);
+%%if (any(f>1))
+%%  disp('f>1');
+%%  x_xi_h_sumdev2_f = [ones(n,1)*x(i,:) xi h sumdev2 f]
+%%  pause
+%%end;
+%    fx(i) = mean(const.*exp(-0.5*sumdev2));
+
+%    if (isscalar(h))
+%      f = multnormpdf(x(i,:),xi,[h2 0;0 h2]);
+%    else
+%      for j = 1:n
+%        f(j) = multnormpdf(x(i,:),xi(j,:),[h2(j) 0;0 h2(j)]);
+%      end;
+%    end;
+
+%    d = eucl(xi,x(i,:));
+    d = (ones(n,1)*x(i,:)-xi)';
+    d = sqrt(sum(d.*d))';
+
+    f = normpdf(d,zeros(n,1),h);
+
+    fx(i) = mean(f);
+  end;
+
+
+  return;

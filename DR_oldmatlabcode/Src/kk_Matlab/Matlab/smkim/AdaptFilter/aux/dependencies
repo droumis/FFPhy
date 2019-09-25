@@ -1,0 +1,7 @@
+TData.o: TData.cc ../aux/hippoIO.h ../aux/mexAux.h \
+  /usr/local/matlab2007b/extern/include/mex.h \
+  /usr/local/matlab2007b/extern/include/matrix.h \
+  /usr/local/matlab2007b/extern/include/tmwtypes.h TData.h ../aux/defs.h
+hippoIO.o: hippoIO.cc hippoIO.h
+numerics.o: numerics.cc numerics.h hippoIO.h
+Grad.o: Grad.cc Grad.h ../aux/numerics.h ../aux/hippoIO.h

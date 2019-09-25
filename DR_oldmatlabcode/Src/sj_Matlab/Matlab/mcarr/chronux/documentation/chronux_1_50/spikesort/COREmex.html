@@ -1,0 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of COREmex</title>
+  <meta name="keywords" content="COREmex">
+  <meta name="description" content="COREMEX           Compile CORE_ functions.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">chronux_1_50</a> &gt; <a href="index.html">spikesort</a> &gt; COREmex.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for chronux_1_50\spikesort&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>COREmex
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>COREMEX           Compile CORE_ functions.</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function COREmex(source, options) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment">COREMEX           Compile CORE_ functions.
+   COREMEX(SOURCE), where SOURCE is the name of a CORE_ source
+   file, checks if the .dll file of the same name is older than any of
+   the following source files: {SOURCE, CORE_library.c, CORE_mextools.c}.
+   If any of these files have been modified since the .dll was created
+   (or if no such .dll exists), COREMEX calls:
+         mex SOURCE CORE_library.c CORE_mextools.c LAPACK
+   where LAPACK is the static LAPACK library definition file for the
+   currently chosen compiler.  This compiles the MEX code in SOURCE
+   and links to both CORE_library functions and BLAS/LAPACK.
+   
+   COREMEX(SOURCE, OPTIONS) allows specification of command line options
+   to be passed to MEX.
+
+   Example:
+      If the current compiler is set to be LCC and CORE_testfile.c has
+      been modified since CORE_testfile.dll was created (i.e., 'Modified'
+      in Windows),
+          COREmex('CORE_testfile.c', '-v -g')
+      calls
+          mex -v -g CORE_testfile.c ...
+                      CORE_library.c CORE_mextools.c lcc_libmwlapack.lib
+
+      If not using the OPTIONS argument, the following syntax is valid:
+          COREMEX CORE_testfile.c</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function COREmex(source, options)</a>
+0002 <span class="comment">%COREMEX           Compile CORE_ functions.</span>
+0003 <span class="comment">%   COREMEX(SOURCE), where SOURCE is the name of a CORE_ source</span>
+0004 <span class="comment">%   file, checks if the .dll file of the same name is older than any of</span>
+0005 <span class="comment">%   the following source files: {SOURCE, CORE_library.c, CORE_mextools.c}.</span>
+0006 <span class="comment">%   If any of these files have been modified since the .dll was created</span>
+0007 <span class="comment">%   (or if no such .dll exists), COREMEX calls:</span>
+0008 <span class="comment">%         mex SOURCE CORE_library.c CORE_mextools.c LAPACK</span>
+0009 <span class="comment">%   where LAPACK is the static LAPACK library definition file for the</span>
+0010 <span class="comment">%   currently chosen compiler.  This compiles the MEX code in SOURCE</span>
+0011 <span class="comment">%   and links to both CORE_library functions and BLAS/LAPACK.</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">%   COREMEX(SOURCE, OPTIONS) allows specification of command line options</span>
+0014 <span class="comment">%   to be passed to MEX.</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">%   Example:</span>
+0017 <span class="comment">%      If the current compiler is set to be LCC and CORE_testfile.c has</span>
+0018 <span class="comment">%      been modified since CORE_testfile.dll was created (i.e., 'Modified'</span>
+0019 <span class="comment">%      in Windows),</span>
+0020 <span class="comment">%          COREmex('CORE_testfile.c', '-v -g')</span>
+0021 <span class="comment">%      calls</span>
+0022 <span class="comment">%          mex -v -g CORE_testfile.c ...</span>
+0023 <span class="comment">%                      CORE_library.c CORE_mextools.c lcc_libmwlapack.lib</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">%      If not using the OPTIONS argument, the following syntax is valid:</span>
+0026 <span class="comment">%          COREMEX CORE_testfile.c</span>
+0027 
+0028 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%% Parse Inputs %%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0029 <span class="keyword">if</span> (nargin &lt; 2),  options = <span class="string">''</span>;  <span class="keyword">end</span>
+0030 [pat,nam,ext] = fileparts(source);
+0031 <span class="keyword">if</span> (~exist(source, <span class="string">'file'</span>)),
+0032     error([<span class="string">'Source file '</span> SOURCE <span class="string">' not found.'</span>]);
+0033 <span class="keyword">end</span>
+0034 
+0035 <span class="comment">%%%%%%%%%%%%%%%%%%%%%% Check if Compile Needed %%%%%%%%%%%%%%%%%%%%%%%</span>
+0036 src1 = dir(source);
+0037 src2 = dir(<span class="string">'CORE_library.c'</span>);
+0038 src3 = dir(<span class="string">'CORE_mextools.c'</span>);
+0039 dll = dir([pat nam <span class="string">'.dll'</span>]);
+0040 <span class="keyword">if</span> (~isempty(dll))
+0041     srclist = [datenum(src1.date) datenum(src2.date) datenum(src3.date)];
+0042     <span class="keyword">if</span> (all(datenum(dll.date) &gt; srclist)),  <span class="keyword">return</span>;   <span class="keyword">end</span>
+0043 <span class="keyword">end</span>
+0044 
+0045 <span class="comment">%%%%%%%%%%%%%%%%%%%%% Choose LAPACK definitions %%%%%%%%%%%%%%%%%%%%%%</span>
+0046 <span class="comment">% We need to figure out which compiler we're using so we can link the</span>
+0047 <span class="comment">% appropriate static LAPACK library definition ...</span>
+0048 [stat,rslt] = system(<span class="string">'echo %USERPROFILE%'</span>);
+0049 mexopts = [rslt(1:end-1) <span class="string">'\Application Data\Mathworks\MATLAB\R13\mexopts.bat'</span>];
+0050 origname = textread(mexopts, <span class="string">'rem %s'</span>, 1, <span class="string">'headerlines'</span>, 1);
+0051 <span class="keyword">switch</span> (upper(origname{1}(1:3)))
+0052     <span class="keyword">case</span> <span class="string">'MSV'</span>, lapack = <span class="string">'msvc_libmwlapack.lib'</span>;
+0053     <span class="keyword">case</span> <span class="string">'BCC'</span>, lapack = <span class="string">'borland_libmwlapack.lib'</span>;
+0054     <span class="keyword">case</span> <span class="string">'LCC'</span>, lapack = <span class="string">'lcc_libmwlapack.lib'</span>;
+0055     <span class="keyword">otherwise</span>,  error(<span class="string">'Do not have the static LAPACK definition for that compiler.'</span>);
+0056 <span class="keyword">end</span>
+0057 
+0058 
+0059 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Compile %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0060 eval([<span class="string">'mex '</span> options <span class="string">' '</span> source <span class="string">' CORE_library.c CORE_mextools.c '</span> lapack]);</pre></div>
+<hr><address>Generated on Mon 09-Oct-2006 00:54:52 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+</body>
+</html>

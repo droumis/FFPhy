@@ -1,0 +1,127 @@
+******** pf10 ***************
+number of pairs fam: 207 used, 31 rejected (238 total)
+number of pairs novel-1: 75 used, 1 rejected (76 total)
+number of pairs novel-2: 19 used, 1 rejected (20 total)
+number of pairs novel-3: 39 used, 0 rejected (39 total)
+number of pairs fam-1: 20 used, 8 rejected (28 total)
+number of pairs fam-2: 16 used, 0 rejected (16 total)
+number of pairs fam-3: 34 used, 4 rejected (38 total)
+fam,    corr: r= 0.579, (0.479, 0.665)   p= 3.1e-19, n= 199
+novel-1,        corr: r= 0.322, (0.102, 0.511)   p= 0.0049, n= 75
+novel-2,        corr: r= -0.539, (-0.804, -0.096)        p= 0.021, n= 18
+novel-3,        corr: r= 0.521, (0.245, 0.718)   p= 0.00068, n= 39
+fam-1,  corr: r= 0.307, (-0.157, 0.660)  p= 0.19, n= 20
+fam-2,  corr: r= 0.692, (0.278, 0.889)   p= 0.0043, n= 15
+fam-3,  corr: r= 0.552, (0.251, 0.755)   p= 0.0011, n= 32
+  "fam-1" vs. "fam": p=0.173
+  "fam-1" vs. "novel-1": p=0.951
+  "fam-1" vs. "novel-2": p=0.009
+  "fam-1" vs. "novel-3": p=0.377
+  "fam-1" vs. "fam-2": p=0.156
+  "fam-1" vs. "fam-3": p=0.320
+>> showCorrel
+number of pairs fam: 207 used, 31 rejected (238 total)
+number of pairs novel-1: 75 used, 1 rejected (76 total)
+number of pairs novel-2: 19 used, 1 rejected (20 total)
+number of pairs novel-3: 39 used, 0 rejected (39 total)
+number of pairs famArm: 70 used, 12 rejected (82 total)
+fam,    corr: r= 0.579, (0.479, 0.665)   p= 3.1e-19, n= 199
+novel-1,        corr: r= 0.322, (0.102, 0.511)   p= 0.0049, n= 75
+novel-2,        corr: r= -0.539, (-0.804, -0.096)        p= 0.021, n= 18
+novel-3,        corr: r= 0.521, (0.245, 0.718)   p= 0.00068, n= 39
+famArm,         corr: r= 0.517, (0.317, 0.674)   p= 7.3e-06, n= 67
+  "famArm" vs. "fam": p=0.538
+  "famArm" vs. "novel-1": p=0.164
+  "famArm" vs. "novel-2": p=0.000
+  "famArm" vs. "novel-3": p=0.983
+
+>> showCorrel
+number of pairs fam: 207 used, 31 rejected (238 total)
+number of pairs novel-1: 75 used, 1 rejected (76 total)
+number of pairs novel-2: 19 used, 1 rejected (20 total)
+number of pairs novel-3: 39 used, 0 rejected (39 total)
+number of pairs famArm: 70 used, 12 rejected (82 total)
+fam,    corr: r= 0.579, (0.479, 0.665)   p= 3.1e-19, n= 199
+novel-1,        corr: r= 0.322, (0.102, 0.511)   p= 0.0049, n= 75
+novel-2,        corr: r= -0.539, (-0.804, -0.096)        p= 0.021, n= 18
+novel-3,        corr: r= 0.521, (0.245, 0.718)   p= 0.00068, n= 39
+famArm,         corr: r= 0.517, (0.317, 0.674)   p= 7.3e-06, n= 67
+  "fam" vs. "novel-1": p=0.017
+  "fam" vs. "novel-2": p=0.000
+  "fam" vs. "novel-3": p=0.642
+  "fam" vs. "famArm": p=0.538
+
+******** pf9 ***************
+>> showCorrel
+number of pairs fam: 236 used, 37 rejected (273 total)
+number of pairs novel-1: 100 used, 1 rejected (101 total)
+number of pairs novel-2: 25 used, 1 rejected (26 total)
+number of pairs novel-3: 50 used, 0 rejected (50 total)
+number of pairs fam-1: 23 used, 8 rejected (31 total)
+fam,    corr: r= 0.613, (0.525, 0.688)   p= 4.9e-25, n= 229
+novel-1,        corr: r= 0.345, (0.159, 0.507)   p= 0.00044, n= 100
+novel-2,        corr: r= -0.268, (-0.606, 0.152)         p= 0.21, n= 24
+novel-3,        corr: r= 0.588, (0.370, 0.745)   p= 7.1e-06, n= 50
+fam-1,  corr: r= 0.242, (-0.189, 0.595)  p= 0.27, n= 23
+fam-2,  corr: r= 0.659, (0.305, 0.853)   p= 0.0016, n= 20
+fam-3,  corr: r= 0.791, (0.628, 0.887)   p= 5.7e-09, n= 37
+    "fam" vs. "novel-1": p=0.004
+    "fam" vs. "novel-2": p=0.000
+    "fam" vs. "novel-3": p=0.807
+    "fam" vs. "fam-1": p=0.046
+    "fam" vs. "fam-2": p=0.761
+    "fam" vs. "fam-3": p=0.051
+>> showCorrel
+number of pairs fam: 236 used, 37 rejected (273 total)
+number of pairs novel-1: 100 used, 1 rejected (101 total)
+number of pairs novel-2: 25 used, 1 rejected (26 total)
+number of pairs novel-3: 50 used, 0 rejected (50 total)
+number of pairs famArm: 83 used, 14 rejected (97 total)
+fam,    corr: r= 0.613, (0.525, 0.688)   p= 4.9e-25, n= 229
+novel-1,        corr: r= 0.345, (0.159, 0.507)   p= 0.00044, n= 100
+novel-2,        corr: r= -0.268, (-0.606, 0.152)         p= 0.21, n= 24
+novel-3,        corr: r= 0.588, (0.370, 0.745)   p= 7.1e-06, n= 50
+famArm,         corr: r= 0.588, (0.423, 0.715)   p= 9.8e-09, n= 80
+  "famArm" vs. "fam": p=0.765
+  "famArm" vs. "novel-1": p=0.039
+  "famArm" vs. "novel-2": p=0.000
+  "famArm" vs. "novel-3": p=0.999
+
+******** pf8 ***************
+>> showCorrel
+number of pairs fam: 123 used, 13 rejected (136 total)
+number of pairs novel-1: 74 used, 1 rejected (75 total)
+number of pairs novel-2: 7 used, 1 rejected (8 total)
+number of pairs novel-3: 35 used, 0 rejected (35 total)
+number of pairs famArm: 53 used, 12 rejected (65 total)
+fam,    corr: r= 0.534, (0.392, 0.650)   p= 2.9e-10, n= 121
+novel-1,        corr: r= 0.327, (0.107, 0.517)   p= 0.0044, n= 74
+novel-2,        corr: r= -0.862, (-0.985, -0.169)        p= 0.027, n= 6
+novel-3,        corr: r= 0.805, (0.645, 0.898)   p= 5.5e-09, n= 35
+famArm,         corr: r= 0.541, (0.317, 0.708)   p= 2.8e-05, n= 53
+  "famArm" vs. "fam": p=0.948
+  "famArm" vs. "novel-1": p=0.149
+  "famArm" vs. "novel-2": p=0.001
+  "famArm" vs. "novel-3": p=0.025
+>> showCorrel
+number of pairs fam: 123 used, 13 rejected (136 total)
+number of pairs novel-1: 74 used, 1 rejected (75 total)
+number of pairs novel-2: 7 used, 1 rejected (8 total)
+number of pairs novel-3: 35 used, 0 rejected (35 total)
+number of pairs fam-1: 14 used, 6 rejected (20 total)
+number of pairs fam-2: 14 used, 0 rejected (14 total)
+number of pairs fam-3: 25 used, 6 rejected (31 total)
+fam,    corr: r= 0.534, (0.392, 0.650)   p= 2.9e-10, n= 121
+novel-1,        corr: r= 0.327, (0.107, 0.517)   p= 0.0044, n= 74
+novel-2,        corr: r= -0.862, (-0.985, -0.169)        p= 0.027, n= 6
+novel-3,        corr: r= 0.805, (0.645, 0.898)   p= 5.5e-09, n= 35
+fam-1,  corr: r= 0.048, (-0.495, 0.564)  p= 0.87, n= 14
+fam-2,  corr: r= 0.767, (0.399, 0.922)   p= 0.0014, n= 14
+fam-3,  corr: r= 0.731, (0.472, 0.874)   p= 3.3e-05, n= 25
+  "fam" vs. "novel-1": p=0.089
+  "fam" vs. "novel-2": p=0.001
+  "fam" vs. "novel-3": p=0.009
+  "fam" vs. "fam-1": p=0.083
+  "fam" vs. "fam-2": p=0.185
+  "fam" vs. "fam-3": p=0.149
+

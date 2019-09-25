@@ -1,0 +1,123 @@
+function showEEGana(mtm)
+%function showEEGana
+%function showEEGana(mtm)
+%
+% Analyze EEG power spectrum.
+
+
+sets{1}.selectid= 'pf9-famArm';
+sets{1}.novelDay= 1;
+sets{1}.label= 'fam1';
+
+sets{2}.selectid= 'pf9-novelArm';
+sets{2}.novelDay= 1;
+sets{2}.label= 'novel1';
+
+%sets{1}.selectid= 'pf9-famArm';
+%sets{1}.novelDay= 2;
+%sets{1}.label= 'fam2';
+
+%sets{2}.selectid= 'pf9-novelArm';
+%sets{2}.novelDay= 2;
+%sets{2}.label= 'novel2';
+
+%sets{1}.selectid= 'pf9-famArm';
+%sets{1}.novelDay= 3;
+%sets{1}.label= 'fam3';
+
+%sets{2}.selectid= 'pf9-novelArm';
+%sets{2}.novelDay= 3;
+%sets{2}.label= 'novel3';
+
+
+if nargin<1; mtm=1; end
+
+newsets= {}; nsets= 0;
+for is=1:length(sets)
+    if ~isempty(sets{is}); nsets= nsets+1; newsets{nsets}= sets{is}; end
+end
+sets= newsets;
+
+vars={'theta', 'width', 'max', 'stdmax'};
+vlabels={'peak freq (Hz)', 'half width (Hz)', 'peak height', 'std peak height'};
+%vars={'nwinall', 'nwin', 'fracnwin', 'Twinall', 'Twin', 'fracTwin'};
+%vlabels={'# windows', '# windows > 1s', 'fraction of windows > 1s', 'win length(s)', 'win length > 1s (s)', 'time fraction of windows > 1s'};
+nvars= length(vars);
+%if(mtm)
+%    nvars= 4;
+%else 
+%    nvars= 3;
+%end
+nvx= ceil(nvars/2);
+nvy= 2;
+
+plotcol= {'k', 'r', 'b', 'g'};
+
+setRoot;
+
+for is=1:nsets
+    selectid= sets{is}.selectid;
+
+    load(sprintf('%s/work/tetrodes-%s', root, selectid));
+    tet= tetrodes;
+    ntet= length(tet.rat);
+    %    load(sprintf('%s/work/epochs-%s', root, selectid));
+    %    ep= epochs;
+    %    nep= length(ep.rat);
+
+    if isfield(sets{is}, 'novelDay') & sets{is}.novelDay
+        ind= find(sets{is}.novelDay== tet.day);
+    else
+        ind= [1:ntet]';
+    end
+%    keyboard
+
+    if strfind(selectid, 'novelArm')
+        novelStr= 'novelArm';
+    elseif strfind(selectid, 'famArm')
+        novelStr= 'famArm';
+    else
+        novelStr= 'outerArm';
+    end
+   
+
+    if(mtm)
+        anafile= sprintf('%s/work/psana-pmtm-%s-%s',root,selectid, novelStr);
+    else
+        anafile= sprintf('%s/work/psana-pwelch-%s-%s',root,selectid, novelStr);
+    end
+    load(anafile);
+
+    for iv=1:nvars
+        tmp= ana.(vars{iv})(ind);
+        V{iv}{is}= tmp(isfinite(tmp));
+%        V{iv}{is}= ana.(vars{iv});
+    end
+    fprintf(1, '%s: %d/%d EEG tetrodes\n', selectid, sum(isfinite(tmp)),length(ind));
+%    keyboard
+end
+
+figure
+opt.ident= 1;
+opt.ref= 1;
+%opt.plot= 'cdf';
+opt.labels= {};
+for is=1:nsets
+    labels{is}= sets{is}.label;
+end
+
+for iv=1:nvars
+    %    subplot(nvx,nvy,iv);
+    %    opt.varname= vars{iv};
+    clf     opt.varname= vlabels{iv};
+    if iv==4;
+        opt.labels= labels;
+    else
+        opt.labels= {};
+    end
+    opt.plot= 'cdf'; opt.title= vars{iv};
+    opt.size= 1.5*[1 2/3];
+    auxCmpDist2(V{iv}, sets, opt)
+end
+%myprint(5*[1 2/3], 'EEGPowerAna');
+

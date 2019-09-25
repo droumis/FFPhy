@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of cohmatrixpt</title>
+  <meta name="keywords" content="cohmatrixpt">
+  <meta name="description" content="Multi-taper coherency matrix - point process times">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">chronux_1_50</a> &gt; <a href="index.html">pointtimes</a> &gt; cohmatrixpt.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for chronux_1_50\pointtimes&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>cohmatrixpt
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>Multi-taper coherency matrix - point process times</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [C,phi,S12,f,zerosp,confC,phistd,Cerr]=cohmatrixpt(data,params,fscorr) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> Multi-taper coherency matrix - point process times
+
+ Usage:
+
+ [C,phi,S12,f,zerosp,confC,phistd,Cerr]=cohmatrixpt(data,params,fscorr)
+ Input: 
+       data    (structure array of spike times with dimension channels) - required
+       params: structure with fields tapers, pad, Fs, fpass, err
+       - optional
+           tapers (precalculated tapers from dpss, or in the form [NW K] e.g [3 5]) -- optional. If not 
+                                                 specified, use [NW K]=[3 5]
+            pad            (padding factor for the FFT) - optional (can take values -1,0,1,2...). 
+                    -1 corresponds to no padding, 0 corresponds to padding
+                    to the next highest power of 2 etc.
+                       e.g. For N = 500, if PAD = -1, we do not pad; if PAD = 0, we pad the FFT
+                       to 512 points, if pad=1, we pad to 1024 points etc.
+                       Defaults to 0.
+           Fs   (sampling frequency) - optional. Default 1.
+           fpass    (frequency band to be used in the calculation in the form
+                                   [fmin fmax])- optional. 
+                                   Default all frequencies between 0 and Fs/2
+           err  (error calculation [1 p] - Theoretical error bars; [2 p] - Jackknife error bars
+                                   [0 p] or 0 - no error bars) - optional. Default 0.
+       fscorr   (finite size corrections, 0 (don't use finite size corrections) or 1 (use finite size corrections) - optional
+                (available only for spikes). Defaults 0.
+ Output:
+       C (magnitude of coherency frequency x channels x channels)
+       phi (phase of coherency frequency x channels x channels)
+       S12 (cross-spectral matrix frequency x channels x channels)
+       f (frequencies)
+       zerosp (1 for channels where no spikes were found, zero otherwise)
+       confC (confidence level for C at 1-p %) - only for err(1)&gt;=1
+       phistd - theoretical/jackknife (depending on err(1)=1/err(1)=2) standard deviation for phi - Note that 
+                phi + 2 phistd and phi - 2 phistd will give 95% confidence
+                bands for phi - only for err(1)&gt;=1 
+       Cerr  (Jackknife error bars for C - use only for Jackknife - err(1)=2)</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="../../chronux_1_50/helper/cohmathelper.html" class="code" title="function  [C,phi,S12,confC,phierr,Cerr]=cohmathelper(J,err,Nsp)">cohmathelper</a>	Helper function called by coherency matrix computations.</li><li><a href="../../chronux_1_50/helper/dpsschk.html" class="code" title="function [tapers,eigs]=dpsschk(tapers,N,Fs)">dpsschk</a>	Helper function to calculate tapers and, if precalculated tapers are supplied,</li><li><a href="../../chronux_1_50/helper/getfgrid.html" class="code" title="function [f,findx]=getfgrid(Fs,nfft,fpass)">getfgrid</a>	Helper function that gets the frequency grid associated with a given fft based computation</li><li><a href="../../chronux_1_50/helper/getparams.html" class="code" title="function [tapers,pad,Fs,fpass,err,trialave,params]=getparams(params)">getparams</a>	Helper function to convert structure params to variables used by the</li><li><a href="minmaxsptimes.html" class="code" title="function [mintime, maxtime]=minmaxsptimes(data)">minmaxsptimes</a>	Find the minimum and maximum of the spike times in each channel</li><li><a href="mtfftpt.html" class="code" title="function [J,Msp,Nsp]=mtfftpt(data,tapers,nfft,t,f,findx)">mtfftpt</a>	Multi-taper fourier transform for point process given as times</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="../../chronux_1_50/testscript.html" class="code" title="">testscript</a>	function testscript(pname,direction,movingwin,segave,params,fscorr)</li></ul>
+<!-- crossreference -->
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [C,phi,S12,f,zerosp,confC,phistd,Cerr]=cohmatrixpt(data,params,fscorr)</a>
+0002 <span class="comment">% Multi-taper coherency matrix - point process times</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% Usage:</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% [C,phi,S12,f,zerosp,confC,phistd,Cerr]=cohmatrixpt(data,params,fscorr)</span>
+0007 <span class="comment">% Input:</span>
+0008 <span class="comment">%       data    (structure array of spike times with dimension channels) - required</span>
+0009 <span class="comment">%       params: structure with fields tapers, pad, Fs, fpass, err</span>
+0010 <span class="comment">%       - optional</span>
+0011 <span class="comment">%           tapers (precalculated tapers from dpss, or in the form [NW K] e.g [3 5]) -- optional. If not</span>
+0012 <span class="comment">%                                                 specified, use [NW K]=[3 5]</span>
+0013 <span class="comment">%            pad            (padding factor for the FFT) - optional (can take values -1,0,1,2...).</span>
+0014 <span class="comment">%                    -1 corresponds to no padding, 0 corresponds to padding</span>
+0015 <span class="comment">%                    to the next highest power of 2 etc.</span>
+0016 <span class="comment">%                       e.g. For N = 500, if PAD = -1, we do not pad; if PAD = 0, we pad the FFT</span>
+0017 <span class="comment">%                       to 512 points, if pad=1, we pad to 1024 points etc.</span>
+0018 <span class="comment">%                       Defaults to 0.</span>
+0019 <span class="comment">%           Fs   (sampling frequency) - optional. Default 1.</span>
+0020 <span class="comment">%           fpass    (frequency band to be used in the calculation in the form</span>
+0021 <span class="comment">%                                   [fmin fmax])- optional.</span>
+0022 <span class="comment">%                                   Default all frequencies between 0 and Fs/2</span>
+0023 <span class="comment">%           err  (error calculation [1 p] - Theoretical error bars; [2 p] - Jackknife error bars</span>
+0024 <span class="comment">%                                   [0 p] or 0 - no error bars) - optional. Default 0.</span>
+0025 <span class="comment">%       fscorr   (finite size corrections, 0 (don't use finite size corrections) or 1 (use finite size corrections) - optional</span>
+0026 <span class="comment">%                (available only for spikes). Defaults 0.</span>
+0027 <span class="comment">% Output:</span>
+0028 <span class="comment">%       C (magnitude of coherency frequency x channels x channels)</span>
+0029 <span class="comment">%       phi (phase of coherency frequency x channels x channels)</span>
+0030 <span class="comment">%       S12 (cross-spectral matrix frequency x channels x channels)</span>
+0031 <span class="comment">%       f (frequencies)</span>
+0032 <span class="comment">%       zerosp (1 for channels where no spikes were found, zero otherwise)</span>
+0033 <span class="comment">%       confC (confidence level for C at 1-p %) - only for err(1)&gt;=1</span>
+0034 <span class="comment">%       phistd - theoretical/jackknife (depending on err(1)=1/err(1)=2) standard deviation for phi - Note that</span>
+0035 <span class="comment">%                phi + 2 phistd and phi - 2 phistd will give 95% confidence</span>
+0036 <span class="comment">%                bands for phi - only for err(1)&gt;=1</span>
+0037 <span class="comment">%       Cerr  (Jackknife error bars for C - use only for Jackknife - err(1)=2)</span>
+0038 
+0039 <span class="keyword">if</span> isstruct(data) 
+0040     Ch=length(data);
+0041     <span class="keyword">if</span> Ch==1; error(<span class="string">'Need at least 2 channels'</span>); <span class="keyword">end</span>;
+0042 <span class="keyword">else</span>
+0043     error(<span class="string">'Need at least two channels of data in the a structural array'</span>); 
+0044 <span class="keyword">end</span>;
+0045 <span class="keyword">if</span> nargin &lt; 2; params=[]; <span class="keyword">end</span>;
+0046 [tapers,pad,Fs,fpass,err,trialave,params]=<a href="../../chronux_1_50/helper/getparams.html" class="code" title="function [tapers,pad,Fs,fpass,err,trialave,params]=getparams(params)">getparams</a>(params);
+0047 clear trialave params
+0048 <span class="keyword">if</span> nargin &lt; 3 || isempty(fscorr); fscorr=0; <span class="keyword">end</span>;
+0049 
+0050 [mintime,maxtime]=<a href="minmaxsptimes.html" class="code" title="function [mintime, maxtime]=minmaxsptimes(data)">minmaxsptimes</a>(data);
+0051 dt=1/Fs; <span class="comment">% sampling time</span>
+0052 t=mintime:dt:maxtime+dt; <span class="comment">% time grid for prolates</span>
+0053 N=length(t); <span class="comment">% number of points in grid for dpss</span>
+0054 nfft=max(2^(nextpow2(N)+pad),N); <span class="comment">% number of points in fft of prolates</span>
+0055 [f,findx]=<a href="../../chronux_1_50/helper/getfgrid.html" class="code" title="function [f,findx]=getfgrid(Fs,nfft,fpass)">getfgrid</a>(Fs,nfft,fpass); <span class="comment">% get frequency grid for evaluation</span>
+0056 tapers=<a href="../../chronux_1_50/helper/dpsschk.html" class="code" title="function [tapers,eigs]=dpsschk(tapers,N,Fs)">dpsschk</a>(tapers,N,Fs); <span class="comment">% check tapers</span>
+0057 [J,Msp,Nsp]=<a href="mtfftpt.html" class="code" title="function [J,Msp,Nsp]=mtfftpt(data,tapers,nfft,t,f,findx)">mtfftpt</a>(data,tapers,nfft,t,f,findx); <span class="comment">% mt fft for point process times</span>
+0058 C1=size(J,3); 
+0059 zerosp=zeros(1,C1); <span class="comment">% initialize the zerosp variable</span>
+0060 zerosp(Nsp==0)=0; <span class="comment">% set the zerosp variable</span>
+0061 <span class="keyword">if</span> err(1)==0;
+0062      [C,phi,S12]=<a href="../../chronux_1_50/helper/cohmathelper.html" class="code" title="function  [C,phi,S12,confC,phierr,Cerr]=cohmathelper(J,err,Nsp)">cohmathelper</a>(J,err);
+0063 <span class="keyword">elseif</span> err(1)==1;
+0064      <span class="keyword">if</span> fscorr==0;
+0065        [C,phi,S12,confC,phistd]=<a href="../../chronux_1_50/helper/cohmathelper.html" class="code" title="function  [C,phi,S12,confC,phierr,Cerr]=cohmathelper(J,err,Nsp)">cohmathelper</a>(J,err);
+0066     <span class="keyword">else</span>
+0067        [C,phi,S12,confC,phistd]=<a href="../../chronux_1_50/helper/cohmathelper.html" class="code" title="function  [C,phi,S12,confC,phierr,Cerr]=cohmathelper(J,err,Nsp)">cohmathelper</a>(J,err,Nsp);
+0068     <span class="keyword">end</span>;
+0069 <span class="keyword">elseif</span> err(1)==2;
+0070      <span class="keyword">if</span> fscorr==0;
+0071        [C,phi,S12,confC,phistd,Cerr]=<a href="../../chronux_1_50/helper/cohmathelper.html" class="code" title="function  [C,phi,S12,confC,phierr,Cerr]=cohmathelper(J,err,Nsp)">cohmathelper</a>(J,err);
+0072     <span class="keyword">else</span>
+0073        [C,phi,S12,confC,phistd,Cerr]=<a href="../../chronux_1_50/helper/cohmathelper.html" class="code" title="function  [C,phi,S12,confC,phierr,Cerr]=cohmathelper(J,err,Nsp)">cohmathelper</a>(J,err,Nsp);
+0074     <span class="keyword">end</span>;
+0075 <span class="keyword">end</span>
+0076 clear Msp</pre></div>
+<hr><address>Generated on Mon 09-Oct-2006 00:54:52 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+</body>
+</html>

@@ -1,0 +1,8 @@
+#comps='aurora blizzard cyclone lightning monsoon tornado tsunami virga'
+comps='aurora blizzard cyclone monsoon sunshine tornado tsunami virga'
+for c in $comps; do
+    echo  ========= $c =========
+    # kill matlab processes
+    ssh -x $c  killall -9 MATLAB
+done
+

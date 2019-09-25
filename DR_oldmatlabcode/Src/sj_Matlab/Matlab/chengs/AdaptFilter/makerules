@@ -1,0 +1,82 @@
+############ Variables ############
+# compiler
+CC		= g++
+## set to -m32 or -m64 for 32 or 64 bit executables, libraries
+EXEBIT		= -m32 -fPIC
+CFLAGS		= $(OPTIM) $(EXEBIT) 
+
+# header file include path
+INCL= -I$(MDIR)/extern/include -I/usr/local/include -I/usr/X11R6/include $(LOCAL_INCL)
+
+# path for documentation
+DOCPATH         = ./doc/code
+DOCFLAGS        = -p --strip-h-path 
+
+#LDFLAGS		= $(CFLAGS) -lgsl -lgslcblas -lm
+# LDFLAGS		= $(CFLAGS) $(LOCAL_LIBS) -lm
+LDFLAGS		= $(CFLAGS) $(LOCAL_LIBS)  -lsupc++
+#ALL_OBJ= ../main/mexversion.o ../main/libAFaux.a ../main/libAFgen.a ../main/libAFmodel.a ../main/libAFfilter.a  
+
+../aux/libAFaux.a: 
+	make -C ../aux
+
+../filter/libAFfilter.a: 
+	make -C ../filter
+
+../gen/libAFgen.a: 
+	make -C ../gen
+
+../model/libAFmodel.a: 
+	make -C ../model
+
+../stats/libAFmodel.a: 
+	make -C ../model
+
+../aux/mexversion.o:
+	make -C ../aux mexversion.o
+
+# linker flags for programs that use Matlab routines
+MEX_LDFLAGS= $(LDFLAGS)\
+	-Wl,--version-script,$(MDIR)/extern/lib/glnx86/mexFunction.map \
+	-L$(MDIR)/bin/glnx86 --rpath-link,$(MDIR)/bin/glnx86 \
+    -lmx -lmex -lm  
+#     -L$(MDIR)/extern/lib/glnx86 --rpath-link,$(MDIR)/extern/lib/glnx86 \
+#     -L$(MDIR)/sys/os/glnx86 --rpath-link,$(MDIR)/sys/os/glnx86 \
+
+# linker flags for programs that read/write MAT files
+MAT_LDFLAGS=$(EXEBIT) $(OPTIM) \
+	-Wl,--rpath-link,$(MDIR)/bin/glnx86 -L$(MDIR)/bin/glnx86 -lmx -lmat -lm  
+
+
+############ FLTK and other graphics ############
+FLC		=fluid -c
+
+X_LIBS		=-L/usr/lib -L/usr/X11R6/lib -Wl,--rpath,/usr/lib:/usr/X11R6/lib  -lXext -lX11 -lm -lsupc++
+FLTK_LIBS	=-L/usr/local/lib -Wl,--rpath,/usr/local/lib -lfltk -lfltk_gl -lfltk_forms 
+GL_LIBS		=-L/usr/lib -L/usr/X11R6/lib -Wl,--rpath,/usr/lib:/usr/X11R6/lib -lGL # -lGLU #-lsupc++
+UI_LIBS		= $(FLTK_LIBS) $(X_LIBS) $(GL_LIBS)  -lpng
+
+############ Suffix rules ############
+.SUFFIXES: .cc
+.cc.o:
+	$(CC) -c $(CFLAGS) $(INCL) -o $@ $<
+
+.c.o:
+	$(CC) -c $(CFLAGS) $(INCL) -o $@ $<
+### UTILITIES ###
+clean:
+	rm -f *.o *.a *~ *.mexglx
+#     rm -f $(TARGETS) *.o *~ 
+
+############ Dependencies ############
+
+depend:
+	@rm -f dependencies
+	$(CC) -MM $(INCL) $(SRCS) > dependencies
+
+#dependencies: $(SRCS)  # is more correct but takes more time
+dependencies: 
+	@rm -f dependencies
+	$(CC) -MM $(INCL) $(SRCS) > dependencies
+
+-include dependencies

@@ -1,0 +1,170 @@
+Algebraic Lens Distortion Model Estimation
+
+Authors : Luis Alvarez, Luis Gomez, Rafael Sendra
+
+CHANGELOG (March 2012)
+--------------------------------------------------------------------------------
+Algebraic Lens Distortion Model Estimation was published in IPOL journal in 
+July 2010. During this time a lot of researchers have used the Online Demo and 
+we have experienced a number of small problems we think we have to solve to 
+increase the paper impact in the Community. The main problems we have experienced 
+are :
+
+(1) People usually manage the distortion center which were not managed in the 
+paper OnLine Demo.
+
+(2) In the output file a lot of different configuration cases are presented 
+and people have problems to extract the main conclusions.
+
+(3) Change the image TIFF library because it fails on 64 bits systems. Replaced
+    with BMP library.
+
+We think that to address these small problems does not justify a new IPOL paper 
+because the core of algorithms and functions are exactly the same. However we 
+think that to perform a number of small changes, mainly in the DEMO page, 
+to deal with this problems can improve in a significant way the user experience 
+using the algorithms. I would like to point out that IPOL is not only a journal, 
+it is an Online Journal were people experiment with the algorithms and do not 
+enjoy of people experiences to improve the way people use the code is a mistake. 
+As far as anyone can access exactly the original code configuration I can't 
+see any problem to do some small improvement in the DEMO page. 
+
+So we have changed the paper IPOL in the following way : 
+    - we manage the center of distortion	
+    - the output file has been reduced, showing only the solutions 
+	  corresponding to 
+        a) ALGEBRAIC METHOD (FROM TRIVIAL SOLUTION) + GRADIENT METHOD. 
+                 NO ZOOM APPLIED (degree of lens distortion model polynom: 4)
+	    b) ALGEBRAIC METHOD (FROM TRIVIAL SOLUTION) + GRADIENT METHOD. 
+                 ZOOM APPLIED (degree of lens distortion model polynom: 4)
+    - the DEMO graphic interface has been improved to deal with the 
+	  new functionalities 
+    - use a fast image undistortion method to obtain the resulting image, 
+	  two versions: sequencial and multithread version.
+
+--------------------------------------------------------------------------------
+lens_distortion.h 
+
+// using stl vector in undistortion process
+#include <vector>
+#include "ami_pol.h"
+// managing 2D points in undistortion process
+#include "point2d.h"
+// read/write bmp image format 
+#include "image.h"
+// using OpenMP to use multithread optimization in the image undistortion method
+#ifdef AMI_OMP_H
+  #include <omp.h>
+#endif
+
+--------------------------------------------------------------------------------
+lens_distortion.cpp 
+
+// to account for center optimization: extra two positions for vectors in 
+     double gradient_method(double *solution, double **x, double **y, int Nl, 
+	 int *Np, int Na,int *change_k, int zoom, int optimize_center);
+	 
+// to account for center optimization and reduction of the cases to consider in 
+     int optimize(double *solution, double **x, double **y, double **xx, 
+	 double **yy, int Nl, int *Np, int Na,double factor_n, int zoom, FILE *fp1, 
+	 double *trivial, int control,int optimize_center); 
+     int algebraic_method_pre_gradient(int Nl, int *Np, double *a, double **x, 
+	 double **y, double **xx, double **yy, double factor_n, int zoom, FILE *fp1, 
+	 double *trivial, int control, int  optimize_center);
+
+//to account for center optimization
+     int trivial_solution(int Nl, int *Np,double *a,double **xx, double **yy, 
+	 double factor_n, FILE *fp1, double *trivial, int optimize_center);
+	 
+//function to account for the optimization of the center of distortion
+	int search_for_best_center(int N, int *Np, double *a, double  **xx, 
+	double  **yy, int  width, int  height);
+	
+//using a fast image undistortion method
+	void ami_lens_distortion_model_evaluation(double *a,int Na, double xc,
+	   double yc,double x_input,double y_input,double *x_output,double *y_output);
+	   double ami_inverse_lens_distortion_newton_raphson(double x,double y, 
+	   double x0,double y0, double *xt,double *yt, double *a, int Na);
+	int ami_inverse_lens_distortion_fast(double x,double y,double x0,double y0, 
+	   double *xt,double *yt, double *a, int Na,double dl1r);
+	int build_l1r_vector(std::vector<double> &l1r,ami::point2d<double> &dc, 
+	   double max_distance_corner,int Na, double *a);
+	ami::image<unsigned char> undistort_image_inverse_fast(ami::image<unsigned char> 
+	   input_image,int Na, double *a,ami::point2d<double> dc,
+	   const double &image_amplification_factor);
+	
+--------------------------------------------------------------------------------
+lens_distortion_estimation.cpp 
+
+- The center of distortion can be indicated by the user (to apply the center 
+  of the loaded image or a desired value) through the program input arguments.
+  
+- The user can indicate if the center of distortion is considered fixed or it is  
+  going to be optimized, through the program input arguments (new option in this 
+  new version of the code). The center of distortion is optimized using a search
+  patch pattern strategy operating at pixel precision. There is a patch (defined 
+  by default of size 20 x 20, in the lens_distortion.h header file #define 
+  patch_size 20). It is assumed  that the user provides a valid estimate of the 
+  center of distortion, and, the simple pattern strategy, will locate it through 
+  the local search optimization strategy. Once it has been located, its value is 
+  optimized at subpixel level by means of the gradient. Note that increasing the 
+  patch size, increases the CPU time. When optimizing the center of distortion, 
+  it is also recommended to compile using the multithreading option 
+  (see the readme.txt file).
+  
+- Modifications introduced in the new version of the code: some options are 
+  shown to user to select if the center of distortion is kept fixed (so, working 
+  as the last version); or it is going to be optimized. Besides, the user can 
+  indicate if the center of distortion to be considered is the center of the 
+  image, or it is another one (defined by the user).
+  
+- Modifications to read/write more image formats.
+ 
+- In the previous version, all the cases were considered (calculated and
+  saved to the output solution file). In this version, the number of calculated 
+  solutions is reduced: only the trivial solution, the one got from the algebraic 
+  method, and its improvement through the gradient method are calculated and 
+  saved to the output solution file.
+ 
+- The method to calculate the distortion coefficients -that is, the purpose 
+  of this algorithm- remains exactly the same. There are some minor modifications 
+  in the code to account for the two extra new variables (x_center, y_center); 
+  which only implies to use a variable vector with two extra positions 
+  (..x[5], x[6]), and of course, the variables needed for the corresponding 
+  loops, that now span from 0 position to the 6th position.
+  This minor modifications affects to a set of functions used by the gradient
+  routines, but, it is remarked that this is the only modification done to the 
+  original code.
+--------------------------------------------------------------------------------  
+- The center of distortion can be optimized if it is indicated 
+  (in the first version the center of distortion was fixed to the center of the image). 
+   The center is optimized at pixel level using a patch search strategy, and then, 
+   at subpixel level by the gradient method (the method that was in the previous 
+   version of the code).
+
+- The graphic interface has been notably improved,
+
+- New library to read/write BMP. These library run both on 32-bit and 64-bit operating systems.
+
+- New C++ functions have been added to speed-up the calculus for the final 
+  undistorted image through two versions: sequencial and multithread version. 
+  To perform this, new functions are needed:
+		ami_lens_distortion_model_evaluation(),
+		ami_inverse_lens_distortion_newton_raphson(),
+		ami_inverse_lens_distortion(),
+		ami_inverse_lens_distortion_fast(),
+		build_l1r_vector(),
+		undistort_image_inverse_fast()
+
+- The lens_distortion.c, lens_distortion.h codes have been modified to calculate 
+  only the most significative solutions from all the possible cases calculated 
+  in the first version.
+	
+- The output file has been reduced, showing only the solutions corresponding to
+        a) SOLUTION 1: ALGEBRAIC METHOD (FROM TRIVIAL SOLUTION) + GRADIENT METHOD. 
+           NO ZOOM APPLIED (degree of lens distortion model polynom: 4)
+	    b) SOLUTION 2: ALGEBRAIC METHOD (FROM TRIVIAL SOLUTION) + GRADIENT METHOD. 
+           ZOOM APPLIED (degree of lens distortion model polynom: 4)
+
+ 
+  

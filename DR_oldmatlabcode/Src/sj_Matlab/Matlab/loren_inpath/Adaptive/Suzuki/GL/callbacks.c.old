@@ -1,0 +1,992 @@
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <GL/glut.h>
+#include <GL/glu.h>
+#include <GL/gl.h>
+#include "adapt.h"
+
+#define NTHETAP 10
+
+/* global variables */
+float epsilon[3];
+float mle[3];
+float stdev[3];
+int 	presentation;
+int 	spedup;
+int    rtxi;
+int    rtti;
+int rti;
+int posi;
+int    rtxinc;
+int    rttinc;
+int    posinc;
+int animate, grid;
+int currentspeed;
+float *rattime;
+float *rattimeptr;
+float starttime;
+float *ratpos;
+float *esttheta;
+float *estthetaptr;
+float *ratposptr;
+float *cpx;
+float *cpt;
+float *thetacurrx;
+float *thetacurrt;
+float *realcpx;
+float *realcpt;
+float *realthetax;
+float *realthetat;
+float *realthetacurrx;
+float *realthetacurrt;
+int nrealthetax;
+int nrealthetat;
+float *spiketime;
+float *spiketimeptr;
+float *currentspike;
+float *spikepos;
+float *spikeisi;
+float timestep;
+float lastspiketime = 0;
+float spiket = 0;
+
+float tscale;
+
+float lambdax1[NLAMBDAXP];
+float lambdax2[NLAMBDAXP];
+float lambdatx[NLAMBDATP];
+float lambdaxorig1[NLAMBDAXP];
+float lambdaxorig2[NLAMBDAXP];
+float lambdatorig[NLAMBDATP];
+
+int 	dumpppm = 0;
+int     ppmfilenum = 10000;
+unsigned char    *pixels;
+int     width = INIT_WINDOW_WIDTH;
+int     height = INIT_WINDOW_HEIGHT;
+
+int nsamples;
+int nspikes;
+int currentpass;
+int lastpass = 0;
+int nspikesused = 0; 
+int nspikestmp = 0;
+int ncpx;
+int ncpt;
+int realncpx;
+int realncpt;
+int    interpspline = 0;
+int nrthetaparms;
+float    leftwall;
+float    rightwall;
+float    traj2start;
+float    peakratex;
+float    peakratet;
+
+typedef struct _WindowLocations {
+    float bottom;
+    float tbottom;
+    float ttop;
+    float xbottom;
+    float xtop;
+    float top;
+    float left;
+    float right;
+} WindowLocations; 
+
+typedef struct _TextInfo {
+    float timeloc[2];
+    float xtitleloc[2];
+    char  xtitle[80];
+    float xlabelloc[2];
+    char  xlabel[80];
+    int   nxxtick;
+    float **xxtickloc;
+    char  **xxtick;
+    int   nxytick;
+    float **xytickloc;
+    char  **xytick;
+    float ttitleloc[2];
+    char ttitle[80];
+    float tlabelloc[2];
+    char  tlabel[80];
+    int   ntxtick;
+    float **txtickloc;
+    char  **txtick;
+    int   ntytick;
+    float **tytickloc;
+    char  **tytick;
+} TextInfo; 
+
+WindowLocations winloc;
+TextInfo    textinfo;
+
+/* get points from files */
+
+void Init(void) {
+    
+    int i, j;
+    int nelem;    
+    /* read in the times of the spikes */
+    nsamples = getnelements(info.ratposfile, sizeof(float));
+    nspikes = getnelements(info.spikefile, sizeof(float));
+
+    printf("\nScanning input files "); fflush(stdout);
+
+    nelem = getnelements(info.estthetafile, sizeof(float));
+    esttheta = (float *) malloc(sizeof(float) * nelem);
+    readdata(info.estthetafile, esttheta, nelem);
+    /* the first two values of estthetafile are the number of x control points and the
+     * number of t control points */
+    ncpx = round(esttheta[0]);
+    ncpt = round(esttheta[1]);
+    cpx = esttheta+2;
+    cpt = cpx + ncpx;
+    /* the start of the second trajectory is the middle control point */
+    traj2start = cpx[(int) ncpx/2]; 
+    /* thetacurrx is the current array of x control point heights */
+    thetacurrx = (float *) malloc(sizeof(float) * ncpx);
+    /* thetacurrt is the current array of t control point heights */
+    thetacurrt = (float *) malloc(sizeof(float) * ncpt);
+    /* copy the starting values into cpx and cpt */
+    for (i = 0; i < ncpx; i++) {
+        thetacurrx[i] = esttheta[2+ncpx+ncpt+i];
+    }
+    for (i = 0; i < ncpt; i++) {
+        thetacurrt[i] = esttheta[2+2*ncpx+ncpt+i];
+    }
+    /* advance the pointer past the control point initial values */
+    esttheta = esttheta + 2 * (1 + ncpx + ncpt);    
+    estthetaptr = esttheta;
+    
+
+    /* if this is to be compared to simulated data, read in the data */
+    if (info.simdata) {
+        /* start with the x control points */
+        nelem = getnelements(info.realthetaxfile, sizeof(float));
+        realthetax = (float *) malloc(sizeof(float) * nelem);
+        readdata(info.realthetaxfile, realthetax, nelem);
+        /* the first value is the number of x control points */
+        realncpx = round(realthetax[0]);
+        realcpx = realthetax+1;
+        /* increment realthetax to start at the beginning of the data. Note that this
+         * leaves a memory hole of 1 element */
+        realthetax = realthetax + (1 + realncpx);
+	nrealthetax = round((nelem - (1 + realncpx)) / (realncpx));
+        /* check the size of realthetax. If it contains only two columns of data, we need
+         * to interpolate between those two columns to get the appropriate values at each
+         * time step */
+
+        /* do the t control points */
+        nelem = getnelements(info.realthetatfile, sizeof(float));
+        realthetat = (float *) malloc(sizeof(float) * nelem);
+        readdata(info.realthetatfile, realthetat, nelem);
+        /* the first value is the number of x control points */
+        realncpt = round(realthetat[0]);
+        realcpt = realthetat+1;
+        /* increment realthetax to start at the beginning of the data. Note that this
+         * leaves a memory hole of 1 element */
+        realthetat = realthetat + (1 + realncpt);
+        nrealthetat = round((nelem - (1 + realncpt)) / (realncpt));
+
+        /* We're going to interpolate between the elements of the input x and t splines */
+	interpspline = 1;
+	/* allocate space for the realthetacurrx and realthetacurrt arrays */
+	realthetacurrx= (float *) malloc(sizeof(float) * realncpx);
+	realthetacurrt = (float *) malloc(sizeof(float) * realncpt);
+	for (i = 0; i < realncpx; i++) {
+	    realthetacurrx[i] = realthetax[i];
+	}
+	for (i = 0; i < realncpt; i++) {
+	    realthetacurrt[i] = realthetat[i];
+	}
+    }
+
+    rattime = (float *)malloc(sizeof(float)*nsamples);
+    ratpos = (float *)malloc(sizeof(float)*nsamples);
+
+    spiketime = (float *)malloc(sizeof(float)*nspikes);
+    spikepos = (float *)malloc(sizeof(float)*nspikes);
+    spikeisi = (float *)malloc(sizeof(float)*nspikes);
+
+    readdata(info.ratposfile, ratpos, nsamples);
+    printf(" . ");
+    readdata(info.timefile, rattime, nsamples);
+    starttime = rattime[0];
+    printf(" . ");
+    readdata(info.spikefile, spiketime, nspikes); 
+    printf(" . ");
+    printf(" . ");
+    printf("Done , nspikes = %d\n", nspikes); fflush(stdout);
+
+
+    spiketimeptr = spiketime; 
+    rattimeptr = rattime;
+    ratposptr = ratpos;
+
+    /* allocate space for the pixels to be dumped */
+    pixels = (unsigned char *) malloc(sizeof(unsigned char) * width * height * 3);
+
+
+    leftwall = cpx[0];
+    rightwall = traj2start;
+    peakratex = -1e100;
+    peakratet = -1e100;
+
+    estthetaptr = esttheta;
+    for (i = 0; i < nsamples; i++) {
+        if (*(estthetaptr++) != -1) {;
+        for (j = 1; j < 5; j++) {
+	    if ((*estthetaptr) > peakratex) {
+		peakratex = (*estthetaptr); 
+	    }
+	    estthetaptr++;
+	}
+        if ((*estthetaptr >= 0) && (cpt[round(*estthetaptr)] <= 1)) {
+	    estthetaptr++;
+	    for (j = 6; j < 10; j++) {
+		if ((*estthetaptr) > peakratet) {
+		    peakratet = (*estthetaptr); 
+		}
+		estthetaptr++;
+       	    } 
+        }
+	else {
+	    estthetaptr += 5;
+        }
+    }
+    else {
+        /* move on to the next time point */
+        estthetaptr += 9;
+    }
+    }
+    /* reset the pointer */
+    estthetaptr = esttheta;
+    
+
+    printf("Found peak values: %f, %f\n", peakratex, peakratet); fflush(stdout);
+
+    /* set up the locations for the various sections of the display */
+    winloc.bottom = -1 * BELOW_T_HEIGHT;
+    winloc.tbottom = 0;
+    winloc.ttop = winloc.tbottom + T_HEIGHT;
+    winloc.xbottom = winloc.ttop + ABOVE_T_HEIGHT;
+    winloc.xtop = winloc.xbottom + X_HEIGHT;
+    winloc.top = winloc.xtop + ABOVE_X_HEIGHT;
+    winloc.left = leftwall - (rightwall - leftwall) / 8;
+    winloc.right = rightwall + (rightwall - leftwall) / 8;
+    /* define grid */
+    define_grid();
+    /* define grid labels */
+    definelabels();
+
+
+    tscale = (rightwall - leftwall) / 3;
+
+    /* define the sets of x positions for the spatial and temporal splines */
+    definesplinepos();
+    currentspike = spiketime;
+    
+    rtxi = 0;
+    rtti = 0;
+    posi = 0;
+    animate = 1;
+    grid = 1;
+
+    currentspeed = 10;
+    rtxinc = realncpx * currentspeed;
+    rttinc = realncpt * currentspeed;
+    posinc = currentspeed;
+    timestep = rattime[4]-rattime[3];
+    presentation = 0;
+    spedup = 0;
+    glEnable(GL_POINT_SMOOTH);
+
+
+}
+
+
+/* display function */
+void Display(void) {
+    
+    int i;
+    int cseg;
+
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    draw_grid(); 
+    drawgridlabels();  
+    
+    if (info.simdata) {
+        if (interpspline) {
+        calctheta(realncpx, realncpt, realthetax, realthetat, nrealthetax,
+                      nrealthetat, (float) posi / (float) nsamples, realthetacurrx,
+                      realthetacurrt);
+        }
+        drawfieldx(realcpx, realthetacurrx, realncpx, 0.0, 1.0, 0, 1, 1, 0);  
+        drawfieldt(realcpt, realthetacurrt, realncpt, 0.0, 1.0, 0);  
+    }
+    drawfieldx(cpx, thetacurrx, ncpx, 1.0, 1.0, .3, 1.0, .5 , 0.2 ); 
+    drawfieldt(cpt, thetacurrt, ncpt, .3, 1.0, 1.0); 
+    drawrat();
+    /* do drawspikes for each timestep */
+    drawspikes();
+    drawtime();  
+
+    glutSwapBuffers();
+
+    if (dumpppm) {
+        glReadPixels(1, 1, width, height, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid *) pixels);
+        /* write the ppm file */
+        writeppm(&ppmfilenum, pixels);
+    }
+    if((posi < (nsamples-posinc))&&(animate == 1)) {
+        /* update the current thetahat */
+        for (i = 0; i < posinc; i++) {
+            if ((cseg = *(estthetaptr)) != -1) {
+		currentpass = (cpx[cseg] < traj2start) ? 1 : 2;
+		if (lastpass == 0) {
+		    lastpass = currentpass;
+		}
+		thetacurrx[cseg-1] = *(++estthetaptr);
+		thetacurrx[cseg] = *(++estthetaptr);
+		thetacurrx[cseg+1] = *(++estthetaptr);
+		thetacurrx[cseg+2] = *(++estthetaptr);
+		estthetaptr++;
+	    }
+	    else {
+		estthetaptr += 5;
+	    }
+	    /* update the points on the end if necessary */
+            if (cseg <= 4) {
+                thetacurrx[ncpx-1] = thetacurrx[2];
+                thetacurrx[ncpx-2] = thetacurrx[1];
+                thetacurrx[ncpx-3] = thetacurrx[0];
+            }
+            else if (cseg >= (ncpx - 5)) {
+                thetacurrx[0] = thetacurrx[ncpx-3];
+                thetacurrx[1] = thetacurrx[ncpx-2];
+                thetacurrx[2] = thetacurrx[ncpx-1];
+            }
+            if ((cseg = *(estthetaptr)) != -1) {
+                thetacurrt[cseg-1] = *(++estthetaptr);
+                thetacurrt[cseg] = *(++estthetaptr);
+                thetacurrt[cseg+1] = *(++estthetaptr);
+                thetacurrt[cseg+2] = *(++estthetaptr);
+		estthetaptr++;
+            }
+        else {
+            estthetaptr += 5;
+            }
+        }
+        posi += posinc;
+    ratposptr += posinc;
+    rattimeptr += posinc;
+        if (info.simdata) {
+            /* increment the pointers to the current real theta hats */
+            rtxi += rtxinc;
+            rtti += rttinc;
+            if (interpspline) {
+        calctheta(realncpx, realncpt, realthetax, realthetat, nrealthetax,
+              nrealthetat, (float) posi / (float) nsamples, realthetacurrx,
+              realthetacurrt);
+            }
+            else {
+                realthetacurrx = realthetax + rtxi;
+                realthetacurrt = realthetat + rtti;
+            }
+        }
+	if (!spedup & presentation && (posi > 10000)) {
+	    /* speed up a bunch */
+	    spedup = 1;
+	    currentspeed *= 20;
+	    rtxinc = realncpx * currentspeed;
+	    rttinc = realncpt * currentspeed;
+	    posinc = currentspeed;
+	}
+    }
+    else {
+        usleep(330000);
+    }
+}
+
+/* change camera when window is resized */
+void Reshape(int w, int h) {
+    
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(winloc.left, winloc.right, winloc.bottom, winloc.top, -1000, 1000);
+    glViewport(0, 0, w, h);
+    width = w;
+    height = h;
+    glMatrixMode(GL_MODELVIEW);
+    
+}
+
+void definesplinepos()
+{
+    float xstep;
+    int i;
+
+    xstep = (rightwall - leftwall)/NLAMBDAXP;
+
+
+    for(i = 0; i < NLAMBDAXP; i++) {
+        lambdaxorig1[i] = (i+1) * xstep;
+        lambdax1[i] = leftwall + i * xstep;
+        lambdaxorig2[i] = traj2start + (i+1)*xstep;
+        lambdax2[i] = rightwall - (i+1) * xstep;
+    }
+    for(i = 0; i < NLAMBDATP; i++) {
+        lambdatorig[i] = (float) pow(10,(float) (i * 3.0 / (float) NLAMBDATP)) * 0.001; 
+        lambdatx[i] = leftwall + log10(lambdatorig[i]*1e3) * tscale;
+    }
+}
+
+
+void drawfieldx(float *cpx, float *cpy, int ncpx, float r1, float g1, float b1, float r2, 
+        float g2, float b2) 
+{
+    float lambday[NLAMBDAXP];
+    float *lx1;
+    float *lx2;
+    float *ly;
+    int i;
+
+    
+    glColor3d(r1, g1, b1);
+    glLineWidth(3.0f);
+    
+    cardinal(cpx, cpy, ncpx, lambdaxorig1, lambday, NLAMBDAXP);
+    lx1 = lambdax1;
+    ly = lambday;
+    
+    glBegin(GL_LINE_STRIP);
+    for(i = 0; i < NLAMBDAXP; i++) {
+        glVertex3f(*(lx1++), winloc.xbottom + *(ly++),0.0f);
+    }
+    glEnd();
+    
+    glColor3d(r2, g2, b2);
+    glLineWidth(3.0f);
+    
+    cardinal(cpx, cpy, ncpx, lambdaxorig2, lambday, NLAMBDAXP);
+    lx2 = lambdax2;
+    ly = lambday;
+    
+    glBegin(GL_LINE_STRIP);
+    for(i = 0; i < NLAMBDAXP; i++) {
+        glVertex3f(*(lx2++), winloc.xbottom + *(ly++),0.0f);
+    }
+    glEnd();
+
+    glLineWidth(1.0f);
+    
+}
+
+void drawfieldt(float *cpt, float *cpy, int ncpx, float r, float g, float b) {
+
+    float lambday[NLAMBDATP];
+    float tmp2;
+    float *lt, *ly;
+    int i;
+    
+    /* plot the temporal spline out to 1 second */
+    glColor3d(r, g, b);
+    glLineWidth(3.0f);
+    
+    cardinal(cpt, cpy, ncpt, lambdatorig, lambday, NLAMBDATP); 
+
+    lt = lambdatx;
+    ly = lambday;
+    
+    tmp2 = peakratex / peakratet;
+    /* scale the lambda to be on a log scale */
+    glBegin(GL_LINE_STRIP);
+    for(i = 1; i < NLAMBDATP; i++) {
+        glVertex3f(*(lt++), winloc.tbottom + *(ly++)*tmp2, 0.0f);
+    }
+    glEnd();
+}
+
+void drawgridlabels(void) 
+{
+    int i, j, len;
+
+
+    /*glNewList(GRIDLABELS, GL_COMPILE); */
+    glColor3f(1.0,1.0,1.0);
+
+    glRasterPos2f(textinfo.xtitleloc[0], textinfo.xtitleloc[1]);
+    len = strlen(textinfo.xtitle);
+    for (j = 0; j < len; j++) {
+    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, textinfo.xtitle[j]);
+    } 
+
+    glRasterPos2f(textinfo.xlabelloc[0], textinfo.xlabelloc[1]);
+    len = strlen(textinfo.xlabel);
+    for (j = 0; j < len; j++) {
+    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, textinfo.xlabel[j]);
+    }
+    for (i = 0; i < textinfo.nxxtick; i++) {
+    glRasterPos2f(textinfo.xxtickloc[i][0], textinfo.xxtickloc[i][1]);
+    len = strlen(textinfo.xxtick[i]);
+    for (j = 0; j < len; j++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, textinfo.xxtick[i][j]);
+    }
+    } 
+    for (i = 0; i < textinfo.nxytick; i++) {
+    glRasterPos2f(textinfo.xytickloc[i][0], textinfo.xytickloc[i][1]);
+    len = strlen(textinfo.xytick[i]);
+    for (j = 0; j < len; j++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, textinfo.xytick[i][j]);
+    }
+    } 
+    
+    glRasterPos2f(textinfo.ttitleloc[0], textinfo.ttitleloc[1]);
+    len = strlen(textinfo.ttitle);
+    for (j = 0; j < len; j++) {
+    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, textinfo.ttitle[j]);
+    }
+    glRasterPos2f(textinfo.tlabelloc[0], textinfo.tlabelloc[1]);
+    len = strlen(textinfo.tlabel);
+    for (j = 0; j < len; j++) {
+    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, textinfo.tlabel[j]);
+    }
+    for (i = 0; i < textinfo.ntxtick; i++) {
+    glRasterPos2f(textinfo.txtickloc[i][0], textinfo.txtickloc[i][1]);
+    len = strlen(textinfo.txtick[i]);
+    for (j = 0; j < len; j++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, textinfo.txtick[i][j]);
+    }
+    } 
+    for (i = 0; i < textinfo.ntytick; i++) {
+    glRasterPos2f(textinfo.tytickloc[i][0], textinfo.tytickloc[i][1]);
+    len = strlen(textinfo.tytick[i]);
+    for (j = 0; j < len; j++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, textinfo.tytick[i][j]);
+    }
+    } 
+    glEndList();
+}
+
+void drawtime(void) {
+
+    char tmpstring[50];
+    int len, i;
+
+    sprintf(tmpstring, "%.2f", *rattimeptr - starttime); 
+    /*sprintf(tmpstring, "%.2f", *rattimeptr); */
+    
+    glColor3f(1.0,1.0,1.0);
+    glRasterPos2f(textinfo.timeloc[0], textinfo.timeloc[1]);
+    len = (int) strlen(tmpstring);
+    for (i = 0; i < len; i++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, tmpstring[i]);
+    }
+
+}
+
+void drawrat(void) {
+
+    glEnable(GL_POINT_SMOOTH);
+    glPointSize(75.0f);
+    glColor3d(1.0,1.0,1.0);
+
+    glBegin(GL_POINTS);
+    glVertex3f(*ratposptr, winloc.xbottom, 0.0f);
+    glEnd();
+
+}
+
+void drawspikes(void) 
+{
+    int i;
+    float tmp2, tmp3;
+    float *ctimeptr;
+
+    glColor3d(1.0,1.0,1.0);
+    /* check for switching passes */
+    if ((lastpass == 1) && (currentpass == 2)) {
+        nspikestmp = 0;
+    lastpass = 2;
+    } 
+    else if ((lastpass == 2) && (currentpass == 1)) {
+        nspikestmp = 0;
+    lastpass = 1;
+    } 
+
+    ctimeptr = rattimeptr;
+    for (i = 0; i < posinc; i++) {
+        while ((nspikesused < nspikes) && (*spiketimeptr >= *ctimeptr) && (*spiketimeptr < *(ctimeptr+1))) { 
+            /* add the spike to the spikelist */
+        tmp2 = *(rattimeptr+i) - lastspiketime;
+            spikeisi[nspikestmp] = *(rattimeptr+i) - lastspiketime;
+            lastspiketime = *(rattimeptr+i);
+            spikepos[nspikestmp++] = *(ratposptr+i); 
+        spiketimeptr++;
+        nspikesused++;
+        }
+    ctimeptr++;
+    }
+    tmp3 =  peakratex * -0.1;
+    tmp2 = winloc.xbottom + tmp3;
+    glLineWidth(0.075f);
+    glBegin(GL_LINES);
+    for(i = 0; i < nspikestmp; i++) {
+        /* draw the position spikes */
+        glVertex3f(spikepos[i], winloc.xbottom, 0.0f);
+        glVertex3f(spikepos[i], tmp2, 0.0f);
+        /* draw the temporal spike */
+        glVertex3f(leftwall+log10(spikeisi[i]*1e3)*tscale, 0, 0.0f);
+        glVertex3f(leftwall+log10(spikeisi[i]*1e3)*tscale, tmp3, 0.0f);
+    }
+
+    glEnd();
+}
+
+void define_grid() 
+{
+    int i, loctmp;
+    float tmp;
+
+    loctmp = (int) (winloc.ttop / peakratet); 
+    if (loctmp == 0) loctmp = 1;
+
+    glNewList(GRID, GL_COMPILE);
+    glColor3f(0,0,1.0);
+    glBegin(GL_LINES);
+    /* put in one horizontal line at 0 and one at 1 for the temporal spline */
+    glVertex3d(leftwall, 0, 0);
+    glVertex3d(rightwall, 0, 0);
+    /* line at 1 */
+    for (i = loctmp; i < winloc.ttop ; i += loctmp) {
+    glVertex3d(leftwall, i, 0);
+    glVertex3d(rightwall, i, 0);
+    }
+    /* line at max of t */
+    glVertex3d(leftwall, winloc.ttop, 0);
+    glVertex3d(rightwall, winloc.ttop, 0);
+
+    /* lines every 10 Hz for X spline */
+    glVertex3d(leftwall, winloc.xbottom, 0);
+    glVertex3d(rightwall, winloc.xbottom, 0); 
+    i = 0;
+    while ((tmp = winloc.xbottom + 10 * i++) <= winloc.xtop) {
+        glVertex3d(leftwall, tmp, 0);
+        glVertex3d(rightwall, tmp, 0);
+    } 
+    /* do the vertical lines */
+    /* the bottom plot is on a log scale so put grid lines at zero, .001, .01, 
+     * .1, 1, and 10. Scale the leftwall to rightwall distances to be from 0.001 to 10
+     * seconds on the log scale or 0 to 4 on a linear scale. To do so, multiply each time
+     * by 1000, take the log10, and scale from leftwall to right wall */
+    tscale = (rightwall - leftwall) / 3; /* 3 segments: .001->.01, .01->.1, .1->1  */
+    glVertex3d(leftwall + log10(.001*1e3)*tscale,  0, 0);
+    glVertex3d(leftwall + log10(.001*1e3)*tscale, peakratex , 0);
+    glVertex3d(leftwall + log10(.01*1e3)*tscale,  0, 0);
+    glVertex3d(leftwall + log10(.01*1e3)*tscale, peakratex , 0);
+    glVertex3d(leftwall + log10(.1*1e3)*tscale,  0, 0);
+    glVertex3d(leftwall + log10(.1*1e3)*tscale, peakratex , 0);
+    glVertex3d(leftwall + log10(1.0*1e3)*tscale,  0, 0);
+    glVertex3d(leftwall + log10(1.0*1e3)*tscale, peakratex , 0); 
+    glVertex3d(leftwall + log10(10*1e3)*tscale,  0, 0);
+    glVertex3d(leftwall + log10(10*1e3)*tscale, peakratex , 0); 
+
+    /* the vertical lines on the top are every 10 cm */
+    for (i = leftwall; i <= leftwall + rightwall; i+=10) {
+        glVertex3d(i, winloc.xbottom, 0);
+        glVertex3d(i, winloc.xtop, 0);
+    }
+        
+    glEnd();
+    glEndList();
+}
+
+void draw_grid(void) {
+
+    if(grid)
+        glCallList(GRID);
+    else {
+        glColor3d(0,1.0,0);
+        glBegin(GL_LINES);
+        glVertex3d(-20, 0, 0);
+        glVertex3d(370, 0, 0);
+        glEnd();
+    }
+}
+
+void definelabels() 
+{
+    int    times[] = {1.0, 10, 100, 1000}; 
+    float    middle;
+    int     i, len; 
+    int     charwidth, stringlen;
+
+    charwidth = glutBitmapWidth(GLUT_BITMAP_HELVETICA_18, 'S'); 
+
+    middle = (leftwall + rightwall) / 2;
+
+    textinfo.timeloc[0] = leftwall - (rightwall - leftwall) / 10;
+    textinfo.timeloc[1] = winloc.xtop + ABOVE_X_HEIGHT / 2;
+
+    
+    sprintf(textinfo.xtitle, "Spatial Component");
+    stringlen = glutBitmapLength(GLUT_BITMAP_HELVETICA_18, (const char *)textinfo.xtitle);
+    len = (int) strlen(textinfo.xtitle);
+    textinfo.xtitleloc[0] = middle-len*2;
+    textinfo.xtitleloc[1] = winloc.xtop + ABOVE_X_HEIGHT / 1.5;
+
+    sprintf(textinfo.xlabel, "Distance (cm)");
+    len = (int) strlen(textinfo.xlabel);
+    textinfo.xlabelloc[0] = middle-len*2;
+    textinfo.xlabelloc[1] = winloc.xtop + ABOVE_X_HEIGHT / 3;
+
+    /* do the xxticks */
+    textinfo.nxxtick = (int) ((rightwall - leftwall) / 100) + 1;
+    textinfo.xxtickloc = (float **) malloc(sizeof(int *) * textinfo.nxxtick);
+    textinfo.xxtick = (char **) malloc(sizeof(char *) * textinfo.nxxtick);
+    for (i = 0; i < textinfo.nxxtick; i++) {
+    textinfo.xxtickloc[i] = (float *) malloc(sizeof(int) * 2);
+    textinfo.xxtickloc[i][0] = leftwall + 100 * i  - 2; 
+    textinfo.xxtickloc[i][1] = winloc.xtop + ABOVE_X_HEIGHT / 6;
+    textinfo.xxtick[i] = (char *) malloc(sizeof(char) * 10);
+    sprintf(textinfo.xxtick[i], "%3d", 100 * i);
+    }
+
+    /* do the xyticks */
+    textinfo.nxytick = (int) (peakratex / 10) + 1;
+    textinfo.xytickloc = (float **) malloc(sizeof(int *) * textinfo.nxytick);
+    textinfo.xytick = (char **) malloc(sizeof(char *) * textinfo.nxytick);
+    for (i = 0; i < textinfo.nxytick; i++) {
+    textinfo.xytickloc[i] = (float *) malloc(sizeof(int) * 2);
+    textinfo.xytickloc[i][0] = leftwall - (rightwall - leftwall) / 30;
+    textinfo.xytickloc[i][1] = winloc.xbottom + i * 10;
+    textinfo.xytick[i] = (char *) malloc(sizeof(char) * 10);
+    sprintf(textinfo.xytick[i], "%d", i * 10);
+    }
+
+    sprintf(textinfo.ttitle, "Temporal Component");
+    len = (int) strlen(textinfo.ttitle);
+    textinfo.ttitleloc[0] = middle - len * 2;
+    textinfo.ttitleloc[1] = winloc.ttop - ABOVE_X_HEIGHT / 4;
+
+    sprintf(textinfo.tlabel, "ISI (ms)");
+    len = (int) strlen(textinfo.tlabel);
+    textinfo.tlabelloc[0] = middle - len * 2;
+    textinfo.tlabelloc[1] = winloc.tbottom - BELOW_T_HEIGHT / 1.25;
+
+    /* there are four tick labels for the xaxis of the temporal spline  */
+    textinfo.ntxtick = 4;
+    textinfo.txtickloc = (float **) malloc(sizeof(int *) * textinfo.ntxtick);
+    textinfo.txtick = (char **) malloc(sizeof(char *) * textinfo.ntxtick);
+    for (i = 0; i < textinfo.ntxtick; i++) {
+    textinfo.txtickloc[i] = (float *) malloc(sizeof(int) * 2);
+    textinfo.txtickloc[i][0] = leftwall+log10(times[i])*tscale;
+    textinfo.txtickloc[i][1] = winloc.tbottom - BELOW_T_HEIGHT / 3;
+    textinfo.txtick[i] = (char *) malloc(sizeof(char) * 10);
+    sprintf(textinfo.txtick[i], "%d", times[i]);
+    }
+
+
+    textinfo.ntytick = (int) peakratet;
+    textinfo.tytickloc = (float **) malloc(sizeof(int *) * textinfo.ntytick);
+    textinfo.tytick = (char **) malloc(sizeof(char *) * textinfo.ntytick);
+    for (i = 0; i < textinfo.ntytick; i++) {
+    textinfo.tytickloc[i] = (float *) malloc(sizeof(int) * 2);
+    textinfo.tytickloc[i][0] = leftwall - (rightwall - leftwall) / 40;
+    textinfo.tytickloc[i][1] = winloc.tbottom + i * winloc.ttop/peakratet;
+    textinfo.tytick[i] = (char *) malloc(sizeof(char) * 10);
+    sprintf(textinfo.tytick[i], "%d", i);
+    }
+
+}
+
+/* menu callback */
+void main_menu(int item) {
+
+    switch(item) {
+
+    case 'r':
+        lastspiketime = 0;
+	spiketimeptr = spiketime; 
+	nspikesused = 0;
+	rattimeptr = rattime;
+	ratposptr = ratpos;
+        rtxi = 0;
+        rtti = 0;
+	lastpass = 0;
+        estthetaptr = esttheta;
+        posi = 0;
+        dumpppm = 0;
+        presentation = 0;
+        break;
+    case 'R':
+        presentation = 1;
+	currentspeed = 20;
+	rtxinc = realncpx * currentspeed;
+	rttinc = realncpt * currentspeed;
+	posinc = currentspeed;
+        lastspiketime = 0;
+	spiketimeptr = spiketime; 
+	nspikesused = 0;
+	rattimeptr = rattime;
+	ratposptr = ratpos;
+        rtxi = 0;
+        rtti = 0;
+	lastpass = 0;
+        estthetaptr = esttheta;
+        posi = 0;
+        dumpppm = 0;
+        break;
+    case 'p':
+        lastspiketime = 0;
+	spiketimeptr = spiketime; 
+	nspikesused = 0;
+	rattimeptr = rattime;
+	ratposptr = ratpos;
+        rtxi = 0;
+        rtti = 0;
+	lastpass = 0;
+        estthetaptr = esttheta;
+        posi = 0;
+        dumpppm = 1;
+        break;
+    case 'b':
+        /* backup 10 sec */
+        ratposptr -= 5000;
+    if (ratposptr < ratpos) ratposptr = ratpos;
+    posi -= 5000;
+    if (posi < 0) posi = 0;
+    rattimeptr -= 5000;
+    if (rattimeptr < rattime) rattimeptr = rattime;
+    rtxi -= 5000 * realncpx;
+    if (rtxi < 0) rtxi = 0;
+    rtti -= 5000 * realncpt;
+    if (rtti < 0) rtti = 0;
+    estthetaptr -= 5000 * NTHETAP;
+    if (estthetaptr < esttheta) estthetaptr = esttheta;
+        lastspiketime = 0;
+
+    /* find the first spike after the current position */
+    nspikesused = 0;
+    spiketimeptr = spiketime; 
+    while ((nspikesused < nspikes) && (*spiketimeptr < *rattimeptr)) {
+        spiketimeptr++;
+        nspikesused++;
+        }
+        break;
+        
+    case 's':
+        animate ^= 1;
+        break;
+    case 'm':
+        grid ^= 1;
+        break;
+    case 'u':
+        currentspeed *= 2;
+        rtxinc = realncpx * currentspeed;
+        rttinc = realncpt * currentspeed;
+        posinc = currentspeed;
+        break;
+    case 'd':
+        currentspeed /= 2;
+        if (currentspeed < 1) {
+            currentspeed = 1;
+        }
+        rtxinc = realncpx * currentspeed;
+        rttinc = realncpt * currentspeed;
+        posinc = currentspeed;
+        break;
+    default:
+        break;
+    }
+}
+
+/* keyboard callback */
+void Keyboard(unsigned char key, int x, int y) {
+
+
+}
+
+void calctheta(int ncpx, int ncpt, float *thetax, float *thetat, int nthetax,
+               int nthetat, float prop, float *thetacurrx, float *thetacurrt)
+    /* prop is equal to the current timestep index / ntimestamps */
+{
+
+    int i;
+    int xstart, tstart;
+    int ncp;
+    float tmp;
+
+    /* find the pair of thetax and thetat variables to interpolate between */
+    xstart = (int) floor((nthetax-1) * prop);
+    tstart = (int) floor((nthetat-1) * prop);
+
+    if (xstart == ((nthetax-1) * prop)) {
+        /* this is right at xstart, so just set thetacurrx to the xstart element */
+        ncp = ncpx;
+        for (i = 0; i < ncp; i++) {
+            thetacurrx[i] = thetax[xstart*ncp+i];
+        }
+    }
+    else {
+        /* figure out the new proportion between xstart and xstart + 1 */
+        tmp = prop * (float) (nthetax-1) - (float) xstart;
+
+        /* interpolate between the two columns of thetax */
+        ncp = ncpx;
+        for (i = 0; i < ncp; i++) {
+            thetacurrx[i] = thetax[xstart*ncp+i] * (1 - tmp) +
+                            thetax[(xstart+1)*ncp+i] * tmp;
+        }
+    }
+
+    if (tstart == ((nthetat-1) * prop)) {
+        /* this is right at tstart, so just set thetacurrt to the tstart element */
+        ncp = ncpt;
+        for (i = 0; i < ncp; i++) {
+            thetacurrt[i] = thetat[tstart*ncp+i];
+        }
+    }
+    else {
+        /* figure out the new proportion between tstart and tstart + 1 */
+        tmp = prop * (float) (nthetat-1) - (float) tstart;
+
+        /* interpolate between the two columns of thetat */
+        ncp = ncpt;
+        for (i = 0; i < ncp; i++) {
+            thetacurrt[i] = thetat[tstart*ncp+i] * (1 - tmp) +
+                            thetat[(tstart+1)*ncp+i] * tmp;
+        }
+    }
+
+    return;
+}
+
+void writeppm(int *ppmfilenum, unsigned char *pixels)
+{
+        FILE *ppmfile;
+        char tmpstring[100];
+        int i;
+
+        sprintf(tmpstring, "a%d.ppm", *ppmfilenum);
+        if ((ppmfile = fopen((const char *) tmpstring, "w")) == NULL) {
+                fprintf(stderr, "Error opening %s for writing\n", tmpstring);
+                exit(1);
+        }
+
+        /* write out the header information */
+        fprintf(ppmfile, "P6\n%d %d\n255\n", width, height);
+
+        /* write out the bytes from upper left to lower right */
+        for (i = height - 1; i >= 0; i--) {
+                fwrite(pixels+(i*width*3), sizeof(char), width*3, ppmfile);
+        }
+        fclose(ppmfile);
+        (*ppmfilenum)++;
+        return;
+}
+

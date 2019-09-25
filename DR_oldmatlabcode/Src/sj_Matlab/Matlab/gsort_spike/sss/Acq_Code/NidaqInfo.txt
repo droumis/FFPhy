@@ -1,0 +1,213 @@
+CAN DO ALL IN SOFTSCOPE
+
+
+>>ai=analoginput('nidaq',1)
+
+>> addchannel(ai,1:4);
+>> set(ai,'SampleRate',32000);
+>> set(ai,'SamplesPerTrigger',32000);
+>> start(ai)
+>> data=getdata(ai);
+>> plot(data)
+>> plot(data(:,1))
+>> demo toolbox 'Data Acquisition'
+>> out=daqhwinfo('nidaq')
+
+out = 
+
+           AdaptorDllName: [1x54 char]
+        AdaptorDllVersion: '2.5 (R14)'
+              AdaptorName: 'nidaq'
+               BoardNames: {1x2 cell}
+        InstalledBoardIds: {'1'  '2'}
+    ObjectConstructorName: {2x3 cell}
+
+>> out.AdaptorDllName
+
+ans =
+
+H:\Shantanu\Matlab\toolbox\daq\daq\private\mwnidaq.dll
+
+>> out.BoardNames
+
+ans = 
+
+    'PCI-MIO-16E-4'    'PCI-6713'
+
+>> out.ObjectConstructorName
+
+
+>> out.ObjectConstructorName(:)
+
+ans = 
+
+    'analoginput('nidaq',1)'
+             ''
+    'analogoutput('nidaq',1)'
+    'analogoutput('nidaq',2)'
+    'digitalio('nidaq',1)'
+    'digitalio('nidaq',2)'
+
+>>ai=analoginput('nidaq',1)
+
+Display Summary of Analog Input (AI) Object Using 'PCI-MIO-16E-4'.
+
+  Acquisition Parameters:  1000 samples per second on each channel.
+                           1000 samples per trigger on each channel.
+                           1 sec. of data to be logged upon START.
+                           Log data to 'Memory' on trigger.
+
+      Trigger Parameters:  1 'Immediate' trigger(s) on START.
+
+           Engine status:  Waiting for START.
+                           0 samples acquired since starting.
+                           0 samples available for GETDATA.
+
+AI object contains no channels.
+>> out=daqhwinfo('ai')
+??? Error using ==> daqhwinfo
+Error using ==> daqhwinfo
+Failure to open requested data acquisition device ai Class not registered
+
+                AdaptorName: 'nidaq'
+                       Bits: 12
+                   Coupling: {'DC'}
+                 DeviceName: [1x13 char]
+            DifferentialIDs: [1x8 double]
+                      Gains: [1x8 double]
+                         ID: '1'
+                InputRanges: [16x2 double]
+              MaxSampleRate: 250000
+              MinSampleRate: 0.0060
+             NativeDataType: 'int16'
+                   Polarity: {1x2 cell}
+                 SampleType: 'Scanning'
+             SingleEndedIDs: [1x16 double]
+              SubsystemType: [1x11 char]
+              TotalChannels: 16
+    VendorDriverDescription: [1x44 char]
+        VendorDriverVersion: '6.9.2'
+
+>>addchannel(ai,1:4);
+
+Display Summary of Analog Input (AI) Object Using 'PCI-MIO-16E-4'.
+
+AI object contains channel(s):
+
+   Index:  ChannelName:  HwChannel:  InputRange:  SensorRange:  UnitsRange:  Units:   
+   1       ''            1           [-5 5]       [-5 5]        [-5 5]       'Volts'  
+   2       ''            2           [-5 5]       [-5 5]        [-5 5]       'Volts'  
+   3       ''            3           [-5 5]       [-5 5]        [-5 5]       'Volts'  
+   4       ''            4           [-5 5]       [-5 5]        [-5 5]       'Volts'  
+
+>> AIinfo=propinfo(ai);
+
+ BufferingConfig: [1x1 struct]
+                BufferingMode: [1x1 struct]
+                      Channel: [1x1 struct]
+                  ChannelSkew: [1x1 struct]
+              ChannelSkewMode: [1x1 struct]
+                  ClockSource: [1x1 struct]
+                DataMissedFcn: [1x1 struct]
+         DriveAISenseToGround: [1x1 struct]
+                     EventLog: [1x1 struct]
+    ExternalSampleClockSource: [1x1 struct]
+      ExternalScanClockSource: [1x1 struct]
+       HwDigitalTriggerSource: [1x1 struct]
+           InitialTriggerTime: [1x1 struct]
+            InputOverRangeFcn: [1x1 struct]
+                    InputType: [1x1 struct]
+                  LogFileName: [1x1 struct]
+                      Logging: [1x1 struct]
+                  LoggingMode: [1x1 struct]
+                LogToDiskMode: [1x1 struct]
+            ManualTriggerHwOn: [1x1 struct]
+                         Name: [1x1 struct]
+                 NumMuxBoards: [1x1 struct]
+                      Running: [1x1 struct]
+              RuntimeErrorFcn: [1x1 struct]
+                   SampleRate: [1x1 struct]
+              SamplesAcquired: [1x1 struct]
+           SamplesAcquiredFcn: [1x1 struct]
+      SamplesAcquiredFcnCount: [1x1 struct]
+             SamplesAvailable: [1x1 struct]
+            SamplesPerTrigger: [1x1 struct]
+                     StartFcn: [1x1 struct]
+                      StopFcn: [1x1 struct]
+                          Tag: [1x1 struct]
+                      Timeout: [1x1 struct]
+                     TimerFcn: [1x1 struct]
+                  TimerPeriod: [1x1 struct]
+                 TransferMode: [1x1 struct]
+               TriggerChannel: [1x1 struct]
+             TriggerCondition: [1x1 struct]
+        TriggerConditionValue: [1x1 struct]
+                 TriggerDelay: [1x1 struct]
+            TriggerDelayUnits: [1x1 struct]
+                   TriggerFcn: [1x1 struct]
+                TriggerRepeat: [1x1 struct]
+             TriggersExecuted: [1x1 struct]
+                  TriggerType: [1x1 struct]
+                         Type: [1x1 struct]
+                     UserData: [1x1 struct]
+
+
+>>>>>>>>>>>>>>>>>
+
+set Configure or display device object properties Syntaxset(obj)
+props = set(obj)
+set(obj,'PropertyName')
+props = set(obj,'PropertyName')
+set(obj,'PropertyName',PropertyValue,...)
+set(obj,PN,PV)
+set(obj,S)
+ArgumentsobjA device object, array of device objects, channels, or lines.'PropertyName'A property name.PropertyValueA property value.PNA cell array of property names.PVA cell array of property values.SA structure whose field names are device object, channel, or line properties.propsA structure array whose field names are the property names for obj, or a cell array of possible values
+>>>>>>>>>>>>>>>>
+
+setverify Configure and return the specified property SyntaxActual = setverify(obj,'PropertyName',PropertyValue)
+Actual = setverify(obj.Channel(index),'PropertyName',PropertyValue)
+Actual = setverify(obj.Line(index),'PropertyName',PropertyValue)
+
+ExampleCreate the analog input object ai for a National Instruments AT-MIO-16DE-10 board, add eight hardware channels to it, and set the sample rate to 10,000 Hz using setverify. 
+ai = analoginput('nidaq',1);
+ch = addchannel(ai,0:7);
+ActualRate = setverify(ai,'SampleRate',10000);
+Suppose you use setverify to set the input range for all channels contained by ai to -8 to 8 volts. ActualInputRange = setverify(ai.Channel,'InputRange',[-8 8]);
+The InputRange value was actually rounded up to -10 to 10 volts. ActualInputRange{1}
+ans =
+   -10    10
+
+
+FOR OUR INPUT BOARD, I HAVE TO SPECIFY THAT IT IS NRSE AND NOT DIFF
+>>>>>>>>>>>>>>
+
+get
+
+>>>>>>>>>>>>>
+
+showdaqevents Display event log information
+Syntax
+showdaqevents(obj)
+showdaqevents(obj,index)
+showdaqevents(struct)
+showdaqevents(struct,index)
+out = showdaqevents(...)
+>>>>>>>>>>>>>>>>>
+
+size Return the size of a device object, channel group, or line group Syntaxd = size(obj)
+[m1,m2,m3,...,mn] = size(obj)
+m = size(obj,dim)
+d = size(obj.Channel)
+[m1,m2,m3,...,mn] = size(obj.Channel)
+m = size(obj.Channel,dim)
+d = size(obj.Line)
+[m1,m2,m3,...,mn] = size(obj.Line)
+m = size(obj.Line,dim)
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+softscope 
+Open the data acquisition oscilloscope
+
+Syntaxsoftscope
+softscope(obj)
+softscope('fname.si')

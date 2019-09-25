@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of gcv</title>
+  <meta name="keywords" content="gcv">
+  <meta name="description" content="generalized cross-validation.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">chronux_1_50</a> &gt; <a href="index.html">locfit</a> &gt; gcv.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for chronux_1_50\locfit&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>gcv
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>generalized cross-validation.</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function g=gcv(varargin) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> generalized cross-validation.
+
+ Usage: g=gcv(varargin)
+
+
+ Author: Catherine Loader.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="locfit.html" class="code" title="function fit=locfit(varargin)">locfit</a>	Smoothing noisy data using Local Regression and Likelihood.</li><li><a href="rsum.html" class="code" title="function z = rsum(fit)">rsum</a>	function to extract log-likelihood and degrees-of-freedom</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="gcvplot.html" class="code" title="function g=gcvplot(alpha,varargin)">gcvplot</a>	Computes and plots the Generalized Cross-Validation score (GCV) for local fits with different smoothing parameters.</li></ul>
+<!-- crossreference -->
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function g=gcv(varargin)</a>
+0002 <span class="comment">% generalized cross-validation.</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% Usage: g=gcv(varargin)</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% Author: Catherine Loader.</span>
+0008 
+0009 fit = <a href="locfit.html" class="code" title="function fit=locfit(varargin)">locfit</a>(varargin{:});
+0010 rs = <a href="rsum.html" class="code" title="function z = rsum(fit)">rsum</a>(fit);
+0011 
+0012 df0 = rs(1);
+0013 df1 = rs(2);
+0014 llk = rs(3);
+0015 n = size(fit{1}{1},1);
+0016 gc = -2*n*llk/((n-df0)^2);
+0017 g = [llk df0 df1 gc];
+0018 
+0019 <span class="keyword">return</span>;</pre></div>
+<hr><address>Generated on Mon 09-Oct-2006 00:54:52 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+</body>
+</html>

@@ -1,0 +1,75 @@
+%adapt_dir= {'KS'};
+%adapt_dir= {'adapt_lin'};
+%adapt_dir= {'adapt_xp015_t015'};
+%adapt_dir= {'adapt_xp2_t1'};
+adapt_dir= {
+%'adapt_xp015_t015', 
+'adapt_xp4_t003',
+%'adapt_xp5_t3', 
+%'adapt_xp20_t015', 
+%'adapt_xp50_t015'
+%'adapt_xp015_t005',  
+%'adapt_xp1_t015', 
+%'adapt_xp05_t015',
+%'adapt_xp5_t1e-4',
+%'AS_xp4_t1e-3',
+%'AS_xp2_t005',
+%'AS_xp2_t025',
+%'AS_xp015_t1',
+%'AS_xp4_t001',
+%'AS_xp5_t3',
+%'AS_xp20_t015',
+};
+%adapt_dir= {'adapt_xp015_t015', 'adapt_xp2_t1', 'adapt_xp05_t015', ...
+%'adapt_xp015_t005', 'adapt_xp1_t015', 'adapt_xp2_t005'};
+%select_id= {'all-placefields-HomeArm'};
+%select_id= {'all-placefields-HomeArm'};
+%select_id= {'all-placefields3-HomeArm'};
+%select_id= {'placefields4-novel'};
+select_id= {
+'placefields4-satellite',
+%'placefields4-train',
+};
+%select_id= {'placefields4-satellite'};
+%select_id= {'placefields4'};
+%select_id= { 'placefields4-fam', 'placefields4-novel'};
+%select_id= {'placefields4-train', 'placefields4-satellite'};
+%select_id= {'placefields4-train', 'placefields4-satellite', 'placefields4-novel', 'placefields4-fam'};
+
+%forallrats('selectNovel(''satellite'')', 'placefields4', 'data2');
+
+
+
+tic
+for iS=1:length(select_id)
+    viol= []; vind= [];
+    for i=1:length(adapt_dir)
+        fprintf(1, '******* starting %s %s *******\n', select_id{iS}, adapt_dir{i});
+        % no reruns
+        forallrats('runAdaptFilter([], [], 1)', select_id{iS}, adapt_dir{i});
+        % run all 
+%        forallrats('runAdaptFilter', select_id{iS}, adapt_dir{i});
+        % run all for three rats
+%        forallrats('runAdaptFilter', select_id{iS}, adapt_dir{i}, {'kyl','sta','fel'});
+
+
+%                forallrats('runStats', select_id{iS}, adapt_dir{i});
+        forallrats('showKSplot([],1,r);', select_id{iS}, adapt_dir{i});
+        [viol(:,2*i-1:2*i), vind]= showKSplot([],1,-1);
+        save(['KStest-' select_id{iS} '-' adapt_dir{i}], 'adapt_dir',  'select_id',  'viol',  'vind')
+%        save(['/bach/theta/work/KStest-' select_id{iS} ], 'adapt_dir',  'select_id',  'viol',  'vind')
+
+        %    collectAnaList(select_id, adapt_dir{i});
+
+        %    forallrats('cmpStats(''Integral2d'', ''LinCorr'', 0,r)', select_id{iS}, adapt_dir{i});
+%            forallrats('cmpStats(''Integral2d'', ''MutualInfo'', 0,r);', select_id{iS}, adapt_dir{i});
+%            sel= cmpStats;
+%            figname= ['asym-' select_id{iS} '-' adapt_dir{i}];
+%            save(figname, 'sel');
+%            disp('press key'); pause
+    end
+end
+%save  KStest_summary viol vind
+toc
+
+
