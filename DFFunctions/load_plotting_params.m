@@ -1,5 +1,5 @@
 
-function plot_params = load_plotting_params(param_set)
+function plot_params = load_plotting_params(param_set, varargin)
 %% param_set : cell array of strings
 % loads variables for each case of the input param_set to caller workspace
 % i.e.:: load_plotting_params({'occnormfiring', 'riptrigspiking'})
@@ -7,7 +7,11 @@ function plot_params = load_plotting_params(param_set)
 
 % helpful: 
 % 'FontSize',Pp.FontS,'FontWeight',Pp.FontW,'FontName', Pp.FontNm
-
+pausefigs = 1;
+savefigs = 0;
+if ~isempty(varargin)
+    assign(varargin{:})
+end
 if ~isa(param_set,'cell')
     param_set = {param_set};
 end
@@ -29,6 +33,7 @@ for s = param_set
             FontNm = 'Arial';
             SupFontS = 12;
             tickSz = 8; % tick labels font size
+            set(0,'defaultAxesFontSize',10)
         case 'fitLM'
             stitFsize = 16;
             tickFsize = 8;
@@ -43,6 +48,8 @@ for s = param_set
             MgBm =  0.04; % margin bottom
         case 'dfa_lickswrcorr'
             position = [.1 .1 .5 .5];
+            SpHz = 0.15; %spacing horizontal
+            SpVt = 0.15; % spacing vertical
         case 'dfa_lickXCorrSpikes'
             position = [.1 .1 .3 .5];
             MgBm =  0.07; % margin bottom
@@ -297,5 +304,13 @@ end
 w = whos;
 for a = 1:length(w)
 plot_params.(w(a).name) = eval(w(a).name);
+plot_params.posparams = {'SpacingVert', SpVt, 'SpacingHoriz', SpHz, ...
+    'MarginLeft', MgLt, 'MarginRight', MgRt, 'MarginTop', MgTp, ...
+    'MarginBottom', MgBm};
 end
+% init fig
+if savefigs && ~pausefigs; close all;
+    ifig = figure('Visible','off','units','normalized','position', plot_params.position, ...
+        'color','white'); else
+    ifig = figure('units','normalized','position',plot_params.position, 'color','white'); end
 end

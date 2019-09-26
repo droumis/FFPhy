@@ -10,7 +10,7 @@ end
 days = unique(epochs(:,1));
 lick = loaddatastruct(animaldir, animal, 'lick', days);
 pos = loaddatastruct(animaldir, animal, 'pos', days);
-
+out = {};
 for i = 1:size(epochs,1)
     day = epochs(i,1);
     epoch = epochs(i,2);
@@ -26,7 +26,12 @@ for i = 1:size(epochs,1)
         end
     end
     % filter out bouts with less than boutNum licks
-    licksInbout = logical(isExcluded(lickTimes, [boutIntvStart boutIntvEnd]));
+    try
+        licksInbout = logical(isExcluded(lickTimes, [boutIntvStart boutIntvEnd]));
+    catch
+        fprintf('error defining lick bouts for %d %d\n', day, epoch)
+        continue
+    end
     N = histcounts(lickTimes(licksInbout), sort([boutIntvStart; boutIntvEnd]));
     incintv = N(1:2:end) > boutNum;
     boutIntvStart = boutIntvStart(incintv);

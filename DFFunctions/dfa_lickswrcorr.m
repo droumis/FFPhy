@@ -13,8 +13,6 @@
 % that sucks is the variability of the phase of each beam break has some
 % variability probably..
 
-
-
 function out = dfa_lickswrcorr(idx, excludeIntervals, varargin)
 pconf = paramconfig;
 pausefigs = 0;
@@ -24,14 +22,16 @@ plotfigs = 1;
 bin = .01;
 tmax = 1;
 boutNum = 10;
-lickgap = .5;
-sw1 = bin*3;
+lickgap = .500;
+sw1 = bin*2;
 % sw1 = 0.005; 
-sw2 = .5;
+sw2 = .250;
 rmstmax = 0.1;
 rmsmincounts = 50;
 numshuffs = 1000;
 shuffOffset = 200; %ms
+returnoutput = 1;
+sigperc = .975;
 if ~isempty(varargin); assign(varargin{:}); end
 day = idx(1,1); epoch = idx(1,2);
 [~, fname,~] = fileparts(mfilename('fullpath'));
@@ -41,6 +41,9 @@ outdir = sprintf('%s/%s/%s/', pconf.andef{4},fname,animal,animal);
 evid = find(contains(varargin(1:2:end), 'rippleskon'));
 o = [1:2:length(varargin)]+1;
 events = varargin{o(evid)};
+
+out = make_blank(idx);
+
 try
     eventTime = [events{day}{epoch}{1}.starttime events{day}{epoch}{1}.endtime];
 catch; fprintf('no events detected for day%d ep%d\n',day,epoch); return; end
@@ -55,12 +58,22 @@ andef = animaldef(animal);
 licks = lick{day}{epoch}.starttime;
 idlicks = lick{day}{epoch}.id;
 licksVecs = getLickBout(andef{2}, animal, [day epoch]);
-boutIntvs = vec2list(licksVecs{day}{epoch}.lickBout, licksVecs{day}{epoch}.time);
+try
+    boutIntvs = vec2list(licksVecs{day}{epoch}.lickBout, licksVecs{day}{epoch}.time);
+catch
+    fprintf('error defining lick bouts for %d %d\n', day, epoch)
+    return
+end
 swrinbouts = swrStart(logical(isExcluded(swrStart, boutIntvs)));
-fprintf('%.02f perc swrs within the %d lickbouts\n', ...
+swrinbouts = sort(swrinbouts(~isnan(swrinbouts)));
+fprintf('%d (%.02f perc) swrs within the %d lickbouts\n', numel(swrinbouts),...
     length(swrinbouts)/length(swrStart)*100, size(boutIntvs,1))
+if isempty(swrinbouts)
+    fprintf('no swrs in lick bouts for %d %d.. skipping\n', day, epoch)
+    return
+end
 lickboutlicks = licks(logical(isExcluded(licks, boutIntvs)));
-fprintf('%.02f perc licks within the %d lickbouts\n', ...
+fprintf('%d (%.02f perc) licks within the %d lickbouts\n', numel(lickboutlicks),...
     length(lickboutlicks)/length(licks)*100, size(boutIntvs,1))
 
 time = (-tmax+bin/2):bin:(tmax-bin/2);
@@ -73,15 +86,19 @@ smthxcShuff = [];
 excorrShuff = [];
 phasemodShuff = [];
 r = randi([-shuffOffset shuffOffset],length(swrinbouts),numshuffs)/1e3;
-swrStartShift = bsxfun(@plus,swrinbouts,r); % make shuffle array
+swrStartShift = bsxfun(@plus,swrinbouts,r); %, make shuffle array
 for i = 1:numshuffs
     % (mean/std xcorr norm smooth)
 %     swrStartShift = sort(swrinbouts+r(:,i));
-    xcSh = spikexcorr(swrStartShift(:,i),lickboutlicks, bin, tmax); 
+    xcSh = spikexcorr(sort(swrStartShift(:,i)), lickboutlicks, bin, tmax);
     normxc = xcSh.c1vsc2 ./ sqrt(xcSh.nspikes1 * xcSh.nspikes2); % normalize
-    smthxcShuff(i,:) = smoothvect(normxc, g1);
+    try 
+        smthxcShuff(end+1,:) = smoothvect(normxc, g1);
+    catch % if normxc is empty
+        continue
+    end
     % excorr
-    excorrShuff(i) = nanmean(excesscorr(xcSh.time, xcSh.c1vsc2, xcSh.nspikes1, ...
+    excorrShuff(end+1) = nanmean(excesscorr(xcSh.time, xcSh.c1vsc2, xcSh.nspikes1, ...
         xcSh.nspikes2, sw1, sw2)); %0 lag
     % MRVmag
     [~,~,spbin] = histcounts(swrStartShift(:,i), lickboutlicks);
@@ -91,21 +108,28 @@ for i = 1:numshuffs
     lickbinstart = lickboutlicks(spbin);
     relswrtime = goodswr - lickbinstart; % swrtime - the nearest preceding lick in bout
     ili = lickboutlicks(spbin+1) - lickbinstart; % inter lick interval
-    useILI = all([ili > .1, ili < .2],2); % include know lick bout intervals
+    useILI = all([ili > .05, ili < .25],2); % include know lick bout intervals
+%     fprintf('%d good swrs in lick bout intervals.. %d %d\n', sum(useILI), day, epoch)
+    if sum(useILI) < 5
+        fprintf('only %d swrs in lickbouts during a shuffle, skipping %d %d\n', ...
+            sum(useILI), day, epoch)
+        return
+    end
     swrlickcylcephase = relswrtime(useILI) ./ ili(useILI);
-    swrLickPhaseShift = 2*pi*(swrlickcylcephase);
-    meanvec = mean(exp(1i*swrLickPhaseShift));
-    meanMRVmagShuff(i) = abs(meanvec);
+    swrLickPhaseShuff = 2*pi*(swrlickcylcephase);
+    meanvec = mean(exp(1i*swrLickPhaseShuff));
+    meanMRVmagShuff(end+1) = abs(meanvec);
+    vecangShuff = angle(meanvec);
     % phasemod
-    [~, z] = circ_rtest(swrLickPhaseShift); % pval is the stat rayleigh test. z is mean res vec
-    phasemodShuff(i) = log(z); % i think log makes it 'variance normalized' (karalis,sirota)
+    [~, z] = circ_rtest(swrLickPhaseShuff); % pval is the stat rayleigh test. z is mean res vec
+    phasemodShuff(end+1) = log(z); % i think log makes it 'variance normalized' (karalis,sirota)
 end
 smthxcShuffstd = std(smthxcShuff); % shuff xcorr std
 smthxcShuffmean = mean(smthxcShuff); %shuff xcorr mean
 
 %% real
 % xcorr norm smooth
-xc = spikexcorr(lickboutlicks, swrinbouts, bin, tmax);
+xc = spikexcorr(swrinbouts,lickboutlicks, bin, tmax);
 normxc = xc.c1vsc2 ./ sqrt(xc.nspikes1 * xc.nspikes2); % normalize xc
 smthxc = smoothvect(normxc, g1); % smooth xc
 % excorr
@@ -124,6 +148,10 @@ if any(relswrtime) < 0
 end
 ili = licks(spbin+1) - licks(spbin);
 useILI = all([ili > .1, ili < .2],2);
+if sum(useILI) < 20
+    fprintf('only %d swrs in lickbouts, skipping %d %d\n', sum(useILI), day, epoch)
+    return
+end
 fprintf('%.03f mean %.03f max %.03f min ILI \n', mean(ili), max(ili), min(ili))
 swrlickcylcephase = relswrtime(useILI) ./ ili(useILI);
 swrLickPhase = 2*pi*(swrlickcylcephase);
@@ -136,19 +164,15 @@ phasemod = log(z); % i think log makes it 'variance normalized' (karalis,sirota)
 
 %% plot
 if plotfigs
-    Pp=load_plotting_params({'defaults','dfa_lickswrcorr'});
-    if savefigs && ~pausefigs; close all;
-        ifig = figure('Visible','off','units','normalized','position', Pp.position, ...
-            'color','white'); else
-        ifig = figure('units','normalized','position',Pp.position, 'color','white'); end
+    Pp=load_plotting_params({'defaults','dfa_lickswrcorr'}, 'pausefigs', pausefigs, ...
+        'savefigs', savefigs);
     %% Xcorr norm smooth, shuff mean/std
-    sf1 = subaxis(3,2,1,'SpacingVert', Pp.SpVt, 'SpacingHoriz', Pp.SpHz, ...
-        'MarginLeft', Pp.MgLt, 'MarginRight', Pp.MgRt, 'MarginTop', Pp.MgTp, ...
-        'MarginBottom', Pp.MgBm); set(gca, 'Tag', 'ripkons');
+    sf1 = subaxis(2,2,1,Pp.posparams{:});
+    sf1.Tag = 'xcorr';
     % shuffled xcorr mean.std ghost trail
-    plot(xc.time, smthxcShuffmean, 'color', [0 0 1 .2], 'linewidth', 1);
+    plot(time, smthxcShuffmean, 'color', [0 0 1 .2], 'linewidth', 1);
     hold on;
-    fill([xc.time'; flipud(xc.time')],[smthxcShuffmean'-smthxcShuffstd';flipud(smthxcShuffmean'+smthxcShuffstd')],'b',...
+    fill([time'; flipud(xc.time')],[smthxcShuffmean'-smthxcShuffstd';flipud(smthxcShuffmean'+smthxcShuffstd')],'b',...
         'linestyle','none', 'facealpha', .1);
     % xcorr norm
     bar(xc.time, normxc, 'k', 'facealpha', .2, 'edgealpha', 0)
@@ -157,71 +181,72 @@ if plotfigs
     line([0 0], ylim, 'color', 'k', 'linestyle', '--', 'linewidth', .5)
     
     ylabel('xcorr');
-    xlabel('lag s');
+    xlabel('time from lick s');
 %     title('xcorr 
     hold off;
     %% excorr over shuff excorr cdf distr
     % relative swr from last lick
-    sf2 = subaxis(3,2,2);
-    histogram(excorrShuff, 60,'Normalization','pdf','edgealpha', 0, 'facecolor', 'k');
-    axis tight; 
-    hold on;
+    sf2 = subaxis(2,2,2);
+    histogram(excorrShuff, 60,'Normalization','probability','edgealpha', 0, 'facecolor', 'k');
     excsort = sort(excorrShuff);
-    idx99 = round(.99*length(excorrShuff));
-    line([excsort(idx99) excsort(idx99)], ylim, 'color', [0 0 0 .8], 'linestyle', '--');
+    idxsig = round(sigperc*length(excorrShuff));
+    line([excsort(idxsig) excsort(idxsig)], ylim, 'color', [0 0 0 .8], 'linestyle', '--');
+    hold on;
     line([excorr excorr], ylim, 'color', 'r');
     excp = 1-sum(excorr>excorrShuff)/length(excorrShuff);
     title(sprintf('excorr %.03f p%.03f', excorr, excp));
-    hold off;
-%     hold on
-%     histogram(relswrtime(useILI),0:.008:.2, 'facecolor', 'k', 'Normalization', 'probability');
-%     %     x = histcounts(relswrtime,100); %, 'Normalization', 'probability');
-%     %     [f,xi] = ksdensity(x,'bandwidth',.02, 'function', 'cumhazard');
-% %     plot(xi,f);
-%     histogram(ili(useILI), 0:.008:.2, 'Normalization', 'probability')
-% %     xlim([0 .2])
-%     ylabel('swr-lag since licktrig')
-%     hold off
-    %% mag distr
-    sf3 = subaxis(3,2,3);
-    histogram(meanMRVmagShuff, 60, 'Normalization', 'pdf', 'edgealpha', 0, 'facecolor', 'k');
+    ylabel('probability')
+    xlabel('excess corr')
     axis tight
-    hold on;
-    mrvsort = sort(meanMRVmagShuff);
-    idx99 = round(.99*length(meanMRVmagShuff));
-    line([mrvsort(idx99) mrvsort(idx99)], ylim, 'color', [0 0 0 .8], 'linestyle', '--');
-    hold on
-    line([meanMRVmag meanMRVmag], ylim, 'color', 'r');
-    mrvp = 1-sum(meanMRVmag>meanMRVmagShuff)/length(meanMRVmagShuff);
-    title(sprintf('MRVmag %.03f p%.03f', meanMRVmag, mrvp));
-    hold off
+    hold off;
+%     %% mag distr
+%     sf3 = subaxis(3,2,3);
+%     histogram(meanMRVmagShuff, 60, 'Normalization', 'probability', 'edgealpha', 0, 'facecolor', 'k');
+%     hold on;
+%     mrvsort = sort(meanMRVmagShuff);
+%     idxsig = round(sigperc*length(meanMRVmagShuff));
+%     line([mrvsort(idxsig) mrvsort(idxsig)], ylim, 'color', [0 0 0 .8], 'linestyle', '--');
+%     hold on
+%     line([meanMRVmag meanMRVmag], ylim, 'color', 'r');
+%     mrvp = 1-sum(meanMRVmag>meanMRVmagShuff)/length(meanMRVmagShuff);
+%     title(sprintf('MRVmag %.03f p%.03f', meanMRVmag, mrvp));
+%     ylabel('probability')
+%     axis tight
+%     hold off
     
     %% phase mod
-    sf4 = subaxis(3,2,4);
-    histogram(phasemodShuff, 100, 'Normalization', 'pdf', 'edgealpha', 0, 'facecolor', 'k');
-    axis tight
+    sf4 = subaxis(2,2,4);
+    histogram(phasemodShuff, 100, 'Normalization', 'probability', 'edgealpha', 0, 'facecolor', 'k');
     hold on;
     mrvsort = sort(phasemodShuff);
-    idx99 = round(.99*length(phasemodShuff));
-    line([mrvsort(idx99) mrvsort(idx99)], ylim, 'color', [0 0 0 .8], 'linestyle', '--');
+    idxsig = round(sigperc*length(phasemodShuff));
+    line([mrvsort(idxsig) mrvsort(idxsig)], ylim, 'color', [0 0 0 .8], 'linestyle', '--');
     hold on
     line([phasemod phasemod], ylim, 'color', 'r');
     modp = 1-sum(phasemod>phasemodShuff)/length(phasemodShuff);
-    title(sprintf('phasemod %.03f p%.03f', phasemod, modp));
+    title(sprintf('phasemod %.03f p%.03f Rpval%.03f', phasemod, modp, pval));
+    ylabel('probability')
+    xlabel('log(Rayleigh Z)')
+    axis tight
     hold off
     
     %% polar distr phase clustering, swrLickPhase, meanMRVmag
-    sf5 = subaxis(3,2,5);
-    a = polarhistogram(swrLickPhase, 16, 'Normalization', 'pdf', 'edgealpha', 0, 'facealpha', .9);
-    hold on
+    sf3 = subaxis(2,2,3);
+%     a = polarhistogram(swrLickPhase, 16, 'Normalization', 'pdf', 'edgealpha', 0,...
+%         'facealpha', .5);
     polarplot([zeros(size(swrLickPhase,1),1) swrLickPhase]', ...
-       repmat([0 max(a.Values)],size(swrLickPhase,1),1)', 'k');
-    polarplot([0; vecang], [0; meanMRVmag], 'r')
+       repmat([0 1],size(swrLickPhase,1),1)', 'color', [0 0 0 .4], 'linewidth', 4);
+   hold on
+    polarplot([0; vecang], [0; meanMRVmag], 'color', [1 0 .3], 'linewidth', 4)
+    grid off
+    rticks([])
+    thetaticks([])
+    title('swr lick-phase')
     hold off
     axis tight
     %% ---- super axis -----
-    sprtit = sprintf('%s %d %d lickVSswr bin20ms shuff200msSTD', animal,day,epoch);
-    sprax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
+    sprtit = sprintf('%s %d %d lickswrcorr', animal,day,epoch);
+    sprax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', gcf);
     iStitle = text(.5, .98, {sprtit}, 'Parent', sprax, 'Units', 'normalized');
     set(iStitle,'FontWeight','bold','FontName','Arial','horizontalAlignment','center', ...
         'FontSize',12);
@@ -233,6 +258,7 @@ if plotfigs
 end
 if returnoutput
     out.index = idx;
+    out.time = time;
     out.swrStart = swrStart;
     out.licks = licks;
     out.idlicks = idlicks;
@@ -241,14 +267,41 @@ if returnoutput
     out.normxc = normxc;
     out.smthxc = smthxc;
     out.excorr = excorr;
-    out.xcrms = xcrms;
+%     out.xcrms = xcrms;
     out.swrinbouts = swrinbouts;
     out.relswrtime = relswrtime;
     out.meanMRVmag = meanMRVmag;
     out.swrLickPhase = swrLickPhase;
     out.vecang = vecang;
     out.phasemod = phasemod;
-    out.meanMRVmagShift = meanMRVmagShuff;
-    out.swrLickPhaseShift = swrLickPhaseShift;
+    out.meanMRVmagShuff = meanMRVmagShuff;
+    out.swrLickPhaseShuff = swrLickPhaseShuff;
+    out.excorrShuff = excorrShuff;
+    out.phasemodShuff = phasemodShuff;
+    out.smthxcShuff = smthxcShuff;
 end
+end
+function out = make_blank(idx)
+    out.index = idx;
+    out.time = [];
+    out.swrStart = [];
+    out.licks = [];
+    out.idlicks = [];
+    out.boutIntvs = [];
+    out.xc = [];
+    out.normxc = [];
+    out.smthxc = [];
+    out.excorr = [];
+%     out.xcrms = [];
+    out.swrinbouts = [];
+    out.relswrtime = [];
+    out.meanMRVmag = [];
+    out.swrLickPhase = [];
+    out.vecang = [];
+    out.phasemod = [];
+    out.meanMRVmagShuff = [];
+    out.swrLickPhaseShuff = [];
+    out.excorrShuff = [];
+    out.phasemodShuff = [];
+    out.smthxcShuff = [];
 end

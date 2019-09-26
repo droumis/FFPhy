@@ -1,21 +1,21 @@
 
 create_filter = 1;
-run_ff = 1;
+run_ff = 0;
 save_ffdata = 0;
 load_ffdata = 0;
 stack_spikes = 0;
 
-make_licks = 0;
+make_licks = 1;
 
 pilotEpoch = 0;
-loadEpoch = 1;
-run_dfa = 1;
+loadEpoch = 0;
+run_dfa = 0;
 
 plotfigs = 1;
 displayplots = 0;
 saveplots = 1;
 %% data filter params
-Fp.animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ2', 'JZ4'};
+Fp.animals = {'JZ3'};
 Fp.filtfunction = 'dfa_lickXCorrSpikes';
 Fp.add_params = {'savefigs', 'wtrackdays', 'valid_ntrodes', 'nonMU_cells'}; %'exemplar_wepochs'
 %% FF

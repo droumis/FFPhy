@@ -201,6 +201,11 @@ for s = Fp.params
             
         case 'dfa_lickswrcorr'
            % /home/droumis/Src/Matlab/filterframework_dr/DFFunctions/dfa_lickswrcorr.m
+            bin = .01;
+            tmax = 1;
+            sw1 = bin*2;
+            sw2 = .250;
+            sigperc = .975;
             eventtype = 'ca1rippleskons';
             consensus_numtets = 2;   % minimum # of tets for consensus event detection
             minstdthresh = 2;        % STD. how big your ripples are
@@ -211,7 +216,7 @@ for s = Fp.params
                 'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
                 'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
                 'minvelocity', minvelocity,'maxvelocity',maxvelocity};            
-            options = {'savefigas', 'png', 'bin', .02, 'tmax', 1, 'savefigs', savefigs, ...
+            options = {'savefigas', 'png', 'bin', bin, 'tmax', tmax, 'savefigs', savefigs, ...
                 'pausefigs', pausefigs};
             filtfunction = 'dfa_lickswrcorr';
             iterator = 'singleepochanal';
