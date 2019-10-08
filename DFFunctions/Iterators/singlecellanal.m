@@ -14,7 +14,7 @@ function f = singlecellanal(f, varargin)
 % The output of the call function can either be a 1 by N vector, or a structure.
 % The outputs are stored in f().output, grouped using the same groupings as
 % in the filter.
-
+returnStruct = 1;
 if ~isempty(varargin)
     assign(varargin{:})
 end
@@ -44,7 +44,7 @@ for an = 1:length(f)
     end
     %iterate through the epochs within each data group
     fprintf(':::::::: single cell iterator :::::::: \n');
-    for g = 1:length(f(an).epochs)
+    for g = 1:length(f(an).epochs) % what is this intended for?
         for e = 1:size(f(an).epochs{g},1)
             day = f(an).epochs{g}(e,1);
             ep = f(an).epochs{g}(e,2);
@@ -102,6 +102,10 @@ for an = 1:length(f)
             f(an).output{g}{e} = fout;
         end
         f(an).output{g} = f(an).output{g}{:};
+        % i need to have an option to save as struct array, numeric array, cell array
+%         if returnStruct
+%             f(an).output{g} = [f(an).output{g}{:}];
+%         end
     end
 end
 

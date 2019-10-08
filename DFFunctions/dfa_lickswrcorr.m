@@ -173,7 +173,7 @@ if plotfigs
     plot(time, smthxcShuffmean, 'color', [0 0 1 .2], 'linewidth', 1);
     hold on;
     fill([time'; flipud(xc.time')],[smthxcShuffmean'-smthxcShuffstd';flipud(smthxcShuffmean'+smthxcShuffstd')],'b',...
-        'linestyle','none', 'facealpha', .1);
+        'linestyle','none', 'facealpha', .s1);
     % xcorr norm
     bar(xc.time, normxc, 'k', 'facealpha', .2, 'edgealpha', 0)
     % xcorr norm smooth

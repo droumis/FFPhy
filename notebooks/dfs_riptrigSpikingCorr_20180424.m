@@ -8,7 +8,7 @@ savefigs = 0;
 pausefigs = ~savefigs;
 runAntiAlias = 0;
 
-Fp = load_filter_params('riptrigspiking_withMU');
+Fp = load_filter_params('c');
 Fp.animals = {'D13'};
 Fp.days = [1:7];
 

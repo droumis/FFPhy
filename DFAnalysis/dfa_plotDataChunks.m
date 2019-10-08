@@ -182,7 +182,6 @@ boutIntvs = vec2list(bouts{day}{epoch}(:,2), bouts{day}{epoch}(:,1));
 noboutIntvs = vec2list(nobouts{day}{epoch}(:,2), nobouts{day}{epoch}(:,1));
 
 %% plot
-Pp=load_plotting_params({'defaults','dfa_plotDataChunks'});
 for ts = 1:length(timeSplits(:,1))
     tstart = timeSplits(ts,1);
     tend = timeSplits(ts,2);
@@ -194,11 +193,8 @@ for ts = 1:length(timeSplits(:,1))
         outdir = sprintf('%s/dfa_plotDataChunk/%s/', pconf.andef{4},animal); end
     if skipExist && exist([outdir strsave], 'file'); fprintf('skipping, exists\n');
         continue; end
-    if savefigs && ~pausefigs; close all;
-        ifig = figure('Visible','off','units','normalized','position', Pp.position);
-    else; ifig = figure('units','normalized','position',Pp.position); end
-    set(gcf,'color','white')
-    
+    Pp=load_plotting_params({'defaults','dfa_plotDataChunks'}, 'pausefigs', pausefigs, ...
+        'savefigs', savefigs);
     %% plot rip consensus power trace
     sf1 = subaxis(Pp.nrows,1,1,'SpacingVert', Pp.SpVt, 'SpacingHoriz', Pp.SpHz, ...
         'MarginLeft', Pp.MgLt, 'MarginRight', Pp.MgRt, 'MarginTop', Pp.MgTp, ...
@@ -330,7 +326,7 @@ for ts = 1:length(timeSplits(:,1))
     plot(veltime, vel); hold on; axis tight; % just to get ylims
     ylabel('Vel2D'); axis tight; set(gca,'YGrid','off','XGrid','on','TickDir','out','TickLength', [0.001 0]);
     yl = ylim; xlim([tstart tend]); xl = xlim; xticks(ceil(xl(1)):2:floor(xl(2)))
-    velinds = vel < maxvelocity; v = vel(velinds); v(v<4) = 1; v(v>=4) = 0; set(gca,'Xticklabel',[]); %
+    velinds = vel < maxvelocity; v = vel(velinds); v(v<maxvelocity) = 1; v(v>=maxvelocity) = 0; set(gca,'Xticklabel',[]); %
     stem(veltime(velinds),v*yl(2),'k','filled','Marker', 'none', 'linewidth',2,'color',[.8 .8 .8 .2]);
     plot(veltime,vel,'LineWidth',2,'Color', 'k', 'linestyle', ':'); hold off
     

@@ -1,7 +1,7 @@
 function [out] = dfa_riptrigspiking(index, excludeperiods, varargin)
 
 % DR 2019 adaptation of MS adapted 2016 from dfakk_geteventtriggeredspiking
-% This function finds spiking triggered to LFP events such as ripples.
+% This function finds spiking triggered to events such as ripples.
 
 disp(sprintf('%d %d %d %d',index))
 %
@@ -31,7 +31,7 @@ disp(sprintf('%d %d %d %d',index))
 %                       each ripple
 
 % default options
-eventsName = '';
+eventName = '';
 spikes = {};
 eventscons = {};
 pos = {};

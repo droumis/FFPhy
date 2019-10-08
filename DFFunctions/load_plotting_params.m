@@ -34,6 +34,15 @@ for s = param_set
             SupFontS = 12;
             tickSz = 8; % tick labels font size
             set(0,'defaultAxesFontSize',10)
+        case 'examples'
+            position = [.1 .1 .6 .5];
+            Yoffset = 600;
+            nrows = 5;
+            SpHz = 0;
+            MgBm =  0.1;
+            MgRt =  0.04;
+            MgLt = .08;
+            MgTp = .1;
         case 'fitLM'
             stitFsize = 16;
             tickFsize = 8;

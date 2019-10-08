@@ -29,10 +29,12 @@ end
 if run_ff; F = runfilter(F); for d = 1:length(F); F(d).datafilter_params = Fp; end; end
 if save_ffdata
     save_data(F, Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, 'filetail',...
-        sprintf('_%s', Fp.epochEnvironment)); end
+        sprintf('_%s', Fp.epochEnvironment));
+end
 if load_ffdata
     spikesF = load_data(Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, ...
-        Fp.animals, 'filetail', sprintf('_%s', Fp.epochEnvironment)); end
+        Fp.animals, 'filetail', sprintf('_%s', Fp.epochEnvironment));
+end
 
 if make_licks
     for ani = 1:length(F)
