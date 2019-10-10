@@ -61,17 +61,18 @@ for s = Fp.params
             %                 ' || ((isequal($type,''%s'')) && (isequal($environment,''%s'')))', ...
             %                 eptypeEnv{:});
             %             epochfilter = epochfilter(4:end); %trim first ||
-            
+        case 'ca1ntrodes'
+            tetfilter = '(isequal($valid,''yes'') && isequal($area,''ca1''))';
         case 'valid_ntrodes'
 %             ntAreas = {'ca1', 'mec', 'ref'}; %, 'por', 'v2l', 'sub'};
             tetfilter = '(isequal($valid,''yes'') && (isequal($area,''ca1'') || isequal($area,''mec'')))';
 %             tetfilter = tetfilter(4:end); %trim first ||
-            
         case 'same tet for eeg'
             eegfilter = {'geteegtet', 'theta','sametet', 1};
+%         case 'ca1SU'
+%             cellfilter = '(isequal($area, ''ca1'')) && ($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))';
         case 'nonMU_cells'
-            cellfilter = ...
-                '($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))';
+            cellfilter = '($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))';
         case '>100spikes_cells'
             cellfilter = '($numspikes > 100)';
         case '2s_win'
@@ -141,6 +142,8 @@ for s = Fp.params
             %         Fp.minvelocity, 'consensus_numtets',Fp.consensus_numtets,'welldist', ...
             %         Fp.welldist);
             %% filter function specific params
+        case 'swrlickmod'
+            filtfunction = 'swrlickmod';
         case 'wavelets4-300Hz'
             waveSet = '4-300Hz';
             wp = getWaveParams(waveSet);

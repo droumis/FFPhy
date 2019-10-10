@@ -25,15 +25,19 @@ for s = param_set
             SpVt = 0.05; % spacing vertical
             %             Pad = 0.00; % padding
             MgLt = 0.08; % margin left
-            MgRt = 0.015; % margin right
-            MgTp = 0.1; % margin top
-            MgBm =  0.05; % margin bottom
+            MgRt = 0.02; % margin right
+            MgTp = 0.08; % margin top
+            MgBm =  0.08; % margin bottom
             FontS = 8;
             FontW = 'bold';
             FontNm = 'Arial';
             SupFontS = 12;
             tickSz = 8; % tick labels font size
             set(0,'defaultAxesFontSize',10)
+        case 'lickBoutSUswrmod'
+            position = [.1 .1 .4 .5];
+            SpVt = 0.01;
+            win = [.5 .5];
         case 'examples'
             position = [.1 .1 .6 .5];
             Yoffset = 600;

@@ -1,3 +1,10 @@
+%{
+get the lick bout intervals
+inputs:
+epochs = n x 2 where n = [day epoch]
+
+%}
+
 function out = getLickBout(animaldir, animal, epochs, varargin)
 
 lickGap = .5; % upper inter bout-lick interval threshold in seconds 
