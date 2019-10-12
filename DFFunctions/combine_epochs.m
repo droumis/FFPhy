@@ -22,6 +22,7 @@ for ian = 1:length(Fp.animals)
     
     % find the unique day/tet outputs
     idata = [F.output{1}{:}];
+    idata = [idata{:}];
     matInds = cell2mat({idata.index}');
     [daytetcells, ~, daytetInds2 ] = unique(matInds(:,[1 3 4]), 'rows', 'stable');
     

@@ -30,22 +30,22 @@ and the mean of the shuffled SWR-PSTHs in the 0-200 ms window after SWR onset, t
 obtain a SWR-modulation measure. To determine SWR-modulation significance, we
 calculated SWR-modulation measures in the same way for the 5000 shuffled SWRPSTHs.
 If the SWR modulation measure of the real SWR-PSTH was greater than 95%
-of the shuffled PSTHs, the PFC neuron was determined to be SWR-modulated. 
+of the shuffled PSTHs, the PFC neuron was determined to be SWR-modulated.
 ... SWR-modulated neurons were categorized as SWR-excited
 or SWR-inhibited by comparing the rate in the 0-200 ms window after SWR onset with
 the rate in a pre-SWR background window -500 to -100 ms window before SWR onset.
 
 Text from Mari's paper about SU mod scoring:
-To detect significant SWR-modulation of NAc cells, we followed a procedure described 
-previously.  Briefly, for each cell, we circularly shuffled each SWR-triggered spike 
-train by a random amount up to ±0.5 s to generate 5000 shuffled PETHs.  We then 
-calculated the summed squared difference of the real PETH relative to the mean of 
+To detect significant SWR-modulation of NAc cells, we followed a procedure described
+previously.  Briefly, for each cell, we circularly shuffled each SWR-triggered spike
+train by a random amount up to ±0.5 s to generate 5000 shuffled PETHs.  We then
+calculated the summed squared difference of the real PETH relative to the mean of
 the shuffles in a 0-200 ms window post SWR-onset, and compared it to the same value
- for each shuffle relative to the mean of the shuffles.  Significance at p<0.05 
+ for each shuffle relative to the mean of the shuffles.  Significance at p<0.05
 indicates that the real modulation exceeded 95% of the shuffles.  The direction of
- modulation was defined from a modulation index, calculated as the mean firing rate 
-in the 0-200 ms window minus the mean baseline firing rate from -500 to -100 ms, divided 
-by the mean baseline firing rate.  This sign of this index was used to assign cells as 
+ modulation was defined from a modulation index, calculated as the mean firing rate
+in the 0-200 ms window minus the mean baseline firing rate from -500 to -100 ms, divided
+by the mean baseline firing rate.  This sign of this index was used to assign cells as
 significantly positively or negatively SWR-modulated.
 
 kenny doesn't have any real description of his modulation testing.. fucking
@@ -66,7 +66,7 @@ between two conditions.. i would only need to use like 2:50 Hz range..
 
 i like this because it will test for differences between conditions, and
 against noise, in time-frequency space.. instead of just doing a single
-time point as the 'modulation window'.. 
+time point as the 'modulation window'..
 - what wavelet script was i using to do all this perm testing?
 - should i just do the normal way first? that's probably the right thing to
 do to verify the % of modulated ca1 neurons vs the other papers.
@@ -85,18 +85,24 @@ finally, finally, make a heatraster of meanFR for all clusters per area (ca1, me
     - for each condition (lick, nonlick)
 .. putting the lick, nonlick, allswrs together, side by side, is probably
     most of the way towards arguing that these are real swr's.. or if they
-    are different, that's interesting, but i'll prob need to do decoding 
+    are different, that's interesting, but i'll prob need to do decoding
 %}
 pconf = paramconfig;
+respwin = [0 250]; % response period in ms rel to swr on
+basewin = [-350 -100]; % baseline period in ms rel to swr on
+minLBSwr = 10;
+minLBSwrSpikes = 10;
+numshuffs = 1000;
+
 create_filter = 0;
 run_ff = 0;
 save_ffdata = 0;
-load_ffdata =0;
-combineEpochs =0;
+load_ffdata = 0;
+combineEpochs = 0;
 saveCombinedEpochs = 0;
 loadCombinedEpochs = 0;
-calcmod = 1;
-plotfigs = 0;
+calcmod = 0;
+plotfigs = 1;
 
 pausefigs = 1;
 savefigs = 0;
@@ -109,9 +115,9 @@ Fp.animals = {'D10'}; %, 'D12', 'D13', 'JZ1', 'JZ2', 'JZ4'};
 %     Fp.filtfunction = 'dfa_lickBoutSpikeCorr';
 %     Fp.filtfunction = 'dfa_lickswrcorr';
 Fp.filtfunction = 'dfa_riptrigspiking';
-Fp.params = {'savefigs', 'wtrackdays', 'exemplar_wepochs','valid_ntrodes',...
-    Fp.filtfunction, 'nonMU_cells'};
+Fp.params = {'savefigs', 'wtrackdays', 'valid_ntrodes', Fp.filtfunction, 'nonMU_cells'};
 Fp = load_filter_params(Fp);
+
 %% FF
 if create_filter
     F = createfilter('animal', Fp.animals, 'epochs', Fp.epochfilter, 'eegtetrodes', Fp.tetfilter, ...
@@ -124,7 +130,7 @@ if run_ff; F = runfilter(F);
 end
 if save_ffdata
     save_data(F, Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, ...
-        'filetail', sprintf('_%s_%s', Fp.epochEnvironment, condition))
+        'filetail', sprintf('_%s_%s', Fp.epochEnvironment))
 end
 if load_ffdata
     F = load_data(Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, Fp.animals, ...
@@ -143,167 +149,156 @@ if loadCombinedEpochs
     F = load_data(Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, Fp.animals,...
         'filetail', '_combEps');
 end
+
 %% selecting ca1 clusters, lickbout swrs, cacluate swr mod
 if calcmod
-    cn = 0;
     modF = struct;
-for ian = 1:length(F)
-    %% create new data filter for swrs during lickbout intervals,
-    % ca1 ntrodes' spikes
-    l.animal = Fp.animals;  
-    l.params = {'wtrackdays', 'lickbouts', 'ca1SU', 'swrlickmod'};
-    l = load_filter_params(l);
-    lickca1F = createfilter('animal', l.animal, 'epochs', l.epochfilter,...
-        'excludetime', l.timefilter, 'cells', l.cellfilter);
-    %%  filter for ca1 clusters
-    % first get the indices of filtered clusters
-    LBdtc = [];
-    for ie = 1:size(lickca1F.epochs{1},1)
-        ieTC = lickca1F.data{1}{ie};
-        d = repmat(lickca1F.epochs{1}(ie,1), size(ieTC,1),1);
-        LBdtc = [LBdtc; d ieTC];
-    end
-    % now impose that filter on the data
-    LBdata = F(ian).data(ismember(cell2mat({F(ian).data.dtc}'), LBdtc, 'rows'));
-    % cluster loop
-    for ic = 1:length(LBdata)
-        dtc = LBdata(ic).dtc;
-        %% filter for swrs within lickbout time intervals
-        swrStart = LBdata(ic).eventtags(:,2); % col 2 is swr starttime
-        epIdx = find(lickca1F(ian).epochs{1}(:,1) == dtc(1));
-        DayexIntervals = [];
-        for iep = 1:numel(epIdx)
-            DayexIntervals = [DayexIntervals; lickca1F.excludetime{1}{epIdx(iep)}];
+    for ian = 1:length(F)
+        modF(ian).data = struct;
+        cn = 0;
+        %% create new data filter for ca1 clusters, swrs during lickbout intervals
+        l.animal = F(ian).animal;
+        l.params = {'wtrackdays', 'lickbouts', 'ca1SU', 'swrlickmod'};
+        l = load_filter_params(l);
+        lickca1F = createfilter('animal', l.animal, 'epochs', l.epochfilter,...
+            'excludetime', l.timefilter, 'cells', l.cellfilter);
+        LBdtc = [];
+        for ie = 1:size(lickca1F.epochs{1},1)
+            ieTC = lickca1F.data{1}{ie};
+            d = repmat(lickca1F.epochs{1}(ie,1), size(ieTC,1),1);
+            LBdtc = [LBdtc; d ieTC];
         end
-        lickBoutSwrMask = ~isExcluded(swrStart, DayexIntervals);
-        if sum(lickBoutSwrMask) < 100 % min numbers of swrs during lick bouts
-            fprintf('%d %d %d only %d swrs in lickbouts. skipping\n', dtc, sum(lickBoutSwrMask));
-            continue
+        LBdata = F(ian).data(ismember(cell2mat({F(ian).data.dtc}'), LBdtc, 'rows'));
+        for ic = 1:length(LBdata)
+            %% make design mat (lickbout-swrs)
+            dtc = LBdata(ic).dtc;
+            swrStart = LBdata(ic).eventtags(:,2); % col 2 is swr starttime
+            epIdx = find(lickca1F(ian).epochs{1}(:,1) == dtc(1));
+            DayexIntervals = [];
+            for iep = 1:numel(epIdx)
+                DayexIntervals = [DayexIntervals; lickca1F.excludetime{1}{epIdx(iep)}];
+            end
+            lickBoutSwrMask = ~isExcluded(swrStart, DayexIntervals);
+            if sum(lickBoutSwrMask) < minLBSwr % filter num lickbout-swrs
+                fprintf('%d %d %d only %d swrs in lickbouts. skipping\n',dtc, ...
+                    sum(lickBoutSwrMask));
+                continue
+            end
+            %% meanmod score for this cluster, per condition
+            ilickFRpsth = LBdata(ic).instantFR(lickBoutSwrMask,:);
+            time = LBdata(ic).time;
+            % response
+            respIdx = [knnsearch(time', respwin(1)/1000) knnsearch(time', respwin(2)/1000)];
+            respmeanperSWR = nanmean(ilickFRpsth(:,respIdx(1):respIdx(2)),2)+1e-6;
+            % baseline
+            baseIdx = [knnsearch(time', basewin(1)/1000) knnsearch(time', basewin(2)/1000)];
+            basemeanperSWR = nanmean(ilickFRpsth(:,baseIdx(1):baseIdx(2)),2)+1e-6;
+            % mean pct change from baseline
+            pctSwrResp = 100*(respmeanperSWR-basemeanperSWR)./basemeanperSWR;
+            mod = mean(pctSwrResp);
+            
+            %% Shuffle
+            numSamples = size(ilickFRpsth,2);
+            r = randi(numSamples,size(ilickFRpsth,1),numshuffs); % shuff shift offsets
+            shuffmod = nan(numshuffs,1);
+            for ish = 1:numshuffs
+                ishLickFRpsth = circshift(ilickFRpsth, r(:,ish));
+                % response
+                respShmeanperSWR = nanmean(ishLickFRpsth(:,respIdx(1):respIdx(2)),2)+1e-6;
+                % baseline
+                baseShmeanperSWR = nanmean(ishLickFRpsth(:,baseIdx(1):baseIdx(2)),2)+1e-6;
+                % mean pct change from baseline
+                pctSwrResp = 100*(respShmeanperSWR-baseShmeanperSWR)./baseShmeanperSWR;
+                shuffmod(ish,1) = nanmean(pctSwrResp);
+            end
+            %% Test real-mod shuff-rank
+            respAboveShuffPct = 100*(1-(sum(shuffmod > mod)./numshuffs));
+            fprintf('%s %d %d %d mod is > %.02fperc of shuffs\n', l.animal, dtc, respAboveShuffPct)
+            %% ouput
+            cn = cn +1;
+            modF(ian).animal = l.animal;
+            modF(ian).data(cn).dtc = dtc;
+            modF(ian).data(cn).time = time;
+            modF(ian).data(cn).psth = LBdata(ic).psth;
+            modF(ian).data(cn).instantFR = LBdata(ic).instantFR;
+            modF(ian).data(cn).lickBoutSwrMask = lickBoutSwrMask;
+            modF(ian).data(cn).epoch_noevents = LBdata(ic).epoch_noevents;
+            modF(ian).data(cn).mod = mod;
+            modF(ian).data(cn).shuffmod = shuffmod;
+            modF(ian).data(cn).respAboveShuffPct = respAboveShuffPct;
         end
-        ilickFRpsth = LBdata(ic).instantFR(lickBoutSwrMask,:);
-         % min number of lickbout swrs that have at least 1 spike
-        if sum(any(ilickFRpsth,2)) < 10
-            fprintf('%d %d %d only %d spikes in swrlickbouts. skipping\n', dtc, sum(any(ilickFRpsth,2)));
-            continue
-        end
-
-        %% calculate swr mod scores for this cluster, per condition
-        time = LBdata(ic).time;
-        zeroIdx = knnsearch(time', 0);
-        respIdx = [zeroIdx zeroIdx+200]; % indices into psth for 'response' or 'post' period
-        baseIdx = [zeroIdx-500 zeroIdx-100]; % indices into psth for 'baseline' or 'back' period
-        
-        meanperSWRresp = mean(ilickFRpsth(:,respIdx(1):respIdx(2)),2);
-        meanperSWRresp = meanperSWRresp+1e-6; % add a near-zero rate to avoid /0 error
-        meanperSWRbase = mean(ilickFRpsth(:,baseIdx(1):baseIdx(2)),2);
-        meanperSWRbase = meanperSWRbase+1e-6; % add a near-zero rate to avoid /0 error
-        pctSwrResp = 100*(meanperSWRbase - meanperSWRresp)./meanperSWRbase;
-        mod = mean(pctSwrResp); % THIS IS MODULATION SCORE
-        
-        %% Check Shuff significance
-        numshuffs = 5000;
-        a = 1;
-        b = size(ilickFRpsth,2);
-        r = randi(b,size(ilickFRpsth,1),numshuffs); % generate rand offset
-        shuffmod = nan(numshuffs,1);
-        for ish = 1:numshuffs
-            ishLickFRpsth = circshift(ilickFRpsth, r(:,ish));
-            ShmeanperSWRresp = mean(ishLickFRpsth(:,respIdx(1):respIdx(2)),2);
-            ShmeanperSWRresp = ShmeanperSWRresp+1e-6; % add a near-zero rate to avoid /0 error
-            ShmeanperSWRbase = mean(ishLickFRpsth(:,baseIdx(1):baseIdx(2)),2);
-            ShmeanperSWRbase = ShmeanperSWRbase+1e-6; % add a near-zero rate to avoid /0 error
-            pctSwrResp = 100*(ShmeanperSWRbase - ShmeanperSWRresp)./ShmeanperSWRbase;
-            shuffmod(ish,1) = mean(pctSwrResp); % THIS IS MODULATION SCORE
-        end
-        respVshuff = 100*sum(abs(mod) > abs(shuffmod))/numshuffs;
-        modsig = 0;
-        if respVshuff > 97.5
-            modsig = 1;
-        end
-       %%
-        cn = cn +1;
-        modF(cn).dtc = dtc;
-        modF(cn).lickBoutSwrMask = lickBoutSwrMask;
-%         out(ic).ilickFRpsth = ilickFRpsth;
-        modF(cn).mod = mod;
-        modF(cn).shuffmod = shuffmod;
-        modF(cn).modsig = modsig;
     end
 end
-end
+% save calcmod?
 
 %% % SU raster, psth, mod score, population percentage mod scores
-
 if plotfigs
-    for ani = 1:length(F)
-        animal = F(ani).animal;
+    for ani = 1:length(modF)
+        animal = modF(ani).animal;
         andef = animaldef(animal);
         tetinfo = loaddatastruct(andef{2}, animal, 'tetinfo');
         cellinfo = loaddatastruct(andef{2}, animal, 'cellinfo');
-        numclusters = length(F(ani).data);
-        for iclust = 1:length(numclusters)
-            day = ppF(an).data(iclust).dtc(1);
-            epoch = 2;
-            nt = ppF(an).data(iclust).dtc(2);
-            clust = ppF(an).data(iclust).dtc(3);
-            close all
+        numclusters = length(modF(ani).data);
+        for ic = 1:length(numclusters)
+            day = modF(an).data(ic).dtc(1);
+            nt = modF(an).data(ic).dtc(2);
+            clust = modF(an).data(ic).dtc(3);
             Pp=load_plotting_params({'defaults',figname}, 'pausefigs', pausefigs, ...
                 'savefigs', savefigs);
-            
-            time = ppF(an).data(1).time;
+            time = modF(an).data(1).time;
             s = knnsearch(time', -Pp.win(1));
             e = knnsearch(time', Pp.win(2));
-            %% SF1 SU raster left. lick bout swrs
+           %% SF1 all swr SU raster left
             sf1 = subaxis(4,2,[1 3 5],Pp.posparams{:});
             sf1.Tag = 'SUraster';
-            [xx, yy] = find(ppF(an).data(iclust).psth(:, s:e)');
+            [xx, yy] = find(modF(an).data(ic).psth(:, s:e)');
             scatter(xx/1000-Pp.win(1),yy, 1, '.k')
             ylabel('ripnum')
             xlim([-Pp.win(1) Pp.win(2)])
-            ylim([0 size(ppF(an).data(iclust).psth,1)])
-            epoch_noevents = ppF(an).data(1).epoch_noevents;
-            epoch_noevents = epoch_noevents(epoch_noevents>0);
+            ylim([0 size(modF(an).data(ic).psth,1)])
+            epoch_noevents = modF(an).data(1).epoch_noevents;
+%             epoch_noevents = epoch_noevents(epoch_noevents>0);
             if length(epoch_noevents) > 1
                 line(xlim, repmat(epoch_noevents,2,1))
             end
             xticks([])
-           
-            %% SF2 mean firing rate
+            
+           %% SF2 mean firing rate
             sf2 = subaxis(4,2,7,Pp.posparams{:});
             sf2.Tag = 'meanFR';
-%             [h, e] = histcounts(xx/1000-1.001, -1:.02:1,'Normalization', 'probability');
-%             area(e(1:end-1)+diff(e)/2,h)
-            plot(time(s:e), ppF(an).data(1).instantFRmean(s:e), 'k')
+            %             [h, e] = histcounts(xx/1000-1.001, -1:.02:1,'Normalization', 'probability');
+            %             area(e(1:end-1)+diff(e)/2,h)
+            plot(time(s:e), modF(an).data(1).instantFRmean(s:e), 'k')
             axis tight
             ylabel('meanFR Hz')
             xlabel('time s')
             
-%            %% SF3 SU raster right non-bout
-%             sf1 = subaxis(4,2,[1 3 5],Pp.posparams{:});
-%             sf1.Tag = 'SUraster';
-%             [xx, yy] = find(ppF(an).data(iclust).psth(:, s:e)');
-%             scatter(xx/1000-Pp.win(1),yy, 1, '.k')
-%             ylabel('ripnum')
-%             xlim([-Pp.win(1) Pp.win(2)])
-%             ylim([0 size(ppF(an).data(iclust).psth,1)])
-%             epoch_noevents = ppF(an).data(1).epoch_noevents;
-%             epoch_noevents = epoch_noevents(epoch_noevents>0);
-%             if length(epoch_noevents) > 1
-%                 line(xlim, repmat(epoch_noevents,2,1))
-%             end
-%             xticks([])
-%            
-%             %% SF4 mean firing rate right non-bout
-%             sf2 = subaxis(4,2,7,Pp.posparams{:});
-%             sf2.Tag = 'meanFR';
-% %             [h, e] = histcounts(xx/1000-1.001, -1:.02:1,'Normalization', 'probability');
-% %             area(e(1:end-1)+diff(e)/2,h)
-%             plot(time(s:e), ppF(an).data(1).instantFRmean(s:e), 'k')
-%             axis tight
-%             ylabel('meanFR Hz')
-%             xlabel('time s')
-
-if 0
+            %            %% SF3 SU raster right non-bout
+            %             sf1 = subaxis(4,2,[1 3 5],Pp.posparams{:});
+            %             sf1.Tag = 'SUraster';
+            %             [xx, yy] = find(ppF(an).data(iclust).psth(:, s:e)');
+            %             scatter(xx/1000-Pp.win(1),yy, 1, '.k')
+            %             ylabel('ripnum')
+            %             xlim([-Pp.win(1) Pp.win(2)])
+            %             ylim([0 size(ppF(an).data(iclust).psth,1)])
+            %             epoch_noevents = ppF(an).data(1).epoch_noevents;
+            %             epoch_noevents = epoch_noevents(epoch_noevents>0);
+            %             if length(epoch_noevents) > 1
+            %                 line(xlim, repmat(epoch_noevents,2,1))
+            %             end
+            %             xticks([])
+            %
+            %             %% SF4 mean firing rate right non-bout
+            %             sf2 = subaxis(4,2,7,Pp.posparams{:});
+            %             sf2.Tag = 'meanFR';
+            % %             [h, e] = histcounts(xx/1000-1.001, -1:.02:1,'Normalization', 'probability');
+            % %             area(e(1:end-1)+diff(e)/2,h)
+            %             plot(time(s:e), ppF(an).data(1).instantFRmean(s:e), 'k')
+            %             axis tight
+            %             ylabel('meanFR Hz')
+            %             xlabel('time s')
+            
+            if 0
                 figure
                 % check plot compare firing rate psth to spike psth
                 subplot(2,2,1)
@@ -326,7 +321,7 @@ if 0
                 yticks([])
                 title('red:lickswrs')
                 hold off;
-            
+                
                 subplot(2,2,3)
                 imagesc(flipud(zscore(smoothdata(ilickFRpsth,2,'loess',500), [], 2)))
                 title('real')
@@ -338,17 +333,18 @@ if 0
                 hold on;
                 line([meanPctSwrResp meanPctSwrResp], [0, yl(2)], 'color', 'r');
                 hold off;
-end
-
+            end
+            
             
             %% Ripple line
             line(sf1, [0 0], ylim(sf1), 'linestyle', '--', 'color', 'c')
             line(sf2, [0 0], ylim(sf2), 'linestyle', '--', 'color', 'c')
             %% Super Axis
+            epoch4subarea = 2;
             area = tetinfo{day}{epoch}{nt}.area;
             subarea = tetinfo{day}{epoch}{nt}.subarea;
-%             meanrate = cellinfo{day}{epoch}{nt}{clust}.firingrate;
-%             isolation = cellinfo{day}{epoch}{nt}{clust}.isolation;
+            %             meanrate = cellinfo{day}{epoch}{nt}{clust}.firingrate;
+            %             isolation = cellinfo{day}{epoch}{nt}{clust}.isolation;
             sprtit = setSuperAxTitle(animal, figname, 'addtitle', ...
                 sprintf('%d %d %d %s %s', day, nt, clust, area, subarea));
             if pausefigs
