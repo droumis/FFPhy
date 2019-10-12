@@ -69,8 +69,8 @@ for s = Fp.params
 %             tetfilter = tetfilter(4:end); %trim first ||
         case 'same tet for eeg'
             eegfilter = {'geteegtet', 'theta','sametet', 1};
-%         case 'ca1SU'
-%             cellfilter = '(isequal($area, ''ca1'')) && ($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))';
+        case 'ca1SU'
+            cellfilter = '(isequal($area, ''ca1'')) && ($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))';
         case 'nonMU_cells'
             cellfilter = '($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))';
         case '>100spikes_cells'
