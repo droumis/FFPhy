@@ -1,4 +1,4 @@
-function data = load_data(filtOutputDirectory, filename, animals, varargin)
+function out = load_data(filtOutputDirectory, filename, animals, varargin)
 % d = load_filter_output(Fp.paths.filtOutputDirectory, Fp.paths.filename, Fp.animals);
 % load filter framework results
 
@@ -27,7 +27,7 @@ for an = 1:length(animals)
         case 'behavestate'
             tmp = load(sprintf('%s%sBehaveState.mat',andef{2}, andef{3}));
             fprintf('%s%sBehaveState.mat \n',andef{2}, andef{3});
-            data{an} = tmp.BehaveState;
+            F = tmp.BehaveState;
         otherwise
             if animpos
                 tmp = load(sprintf('%s/%s%s_%s.mat',dirout , filename, filetail, animal));
@@ -36,10 +36,11 @@ for an = 1:length(animals)
                 tmp = load(sprintf('%s/%s%s%s.mat', dirout, animal, filename, filetail));
                 fprintf('loaded: %s/%s%s%s.mat \n',animal, dirout , filename, filetail)
             end
-            data{an} = tmp.F;
-            
+            F = tmp.F;
     end
+    out(an) = F(1);
+    out(an).animal = animal;
 end
-data = [data{:}]'; % merge the cell array of structs to match filter output form
+% data = [data{:}]'; % merge the cell array of structs to match filter output form
 fprintf('took %.02f sec\n',toc);
 end

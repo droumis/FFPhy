@@ -35,8 +35,8 @@ for s = param_set
             tickSz = 8; % tick labels font size
             set(0,'defaultAxesFontSize',10)
         case 'lickBoutSUswrmod'
-            position = [.1 .1 .4 .5];
-            SpVt = 0.01;
+            position = [.1 .1 .6 .7];
+            SpVt = 0.05;
             win = [.5 .5];
         case 'examples'
             position = [.1 .1 .6 .5];

@@ -1,6 +1,6 @@
 function save_data(F, filtOutputDirectory, filename, varargin)
 % F is a struct with at least an 'animal' field
-
+pconf = paramconfig;
 filetail = '';
 per_animal = 1;
 animpos = 1; % if 1, at end, if 0, at beginning. at end has leading underscore
@@ -28,7 +28,11 @@ if per_animal
         if strcmp(filtOutputDirectory, 'filterframework')
             andef = animaldef(animals{an});
             dirout = andef{2};
-            save_F(F(an).data, dirout, [filename filetail], animals{an}, ...
+            save_F(F(an), dirout, [filename filetail], animals{an}, ...
+                'animpos', animpos, 'varname', varname);
+        elseif strcmp(filtOutputDirectory, 'results')
+            dirout = [pconf.andef{3} '/' filename, '/'];
+            save_F(F(an), dirout, [filename filetail], animals{an}, ...
                 'animpos', animpos, 'varname', varname);
         else
             dirout = filtOutputDirectory;        
