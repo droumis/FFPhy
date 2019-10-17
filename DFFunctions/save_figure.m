@@ -1,13 +1,16 @@
 
-%{
-save matlab figs to common academic and data analysis formats
-Demetris Roumis
-%}
+% save matlab figs to common academic and data analysis formats
+% save_figure(figdirectory, filename, varargin)
+% varg - subdir: string (default = '')
+% varg - savefigas: cellarray of file formats (default={'png'}) [png, mfig, eps, svg, pdf]
+
+% 2019 Demetris Roumis
 
 function save_figure(figdirectory, filename, varargin)
+
 set(gcf, 'PaperPositionMode', 'auto'); %saves the png in the dimensions defined for the fig
 subdir = '';
-savefigas = 'png';
+savefigas = {'png'};
 if ~isempty(varargin)
     assign(varargin{:});
 end

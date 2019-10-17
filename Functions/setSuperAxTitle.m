@@ -1,18 +1,30 @@
 
 
 %{
-set super figure axis title
+set super figure axis title i.e. above and independent of all the subplots
+
+arg1: str: title string
+
+varg-vertPos: float: % to top
+varg-horzPos: float: % to right
+varg-titleVargs: cellarray: varargs input to set title text object
 %}
 
-function sprtit = setSuperAxTitle(animal, figname, varargin)
-addtitle = '';
+function setSuperAxTitle(titlestring, varargin)
+
+vertPos = .98;
+horzPos = .5;
+titleVargs = {'FontWeight','bold','FontName','Arial','horizontalAlignment', 'center', ...
+    'FontSize',14};
 if ~isempty(varargin)
     assign(varargin{:})
 end
-sprtit = sprintf('%s %s %s', figname,  animal, addtitle);
+
 sprax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', gcf);
-iStitle = text(.5, .98, {sprtit}, 'Parent', sprax, 'Units', 'normalized');
-set(iStitle,'FontWeight','bold','FontName','Arial','horizontalAlignment', 'center', ...
-    'FontSize',12);
+iStitle = text(horzPos, vertPos, {titlestring}, 'Parent', sprax, 'Units', 'normalized');
+set(iStitle,titleVargs{:});
 h = get(gcf,'Children');
+
+% put the super axes at the bottom of the stack to gain access to
+% underlying subplots for direct matlab-figure interaction
 set(gcf,'Children',flip(h));

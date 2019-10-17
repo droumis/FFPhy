@@ -111,8 +111,8 @@ loadmodF = 0;
 plotClusterFigs = 0;
 plotPopulationFigs = 1;
 
-pausefigs = 1;
-savefigs = 0;
+pausefigs = 0;
+savefigs = 1;
 figname = 'lickBoutSUswrmod';
 
 Fp.animals = {'D10'}; %, 'D12', 'D13', 'JZ1', 'JZ2', 'JZ4'};
@@ -194,16 +194,16 @@ if plotClusterFigs
             day = modF(ian).data(ic).dtc(1);
             nt = modF(ian).data(ic).dtc(2);
             clust = modF(ian).data(ic).dtc(3);
-%             if any(cell2mat(modF(ian).data(ic).numSpikesResp)) < 10
-%                 fprintf('%d %d %d cond %d not enough spikes in response period\n', ...
-%                     day,nt,clust, id);
-%                 continue
-%             end
-%             if any(cell2mat(modF(ian).data(ic).numSpikesBase)) < 10
-%                 fprintf('%d %d %d cond %d not enough spikes in baseline period\n', ...
-%                     day,nt,clust);
-%                 continue
-%             end
+            %             if any(cell2mat(modF(ian).data(ic).numSpikesResp)) < 10
+            %                 fprintf('%d %d %d cond %d not enough spikes in response period\n', ...
+            %                     day,nt,clust, id);
+            %                 continue
+            %             end
+            %             if any(cell2mat(modF(ian).data(ic).numSpikesBase)) < 10
+            %                 fprintf('%d %d %d cond %d not enough spikes in baseline period\n', ...
+            %                     day,nt,clust);
+            %                 continue
+            %             end
             Pp=load_plotting_params({'defaults',figname}, 'pausefigs', pausefigs, ...
                 'savefigs', savefigs);
             time = modF(ian).data(1).time;
@@ -382,7 +382,7 @@ if plotClusterFigs
             title(sprintf('mod > %.0fpct of shuff',modF(ian).data(ic).respAboveShuffPct{id}));
             yticks([])
             % why isn't this centered on 0 pcnt?
-%             xlabel('pct change from baseline')
+            %             xlabel('pct change from baseline')
             hold off
             %% lickbout modShuffRnk
             id = 2;
@@ -437,8 +437,7 @@ if plotClusterFigs
     end
 end
 if plotPopulationFigs
-    % for each animal, gather the ca1 su meanFRpsth, sort by score, and
-    % heatmap
+    % gather the ca1 su meanFRpsth, sort by score, and heatmap, animal summary
     for ian = 1:length(modF)
         animal = modF(ian).animal;
         Pp=load_plotting_params({'defaults',figname}, 'pausefigs', pausefigs, ...
@@ -446,36 +445,107 @@ if plotPopulationFigs
         time = modF(ian).data(1).time;
         s = knnsearch(time', -Pp.win(1));
         e = knnsearch(time', Pp.win(2));
-        %%
+       %%
+        minNumSpikes = 10;
         id = 1;
+        c = 0;
+        FRrast = [];
+        allMeanPctResp = [];
         for ic = 1:length(modF(ian).data)
-            FRrast(ic,:) = nanmean(modF(ian).data(ic).inputdata.instantFR(...
-                modF(ian).data(ic).dmat(:,id),s:e));
-            clustRank(ic,1) = modF(ian).data(ic).respAboveShuffPct{id};
+            if ~any(cell2mat(modF(ian).data(ic).numSpikesResp)<minNumSpikes)
+                c = c+1;
+                allRespPctShuff(c, 1) = modF(ian).data(ic).respAboveShuffPct{id};
+                FRrast(c,:) = smoothdata(zscore(nanmean(modF(ian).data(ic).inputdata.instantFR(...
+                    modF(ian).data(ic).dmat(:,id),s:e)),[],2), 2,'loess',100);
+                allMeanPctResp(c,1) = modF(ian).data(ic).meanPctSwrResp{id};
+            else
+                fprintf('not enough spikes %s %d %d %d \n', animal, modF(ian).data(ic).dtc)
+            end
         end
-        frsm = smoothdata(zscore(FRrast,[],2),2,'loess',100);
-        [~, sortidx] = sort(clustRank, 'descend');
-        imagesc(frsm(sortidx,:))
+        fprintf('%d of %d clusters included\n', c, ic)
+        subplot(1,3,1)
+        [~,clusterRank] = sort(allMeanPctResp, 'descend');
+        imagesc(time, 1:size(FRrast,1), FRrast(clusterRank,:))
         colormap(jet)
-        %% now plot cum dist scores with sig lines a la sirota
+        ylabel('unit n')
+        xlabel('time s')
+        title('all swrs')
+        %% lickbout condition
+        id = 2;
+        c = 0;
+        FRrast = [];
+        lickMeanPctResp = [];
+        for ic = 1:length(modF(ian).data)
+            if ~any(cell2mat(modF(ian).data(ic).numSpikesResp)<minNumSpikes)
+                c = c+1;
+                lickRespPctShuff(c, 1) = modF(ian).data(ic).respAboveShuffPct{id};
+                FRrast(c,:) = smoothdata(zscore(nanmean(modF(ian).data(ic).inputdata.instantFR(...
+                    modF(ian).data(ic).dmat(:,id),s:e)),[],2), 2,'loess',100);
+                lickMeanPctResp(c,1) = modF(ian).data(ic).meanPctSwrResp{id};
+            else
+                fprintf('not enough spikes %s %d %d %d \n', animal, modF(ian).data(ic).dtc)
+            end
+        end
+        fprintf('%d of %d clusters included\n', c, ic)
+        subplot(1,3,2)
+        [~,clusterRank] = sort(lickMeanPctResp, 'descend');
+        imagesc(time, 1:size(FRrast,1), FRrast(clusterRank,:))
+        colormap(jet)
+        ylabel('unit n')
+        xlabel('time s')
+        title('lickbout swrs')
+        %% plot scatter of scores in the two conditions.
+
+        % unity line
+        subplot(2,3,3)
+        u = plot(allMeanPctResp, allMeanPctResp, 'color', [.5 .5 .5], 'LineWidth', 1);
+        hold on
+
+        % scatter of real normalized modulation
+        a = scatter(allMeanPctResp, lickMeanPctResp, 'o');
+        a.MarkerEdgeAlpha = 0;
+        a.MarkerFaceAlpha = .2;
+        a.MarkerFaceColor = 'k';
         
+        % linfit of real normalized modulation
+        X = [ones(length(allMeanPctResp),1) allMeanPctResp];
+        c1 = X\lickMeanPctResp;
+        yCalc = X*c1;
+        v = plot(allMeanPctResp, yCalc, 'linewidth', 1);
+        v.Color = [1 0 0 .5];
         
-        %% Super Axis
-        epoch4subarea = 2;
-        area = tetinfo{day}{epoch4subarea}{nt}.area;
-        subarea = tetinfo{day}{epoch4subarea}{nt}.subarea;
-        %             meanrate = cellinfo{day}{epoch}{nt}{clust}.firingrate;
-        %             isolation = cellinfo{day}{epoch}{nt}{clust}.isolation;
-        sprtit = setSuperAxTitle(animal, figname, 'addtitle', ...
-            sprintf('%d %d %d %s %s', day, nt, clust, area, subarea));
+        xlabel('all swr')
+        ylabel('lickbout swr')
+        title('mean % from base')
+        axis tight
+        grid on
+        hold off
+
+        %% cumsum of cells at given % change from baseline
+        subplot(2,3,6)
+        [allh, allb] = histcounts(allMeanPctResp,1000,'Normalization','cdf');
+        plot(allb(1:end-1)+diff(allb) / 2, allh, 'k')
+        hold on;
+        
+        [lickh, lickb] = histcounts(lickMeanPctResp,1000,'Normalization', 'cdf');
+        plot(lickb(1:end-1)+diff(lickb) / 2, lickh, 'b')
+        
+        xlabel('% norm response')
+        ylabel('% units');
+        ax = gca;
+        ax.YDir = 'reverse';
+        axis tight
+        grid on
+        hold off
+        
+        %% super title, Pause/Save
+        setSuperAxTitle([figname ' ' animal ' ca1']);
         if pausefigs
             pause;
         end
         if savefigs
-            outdir = sprintf('%s/%s/', pconf.andef{4}, figname);
-            save_figure(outdir, sprtit);
+            save_figure([pconf.andef{4} '/' figname '/'], [figname ' ' animal ' ca1']);
         end
     end
-    
 end
 
