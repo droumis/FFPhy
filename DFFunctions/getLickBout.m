@@ -8,7 +8,7 @@ epochs = n x 2 where n = [day epoch]
 function out = getLickBout(animaldir, animal, epochs, varargin)
 
 lickGap = .5; % upper inter bout-lick interval threshold in seconds 
-boutNum = 10; %filter out bouts with less than boutNum licks
+minBoutLicks = 10; %filter out bouts with less than boutNum licks
 if ~isempty(varargin)
     assign(varargin{:})
 end
@@ -40,7 +40,7 @@ for i = 1:size(epochs,1)
         continue
     end
     N = histcounts(lickTimes(licksInbout), sort([boutIntvStart; boutIntvEnd]));
-    incintv = N(1:2:end) > boutNum;
+    incintv = N(1:2:end) > minBoutLicks;
     boutIntvStart = boutIntvStart(incintv);
     boutIntvEnd = boutIntvEnd(incintv);
     % downsample to the position times

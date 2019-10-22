@@ -34,6 +34,13 @@ for s = param_set
             SupFontS = 12;
             tickSz = 8; % tick labels font size
             set(0,'defaultAxesFontSize',10)
+        case 'licktracking'
+            likethresh = .99;
+            SpVt = 0.01;
+            Msz = 3;
+            lickClr = [0 0 1 .1];
+            rewClr = [1 0 0 .8];
+            
         case 'lickBoutSUswrmod'
             position = [.1 .1 .6 .7];
             SpVt = 0.05;

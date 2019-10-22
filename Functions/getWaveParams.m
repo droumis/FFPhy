@@ -119,7 +119,13 @@ switch waveSet
 %         frex = logspace(log10(min_freq),log10(max_freq),numfrex);
 %         baseind = [.75 1] * srate;
 %         voxel_pval = .01;
-%         
+    case 'Lick7Hz'
+        srate = 125;
+        freq =  7;
+        nWaveCyc = 3; % more decreases temp, increases freq precision                
+        freqLog = log10(freq);
+        nWaveCycLog = log10(nWaveCyc); %number of wavelet cycles per freq
+      
     case '4-300Hz'
         srate = 1500;
         win = [-2 2];
