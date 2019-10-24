@@ -15,10 +15,11 @@ for x = 1:size(index,1)
     epoch = index(x,2);
     % from lick DIO ID in taskInfo to index into DIO
     lickDIOID = task{day}{epoch}.inputdio;
-    isinput = cellfun(@(x) isequal(x.input,1), DIO{day}{epoch}, 'un', 1);
+    isInput = cellfun(@(x) isequal(x.input,1), DIO{day}{epoch}, 'un', 1);
     dioID = cellfun(@(x) str2double(regexp(x.original_id,'\d*','Match')),...
         DIO{day}{epoch}, 'un', 1);
-    lickDIOIdx = find(ismember(dioID(isinput),lickDIOID));
+%     lickDIOIdx = find(ismember(dioID(isinput),lickDIOID));
+    lickDIOIdx = find(all([ismember(dioID,lickDIOID)' isInput'],2));
     lickPortDin = DIO{day}{epoch}(lickDIOIdx);
     % for each lick port Din, gather it's times along with index
     l = cellfun(@(x) x.times, lickPortDin,'un',0)';
@@ -40,7 +41,3 @@ if saveout
     save_data(F, 'filterframework', 'lick', 'animpos', 0, 'varname', 'lick');
 end
 end
-
-    
-
-

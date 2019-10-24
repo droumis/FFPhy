@@ -35,6 +35,10 @@ for s = param_set
             tickSz = 8; % tick labels font size
             set(0,'defaultAxesFontSize',10)
             
+        case 'wetVDryILIphaseSWR'
+            position = [.1 .1 .5 .5];
+            
+            
         case 'FeatureTracking'
             SpVt = 0.00;
             Msz = 30;

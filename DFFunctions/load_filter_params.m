@@ -223,7 +223,7 @@ for s = Fp.params
                 'pausefigs', pausefigs};
             filtfunction = 'dfa_lickswrcorr';
             iterator = 'singleepochanal';
-            datatypes = {'ca1rippleskons','task', 'lick'};
+            datatypes = {'ca1rippleskons','task', 'lick', 'DIO'};
         case 'savefigs'
             savefigs = 1;
             pausefigs = 0;

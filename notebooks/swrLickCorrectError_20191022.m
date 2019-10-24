@@ -89,7 +89,6 @@ if 1
     swrLickPhase = cell2mat({Fs.swrLickPhase}');
     swrStart = cell2mat({Fs.swrInBurstStart}');
     swrBurstInterval = cell2mat({Fs.swrBurstInterval}');
-%     ili = cell2mat({Fs.ili}');
     deUnq = cell2mat({Fs.index}');
     de = [];
     for i = 1:size(deUnq)
@@ -99,7 +98,6 @@ if 1
     %% Test phase modulation using all swrs
     [pval, z] = circ_rtest(swrLickPhase); % pval is the stat rayleigh test. z is mean res vec
     phasemod = log(z); % i think log makes it 'variance normalized' (karalis,sirota)
-    
 end
 if 1
     %% lookup swr in ripplekons based on [day epoch starttime] dayepIdx swrStart
