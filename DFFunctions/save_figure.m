@@ -14,6 +14,7 @@ savefigas = {'png'};
 if ~isempty(varargin)
     assign(varargin{:});
 end
+
 if ~isempty(subdir)
     figdir = sprintf('%s/%s/',figdirectory, subdir);
 else

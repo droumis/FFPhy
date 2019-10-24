@@ -291,7 +291,7 @@ dconv = dataFFT.*waveletFFT;
 as = ifft(astmp);
 
 phase = angle(as);
-%%
+%% FIRPM Parks-McClellan optimal equiripple FIR filter design
 Fs = 125;  % Sampling Frequency
 
 Fstop1 = 4;                % First Stopband Frequency
@@ -311,7 +311,7 @@ dens   = 20;               % Density Factor
 b  = firpm(N, Fo, Ao, W, {dens});
 Hd = dfilt.dffir(b);
 
-%% aj's method
+%% polar histogram
 data = {jaw, tongue, eye, nose, ear};
 figure
 for s = 1:5

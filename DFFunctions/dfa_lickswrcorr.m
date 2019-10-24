@@ -16,9 +16,9 @@
 function out = dfa_lickswrcorr(idx, excludeIntervals, varargin)
 pconf = paramconfig;
 pausefigs = 0;
-savefigs = 1;
+savefigs = 0;
 savefigas = 'png';
-plotfigs = 1;
+plotfigs = 0;
 bin = .01;
 tmax = 1;
 boutNum = 10;
@@ -32,104 +32,87 @@ numshuffs = 1000;
 shuffOffset = 200; %ms
 returnoutput = 1;
 sigperc = .975;
-if ~isempty(varargin); assign(varargin{:}); end
-day = idx(1,1); epoch = idx(1,2);
-[~, fname,~] = fileparts(mfilename('fullpath'));
-outdir = sprintf('%s/%s/%s/', pconf.andef{4},fname,animal,animal);
+minILIthresh = .06; % min seconds of included ili
+compute_shuffle = 0;
+if ~isempty(varargin)
+    assign(varargin{:});
+end
 
-% get the ripplekons events, which could be variably named
+% init output
+out = make_blank(idx);
+
+day = idx(1,1); epoch = idx(1,2);
+
+% filter the ripplekons events, which could be variably named
 evid = find(contains(varargin(1:2:end), 'rippleskon'));
 o = [1:2:length(varargin)]+1;
 events = varargin{o(evid)};
-
-out = make_blank(idx);
-
 try
     eventTime = [events{day}{epoch}{1}.starttime events{day}{epoch}{1}.endtime];
-catch; fprintf('no events detected for day%d ep%d\n',day,epoch); return; end
+catch
+    fprintf('no events detected for day%d ep%d \n',day,epoch)
+    return
+end
 eventTime = eventTime(~isExcluded(eventTime(:,1),excludeIntervals),:);
 swrStart = eventTime(:,1);
 
-% total time
-T = diff(events{day}{epoch}{1}.timerange);
-
-% licks, bouts
-andef = animaldef(animal);
-licks = lick{day}{epoch}.starttime;
-idlicks = lick{day}{epoch}.id;
-licksVecs = getLickBout(andef{2}, animal, [day epoch]);
+% get lick intervals using lick data
+licksVecs = getLickBout(animal, [day epoch], 'lick', lick);
 try
-    boutIntvs = vec2list(licksVecs{day}{epoch}.lickBout, licksVecs{day}{epoch}.time);
+    burstIntvs = vec2list(licksVecs{day}{epoch}.lickBout, licksVecs{day}{epoch}.time);
 catch
-    fprintf('error defining lick bouts for %d %d\n', day, epoch)
+    fprintf('error defining lick bouts for %d %d \n', day, epoch)
     return
 end
-swrinbouts = swrStart(logical(isExcluded(swrStart, boutIntvs)));
-swrinbouts = sort(swrinbouts(~isnan(swrinbouts)));
-fprintf('%d (%.02f perc) swrs within the %d lickbouts\n', numel(swrinbouts),...
-    length(swrinbouts)/length(swrStart)*100, size(boutIntvs,1))
-if isempty(swrinbouts)
+
+% filter for swr within lick bouts
+swrInBurstStart = swrStart(logical(isExcluded(swrStart, burstIntvs)));
+swrInBurstStart = sort(swrInBurstStart(~isnan(swrInBurstStart)));
+fprintf('swrs within %d lickbouts:  %d (%.02f pct swrs) \n', size(burstIntvs,1), numel(swrInBurstStart),...
+    length(swrInBurstStart)/length(swrStart)*100)
+if isempty(swrInBurstStart)
     fprintf('no swrs in lick bouts for %d %d.. skipping\n', day, epoch)
     return
 end
-lickboutlicks = licks(logical(isExcluded(licks, boutIntvs)));
-fprintf('%d (%.02f perc) licks within the %d lickbouts\n', numel(lickboutlicks),...
-    length(lickboutlicks)/length(licks)*100, size(boutIntvs,1))
 
+% filter for licks within lick bouts
+licks = lick{day}{epoch}.starttime;
+idlicks = lick{day}{epoch}.id;
+lickboutlicks = licks(logical(isExcluded(licks, burstIntvs)));
+fprintf('licks within %d lickbouts: %d (%.02f pct licks) \n',size(burstIntvs,1), numel(lickboutlicks),...
+    length(lickboutlicks)/length(licks)*100)
+
+%% exclude bad doublet triggers caused by non uniformity of jaw surface (<60ms)
+% of the lick intervals that contain a swr, which are within lick-burst ili range
+[~,~,swrLickBin] = histcounts(swrInBurstStart, lickboutlicks);
+% exclude swr's that are within lick bouts but 
+swrLickBin = swrLickBin(swrLickBin > 0);
+swrInBurstStart = swrInBurstStart(swrLickBin > 0);
+swrTimeSinceLick = swrInBurstStart - lickboutlicks(swrLickBin);
+if any(swrTimeSinceLick) < 0
+    error('swr rel time must be pos')
+end
+
+swrBinILI = lickboutlicks(swrLickBin+1) - lickboutlicks(swrLickBin);
+swrInValidILI = swrBinILI < minILIthresh;
+
+swrInBurstStart = swrInBurstStart(swrInValidILI);
+fprintf('swrs in valid ILI:  %d (%.02f pct swrs) \n', numel(swrInBurstStart),...
+    numel(swrInBurstStart)/length(swrStart)*100)
+
+swrBinILI = swrBinILI(swrInValidILI);
+swrTimeSinceLick = swrTimeSinceLick(swrInValidILI);
+
+% save burst start/end time for each enclosed and valid swr
+[~,~,swrLickBurstIdx] = histcounts(swrInBurstStart, [burstIntvs(:,1); inf]);
+swrBurstInterval = burstIntvs(swrLickBurstIdx,:);
+
+%% Compute real lickDin x swr
+% xcorr norm smooth
 time = (-tmax+bin/2):bin:(tmax-bin/2);
 nstd=round(sw1/(time(2) - time(1)));
 g1 = gaussian(nstd, 2*nstd+1);
-
-%% shuffles
-meanMRVmagShuff = [];
-smthxcShuff = [];
-excorrShuff = [];
-phasemodShuff = [];
-r = randi([-shuffOffset shuffOffset],length(swrinbouts),numshuffs)/1e3;
-swrStartShift = bsxfun(@plus,swrinbouts,r); %, make shuffle array
-for i = 1:numshuffs
-    % (mean/std xcorr norm smooth)
-%     swrStartShift = sort(swrinbouts+r(:,i));
-    xcSh = spikexcorr(sort(swrStartShift(:,i)), lickboutlicks, bin, tmax);
-    normxc = xcSh.c1vsc2 ./ sqrt(xcSh.nspikes1 * xcSh.nspikes2); % normalize
-    try 
-        smthxcShuff(end+1,:) = smoothvect(normxc, g1);
-    catch % if normxc is empty
-        continue
-    end
-    % excorr
-    excorrShuff(end+1) = nanmean(excesscorr(xcSh.time, xcSh.c1vsc2, xcSh.nspikes1, ...
-        xcSh.nspikes2, sw1, sw2)); %0 lag
-    % MRVmag
-    [~,~,spbin] = histcounts(swrStartShift(:,i), lickboutlicks);
-    % exclude swrs falling outside lickbouts
-    goodswr = swrStartShift(spbin>0,i);
-    spbin = spbin(spbin>0);
-    lickbinstart = lickboutlicks(spbin);
-    relswrtime = goodswr - lickbinstart; % swrtime - the nearest preceding lick in bout
-    ili = lickboutlicks(spbin+1) - lickbinstart; % inter lick interval
-    useILI = all([ili > .05, ili < .25],2); % include know lick bout intervals
-%     fprintf('%d good swrs in lick bout intervals.. %d %d\n', sum(useILI), day, epoch)
-    if sum(useILI) < 5
-        fprintf('only %d swrs in lickbouts during a shuffle, skipping %d %d\n', ...
-            sum(useILI), day, epoch)
-        return
-    end
-    swrlickcylcephase = relswrtime(useILI) ./ ili(useILI);
-    swrLickPhaseShuff = 2*pi*(swrlickcylcephase);
-    meanvec = mean(exp(1i*swrLickPhaseShuff));
-    meanMRVmagShuff(end+1) = abs(meanvec);
-    vecangShuff = angle(meanvec);
-    % phasemod
-    [~, z] = circ_rtest(swrLickPhaseShuff); % pval is the stat rayleigh test. z is mean res vec
-    phasemodShuff(end+1) = log(z); % i think log makes it 'variance normalized' (karalis,sirota)
-end
-smthxcShuffstd = std(smthxcShuff); % shuff xcorr std
-smthxcShuffmean = mean(smthxcShuff); %shuff xcorr mean
-
-%% real
-% xcorr norm smooth
-xc = spikexcorr(swrinbouts,lickboutlicks, bin, tmax);
+xc = spikexcorr(swrInBurstStart, lickboutlicks, bin, tmax);
 normxc = xc.c1vsc2 ./ sqrt(xc.nspikes1 * xc.nspikes2); % normalize xc
 smthxc = smoothvect(normxc, g1); % smooth xc
 % excorr
@@ -139,22 +122,18 @@ excorr = nanmean(excesscorr(xc.time, xc.c1vsc2, xc.nspikes1, xc.nspikes2, sw1, s
 % p2 = xc.nspikes2/T; % fr in Hz
 % expProb = p1*p2; % per sec. Expected probability
 % MRVmag
-[~,~,spbin] = histcounts(swrinbouts, licks);
-relswrtime = swrinbouts - licks(spbin); % swrtime - the nearest preceding lick in bout
-fprintf('%.03f mean %.03f max %.03f min swr time since last lick \n', mean(relswrtime), ...
-    max(relswrtime), min(relswrtime))
-if any(relswrtime) < 0
-    error('swr rel time must be pos')
-end
-ili = licks(spbin+1) - licks(spbin);
-useILI = all([ili > .1, ili < .2],2);
-if sum(useILI) < 20
-    fprintf('only %d swrs in lickbouts, skipping %d %d\n', sum(useILI), day, epoch)
-    return
-end
-fprintf('%.03f mean %.03f max %.03f min ILI \n', mean(ili), max(ili), min(ili))
-swrlickcylcephase = relswrtime(useILI) ./ ili(useILI);
-swrLickPhase = 2*pi*(swrlickcylcephase);
+
+%% get swrLickPhase from swrtimes and lickintervals
+% swrPctSinceLick
+swrPctSinceLick = swrTimeSinceLick ./ swrBinILI;
+% values can be 0:1
+% so get pct of full rotation.. this is the transormation to polar from cart
+swrLickPhase = 2*pi*swrPctSinceLick;
+
+fprintf('lBurst swrs in valid ILI: %d (%.02f pct swrs) \n', sum(swrInValidILI), ...
+    sum(swrInValidILI)/length(swrStart)*100)
+
+% fprintf('%.03f mean %.03f max %.03f min ILI \n', mean(ili), max(ili), min(ili))
 meanvec = mean(exp(1i*swrLickPhase));
 meanMRVmag = abs(meanvec);
 vecang = angle(meanvec);
@@ -162,8 +141,58 @@ vecang = angle(meanvec);
 [pval, z] = circ_rtest(swrLickPhase); % pval is the stat rayleigh test. z is mean res vec
 phasemod = log(z); % i think log makes it 'variance normalized' (karalis,sirota)
 
+%% Compute shuffled lickDin x swr
+% if compute_shuffle
+%     meanMRVmagShuff = [];
+%     smthxcShuff = [];
+%     excorrShuff = [];
+%     phasemodShuff = [];
+%     r = randi([-shuffOffset shuffOffset],length(swrInBurstStart),numshuffs)/1e3;
+%     swrStartShift = bsxfun(@plus,swrInBurstStart,r); %, make shuffle array
+%     for i = 1:numshuffs
+%         % (mean/std xcorr norm smooth)
+%         %     swrStartShift = sort(swrinbouts+r(:,i));
+%         xcSh = spikexcorr(sort(swrStartShift(:,i)), lickboutlicks, bin, tmax);
+%         normxc = xcSh.c1vsc2 ./ sqrt(xcSh.nspikes1 * xcSh.nspikes2); % normalize
+%         try
+%             smthxcShuff(end+1,:) = smoothvect(normxc, g1);
+%         catch % if normxc is empty
+%             continue
+%         end
+%         % excorr
+%         excorrShuff(end+1) = nanmean(excesscorr(xcSh.time, xcSh.c1vsc2, xcSh.nspikes1, ...
+%             xcSh.nspikes2, sw1, sw2)); %0 lag
+%         % MRVmag
+%         [~,~,swrLickBin] = histcounts(swrStartShift(:,i), lickboutlicks);
+%         % exclude swrs falling outside lickbouts
+%         goodswr = swrStartShift(swrLickBin>0,i);
+%         swrLickBin = swrLickBin(swrLickBin>0);
+%         lickbinstart = lickboutlicks(swrLickBin);
+%         swrTimeSinceLick = goodswr - lickbinstart; % swrtime - the nearest preceding lick in bout
+%         ili = lickboutlicks(swrLickBin+1) - lickbinstart; % inter lick interval
+%         inclILI = all([ili > .05, ili < .25],2); % include know lick bout intervals
+%         %     fprintf('%d good swrs in lick bout intervals.. %d %d\n', sum(useILI), day, epoch)
+%         if sum(inclILI) < 5
+%             fprintf('##only %d swrs in lickbouts during a shuffle.. not doing shuff %d %d\n', ...
+%                 sum(inclILI), day, epoch)
+%             break
+%         end
+%         swrPctSinceLick = swrTimeSinceLick(inclILI) ./ ili(inclILI);
+%         swrLickPhaseShuff = 2*pi*(swrPctSinceLick);
+%         meanvec = mean(exp(1i*swrLickPhaseShuff));
+%         meanMRVmagShuff(end+1) = abs(meanvec);
+%         vecangShuff = angle(meanvec);
+%         % phasemod
+%         [~, z] = circ_rtest(swrLickPhaseShuff); % pval is the stat rayleigh test. z is mean res vec
+%         phasemodShuff(end+1) = log(z); % i think log makes it 'variance normalized' (karalis,sirota)
+%     end
+%     smthxcShuffstd = std(smthxcShuff); % shuff xcorr std
+%     smthxcShuffmean = mean(smthxcShuff); %shuff xcorr mean
+% end
 %% plot
 if plotfigs
+    [~, fname,~] = fileparts(mfilename('fullpath'));
+    outdir = sprintf('%s/%s/%s/', pconf.andef{4},fname,animal,animal);
     Pp=load_plotting_params({'defaults','dfa_lickswrcorr'}, 'pausefigs', pausefigs, ...
         'savefigs', savefigs);
     %% Xcorr norm smooth, shuff mean/std
@@ -173,7 +202,7 @@ if plotfigs
     plot(time, smthxcShuffmean, 'color', [0 0 1 .2], 'linewidth', 1);
     hold on;
     fill([time'; flipud(xc.time')],[smthxcShuffmean'-smthxcShuffstd';flipud(smthxcShuffmean'+smthxcShuffstd')],'b',...
-        'linestyle','none', 'facealpha', .s1);
+        'linestyle','none', 'facealpha', .2);
     % xcorr norm
     bar(xc.time, normxc, 'k', 'facealpha', .2, 'edgealpha', 0)
     % xcorr norm smooth
@@ -244,6 +273,7 @@ if plotfigs
     title('swr lick-phase')
     hold off
     axis tight
+    
     %% ---- super axis -----
     sprtit = sprintf('%s %d %d lickswrcorr', animal,day,epoch);
     sprax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', gcf);
@@ -262,27 +292,38 @@ if returnoutput
     out.swrStart = swrStart;
     out.licks = licks;
     out.idlicks = idlicks;
-    out.boutIntvs = boutIntvs;
+    out.boutIntvs = burstIntvs;
     out.xc = xc;
     out.normxc = normxc;
     out.smthxc = smthxc;
     out.excorr = excorr;
 %     out.xcrms = xcrms;
-    out.swrinbouts = swrinbouts;
-    out.relswrtime = relswrtime;
+    out.swrBinILI = swrBinILI;
+    out.swrInBurstStart = swrInBurstStart;
+    out.relswrtime = swrTimeSinceLick;
     out.meanMRVmag = meanMRVmag;
     out.swrLickPhase = swrLickPhase;
     out.vecang = vecang;
     out.phasemod = phasemod;
-    out.meanMRVmagShuff = meanMRVmagShuff;
-    out.swrLickPhaseShuff = swrLickPhaseShuff;
-    out.excorrShuff = excorrShuff;
-    out.phasemodShuff = phasemodShuff;
-    out.smthxcShuff = smthxcShuff;
+    out.swrBurstInterval = swrBurstInterval;
+    try
+        out.meanMRVmagShuff = meanMRVmagShuff;
+        out.swrLickPhaseShuff = swrLickPhaseShuff;
+        out.excorrShuff = excorrShuff;
+        out.phasemodShuff = phasemodShuff;
+        out.smthxcShuff = smthxcShuff;
+    catch
+        out.meanMRVmagShuff = [];
+        out.swrLickPhaseShuff = [];
+        out.excorrShuff = [];
+        out.phasemodShuff = [];
+        out.smthxcShuff = [];
+    end
 end
 end
 function out = make_blank(idx)
     out.index = idx;
+    out.swrBurstInterval = [];
     out.time = [];
     out.swrStart = [];
     out.licks = [];
@@ -293,7 +334,8 @@ function out = make_blank(idx)
     out.smthxc = [];
     out.excorr = [];
 %     out.xcrms = [];
-    out.swrinbouts = [];
+    out.ili = [];
+    out.swrInBurstStart = [];
     out.relswrtime = [];
     out.meanMRVmag = [];
     out.swrLickPhase = [];
