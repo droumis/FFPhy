@@ -4,7 +4,7 @@
 function out = dfa_perripspikingcorr(index, excludeperiods, spikes, eventscons, varargin)
 % Calculate per rip corr between the spikes from ntA, ntB
 % exclude periods and other filters apply to the rips
-
+% COMBINES SPIKES FROM ALL CLUSTERS ON EACH NTRODE
 
 %%% Inputs
 %   index           [day epoch tetrode cell tetrode cell]
@@ -64,6 +64,7 @@ catch
 end
 
 % ones = included, zeros = excluded
+
 includetimes = ~isExcluded(times, excludeperiods);
 includetimes = includetimes(:);
 

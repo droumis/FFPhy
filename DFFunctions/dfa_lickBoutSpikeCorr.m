@@ -11,16 +11,12 @@ for s = 1:length(reqData)
 end
 
 pconf = paramconfig;
-bin = 0.01; % 10 ms bins
-sw1 = bin*3;
-% sw1 = 0.005; 
+bin = 0.01; % seconds
+sw1 = bin*3; % seconds
 sw2 = 0.250;
 rmstmax = 0.1;
 rmsmincounts = 50;
-
 tmax = .5 ;
-numshuff = 1000;
-shuff = 100; % ms
 if ~isempty(varargin)
     assign(varargin{:});
 end

@@ -162,19 +162,21 @@ for s = Fp.params
             options = {'savefigas', 'png', 'eventName',eventName};
             
         case 'lickbouts'
-            lickGap = 0.5;
-            boutNum = 10;
+            maxIntraBurstILI = 0.25;  % max burst ili threshold in seconds
+            minBoutLicks = 3; %filter out bouts with less than boutNum licks
             % timefilt1: lick bouts, 
-            timefilter{end+1} = {'getLickBout', '($lickBout == 1)', 'lickGap', lickGap, ...
-                'boutNum', boutNum};
+            timefilter{end+1} = {'getLickBout', '($lickBout == 1)', ...
+                'maxIntraBurstILI', maxIntraBurstILI, ...
+                'minBoutLicks', minBoutLicks};
             
         case 'nolickbouts'
             % timefilt: immoble not lick bout
-            lickGap = 0.5;
-            boutNum = 10;
+            maxIntraBurstILI = 0.25;  % max burst ili threshold in seconds
+            minBoutLicks = 3; % filter out bouts with less than boutNum licks
+            minTimeFromLick = .5; % time duration from closest lick
             timefilter{end+1} = {'getLickBout', ...
-                '(($lickBout == 0) & ($velocity < 1) & ($timeFromLick > .5))', ...
-                'lickGap', lickGap, 'boutNum', boutNum};
+                sprintf('($lickBout == 0) & ($timeFromLick > %d)',minTimeFromLick), ...
+                'maxIntraBurstILI', maxIntraBurstILI, 'minBoutLicks', minBoutLicks};
                 
         case 'dfa_lickphaseSUclustering'
             eventName = 'lick';
@@ -366,6 +368,19 @@ for s = Fp.params
             iterator = 'singlecellanal';
             filtfunction = 'calcxcorrmeasures';
             datatypes = {'spikes', 'ca1rippleskons', 'pos', 'task'};
+        
+        case 'dfa_suCoactiveXcorr'
+            iterator = 'singlecellanal';
+            filtfunction = 'dfa_suCoactiveXcorr';
+            
+            cellpairfilter = {'allcomb', ...
+                '($numspikes > 100) && (isequal($area, ''ca1'')) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))', ...
+                '($numspikes > 100) && (isequal($area, ''ca1'')) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))'};
+            
+            eventName = 'swr';
+            iterator = 'singlecellanal';
+            datatypes = {'spikes'};
+            options = {'savefigas', 'png', 'eventName',eventName};
             
         case 'mua_calcxcorrmeasures'
             % requires 'tetrodepairs', Fp.tetpairfilter,

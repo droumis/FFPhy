@@ -7,9 +7,12 @@ epochs = n x 2 where n = [day epoch]
 % dio times along with..
 /home/droumis/Src/Matlab/filterframework_dr/Functions/get_licks.m
 
+'datadir' arg1 currently needs to be there bc of the way setfiltertime
+calls the time funcs... but i don't use it so outside of setfiltertime i
+should just pass an empty arg there..
 %}
 
-function out = getLickBout(animal, epochs, varargin)
+function out = getLickBout(datadir, animal, epochs, varargin)
 
 maxIntraBurstILI = .25; % max burst ili threshold in seconds
 minBoutLicks = 3; %filter out bouts with less than boutNum licks
