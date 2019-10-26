@@ -144,11 +144,14 @@ for s = Fp.params
             %% filter function specific params
         case 'swrlickmod'
             filtfunction = 'swrlickmod';
+            
         case 'wavelets4-300Hz'
             waveSet = '4-300Hz';
             wp = getWaveParams(waveSet);
             
-        case 'behavestate'
+        case 'reactivationPLTH'
+            iterator = 'singlepochanal';
+            datatypes = {'spikes', 'pos', 'licks'};
             
         case 'dfa_lickBoutSpikeCorr'
 
