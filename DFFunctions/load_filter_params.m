@@ -28,30 +28,30 @@ for s = Fp.params
     switch s{1}
         %% EPOCH TETRODE CELL RIPPLE filters
         case 'sleep'
-            epochEnvironment = 'sleep';
+            env = 'sleep';
             epochfilter = sprintf('(isequal($environment,''%s''))', ...
-                epochEnvironment);
+                env);
         case 'wtrack'
-            epochEnvironment = 'wtrack';
+            env = 'wtrack';
             epochfilter = sprintf('(isequal($environment,''%s''))', ...
-                epochEnvironment);
+                env);
         case 'wtrackdays'
-            epochEnvironment = 'wtrack';
+            env = 'wtrack';
             daytype = 'wtrack';
             epochfilter = sprintf('(isequal($daytype,''%s'')) && (isequal($environment,''%s''))', ...
-                daytype, epochEnvironment);
+                daytype, env);
         case 'exemplar_wepochs'
-            epochEnvironment = 'wtrack';
+            env = 'wtrack';
             epochfilter = sprintf('(isequal($exemplar,1)) && (isequal($environment,''wtrack''))');
         case 'sleepwtrackdays'
-            epochEnvironment = 'sleep';
+            env = 'sleep';
             daytype = 'wtrack';
             epochfilter = sprintf('(isequal($daytype,''%s'')) && (isequal($environment,''%s''))', ...
-                daytype, epochEnvironment);
+                daytype, env);
         case 'openfield'
-            epochEnvironment = 'openfield';
+            env = 'openfield';
             epochfilter = sprintf('(isequal($environment,''%s''))', ...
-                epochEnvironment);
+                env);
             %         case 'all_epoch_types'
             %             epochType = {'sleep','run', 'run', 'run','run', 'run'};
             %             epochEnvironment = {'sleep', 'wtrack', 'wtrackrotated', 'openfield', ...
@@ -114,7 +114,7 @@ for s = Fp.params
             timefilter{end+1} = {'getpriortofirstwell', '($prefirst == 0)'};
             
         case 'excludeAfterLastWell'
-            timefilter{end+1} = {'getpostlastwell', '($postlast == 0)'};            
+            timefilter{end+1} = {'getpostlastwell', '($postlast == 0)'};
         case 'referenced'
             uselfptype = 'eeg';
         case 'unreferenced'
@@ -142,6 +142,32 @@ for s = Fp.params
             %         Fp.minvelocity, 'consensus_numtets',Fp.consensus_numtets,'welldist', ...
             %         Fp.welldist);
             %% filter function specific params
+        case 'dfa_reactivationPSTH'
+            win = [-1 1];
+            bin = .1;
+            consensus_numtets = 2;   % minimum # of tets for consensus event detection
+            minstdthresh = 3;        % STD. how big your ripples are
+            exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
+            minvelocity = 0;
+            maxvelocity = 4;
+            maxIntraBurstILI = 0.25;  % max burst ili threshold in seconds
+            minBoutLicks = 3; % filter out bouts with less than boutNum licks
+            minTimeFromLick = .5; % time duration from closest lick
+            
+            iterator = 'singleepochanal';
+            datatypes = {'spikes', 'lick', 'ca1rippleskons', 'cellinfo'};
+            options = {'cellfilter', cellfilter, 'win', win, 'bin', bin,...
+                'swrTimeFilter', ...
+                [{{'getconstimes', '($cons == 1)', ...
+                'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
+                'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
+                'minvelocity', minvelocity,'maxvelocity',maxvelocity}}, ...
+                {{'getpriortofirstwell', '($prefirst == 0)'}}], ...
+                'lickTimeFilter', ...
+                {{'getLickBout', '($lickBout == 1)', 'maxIntraBurstILI', maxIntraBurstILI, ...
+                'minBoutLicks', minBoutLicks}}};
+            
+            
         case 'swrlickmod'
             filtfunction = 'swrlickmod';
             
@@ -150,9 +176,9 @@ for s = Fp.params
             wp = getWaveParams(waveSet);
             
         case 'reactivationPLTH'
-            iterator = 'singlepochanal';
+            iterator = 'singleepochanal';
             datatypes = {'spikes', 'pos', 'licks'};
-            
+
         case 'dfa_lickBoutSpikeCorr'
 
             cellpairfilter = {'allcomb', ...

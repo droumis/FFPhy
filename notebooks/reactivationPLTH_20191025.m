@@ -5,9 +5,7 @@
 
 - bin >4cm/s spikes into 100 ms intervals
 
-
 %}
-
 
 animal = 'D10';
 day = 6;

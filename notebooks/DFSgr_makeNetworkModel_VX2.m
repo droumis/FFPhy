@@ -299,8 +299,6 @@ if gatherdata
                 Qmatch=zscore(curSleepSpikeBins')';
                 numMatchBins=size(curSleepSpikeBins,2);
                 
-                
-                
                 %===== 'FULL MODEL': PRE-PRINCIPAL-COMPONENT DECOMPOSITION
                 % I do the same analyses below per- principal component
                 MtemplatematchTimeSeries=diag(Qmatch'*C0*Qmatch)';
