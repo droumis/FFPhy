@@ -34,6 +34,8 @@ for s = param_set
             SupFontS = 12;
             tickSz = 8; % tick labels font size
             set(0,'defaultAxesFontSize',10)
+        case 'ReactivationStrength'
+            position = [.1 .1 .5 .5];
             
         case 'wetVDryILIphaseSWR'
             position = [.1 .1 .5 .5];

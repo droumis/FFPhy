@@ -16,15 +16,12 @@ for s = 1:length(reqData)
 end
 
 % assign params
-numCellsThresh = 10;
-savefigas = {'png'};
+numCellsThresh = 5;
+numSpikesThresh = 50;
 numShuffs = 100;
-bin = 0.100; % seconds
+bin = 0.01; % seconds
 fullModel = 1;
-perPC = 1;
-plotfigs = 1;
-savefigs = 1;
-trimIdx = 4;
+perPC = 0;
 if ~isempty(varargin)
     assign(varargin{:})
 end
@@ -36,25 +33,36 @@ out = init_out(idx, animal);
 su = evaluatefilter(cellinfo, cellfilter);
 numCells=size(su,1);
 if numCells<numCellsThresh
-    fprintf('not enough cells:(%d) %d %d\n', numCells, idx(1), idx(2));
+    fprintf('%s %d %d not enough cells: %d < %d\n', animal, idx(1), idx(2), numCells, numCellsThresh);
     return
 end
-epTimeRange = spikes{idx(1)}{idx(2)}{su(1,3)}{su(s,4)}.timerange;
+
+epTimeRange = spikes{idx(1)}{idx(2)}{su(1,3)}{su(1,4)}.timerange;
+times = epTimeRange(1):.001:epTimeRange(2); % ms rez ep time
+andef = animaldef(animal);
+f.animal = animaldef(animal);
+f.epochs{1} = idx;
+
 timeBinEdges = epTimeRange(1):bin:epTimeRange(2);
 for s = 1:length(su(:,1))
     iSpks = spikes{idx(1)}{idx(2)}{su(s,1)}{su(s,2)}.data;
+    if length(iSpks) < numSpikesThresh
+        fprintf('%s %d %d not enough spikes: %d < %d\n', animal, idx(1), idx(2), length(iSpks), numSpikesThresh);
+        return
+    end
     binSpikes(s,:) = histc(iSpks,timeBinEdges);
 end
 %% Get Template and Match binned zSpikes
 templMask = logical(isExcluded(timeBinEdges, templateIntervals));
 fprintf('template pct eptime %.02f (%.03f s)\n',sum(templMask)/length(templMask)*100, ...
     sum(templMask)*bin)
-
+% get time bins
 tmpTimeEdges = timeBinEdges(templMask);
 spikesTemplateTime = tmpTimeEdges(1:end-1)+bin/2;
 matchTimeEdges = timeBinEdges(~templMask);
-spikesMatchTime = matchTimeEdges(1:end-1)+bin/2;
-
+reactTime = matchTimeEdges(1:end-1)+bin/2;
+out.reactTime = reactTime;
+% bin template spikes
 spikesTemplate = binSpikes(:,templMask);
 numBinsTemplate=size(spikesTemplate,2);
 spikesMatch = binSpikes(:,~templMask);
@@ -70,78 +78,104 @@ zCCtemplate=(zSpikesTemplate*zSpikesTemplate')/numBinsTemplate; %effectively sam
 zCCtemplateNoDiag = zCCtemplate - diag(diag(zCCtemplate)); % cancel out the diag i=j terms
 
 %% Full Model version of Reactivation Strength
-reactFull=diag(zSpikesMatch'*zCCtemplateNoDiag*zSpikesMatch)';
-Mtemplatematch=(1/(2*numMatchBins))*sum(reactFull);
-%  = (1/(2*numMatchBins))*sum(reactSeries);
-% tempMatchTS = MtempMatch;
-% tempMatch=[Mtemplatematch];
-
-%% full model time-shuffle
 if fullModel
-    % Test significance of reactivation by comparing reactivation strength to that from
-    % shuffled Qmatch matrices
-    %     MtemplatematchShufs=[];
-    reactFullShuf = [];
-    MtemplatematchShufs = [];
-    for qq = 1:numShuffs
-        zSpikesMatchShuf = [];
-        for ic = 1:numCells
-            shiftamount = round(rand(1)*numMatchBins);
-            zSpikesMatchShuf(ic,:) = circshift(zSpikesMatch(ic,:),shiftamount,2);
-        end
-        MtemplatematchTimeSeriesShuf =diag(zSpikesMatchShuf'*zCCtemplateNoDiag*zSpikesMatchShuf);
-        MtemplatematchShuf=(1/(2*numMatchBins))*sum(MtemplatematchTimeSeriesShuf);
-        MtemplatematchShufs=[MtemplatematchShufs MtemplatematchShuf];
-    end
-    reactSignFull=nanmean(Mtemplatematch<MtemplatematchShufs);
-    
-    %% Full Model swr reactivation psth, eta
-    andef = animaldef(animal);
-    f.animal = animaldef(animal);
-    f.epochs{1} = idx;
+    reactFull=diag(zSpikesMatch'*zCCtemplateNoDiag*zSpikesMatch)';
+    out.reactFull = reactFull;
+    %% all SWR psth
     d = setfiltertime(f, swrTimeFilter);
-    times = epTimeRange(1):.001:epTimeRange(2);
-    swrIntervals = vec2list(~isExcluded(times, d.excludetime{1}{1}), times);
-    % use swr starts to check for inclusion into matchTimeEdges
-    [h, swrTimeIdx] = histc(swrIntervals(:,1), matchTimeEdges);
+    swrTime = vec2list(~isExcluded(times, d.excludetime{1}{1}), times);
+    out.swrTime = swrTime;
+    [~, swrTimeIdx] = histc(swrTime(:,1), matchTimeEdges);
     idxWin = win(1)/bin:win(2)/bin;
-    swrReactPSTHtime = idxWin*.1;
+    lag0idx = ceil(length(idxWin)/2);
+    swrReactPSTHtime = idxWin*bin;
     swrTimeIdx = swrTimeIdx(swrTimeIdx+min(idxWin)>0);
-    swrReactPSTH = cell2mat(arrayfun(@(r) reactFull(r+idxWin), swrTimeIdx, 'un', 0));
-    swrReactETA = nanmean(swrReactPSTH);
-    % plot(idxWin, swrReactETA)
+    swrTimeIdx = swrTimeIdx(swrTimeIdx+max(idxWin)<length(reactFull));
+    if ~isempty(swrTimeIdx)
+        swrReactPSTHfull = cell2mat(arrayfun(@(r) reactFull(r+idxWin), swrTimeIdx, 'un', 0));
+        swrReactETAfull = nanmean(swrReactPSTHfull);
+        % all swr shuff
+        swrReactETAfullShufs = [];
+        for sh=1:numShuffs
+            swrReactPSTHfullShuf=[];
+            for qq=1:length(swrTimeIdx)
+                shiftBy=round(rand(1)*size(swrReactPSTHfull,2));
+                swrReactPSTHfullShuf(qq,:)=circshift(swrReactPSTHfull(qq,:),shiftBy,2);
+            end
+            swrReactETAfullShufs(sh,:) = nanmean(swrReactPSTHfullShuf);
+        end
+        swrReactETAfullShufsMean = nanmean(swrReactETAfullShufs);
+        swrReactETAfullShufsSEM = nanstd(swrReactETAfullShufs)/...
+            sqrt(size(swrReactETAfullShufs,1));
+        %     swrP = ranksum(swrReactETAfullShufs(:,lag0idx), swrReactETAfull(:,lag0idx),'alpha',0.05,'tail','left');
+
+    out.swrReactPSTHfull = swrReactPSTHfull;
+    out.swrReactETAfull = swrReactETAfull;
+    out.reactPSTHtime = swrReactPSTHtime;
+    out.swrReactETAfullShufs = swrReactETAfullShufs;
+    end
     
-    % swr psth shuff
-    swrReactPSTHshuff =
-    swrReactETAshuff =
-    
-    %% Burst swr psth, eta
-    swrBurstReactPSTH =
-    swrBurstReactETA =
-    swrBurstReactPSTHshuff =
-    swrBurstReactETAshuff =
+    %% SWR-Burst psth
+    l = setfiltertime(f, burstTimeFilter);
+    swrBurstTime = swrTime(~isExcluded(swrTime(:,1), l.excludetime{1}{1}),:);
+    out.swrBurstTime = swrBurstTime;
+    [~, swrBurstTimeIdx] = histc(swrBurstTime(:,1), matchTimeEdges);
+    swrBurstTimeIdx = swrBurstTimeIdx(swrBurstTimeIdx+min(idxWin)>0);
+    swrBurstTimeIdx = swrBurstTimeIdx(swrBurstTimeIdx+max(idxWin)<length(reactFull));
+    if ~isempty(swrBurstTimeIdx)
+        swrBurstReactPSTHfull = cell2mat(arrayfun(@(r) reactFull(r+idxWin), swrBurstTimeIdx, 'un', 0));
+        swrBurstReactETAfull = nanmean(swrBurstReactPSTHfull);
+        % swr-burst shuff
+        swrBurstReactETAfullShufs = [];
+        for sh=1:numShuffs
+            swrBurstReactPSTHfullShuf=[];
+            for qq=1:length(swrBurstTimeIdx)
+                shiftBy=round(rand(1)*size(swrBurstReactPSTHfull,2));
+                swrBurstReactPSTHfullShuf(qq,:)=circshift(swrBurstReactPSTHfull(qq,:),shiftBy,2);
+            end
+            swrBurstReactETAfullShufs(sh,:) = nanmean(swrBurstReactPSTHfullShuf);
+        end
+        swrBurstReactETAfullShufsMean = nanmean(swrBurstReactETAfullShufs);
+        swrBurstReactETAfullShufsSEM = nanstd(swrBurstReactETAfullShufs)/...
+            sqrt(size(swrBurstReactETAfullShufs,1));
+        swrBurstP = ranksum(swrBurstReactETAfullShufs(:,lag0idx), swrBurstReactETAfull(:,lag0idx),'alpha',0.05,'tail','left');
+
+        out.swrBurstReactPSTHfull = swrBurstReactPSTHfull;
+        out.swrBurstReactETAfull = swrBurstReactETAfull;
+        out.swrBurstReactETAfullShufs = swrBurstReactETAfullShufs;
+    end
     
     %% Full Model lick reactivation psth, eta
-    l = setfiltertime(f, lickTimeFilter);
     burstIntervals = vec2list(~isExcluded(times, l.excludetime{1}{1}), times);
     allLicks = lick{idx(1)}{idx(2)}.starttime;
-    licksFilt = allLicks(logical(isExcluded(allLicks, burstIntervals)));
-    
-    [h, burstTimeIdx] = histc(licksFilt, matchTimeEdges);
-    idxWin = win(1)/bin:win(2)/bin;
-    burstTimeIdx = burstTimeIdx(burstTimeIdx+min(idxWin)>0);
-    lickReactPSTH = cell2mat(arrayfun(@(r) reactFull(r+idxWin), burstTimeIdx, 'un', 0));
-    lickReactETA = mean(lickReactPSTH);
-    % plot(idxWin, lickReactETA)
-    
-    lickReactPSTHshuff =
-    lickReactETAshuff =
-    %% stat testing
-    % p-value at lag 0
-    lag0idx = [];
-    swrP = ranksum(swrReactETAshuff(:,lag0idx), swrReactETA(:,lag0idx),'alpha',0.05,'tail','left');
-    swrBurstP = ranksum(swrBurstReactETAshuff(:,lag0idx), swrBurstReactETA(:,lag0idx),'alpha',0.05,'tail','left');
-    lickP = ranksum(lickReactETAshuff(:,lag0idx), lickReactETA(:,lag0idx),'alpha',0.05,'tail','left');
+    lickBurstTime = allLicks(logical(isExcluded(allLicks, burstIntervals)));
+    lickBurstTime = lickBurstTime(lickBurstTime+min(idxWin)>0);
+    lickBurstTime = lickBurstTime(lickBurstTime+max(idxWin)<length(reactFull));
+    out.lickBurstTime = lickBurstTime;
+    [~, lickBurstTimeIdx] = histc(lickBurstTime, matchTimeEdges);
+    lickBurstTimeIdx = lickBurstTimeIdx(lickBurstTimeIdx+min(idxWin)>0);
+    lickBurstTimeIdx = lickBurstTimeIdx(lickBurstTimeIdx+max(idxWin)<length(reactFull));
+    if ~isempty(lickBurstTimeIdx)
+        lickReactPSTHfull = cell2mat(arrayfun(@(r) reactFull(r+idxWin), lickBurstTimeIdx, 'un', 0));
+        lickReactETAfull = nanmean(lickReactPSTHfull);
+        % lick shuff
+        lickReactETAfullShufs = [];
+        for sh=1:numShuffs
+            lickReactPSTHfullShuf=[];
+            for qq=1:length(lickBurstTimeIdx)
+                shiftBy=round(rand(1)*size(lickReactPSTHfull,2));
+                lickReactPSTHfullShuf(qq,:)=circshift(lickReactPSTHfull(qq,:),shiftBy,2);
+            end
+            lickReactETAfullShufs(sh,:) = nanmean(lickReactPSTHfullShuf);
+        end
+        lickReactETAfullShufsMean = nanmean(lickReactETAfullShufs);
+        lickReactETAfullShufsSEM = nanstd(lickReactETAfullShufs)/...
+            sqrt(size(lickReactETAfullShufs,1));
+        %         lickP = ranksum(lickReactETAfullShufs(:,lag0idx), lickReactETAfull(:,lag0idx),'alpha',0.05,'tail','left');
+        out.lickReactPSTHfull = lickReactPSTHfull;
+        out.lickReactETAfull = lickReactETAfull;
+        out.lickReactETAfullShufs = lickReactETAfullShufs;
+    end
 end
 
 %% PER PC
@@ -174,6 +208,7 @@ if perPC
             reactPerPC(jEig,it)=sum(sum(ensOutProd.*squeeze(PCsNoDiag(jEig,:,:))));
         end
     end
+    out.reactPerPC = reactPerPC; % per pc full epoch 'match' intervals reactivation strength series
     %% per PC shuffle and test psth
     
     reactSignPCs = [];
@@ -184,8 +219,8 @@ if perPC
         for qq=1:numShuffs
             zSpikesMatchShuf=[];
             for tr=1:numCells
-                shiftamount=round(rand(1)*numMatchBins);
-                zSpikesMatchShuf(tr,:)=circshift(zSpikesMatch(tr,:),shiftamount,2);
+                shiftBy=round(rand(1)*numMatchBins);
+                zSpikesMatchShuf(tr,:)=circshift(zSpikesMatch(tr,:),shiftBy,2);
             end
             
             for i2=1:numMatchBins
@@ -201,14 +236,14 @@ if perPC
         
         swrReactPSTHperPC = cell2mat(arrayfun(@(r) reactPerPC(iEig,r+idxWin), swrTimeIdx, 'un', 0));
         swrReactETAperPC = nanmean(swrReactPSTHperPC);
-       % circshift test psth
+        % circshift test psth
         swrReactETAperPCShufsTrim=[];
         swrReactETAperPCShufs=[];
-        for tt=1:numShuffs
+        for sh=1:numShuffs
             swrReactPSTHperPCShuf=[];
             for qq=1:length(swrTimeIdx)
-                shiftamount=round(rand(1)*size(swrReactPSTHperPC,2));
-                swrReactPSTHperPCShuf(qq,:)=circshift(swrReactPSTHperPC(qq,:),shiftamount,2);
+                shiftBy=round(rand(1)*size(swrReactPSTHperPC,2));
+                swrReactPSTHperPCShuf(qq,:)=circshift(swrReactPSTHperPC(qq,:),shiftBy,2);
                 
             end
             swrReactETAperPCShuf=nanmean(swrReactPSTHperPCShuf);
@@ -224,126 +259,42 @@ if perPC
         end
         
         % need to add burst swr and lick to this psth,shuffle
-%         swrBurstReactPSTHperPC = 
-%         swrBurstReactETAperPC = 
-%         swrBurstReactPSTHperPCshuff = 
-%         swrBurstReactETAperPCshuff = 
-%         
-%         lickReactPSTHperPC = 
-%         lickReactETAperPC = 
-%         lickReactPSTHperPCshuff = 
-%         lickReactETAperPCshuff = 
-       
+        %         swrBurstReactPSTHperPC =
+        %         swrBurstReactETAperPC =
+        %         swrBurstReactPSTHperPCshuff =
+        %         swrBurstReactETAperPCshuff =
+        %
+        %         lickReactPSTHperPC =
+        %         lickReactETAperPC =
+        %         lickReactPSTHperPCshuff =
+        %         lickReactETAperPCshuff =
+        
     end
 end
-if plotfigs
-    %% plot Full ETA w sem errorbars
-    % plot swr ETA with ebars, shuff
-    
-    subplot(3,1,1)
-    plot(swrReactPSTHtime, swrReactETA,'k','linewidth',3);
-    hold on;
-    plot(swrReactPSTHtime,swrReactETAshuff,'r','linewidth',3);
-    errorbar(swrReactPSTHtime,swrReactETA,nanstd(swrReactPSTH)/sqrt(size(swrReactPSTH,1)),'k','linewidth',0.5)
-    errorbar(swrReactPSTHtime,swrReactETAshuff,nanstd(swrReactETAshuff)/sqrt(size(swrReactETAshuff,1)),'r','linewidth',0.5)
-    ylabel('Reactivation strength')
-    xlabel('Time (s)')
-    title('swrReactETA')
-    
-    % plot swr burst ETA with ebars, shuff
-    subplot(3,1,2)
-    plot(swrReactPSTHtime, swrBurstReactETA,'k','linewidth',3);
-    hold on;
-    plot(swrReactPSTHtime,swrBurstReactETAshuff,'r','linewidth',3);
-    errorbar(swrReactPSTHtime,swrBurstReactETA, ...
-        nanstd(swrBurstReactPSTH)/sqrt(size(swrBurstReactPSTH,1)),'k','linewidth',0.5)
-    errorbar(swrReactPSTHtime,swrBurstReactETAshuff, ...
-        nanstd(swrBurstReactPSTHshuff)/sqrt(size(swrBurstReactPSTHshuff,1)),'r','linewidth',0.5)
-    ylabel('Reactivation strength')
-    xlabel('Time (s)')
-    title('swrBurstReactETA')
-    
-    % plot lick ETA with ebars, shuff
-    subplot(3,1,3)
-    plot(swrReactPSTHtime, lickReactETA,'k','linewidth',3);
-    hold on;
-    plot(swrReactPSTHtime,lickReactETAshuff,'r','linewidth',3);
-    errorbar(swrReactPSTHtime,lickReactETA,nanstd(lickReactPSTH)/sqrt(size(lickReactPSTH,1)),'k','linewidth',0.5)
-    errorbar(swrReactPSTHtime,lickReactETAshuff,nanstd(lickReactETAshuff)/sqrt(size(lickReactETAshuff,1)),'r','linewidth',0.5)
-    ylabel('Reactivation strength')
-    xlabel('Time (s)')
-    title('lickReactETA')
-    
-    %% plot time snippet of spikes + zbinSpikes traces + reactivation result (full,pc)
-    exWin = [];
-    % plot spikes in time window
-    
-    % plot zbinspikes traces in time window
-    % plot like lfp
-    
-    % plot reactivation result in time window
-    % reactPerPC (1 trace per sig pc)
-    % reactFull
-    
-    %% plot per PC method Demo
-    % plot the steps and examples of the main parts
-    % templateCC Eigvec, val, sig PC's, match z spikes, per pc react
-    if 1
-        figure
-        subplot(2,3,1); imagesc(zCCtemplateNoDiag); ax = gca; ax.YDir = 'normal'; title('zCCtemplateNoDiag')
-        ylabel('cell')
-        subplot(2,3,2); imagesc(eigVal); ax = gca; ax.YDir = 'normal'; title('eigval')
-        subplot(2,3,3); imagesc(eigVec); ax = gca; ax.YDir = 'normal'; title('eigvec')
-        for iEig = 1:numEigValSig
-            subplot(2,3,iEig+3); imagesc(squeeze(PCsNoDiag(iEig,:,:))); ax = gca; ax.YDir = 'normal';
-            title(sprintf('zCCtemplate SigPC%dnoDiag', iEig))
-        end
-    end
-    %% Plot reactStrength swr-psth, lick-psth, burst-swr-psth
-    % plot burst swr-psth, burst lick-psth, nonburst swr-psth
-    % underneath heatrasters, plot ETA, stdfill, shuffle
-    
-    %%
-    % plot the spatial representation of the significant PC's, a la Peyrache
-end
-%% return output
-out.reactSeries = reactFull; % full epoch 'match' intervals reactivation strength series
-out.reactSeriesPerPC = reactPerPC; % per pc full epoch 'match' intervals reactivation strength series
-out.timeBinEdges = timeBinEdges(templMask); % full epoch 'match' intervals time
 
-out.swrReactPSTH = swrReactPSTH;
-out.swrReactETA = swrReactETA;
-out.swrReactPSTHtime = swrReactPSTHtime;
-
-out.swrReactPSTHshuff = swrReactPSTHshuff;
-out.swrReactETAshuff = swrReactETAshuff;
-
-out.swrBurstReactPSTH = swrBurstReactPSTH; % nBurstSWRDin x periSWRTimeWin
-out.swrNoBurstReactPSTH = swrNoBurstReactPSTH; % nNonBurstSWRDin x periSWRTimeWin
-
-out.singleepochReactPSTH = lickReactPSTH;% nLickDin x periLickTimeWin
-out.lickReactPSTHtime = [];
 end
 
 function out = init_out(idx, animal, varargin)
 out.idx = idx;
-out.idx = animal;
-out.reactSeries = [];
-out.reactSeriesPerPC = [];
-out.timeBinEdges = [];
+out.animal = animal;
+out.reactFull = []; % full epoch 'match' intervals reactivation strength series
+out.reactTime = []; % full epoch 'match' time.. aka reactivation
 
-out.swrReactPSTH = [];
-out.swrReactETA = [];
-out.swrReactPSTHtime = [];
+out.swrTime = [];
+out.swrReactPSTHfull = [];
+out.swrReactETAfull = [];
+out.reactPSTHtime = [];
+out.swrReactETAfullShufs = [];
 
-out.swrReactPSTHshuff = [];
-out.swrReactETAshuff = [];
+out.swrBurstTime = [];
+out.swrBurstReactPSTHfull = [];
+out.swrBurstReactETAfull = [];
+out.swrBurstReactETAfullShufs = [];
 
-out.swrBurstReactPSTH = [];
-out.swrNoBurstReactPSTH = [];
-
-out.lickReactPSTH = [];
-out.lickReactPSTHtime = [];
+out.lickBurstTime = [];
+out.lickReactPSTHfull = [];
+out.lickReactETAfull = [];
+out.lickReactETAfullShufs = [];
 end
 
 
