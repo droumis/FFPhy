@@ -14,7 +14,7 @@ at the same ILI phase..
 - i think the easier first step is to do the psth relative to time rather
 than ILIphase.. 
 %}
-create_filter = 1;
+create_filter = 0;
 run_ff = 1;
 load_ffdata = 0;
 %% FF
