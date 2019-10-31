@@ -23,6 +23,7 @@ catch
     end
 end
 tic
+fprintf('saving...\n')
 if per_animal
     for an = 1:length(animals)
         if strcmp(filtOutputDirectory, 'filterframework')

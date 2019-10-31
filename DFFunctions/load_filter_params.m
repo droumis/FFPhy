@@ -119,6 +119,24 @@ for s = Fp.params
             uselfptype = 'eeg';
         case 'unreferenced'
             uselfptype = 'eeggnd';
+            
+        case 'lickbouts'
+            maxIntraBurstILI = 0.25;  % max burst ili threshold in seconds
+            minBoutLicks = 3; %filter out bouts with less than boutNum licks
+            % timefilt1: lick bouts, 
+            timefilter{end+1} = {'getLickBout', '($lickBout == 1)', ...
+                'maxIntraBurstILI', maxIntraBurstILI, ...
+                'minBoutLicks', minBoutLicks};
+            
+        case 'nolickbouts'
+            % timefilt: immoble not lick bout
+            maxIntraBurstILI = 0.25;  % max burst ili threshold in seconds
+            minBoutLicks = 3; % filter out bouts with less than boutNum licks
+            minTimeFromLick = .5; % time duration from closest lick
+            timefilter{end+1} = {'getLickBout', ...
+                sprintf('($lickBout == 0) & ($timeFromLick > %d)',minTimeFromLick), ...
+                'maxIntraBurstILI', maxIntraBurstILI, 'minBoutLicks', minBoutLicks};
+                
         case 'ripples'
             TF = 1;
             eventtype = 'rippleskons';
@@ -143,7 +161,7 @@ for s = Fp.params
             %         Fp.welldist);
             %% filter function specific params
         case 'dfa_reactivationPSTH'
-            bin = 0.01; % seconds
+            bin = 0.025; % seconds
             win = [-2 2];
             
             consensus_numtets = 2;   % minimum # of tets for consensus event detection
@@ -174,7 +192,10 @@ for s = Fp.params
             
         case 'wavelets4-300Hz'
             waveSet = '4-300Hz';
-            wp = getWaveParams(waveSet);
+%             wp = getWaveParams(waveSet);
+        case '4-300Hz_focusSWR'
+            waveSet = '4-300Hz_focusSWR';
+%             wp = getWaveParams(waveSet);
             
         case 'reactivationPLTH'
             iterator = 'singleepochanal';
@@ -190,24 +211,7 @@ for s = Fp.params
             iterator = 'singlecellanal';
             datatypes = {'spikes'};
             options = {'savefigas', 'png', 'eventName',eventName};
-            
-        case 'lickbouts'
-            maxIntraBurstILI = 0.25;  % max burst ili threshold in seconds
-            minBoutLicks = 3; %filter out bouts with less than boutNum licks
-            % timefilt1: lick bouts, 
-            timefilter{end+1} = {'getLickBout', '($lickBout == 1)', ...
-                'maxIntraBurstILI', maxIntraBurstILI, ...
-                'minBoutLicks', minBoutLicks};
-            
-        case 'nolickbouts'
-            % timefilt: immoble not lick bout
-            maxIntraBurstILI = 0.25;  % max burst ili threshold in seconds
-            minBoutLicks = 3; % filter out bouts with less than boutNum licks
-            minTimeFromLick = .5; % time duration from closest lick
-            timefilter{end+1} = {'getLickBout', ...
-                sprintf('($lickBout == 0) & ($timeFromLick > %d)',minTimeFromLick), ...
-                'maxIntraBurstILI', maxIntraBurstILI, 'minBoutLicks', minBoutLicks};
-                
+
         case 'dfa_lickphaseSUclustering'
             eventName = 'lick';
             filtfunction = 'dfa_lickphaseSUclustering';
@@ -319,7 +323,7 @@ for s = Fp.params
             LFPtypes = {'eeggnd', 'eeg'};%, 'theta', 'ripple'}; %'lowgamma', 'fastgamma', 'ripple'};
             LFPrangesHz = {'1-400', '1-400'};%, '6-9', '140-250'}; %'20-50', '65-140',};
             srate = 1500;
-            win = [2 2];
+            win = [1.5 1.5];
             time = -win(1):1/srate:win(2);
             TF = 1;
             eventtype = 'rippleskons';

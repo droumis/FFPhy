@@ -45,13 +45,17 @@ f.epochs{1} = idx;
 
 timeBinEdges = epTimeRange(1):bin:epTimeRange(2);
 for s = 1:length(su(:,1))
-    iSpks = spikes{idx(1)}{idx(2)}{su(s,1)}{su(s,2)}.data;
+    iSpks = spikes{idx(1)}{idx(2)}{su(s,3)}{su(s,4)}.data;
     if length(iSpks) < numSpikesThresh
         fprintf('%s %d %d not enough spikes: %d < %d\n', animal, idx(1), idx(2), length(iSpks), numSpikesThresh);
         return
     end
+    outSpikes{s,1} = [repmat(s,length(iSpks),1) iSpks];
     binSpikes(s,:) = histc(iSpks,timeBinEdges);
 end
+out.su = su;
+out.binSpikes = binSpikes;
+out.spikes = cell2mat(outSpikes);
 %% Get Template and Match binned zSpikes
 templMask = logical(isExcluded(timeBinEdges, templateIntervals));
 fprintf('template pct eptime %.02f (%.03f s)\n',sum(templMask)/length(templMask)*100, ...
@@ -80,6 +84,7 @@ zCCtemplateNoDiag = zCCtemplate - diag(diag(zCCtemplate)); % cancel out the diag
 %% Full Model version of Reactivation Strength
 if fullModel
     reactFull=diag(zSpikesMatch'*zCCtemplateNoDiag*zSpikesMatch)';
+%     reactFullNorm=(1/(2*numMatchBins))*sum(reactFull);
     out.reactFull = reactFull;
     %% all SWR psth
     d = setfiltertime(f, swrTimeFilter);
@@ -149,6 +154,9 @@ if fullModel
     burstIntervals = vec2list(~isExcluded(times, l.excludetime{1}{1}), times);
     allLicks = lick{idx(1)}{idx(2)}.starttime;
     lickBurstTime = allLicks(logical(isExcluded(allLicks, burstIntervals)));
+    % exclude licks within 1 second of a swr
+    [~, d] = knnsearch(swrBurstTime(:), lickBurstTime);
+    lickBurstTime = lickBurstTime(d > 1);
     lickBurstTime = lickBurstTime(lickBurstTime+min(idxWin)>0);
     lickBurstTime = lickBurstTime(lickBurstTime+max(idxWin)<length(reactFull));
     out.lickBurstTime = lickBurstTime;
@@ -277,6 +285,9 @@ end
 function out = init_out(idx, animal, varargin)
 out.idx = idx;
 out.animal = animal;
+out.su = [];
+out.binSpikes = [];
+out.spikes = [];
 out.reactFull = []; % full epoch 'match' intervals reactivation strength series
 out.reactTime = []; % full epoch 'match' time.. aka reactivation
 

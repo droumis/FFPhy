@@ -9,7 +9,7 @@ pconf = paramconfig;
 me = animaldef('Demetris');
 noiseEvents = struct;
 lfptype = 'eeg';
-expvars = {'onlywdays'}; %,'rewarded', 'unrewarded', 'inbound' , 'outbound', 'proximalWell', ...
+expvars = {}; %,'rewarded', 'unrewarded', 'inbound' , 'outbound', 'proximalWell', ...
 %     'distalWell'};
 saveout = 1;
 run_perm = 1;
@@ -17,7 +17,9 @@ outdir = 'expvarCatMeanPwr';
 if ~isempty(varargin)
     assign(varargin{:});
 end
-
+if isempty(expvars)
+    expvars = expvarCat(1).expvars;
+end
 for ian = 1:length(rawpwr)
     wp = getWaveParams(Fp.waveSet);
     animal = Fp.animals{ian};
@@ -58,7 +60,7 @@ for ian = 1:length(rawpwr)
     out(ian).meandbpower = meandbpower;
     
     if saveout
-        save_data(out, [pconf.andef{2},outdir,'/'], [outdir, '_', Fp.epochEnvironment])
+        save_data(out, [pconf.andef{2},outdir,'/'], [outdir, '_', Fp.env])
     end
 end
 end

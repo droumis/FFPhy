@@ -34,12 +34,17 @@ for s = param_set
             SupFontS = 12;
             tickSz = 8; % tick labels font size
             set(0,'defaultAxesFontSize',10)
+        case 'areaTFspect'
+%             area = {{'mec', 'sup'}, {'mec', 'deep'}, {'ca1', 'd'}};
+            position = [.1 .1 .8 .5];
+            win = [-.5 .5];
+            usecolormap = hot;
+            tickFsize = 8;
         case 'ReactivationStrength'
             position = [.1 .1 .5 .5];
-            
+            winSE = [-2 2];
         case 'wetVDryILIphaseSWR'
             position = [.1 .1 .5 .5];
-            
             
         case 'FeatureTracking'
             SpVt = 0.00;
@@ -102,7 +107,7 @@ for s = param_set
             stitFsize = 16;
             tickFsize = 8;
             sfTitFsize = 14;
-            pwin = [1 1];
+            pwin = [.5 .5];
             usecolormap = 'bone';
             contourRes = 40;
             position = [.1 .1 1 1];

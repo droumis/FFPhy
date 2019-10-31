@@ -1,5 +1,6 @@
 function out = stack_riptriglfp(data, Fp, varargin)
 % make single data matrix per animal
+% exclude any events containing at least one nan in any tetrode
 
 % compile results from F(anim).output{dayep}.data{lfptype}{ripN: ntXsamp}
 % into out(ian).data{lfptype}(ntrode x sample x ripple)
@@ -11,69 +12,73 @@ if ~isempty(varargin)
 end
 
 out = struct;
-for ian = 1:length(data)
-    out(ian).animal = data(ian).animal{3};
+for ian = 1:length(data) % per animal
+    animal = data(ian).animal{3};
+    out(ian).animal = animal;
     out(ian).lfptypes = data(ian).datafilter_params.LFPtypes;
     try
         out(ian).LFPrangesHz = data(ian).datafilter_params.LFPrangesHz;
     catch
-    end    
+    end
     out(ian).data_dims = {'ntrode', 'sample', 'ripple'};
-    out(ian).dayeps = data(ian).epochs{1, 1};
-    out(ian).data = {};
-    out(ian).numrips_perep = {};
-    for ide = 1:length(out(ian).dayeps(:,1)) % per epoch
-        day = out(ian).dayeps(ide,1);
-        epoch = out(ian).dayeps(ide,2);
-        try
-        if isempty(data(ian).output{ide}.data)
-            fprintf('missing data %s %d %d\n', out(ian).animal, day, epoch);
-            continue
-        end
-        catch
-            fprintf('missing data %s %d %d\n', out(ian).animal, day, epoch);
-            continue
-        end
-        for t = 1:length(out(ian).lfptypes) % LFP type.. 
-            % TODO: need to seperate out the different lfp bands so i can load per type
-            % ntrode x sample X ripple
-            tmp = data(ian).output{1,ide}.data{t};
-            if isempty(tmp)
+    dayeps = data(ian).epochs{1, 1};
+    out(ian).dayeps = dayeps;
+    for t = 1:length(out(ian).lfptypes) % LFP type..
+        for ide = 1:size(dayeps,1) % per epoch
+            day = dayeps(ide,1);
+            epoch = dayeps(ide,2);
+            try
+                epData = data(ian).output{1,ide}.data{t};
+                if isempty(epData)
+                    fprintf('missing data %s %d %d\n', animal, day, epoch);
+                    continue
+                end
+            catch
+                fprintf('missing data %s %d %d\n', animal, day, epoch);
                 continue
-            else
-                out(ian).data{t}{1,ide} = cat(3,tmp{:}); % concat ripples into 3rd dim
             end
+            epDataTnsr = cat(3,epData{:}); % concat into [ntrode x sample x event]
+            % exclude any events with a nan
+            vEvents = find(squeeze(all(all(~isnan(epDataTnsr),1),2)));
+            numValid = numel(vEvents);
+            if max(vEvents) ~= numValid
+                fprintf('D:%d E:%d LFP:%s excluding bc nan: %d of %d events\n', ...
+                    day, epoch, out(ian).lfptypes{t}, max(vEvents)-length(vEvents), length(vEvents));
+            end
+            dataTnsr{1,ide} = epDataTnsr(:,:,vEvents);
+            evStartIdx{ide,1} = data(ian).output{ide}.eventStartIndices(vEvents);
+            evEndIdx{ide,1} = data(ian).output{ide}.eventEndIndices(vEvents);
+            
+            % collect day/epoch level info
+            numEvPerEp{ide,1} = numValid;
+            evDay{ide,1} = day*ones(numValid, 1);
+            evEpoch{ide,1} = epoch*ones(numValid, 1);
+            evStart{ide,1} = data(ian).output{ide}.LFPtimes(evStartIdx{ide});
+            evEnd{ide,1} = data(ian).output{ide}.LFPtimes(evEndIdx{ide});
         end
-        % collect day/epoch level info
-        out(ian).numrips_perep{ide,1} = length(out(ian).data{t}{ide}(1,1,:));
-        out(ian).day{ide,1} = day*ones(length(out(ian).data{t}{ide}(1,1,:)), 1);
-        out(ian).epoch{ide,1} = epoch*ones(length(out(ian).data{t}{ide}(1,1,:)), 1);
-        out(ian).ripStartIdx{ide,1} = data(ian).output{ide}.eventStartIndices;
-        out(ian).ripEndIdx{ide,1} = data(ian).output{ide}.eventEndIndices;
-        out(ian).ripStartTime{ide,1} = data(ian).output{ide}.LFPtimes(...
-            data(ian).output{ide}.eventStartIndices);
-        out(ian).ripEndTime{ide,1} = data(ian).output{ide}.LFPtimes(...
-            data(ian).output{ide}.eventEndIndices);
+        out(ian).time{t} = data(ian).datafilter_params.time;
+        out(ian).day{t} = cell2mat(evDay);
+        out(ian).epoch{t} = cell2mat(evEpoch);
+        out(ian).ntrodes{t} = unique(cell2mat(cellfun(@(x) x(:,3), {data(ian).output{ide}.index}, ...
+            'un', 0)'), 'stable');
+        
+        out(ian).data{t} = cell2mat(permute(dataTnsr, [1 3 2])); % stack all rips
+        out(ian).numEvPerEp{t} = cell2mat(numEvPerEp);
+        out(ian).evStartIdx{t} = cell2mat(evStartIdx);
+        out(ian).evEndIdx{t} = cell2mat(evEndIdx);
+        out(ian).evStart{t} = cell2mat(evStart);
+        out(ian).evEnd{t} = cell2mat(evEnd);
     end
-    % collapse data across collected epochs into one matrix
-    for t = 1:length(out(ian).lfptypes) % LFP type
-        out(ian).data{t} = cell2mat(permute(out(ian).data{t}, [1 3 2])); % stack all rips
-    end
-    out(ian).ntrodes = unique(cell2mat(cellfun(@(x) x(:,3), {data(ian).output{ide}.index}, ...
-        'un', 0)'), 'stable');
-    out(ian).time = data(ian).datafilter_params.time;
-    out(ian).numrips_perep = cell2mat(out(ian).numrips_perep);
-    out(ian).day = cell2mat(out(ian).day);
-    out(ian).epoch = cell2mat(out(ian).epoch);
-    out(ian).ripStartIdx = cell2mat(out(ian).ripStartIdx);
-    out(ian).ripEndIdx = cell2mat(out(ian).ripEndIdx);
-    out(ian).ripStartTime = cell2mat(out(ian).ripStartTime);
-    out(ian).ripEndTime = cell2mat(out(ian).ripEndTime);
+%     % collapse data across collected epochs into one matrix
+%     for t = 1:length(out(ian).lfptypes) % LFP type
+%         out(ian).data{t} = cell2mat(permute(out(ian).data{t}, [1 3 2])); % stack all rips
+%     end
 end
 if saveout
-    save_data(out, Fp.paths.resultsDirectory,['riptriglfpstack_',Fp.epochEnvironment]);
+    save_data(out, Fp.paths.resultsDirectory,['riptriglfpstack_',Fp.env]);
 end
 
 end
+
 
 

@@ -10,23 +10,24 @@ function [powerout, phaseout] = computeAnalyticSignal(lfpstack, varargin)
 % Demetris Roumis 2019
 
 saveOutput = 1;
-uselfptype = 'eeg';
+lfptype = 'eeg';
 waveSet = '4-300Hz';
-epochEnvironment = 'ep';
+env = 'ep';
 if ~isempty(varargin)
     assign(varargin{:});
 end
 
 for ian = 1:length(lfpstack)
     animal = lfpstack(ian).animal;
-    fprintf('computing Analytic Signal for %s %s\n', animal, uselfptype);
+    fprintf('computing Analytic Signal for %s %s\n', animal, lfptype);
     fprintf('waveSet: %s\n', waveSet);
-    wp = getWaveParams(waveSet);    
-    itypeidx = find(strcmp(lfpstack(ian).lfptypes, uselfptype));
-    dsampdata = lfpstack(ian).data{itypeidx}(:,1:wp.dsamp:end,:);
+    wp = getWaveParams(waveSet);
+    t = find(strcmp(lfpstack(ian).lfptypes, lfptype));
+    
+    dsampdata = lfpstack(ian).data{t}(:,1:wp.dsamp:end,:);
+    nNtrodes = size(dsampdata,1);
     nevents = size(dsampdata,3);
     nsamps = size(dsampdata,2);
-    nNtrodes = size(dsampdata,1);
     nData = nsamps*nevents*nNtrodes;
     timeWin = wp.win(1):1/(wp.srate/wp.dsamp):wp.win(2);
     baseind(1,1) = dsearchn(timeWin',wp.basewin(1));
@@ -53,47 +54,47 @@ for ian = 1:length(lfpstack)
     
     % Phase
     fprintf('getting phase \n');
-    phaseout.ph =  single(angle(as)); % convert to single to save diskspace
-    phaseout.wp = wp;
-    phaseout.animal = animal;
-    phaseout.day = lfpstack(ian).day;
-    phaseout.epoch = lfpstack(ian).epoch;
-    phaseout.ripStartTime = lfpstack(ian).ripStartTime;
-    phaseout.ripEndTime = lfpstack(ian).ripEndTime;
-    phaseout.ntrode = lfpstack(ian).ntrodes;
-    phaseout.frequency = wp.frex;
-    phaseout.lfptype = uselfptype;
-    phaseout.dsampsrate = wp.win(1):1/(wp.srate/wp.dsamp):wp.win(2);
-    phaseout.dsamp = wp.dsamp;
-    phaseout.time = timeWin;
-    phaseout.dims = {'ntrode', 'sample', 'ripple', 'frequency'};
+    phaseout(ian).ph =  single(angle(as)); % convert to single to save diskspace
+    phaseout(ian).wp = wp;
+    phaseout(ian).animal = animal;
+    phaseout(ian).day = lfpstack(ian).day{t};
+    phaseout(ian).epoch = lfpstack(ian).epoch{t};
+    phaseout(ian).evStart = lfpstack(ian).evStart{t};
+    phaseout(ian).evEnd = lfpstack(ian).evEnd{t};
+    phaseout(ian).ntrode = lfpstack(ian).ntrodes{t};
+    phaseout(ian).frequency = wp.frex;
+    phaseout(ian).lfptype = lfptype;
+    phaseout(ian).dsampsrate = wp.win(1):1/(wp.srate/wp.dsamp):wp.win(2);
+    phaseout(ian).dsamp = wp.dsamp;
+    phaseout(ian).time = timeWin;
+    phaseout(ian).dims = {'ntrode', 'sample', 'event', 'frequency'};
     
     % Power
     fprintf('getting power \n');
-    powerout.pwr =  single(abs(as).^2);
-    powerout.wp = wp;
-    powerout.animal = animal;
-    powerout.day = lfpstack(ian).day;
-    powerout.epoch = lfpstack(ian).epoch;
-    powerout.ripStartTime = lfpstack(ian).ripStartTime;
-    powerout.ripEndTime = lfpstack(ian).ripEndTime;
-    powerout.ntrode = lfpstack(ian).ntrodes;
-    powerout.frequency = wp.frex;
-    powerout.lfptype = uselfptype;
-    powerout.dsampsrate = wp.win(1):1/(wp.srate/wp.dsamp):wp.win(2);
-    powerout.dsamp = wp.dsamp;
-    powerout.time = timeWin;
-    powerout.dims = {'ntrode', 'sample', 'ripple', 'frequency'};
-    fprintf('%.02f seconds to compute pwr,ph AS\n', toc);
+    powerout(ian).pwr =  single(abs(as).^2);
+    powerout(ian).wp = wp;
+    powerout(ian).animal = animal;
+    powerout(ian).day = lfpstack(ian).day{t};
+    powerout(ian).epoch = lfpstack(ian).epoch{t};
+    powerout(ian).evStart = lfpstack(ian).evStart{t};
+    powerout(ian).evEnd = lfpstack(ian).evEnd{t};
+    powerout(ian).ntrode = lfpstack(ian).ntrodes{t};
+    powerout(ian).frequency = wp.frex;
+    powerout(ian).lfptype = lfptype;
+    powerout(ian).dsampsrate = wp.win(1):1/(wp.srate/wp.dsamp):wp.win(2);
+    powerout(ian).dsamp = wp.dsamp;
+    powerout(ian).time = timeWin;
+    powerout(ian).dims = {'ntrode', 'sample', 'event', 'frequency'};
+    fprintf('%.02f seconds to compute AS, pwr, ph \n', toc);
     
     %% ---------------- Save Output ---------------------------------------------------
     if saveOutput == 1
         fprintf('saving AS\n')
         andef = animaldef(lower('Demetris'));
-        save_data(phaseout, sprintf('%s/analyticSignal/', andef{2}), ...
-            sprintf('AS_waveSet-%s_%s_%s_phase', waveSet, uselfptype, epochEnvironment))
-        save_data(powerout, sprintf('%s/analyticSignal/', andef{2}), ...
-            sprintf('AS_waveSet-%s_%s_%s_power', waveSet, uselfptype, epochEnvironment))
+        save_data(phaseout(ian), sprintf('%s/analyticSignal/', andef{2}), ...
+            sprintf('AS_waveSet-%s_%s_%s_phase', waveSet, lfptype, env))
+        save_data(powerout(ian), sprintf('%s/analyticSignal/', andef{2}), ...
+            sprintf('AS_waveSet-%s_%s_%s_power', waveSet, lfptype, env))
     end
 end
 end
@@ -110,7 +111,10 @@ parfor fi=1:wp.numfrex % can use parfor
     gaus_win = exp(-timeWin.^2./(2*bn^2)); % gaussian
     wavelet = sine_wave .* gaus_win;
 %     gaus_fwhm = exp(-(4*log(2)*timeWin).^2/fwhm(fi).^2);
-    wavefft = fft(wavelet,nConv2pow); % fft of the wavelet, pad to next power of 2 
+% i think this will ensure that the wavelett and data fft have same
+    % freq resolution
+    wavefft = fft(wavelet,nConv2pow); % fft of the wavelet, pad to next power of 2 of data
+    
     % normalize wavelet to a maximum of 1 to ensure convolution units are same as data
     waveletFFT(:,fi) = (wavefft ./ max(wavefft))';
     fprintf('creating wavelet for freq %d of %d \n',fi,wp.numfrex);

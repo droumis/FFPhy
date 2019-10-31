@@ -4,75 +4,82 @@ function out = makeExpvarCatDesignMat(lfpstack, varargin)
     % return design matrix of experiment variables [rip var]
     % Demetris Roumis 2019
     pconf = paramconfig;
-    expvars = {'onlywdays', 'rewarded', 'unrewarded', 'inbound' , 'outbound', ...
+    expvars = {'all', 'rewarded', 'unrewarded', 'inbound' , 'outbound', ...
          'proximalWell', 'distalWell', 'rewarded_outbound', 'rewarded_inbound'};
     saveout = 1;
     outdir = 'expvarCat';
     defaults = {'wtrackdays', 'excludeNoise','excludePriorFirstWell'};
+    lfptype = 'eeg';
     if ~isempty(varargin)
         assign(varargin{:})
     end
-    
+    fprintf('defaults: %s\n', defaults{:})
     outpath = [pconf.andef{2},outdir,'/'];
     for ian = 1:length(lfpstack)
+        t = find(strcmp(lfpstack(ian).lfptypes, lfptype));
         animal = lfpstack(ian).animal;
         out(ian).animal = animal;
         out(ian).dims = {'ripple', 'expvar'};
-        out(ian).ripStartTime = lfpstack(ian).ripStartTime;
-        out(ian).ripEndTime = lfpstack(ian).ripEndTime;
-        out(ian).dayeps = [lfpstack(ian).day lfpstack(ian).epoch];
+        out(ian).evStart = lfpstack(ian).evStart{t};
+        out(ian).evEnd = lfpstack(ian).evEnd{t};
+        out(ian).dayeps = [lfpstack(ian).day{t} lfpstack(ian).epoch{t}];
         out(ian).expvars = expvars;
-        out(ian).dm = zeros(length(out(ian).ripStartTime), length(expvars));
+        out(ian).dm = zeros(length(out(ian).evStart), length(expvars));
         Fp = struct;
         for ss = 1:length(expvars)
-            Fp.add_params = defaults;
+            Fp.params = defaults;
             switch expvars{ss}
-%                 case 'all'
-%                     Fp.add_params = {'excludeNoise','excludePriorFirstWell'};
-                case 'onlywdays'
+                case 'all'
                     % all defaults
+                case 'lickbouts'
+                    Fp.params{end+1} = 'lickbouts';
+                case 'nolickbouts'
+                    Fp.params{end+1} = 'nolickbouts';
                 case 'rewarded'
-                    Fp.add_params{end+1} = 'correcttrials';
+                    Fp.params{end+1} = 'correcttrials';
                 case 'unrewarded'
-                    Fp.add_params{end+1} = 'errortrials';
+                    Fp.params{end+1} = 'errortrials';
                 case 'outbound'
-                    Fp.add_params{end+1} = 'outbound';
+                    Fp.params{end+1} = 'outbound';
                 case 'inbound'
-                    Fp.add_params{end+1} = 'inbound';
+                    Fp.params{end+1} = 'inbound';
                 case 'rewarded_outbound'
-                    Fp.add_params{end+1} = 'correcttrials';
-                    Fp.add_params{end+1} = 'outbound';
+                    Fp.params{end+1} = 'correcttrials';
+                    Fp.params{end+1} = 'outbound';
                 case 'unrewarded_outbound'
-                    Fp.add_params{end+1} = 'errortrials';
-                    Fp.add_params{end+1} = 'outbound';
+                    Fp.params{end+1} = 'errortrials';
+                    Fp.params{end+1} = 'outbound';
                 case 'rewarded_inbound'
-                    Fp.add_params{end+1} = 'correcttrials';
-                    Fp.add_params{end+1} = 'inbound';
+                    Fp.params{end+1} = 'correcttrials';
+                    Fp.params{end+1} = 'inbound';
                 case 'unrewarded_inbound'
-                    Fp.add_params{end+1} = 'errortrials';
-                    Fp.add_params{end+1} = 'inbound';
+                    Fp.params{end+1} = 'errortrials';
+                    Fp.params{end+1} = 'inbound';
                 case 'proximalWell'
-                    Fp.add_params{end+1} = 'proximalWell';
+                    Fp.params{end+1} = 'proximalWell';
                 case 'distalWell'
-                    Fp.add_params{end+1} = 'distalWell';
+                    Fp.params{end+1} = 'distalWell';
                 otherwise
                     error('condition string %s unrecognized', expvars{ss});
             end
-            Fp = load_filter_params(Fp, 'add_params', Fp.add_params);
+            fprintf('============ %s =============\n', expvars{ss});
+            Fp = load_filter_params(Fp);
             F = createfilter('animal', {out(ian).animal}, 'epochs', ...
                 Fp.epochfilter, 'excludetime', Fp.timefilter);
             for de = 1:length(F.epochs{1}(:,1))
                 day = F.epochs{1}(de,1);
                 epoch = F.epochs{1}(de,2);
+                % events in current epoch
                 ieprips = ismember(out(ian).dayeps, [day epoch], 'rows');
+                % events in current timefilter
                 out(ian).dm(ieprips,ss) = ...
-                    ~isExcluded(out(ian).ripStartTime(ieprips), ...
+                    ~isExcluded(out(ian).evStart(ieprips), ...
                     F.excludetime{1}{de});
             end
         end
     end
     if saveout
-        save_data(out, outpath, [outdir,'_',Fp.epochEnvironment]); 
+        save_data(out, outpath, [outdir,'_',Fp.env]); 
     end
 end
 
