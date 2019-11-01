@@ -239,27 +239,48 @@ for s = Fp.params
             datatypes = {'lick', 'task', 'DIO', 'spikes', 'cellinfo'};
             
         case 'dfa_lickswrcorr'
-           % /home/droumis/Src/Matlab/filterframework_dr/DFFunctions/dfa_lickswrcorr.m
+            % dfa params
+            plotfigs = 1;
+            pausefigs = 0;
+            savefigs = 1;
+            savefigas = {'png', 'eps'};
             bin = .01;
             tmax = 1;
-            sw1 = bin*2;
-            sw2 = .250;
-            sigperc = .975;
-            eventtype = 'ca1rippleskons';
+            boutNum = 10;
+            lickgap = .500;
+            excShortBin = bin*2;
+            excLongBin = .250;
+            minILIthresh = .06; % seconds
+            maxILIthresh = .250; % seconds
+            rmsmincounts = 1; % min bin count within rmstamax. otherwise nan
+            rmstmax = .25; % seconds
+            compute_shuffle = 1;
+            numshuffs = 200;
+            shuffOffset = 250; %ms
+            sigpct = .975;
+
+            % timefilter params
             consensus_numtets = 2;   % minimum # of tets for consensus event detection
             minstdthresh = 2;        % STD. how big your ripples are
             exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
             minvelocity = 0;
             maxvelocity = 4;
+            
+            iterator = 'singleepochanal';
+            filtfunction = 'dfa_lickswrcorr';
             timefilter{end+1} = {'getconstimes', '($cons == 1)', ...
                 'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
                 'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
                 'minvelocity', minvelocity,'maxvelocity',maxvelocity};            
-            options = {'savefigas', 'png', 'bin', bin, 'tmax', tmax, 'savefigs', savefigs, ...
-                'pausefigs', pausefigs};
-            filtfunction = 'dfa_lickswrcorr';
-            iterator = 'singleepochanal';
             datatypes = {'ca1rippleskons','task', 'lick', 'DIO'};
+            options = {'plotfigs', plotfigs, 'pausefigs', pausefigs,'savefigs', savefigs,...
+                'savefigas', savefigas, 'bin', bin, 'tmax', tmax, 'boutNum', boutNum, ...
+                'lickgap', lickgap, 'excShortBin', excShortBin, 'excLongBin', excLongBin, ...
+                'minILIthresh', minILIthresh, 'maxILIthresh', maxILIthresh, ...
+                'rmsmincounts', rmsmincounts, 'rmstmax', rmstmax, 'compute_shuffle', ...
+                compute_shuffle, 'numshuffs', numshuffs, 'shuffOffset', shuffOffset, ...
+                'sigpct', sigpct};            
+            
         case 'savefigs'
             savefigs = 1;
             pausefigs = 0;

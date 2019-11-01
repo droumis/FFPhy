@@ -3,37 +3,36 @@
 %{
 just get a per-animal, all-swr-trig spect.. focusing on the higher
 frequencies
-
 %}
 % get data
 pconf = paramconfig;
-create_filter = 0;
-run_ff = 0;
+create_filter = 1;
+run_ff = 1;
 load_ffdata = 0;
-stack_swrLFP = 0;
+stack_swrLFP = 1;
 load_swrLFPstack = 0;
 % run cmwc
-make_ASig = 0;
+make_ASig = 1;
 load_rawpwr = 0;
 load_phase = 0;
 % create condition design mat
-make_expvarCat = 0;
+make_expvarCat = 1;
 load_expvarCat = 0;
-makeNoiseEvents = 0;
+makeNoiseEvents = 1;
 loadNoiseEvents = 0;
 % compute per condition
-make_expvarCatMeanPwr = 0;
+make_expvarCatMeanPwr = 1;
 load_expvarCatMeanPwr = 0;
 % combine per area
 combineArea = 0;
 % plot
 plot_expvarCatMeanPwr = 0;
-plot_ByArea = 1;
+plot_ByArea = 0;
 pausefigs = 0;
 savefigs = 1;
 
-%%
-Fp.animals = {'D13'}; %{'D10','D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'}; %, 'JZ4'}; %;{'D10'}; %
+%% 
+Fp.animals = {'D10','D13'}; %, 'JZ4'}; %;{'D10'}; %
 Fp.filtfunction = 'dfa_riptriglfp';
 % Fp.add_params = {'sleepwtrackdays', 'excludeNoise', '<4cm/s', 'wavelets4-300Hz'};
 Fp.params = {'referenced','wtrackdays', 'excludePriorFirstWell','<4cm/s', ...
@@ -117,6 +116,7 @@ if combineArea
                 sprintf('isequal($area,''%s'') && isequal($subarea,''%s'')', area{ia}{1}, ...
                 area{ia}{2}));
             ntsA = unique(ntsInArea(:,3));
+%             ntsAIdx = %find(1&sort(ntsA));
             for iv = 1:length(expvarCatMeanPwr(ani).expvars)
                 areaData = expvarCatMeanPwr(ani).meandbpower{iv}.pwr_mean_db(ntsA,:,:);
                 meanPwrArea{ia}{iv} = squeeze(nanmean(areaData,1))';

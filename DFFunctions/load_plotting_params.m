@@ -78,10 +78,12 @@ for s = param_set
             MgLt = 0.04; % margin left
             MgTp = 0.07; % margin top
             MgBm =  0.04; % margin bottom
+            
         case 'dfa_lickswrcorr'
             position = [.1 .1 .5 .5];
             SpHz = 0.15; %spacing horizontal
             SpVt = 0.15; % spacing vertical
+            
         case 'dfa_lickXCorrSpikes'
             position = [.1 .1 .3 .5];
             MgBm =  0.07; % margin bottom
@@ -89,6 +91,7 @@ for s = param_set
             MgLt = .11;
             MgTp = .06;
             psthSize = 5;
+            
         case 'combinedAreasTFstats'
             stitFsize = 16;
             tickFsize = 8;

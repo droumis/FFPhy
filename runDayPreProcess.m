@@ -2,6 +2,9 @@
 
 function runDayPreProcess()
 % run an animal's preprocess log and call this at the bottom
+% this can be used to pass all the workspace vars to Trodes_dayprocess,
+% instead of having to load up a varargin array
+% Demetris Roumis 2019
 tic
 w = evalin('caller', 'whos');
 for a = 1:length(w)

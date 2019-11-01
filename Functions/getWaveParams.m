@@ -68,7 +68,7 @@ switch waveSet
 case '4-300Hz_focusSWR'
         srate = 1500;
         win = [-1.5 1.5];
-        dsamp = 2;
+        dsamp = 3;
         basewin = [-.5 -.2]; % in seconds, period before event start to use as baseline
         pval = 0.05;
         voxel_pval = 0.01;
@@ -78,8 +78,8 @@ case '4-300Hz_focusSWR'
         n_permutes = 100;
         
         min_freq =  4;
-        max_freq = 300;
-        numfrex = 25;
+        max_freq = 350;
+        numfrex = 20;
         range_cycles = [3 14]; % more decreases temp, increases freq precision        
         
         frex = logspace(log10(min_freq),log10(max_freq),numfrex);
