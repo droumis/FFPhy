@@ -34,12 +34,6 @@ for s = 1:length(reqData)
 end
 
 pconf = paramconfig;
-
-plotfigs = 1;
-pausefigs = 0;
-savefigs = 1;
-savefigas = {'png'};
-
 bin = .01;
 tmax = 1;
 boutNum = 10;
@@ -125,6 +119,9 @@ swrValidILI = all([swrBinILI > minILIthresh swrBinILI < maxILIthresh],2);
 fprintf('lBurst swrs in valid ILI: %d (%.02f pct swrs) \n', sum(swrValidILI), ...
     sum(swrValidILI)/length(swrStart)*100)
 swrInBurstStart = swrInBurstStart(swrValidILI);
+if isempty(swrInBurstStart)
+    return
+end
 swrBinILI = swrBinILI(swrValidILI);
 swrTimeSinceLick = swrTimeSinceLick(swrValidILI);
 
@@ -228,18 +225,18 @@ if compute_shuffle
         swrInBurstStart = swrInBurstStart(swrValidILI);
         swrBinILI = swrBinILI(swrValidILI);
         swrTimeSinceLick = swrTimeSinceLick(swrValidILI);
-%         fprintf('swrs with valid ILI:  %d (%.02f pct swrs) \n', numel(swrInBurstStart),...
-%             numel(swrInBurstStart)/length(swrStart)*100)
+        %         fprintf('swrs with valid ILI:  %d (%.02f pct swrs) \n', numel(swrInBurstStart),...
+        %             numel(swrInBurstStart)/length(swrStart)*100)
         % save burst start/end time for each enclosed and valid swr
         [~,~,swrLickBurstIdx] = histcounts(swrInBurstStart, [burstIntvs(:,1); inf]);
         swrBurstInterval = burstIntvs(swrLickBurstIdx,:);
-
+        
         out.swrBinILIShuf{end+1} = swrBinILI;
         out.swrInBurstStartShuf{end+1} = swrInBurstStart;
         out.swrTimeSinceLickShuf{end+1} = swrTimeSinceLick;
         out.swrBurstIntervalShuf{end+1} = swrBurstInterval;
         
-       %% Compute shuffle lickDin x swr
+        %% Compute shuffle lickDin x swr
         % xcorr norm smooth
         xc = spikexcorr(sort(swrInBurstStart), lickboutlicks, bin, tmax);
         normxc = xc.c1vsc2 ./ sqrt(xc.nspikes1 * xc.nspikes2); % normalize xc
@@ -254,7 +251,7 @@ if compute_shuffle
         p1 = xc.nspikes1/T;
         p2 = xc.nspikes2/T; % fr in Hz
         expProb = p1*p2; % per sec. Expected probability
-
+        
         out.xcShuf{end+1} = xc;
         out.normxcShuf{end+1} = normxc;
         out.smthxcShuf{end+1} = smthxc;
@@ -286,88 +283,8 @@ if compute_shuffle
         out.phasemodShuf{end+1} = phasemod;
     end
 end
+end
 
-%% plot
-if plotfigs
-    [~, fname,~] = fileparts(mfilename('fullpath'));
-    outdir = sprintf('%s/%s/', pconf.andef{4},fname,animal);
-    Pp=load_plotting_params({'defaults','dfa_lickswrcorr'}, 'pausefigs', pausefigs, ...
-        'savefigs', savefigs);
-    
-    %% Xcorr norm smooth, shuff mean/std
-    sf1 = subaxis(2,2,1,Pp.posparams{:});
-    sf1.Tag = 'xcorr';
-    
-    % shuffled xcorr with std ghost trail
-    xmsh = mean(cell2mat(out.smthxcShuf'));
-    xstdsh = std(cell2mat(out.smthxcShuf')); %/size(cell2mat(out.smthxcShuf'),1);
-    plot(out.xc.time, xmsh, 'color', [0 0 1 .2], 'linewidth', 1);
-    hold on;
-    fill([out.xc.time'; flipud(out.time')],[xmsh'-xstdsh';flipud(xmsh'+xstdsh')],'b', 'linestyle', ...
-        'none', 'facealpha', .2);
-    % xcorr norm
-    bar(out.xc.time, out.normxc, 'k', 'facealpha', .2, 'edgealpha', 0)
-    % xcorr norm smooth
-    plot(out.time, out.smthxc, 'k')
-    line([0 0], ylim, 'color', 'k', 'linestyle', '--', 'linewidth', .5)
-    
-    ylabel('xcorr');
-    xlabel('time from lick s');
-    %     title('xcorr
-    hold off;
-    %% excorr over shuff excorr cdf distr
-    % relative swr from last lick
-    sf2 = subaxis(2,2,2);
-    histogram(cell2mat(out.excorrShuf), 60,'Normalization','probability','edgealpha', 0, 'facecolor', 'k');
-    excsort = sort(cell2mat(out.excorrShuf));
-    idxsig = round(sigpct*length(out.excorrShuf));
-    line([excsort(idxsig) excsort(idxsig)], ylim, 'color', [0 0 0 .8], 'linestyle', '--');
-    hold on;
-    line([out.excorr out.excorr], ylim, 'color', 'r');
-    excp = 1-sum(out.excorr>cell2mat(out.excorrShuf))/length(out.excorrShuf);
-    title(sprintf('excorr %.03f p%.03f', out.excorr, excp));
-    ylabel('probability')
-    xlabel('excess corr')
-    axis tight
-    hold off;
-        %% polar distr phase clustering, swrLickPhase, meanMRVmag
-    sf3 = subaxis(2,2,3);
-    %     a = polarhistogram(swrLickPhase, 16, 'Normalization', 'pdf', 'edgealpha', 0,...
-    %         'facealpha', .5);
-    polarplot([zeros(size(out.swrLickPhase,1),1) out.swrLickPhase]', ...
-        repmat([0 1],size(out.swrLickPhase,1),1)', 'color', [0 0 0 .4], 'linewidth', 4);
-    hold on
-    polarplot([0; out.vecang], [0; out.meanMRVmag], 'color', [1 0 .3], 'linewidth', 4)
-    grid off
-    rticks([])
-    thetaticks([])
-    title('swr ILI-phase')
-    hold off
-    axis tight
-    %% phase mod
-    sf4 = subaxis(2,2,4);
-    histogram(cell2mat(out.phasemodShuf), 100, 'Normalization', 'probability', 'edgealpha', 0, 'facecolor', 'k');
-    hold on;
-    mrvsort = sort(cell2mat(out.phasemodShuf));
-    idxsig = round(sigpct*length(out.phasemodShuf));
-    line([mrvsort(idxsig) mrvsort(idxsig)], ylim, 'color', [0 0 0 .8], 'linestyle', '--');
-    hold on
-    line([out.phasemod out.phasemod], ylim, 'color', 'r');
-    modp = 1-sum(out.phasemod>cell2mat(out.phasemodShuf))/length(out.phasemodShuf);
-    title(sprintf('logMRVmag %.03f p%.03f Rpval%.03f', out.phasemod, modp, pval));
-    ylabel('probability')
-    xlabel('log(Rayleigh Z)')
-    axis tight
-    hold off
-    
-    %% ---- super axis -----
-    sprtit = sprintf('%s %d %d %s', animal, day, epoch, fname(5:end));
-    setSuperAxTitle(sprtit)
-    % ---- pause, save figs ----
-    if pausefigs; pause; end
-    if savefigs; save_figure(outdir, sprtit, 'savefigas', savefigas); end
-end
-end
 function out = make_blank()
 out.index = [];
 out.time = [];
@@ -394,7 +311,8 @@ out.swrLickPhase = [];
 out.swrPctSinceLick = [];
 out.vecang = [];
 out.phasemod = [];
-%% shuffle 
+
+%% shuffle
 out.swrStartShuf = [];
 % xcTime
 out.xcShuf = {};

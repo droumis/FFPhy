@@ -19,7 +19,7 @@ savefigs = 1;
 savefigas = {'png', 'eps'};
 
 %% data filter params
-Fp.animals = {'D12', 'D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'}; %, 'JZ2', 'JZ4'};
+Fp.animals = {'JZ4'}; %, 'JZ2', 'JZ4'};
 Fp.filtfunction = 'dfa_lickswrcorr';
 Fp.params = {'wtrackdays', Fp.filtfunction};
 
@@ -41,56 +41,118 @@ if load_ffdata
         'filetail', sprintf('_%s', Fp.epochEnvironment));
 end
 
-% %%
-% if combineEpochs
-%     smxc{ani} = 
-%     
-%     smxc = {}; excorr = {}; mrvmag = {}; phmod = {}; smxcShuff = {}; excorrShuff = {};
-%     mrvmagShuff = {}; phmodShuff = {}; vecang = {};
-%     for ani = 1:length(F)
-%         gather the real swr-lick measures across epochs
-%         smxc{ani} = cell2mat(cellfun(@(x) x.smthxc, F(ani).output, 'un', 0)');
-%         excorr{ani} = cell2mat(cellfun(@(x) x.excorr, F(ani).output, 'un', 0)');
-%         mrvmag{ani} = cell2mat(cellfun(@(x) x.meanMRVmag, F(ani).output, 'un', 0)');
-%         vecang{ani} = cell2mat(cellfun(@(x) x.vecang, F(ani).output, 'un', 0)');
-%         phmod{ani} = cell2mat(cellfun(@(x) x.phasemod, F(ani).output, 'un', 0)');
-%         swrLickPhase{ani} = cell2mat(cellfun(@(x) x.swrLickPhase, F(ani).output, 'un', 0)');
-%         gather the swr-lick swr-lick shuffle distributions across epochs (1k per)
-%         smxcShuff{ani} = cell2mat(cellfun(@(x) x.smthxcShuff, F(ani).output, 'un', 0)');
-%         excorrShuff{ani} = cell2mat(cellfun(@(x) x.excorrShuff, F(ani).output, 'un', 0)');
-%         mrvmagShuff{ani} = cell2mat(cellfun(@(x) x.meanMRVmagShuff, F(ani).output, 'un', 0)');
-%         vecangShuff{ani} = cellfun(@(x) x.vecangShuff, F(ani).output, 'un', 0)';
-%         phmodShuff{ani} = cell2mat(cellfun(@(x) x.phasemodShuff, F(ani).output, 'un', 0)');
-%         swrLickPhaseShuff{ani} = cell2mat(cellfun(@(x) x.swrLickPhaseShuff, F(ani).output, 'un', 0)');
-%     end
-% end
+%% plot per epoch
+if plotfigs
+    for ani = 1:length(F)
+        for e = 1:length(F(ani).output)
+            [~, fname,~] = fileparts(mfilename('fullpath'));
+            outdir = sprintf('%s/%s/', pconf.andef{4},fname,animal);
+            Pp=load_plotting_params({'defaults','dfa_lickswrcorr'}, 'pausefigs', pausefigs, ...
+                'savefigs', savefigs);
+            
+            %% Xcorr norm smooth, shuff mean/std
+            sf1 = subaxis(2,2,1,Pp.posparams{:});
+            sf1.Tag = 'xcorr';
+            
+            % shuffled xcorr with std ghost trail
+            xmsh = mean(cell2mat(out.smthxcShuf'));
+            xstdsh = std(cell2mat(out.smthxcShuf')); %/size(cell2mat(out.smthxcShuf'),1);
+            plot(out.xc.time, xmsh, 'color', [0 0 1 .2], 'linewidth', 1);
+            hold on;
+            fill([out.xc.time'; flipud(out.time')],[xmsh'-xstdsh';flipud(xmsh'+xstdsh')],'b', 'linestyle', ...
+                'none', 'facealpha', .2);
+            % xcorr norm
+            bar(out.xc.time, out.normxc, 'k', 'facealpha', .2, 'edgealpha', 0)
+            % xcorr norm smooth
+            plot(out.time, out.smthxc, 'k')
+            line([0 0], ylim, 'color', 'k', 'linestyle', '--', 'linewidth', .5)
+            
+            ylabel('xcorr');
+            xlabel('time from lick s');
+            %     title('xcorr
+            hold off;
+            %% excorr over shuff excorr cdf distr
+            % relative swr from last lick
+            sf2 = subaxis(2,2,2);
+            histogram(cell2mat(out.excorrShuf), 60,'Normalization','probability','edgealpha', 0, 'facecolor', 'k');
+            excsort = sort(cell2mat(out.excorrShuf));
+            idxsig = round(sigpct*length(out.excorrShuf));
+            line([excsort(idxsig) excsort(idxsig)], ylim, 'color', [0 0 0 .8], 'linestyle', '--');
+            hold on;
+            line([out.excorr out.excorr], ylim, 'color', 'r');
+            excp = 1-sum(out.excorr>cell2mat(out.excorrShuf))/length(out.excorrShuf);
+            title(sprintf('excorr %.03f p%.03f', out.excorr, excp));
+            ylabel('probability')
+            xlabel('excess corr')
+            axis tight
+            hold off;
+            %% polar distr phase clustering, swrLickPhase, meanMRVmag
+            sf3 = subaxis(2,2,3);
+            %     a = polarhistogram(swrLickPhase, 16, 'Normalization', 'pdf', 'edgealpha', 0,...
+            %         'facealpha', .5);
+            polarplot([zeros(size(out.swrLickPhase,1),1) out.swrLickPhase]', ...
+                repmat([0 1],size(out.swrLickPhase,1),1)', 'color', [0 0 0 .4], 'linewidth', 4);
+            hold on
+            polarplot([0; out.vecang], [0; out.meanMRVmag], 'color', [1 0 .3], 'linewidth', 4)
+            grid off
+            rticks([])
+            thetaticks([])
+            title('swr ILI-phase')
+            hold off
+            axis tight
+            %% phase mod
+            sf4 = subaxis(2,2,4);
+            histogram(cell2mat(out.phasemodShuf), 100, 'Normalization', 'probability', 'edgealpha', 0, 'facecolor', 'k');
+            hold on;
+            mrvsort = sort(cell2mat(out.phasemodShuf));
+            idxsig = round(sigpct*length(out.phasemodShuf));
+            line([mrvsort(idxsig) mrvsort(idxsig)], ylim, 'color', [0 0 0 .8], 'linestyle', '--');
+            hold on
+            line([out.phasemod out.phasemod], ylim, 'color', 'r');
+            modp = 1-sum(out.phasemod>cell2mat(out.phasemodShuf))/length(out.phasemodShuf);
+            title(sprintf('logMRVmag %.03f p%.03f Rpval%.03f', out.phasemod, modp, pval));
+            ylabel('probability')
+            xlabel('log(Rayleigh Z)')
+            axis tight
+            hold off
+            
+            %% ---- super axis -----
+            sprtit = sprintf('%s %d %d %s', animal, day, epoch, fname(5:end));
+            setSuperAxTitle(sprtit)
+            % ---- pause, save figs ----
+            if pausefigs; pause; end
+            if savefigs; save_figure(outdir, sprtit, 'savefigas', savefigas); end
+        end
+    end
+end
 
-% plot a version of the perepoch fig, but for all epochs combined for each
-%% plot
-
+%% plot per animal
 for ani = 1:length(F)
     animal = F(ani).animal{3};
     if plotfigs
         Pp=load_plotting_params({'defaults','dfa_lickswrcorr'}, 'pausefigs', pausefigs, ...
             'savefigs', savefigs);
+        
         %% Xcorr norm smooth, shuff mean/std
         sf1 = subaxis(2,2,1,Pp.posparams{:});
         sf1.Tag = 'xcorr';
         % shuffled xcorr mean.std ghost trail
         a = [F(ani).output{:}];
-        time = cell2mat({a(1).time}');
+        nonempty = find(~cell2mat(cellfun(@isempty, {a.time}, 'un', 0)));
+        time = cell2mat({a(nonempty(1)).time}');
         % xcorr norm smooth
         smxcmean = nanmean(cell2mat({a.smthxc}'),1);
         smxcstd = nanstd(cell2mat({a.smthxc}'),[],1);
         plot(time, smxcmean, 'k')
         hold on;
         fill([time'; flipud(time')],[smxcmean'-smxcstd';flipud(smxcmean'+smxcstd')],'k',...
-                'linestyle','none', 'facealpha', .1);
+            'linestyle','none', 'facealpha', .1);
         line([0 0], ylim, 'color', 'k', 'linestyle', '--', 'linewidth', .5)
         ylabel('xcorr');
         xlabel('time from lick s');
         axis tight
         hold off;
+        
         %% excorr over shuff excorr cdf distr
         % relative swr from last lick
         sf2 = subaxis(2,2,2);
@@ -98,7 +160,7 @@ for ani = 1:length(F)
         anEXC = [a.excorr];
         grps = [zeros(numel(anEXCSh),1); ones(numel(anEXC),1)];
         violin({anEXCSh, anEXC},...
-            'facecolor',[.5 .5 .5; .6 .6 1;],'edgecolor','none'); 
+            'facecolor',[.5 .5 .5; .6 .6 1;],'edgecolor','none');
         hold on
         b = boxplot([anEXCSh anEXC]',grps, ...
             'PlotStyle', 'compact', 'Symbol', '.','Color', 'k');
@@ -112,45 +174,18 @@ for ani = 1:length(F)
         title(sprintf('ranksum p%.05f', p),'fontname','arial','fontsize', 10);
         ylabel('excess corr')
         hold off;
-            %% mag distr
-        %     sf3 = subaxis(3,2,3);
-        %     histogram(meanMRVmagShuff, 60, 'Normalization', 'probability', 'edgealpha', 0, 'facecolor', 'k');
-        %     hold on;
-        %     mrvsort = sort(meanMRVmagShuff);
-        %     idxsig = round(sigperc*length(meanMRVmagShuff));
-        %     line([mrvsort(idxsig) mrvsort(idxsig)], ylim, 'color', [0 0 0 .8], 'linestyle', '--');
-        %     hold on
-        %     line([meanMRVmag meanMRVmag], ylim, 'color', 'r');
-        %     mrvp = 1-sum(meanMRVmag>meanMRVmagShuff)/length(meanMRVmagShuff);
-        %     title(sprintf('MRVmag %.03f p%.03f', meanMRVmag, mrvp));
-        %     ylabel('probability')
-        %     axis tight
-        %     hold off
-%% polar distr phase clustering, swrLickPhase, meanMRVmag
-        sf3 = subaxis(2,2,3);
         
+        %% polar distr phase clustering, swrLickPhase, meanMRVmag
+        sf3 = subaxis(2,2,3);
         swrLPh = cell2mat({a.swrLickPhase}');
         swrLPhShuf = cell2mat([a.swrLickPhaseShuf]');
-%         anMRVmag = cell2mat(mrvmag{ani});
-%         anvecang = cell2mat(vecang{ani});
-%         anMRVmagShuff = cell2mat(mrvmagShuff{ani});
-%         anvecangShuff = cell2mat(vecangShuff{ani});
-        
         [Rp, z] = circ_rtest(swrLPh);
-%         [kuippval, k, K] = circ_kuipertest(swrLPh, swrLPhShuff, 1, 1);
+        %         [kuippval, k, K] = circ_kuipertest(swrLPh, swrLPhShuff, 1, 1);
         polarhistogram(swrLPhShuf, 32, 'Normalization', 'pdf', 'edgealpha', .1,...
             'facecolor', [.5 .5 .5]);
         hold on
         polarhistogram(swrLPh, 32, 'Normalization', 'pdf', 'edgealpha', .1,...
             'facealpha', .8, 'facecolor', [.6 .6 1]);
-    	
-%         polarplot([zeros(numel(swrLPh),1) swrLPh(:)]', ...
-%             repmat([0 1],numel(swrLPh),1)', 'color', [0 0 0 .4], 'linewidth', 4);
-%         a.ThetaAxisUnits = 'radians';
-%         polarplot(anvecang, anMRVmag, '.', 'color', [0 0 0])
-%         grid on
-%         rticks([])
-%         thetaticks([])
         title(sprintf('rtest p%.04f', Rp))
         hold off
         axis tight
@@ -161,7 +196,7 @@ for ani = 1:length(F)
         anPHMOD = [a.phasemod];
         grps = [zeros(numel(anPHMODSh),1); ones(numel(anPHMOD),1)];
         violin({anPHMODSh, anPHMOD},...
-            'facecolor',[.5 .5 .5; .6 .6 1;],'edgecolor','none'); 
+            'facecolor',[.5 .5 .5; .6 .6 1;],'edgecolor','none');
         hold on
         b = boxplot([anPHMODSh anPHMOD]',grps, ...
             'PlotStyle', 'compact', 'Symbol', '.','Color', 'k');
@@ -177,8 +212,8 @@ for ani = 1:length(F)
         yl = ylim;
         ylim([yl(1) yl(2)+2])
         hold off;
-    
-    %% ---- 
+        
+        %% ----
         sprtit = sprintf('%s %s', animal, Fp.filtfunction(5:end));
         setSuperAxTitle(sprtit)
         if pausefigs; pause; end
@@ -186,8 +221,32 @@ for ani = 1:length(F)
         if savefigs; save_figure(outdir, sprtit, 'savefigas', savefigas); end
     end
 end
-% animal
-% plot a version of the perepoch fig, but for all the animals combined
-% now that i have a distribution for the real, instead of just 1 number, i
-% can do a boxwhisker between the real and the combined shuffled for each
-% measure
+%% plot all data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

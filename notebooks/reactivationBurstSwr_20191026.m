@@ -27,11 +27,11 @@ plotPCdemo = 0;
 pausefigs = 0;
 savefigs = 1;
 %% FF
-Fp.animals = {'D10', 'D13', 'JZ1', 'JZ2', 'JZ4'};
+Fp.animals = {'D10'};
 Fp.filtfunction = 'dfa_reactivationPSTH';
-Fp.params = {'>4cm/s', 'ca1SU', 'wtrackdays', 'excludePriorFirstWell', ...
-    Fp.filtfunction}; %'exemplar_wepochs',
+Fp.params = {'>4cm/s', 'ca1SU', 'wtrackdays', 'excludePriorFirstWell', Fp.filtfunction};
 Fp = load_filter_params(Fp);
+
 %%
 if create_filter
     F = createfilter('animal', Fp.animals, 'epochs', Fp.epochfilter,  ...
@@ -49,8 +49,6 @@ if load_ffdata
         'filetail', ['_' Fp.env]);
 end
 %% copy ntrode info to cell info for the rest of the animals
-
-
 
 %% create summary data
 if createSummaryData
