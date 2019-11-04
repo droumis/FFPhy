@@ -134,15 +134,15 @@ if fullModel
     out.reactFull = reactFull;
     %% SWR rxn psth
     [out.swrReactPSTHfull, out.swrReactETAfull, out.swrReactETAfullShufs] = ...
-        stackPSTHwShuf(reactFull, swrTimeIdx, idxWin, numShufs);
+        stackPSTH(reactFull, swrTimeIdx, 'idxWin', idxWin, 'numShufs', numShufs);
     %% SWR-Burst rxn psth
     if ~isempty(swrBurstTimeIdx)
         [out.swrBurstReactPSTHfull, out.swrBurstReactETAfull, out.swrBurstReactETAfullShufs] = ...
-            stackPSTHwShuf(reactFull, swrBurstTimeIdx, idxWin, numShufs);
+            stackPSTH(reactFull, swrBurstTimeIdx, 'idxWin', idxWin, 'numShufs', numShufs);
     end
     %% lick rxn psth
     [out.lickReactPSTHfull, out.lickReactETAfull, out.lickReactETAfullShufs] = ...
-        stackPSTHwShuf(reactFull, lickBurstTimeIdx, idxWin, numShufs);
+        stackPSTH(reactFull, lickBurstTimeIdx, 'idxWin', idxWin, 'numShufs', numShufs);
 end
 
 %% PER PC
@@ -178,15 +178,15 @@ if perPC
         end
         %% SWR rxn psth per PC
         [out.swrReactPSTHPerPC{jEig}, out.swrReactETAPerPC{jEig}, out.swrReactETAPerPCShufs{jEig}] = ...
-            stackPSTHwShuf(out.reactPerPC{jEig}, swrTimeIdx, idxWin, numShufs);
+            stackPSTH(out.reactPerPC{jEig}, swrTimeIdx, 'idxWin', idxWin, 'numShufs', numShufs);
         %% SWR-Burst rxn psth
         if ~isempty(swrBurstTimeIdx)
             [out.swrBurstReactPSTHPerPC{jEig}, out.swrBurstReactETAPerPC{jEig}, out.swrBurstReactETAPerPCShufs{jEig}] = ...
-                stackPSTHwShuf(out.reactPerPC{jEig}, swrBurstTimeIdx, idxWin, numShufs);
+                stackPSTH(out.reactPerPC{jEig}, swrBurstTimeIdx, 'idxWin', idxWin, 'numShufs', numShufs);
         end
         %% lick rxn psth
         [out.lickReactPSTHPerPC{jEig}, out.lickReactETAPerPC{jEig}, out.lickReactETAPerPCShufs{jEig}] = ...
-            stackPSTHwShuf(out.reactPerPC{jEig}, lickBurstTimeIdx, idxWin, numShufs);
+            stackPSTH(out.reactPerPC{jEig}, lickBurstTimeIdx, 'idxWin', idxWin, 'numShufs', numShufs);
     end
 end
 
@@ -235,24 +235,4 @@ out.swrBurstReactETAPerPCShufs = [];
 out.lickReactPSTHPerPC = [];
 out.lickReactETAPerPC = [];
 out.lickReactETAPerPCShufs = [];
-end
-
-function [swrReactPSTHfull, swrReactETAfull, swrReactETAfullShufs] = ...
-    stackPSTHwShuf(reactFull, swrTimeIdx, idxWin, numShufs)
-% stack to psth
-swrReactPSTHfull = cell2mat(arrayfun(@(r) reactFull(r+idxWin), swrTimeIdx, 'un', 0));
-swrReactETAfull = nanmean(swrReactPSTHfull);
-% time shuffle psth
-swrReactETAfullShufs = [];
-for sh=1:numShufs
-    swrReactPSTHfullShuf=[];
-    for qq=1:length(swrTimeIdx)
-        shiftBy=round(rand(1)*size(swrReactPSTHfull,2));
-        swrReactPSTHfullShuf(qq,:)=circshift(swrReactPSTHfull(qq,:),shiftBy,2);
-    end
-    swrReactETAfullShufs(sh,:) = nanmean(swrReactPSTHfullShuf);
-end
-swrReactETAfullShufsMean = nanmean(swrReactETAfullShufs);
-swrReactETAfullShufsSEM = nanstd(swrReactETAfullShufs)/...
-    sqrt(size(swrReactETAfullShufs,1));
 end

@@ -1,42 +1,42 @@
 
 
 %{
-just get a per-animal, all-swr-trig spect.. focusing on the higher
-frequencies
+peri Burst-Lick spectrogram
+DR 20191103
 %}
-% get data
 pconf = paramconfig;
+% get data
 create_filter = 1;
 run_ff = 1;
 load_ffdata = 0;
-stack_swrLFP = 1;
-load_swrLFPstack = 0;
-% run cmwc
-make_ASig = 1;
+% stack data
+stack_LFP = 1;
+load_LFPstack = 0;
+% get power
+make_rawpwr = 1;
 load_rawpwr = 0;
-load_phase = 0;
 % create condition design mat
 make_expvarCat = 1;
 load_expvarCat = 0;
-makeNoiseEvents = 1;
-loadNoiseEvents = 0;
 % compute per condition
 make_expvarCatMeanPwr = 1;
 load_expvarCatMeanPwr = 0;
 % combine per area
-combineArea = 0;
+combineArea = 1;
 % plot
-plot_expvarCatMeanPwr = 0;
-plot_ByArea = 0;
+plot_expvarCatMeanPwr = 1;
+plot_ByArea = 1;
 pausefigs = 0;
 savefigs = 1;
 
 %% 
-Fp.animals = {'D10','D13'}; %, 'JZ4'}; %;{'D10'}; %
-Fp.filtfunction = 'dfa_riptriglfp';
+Fp.animals = {'D10'}; %, 'JZ4'}; %;{'D10'}; %
+Fp.filtfunction = 'dfa_eventTrigLFP';
+Fp.Label = 'wtrackLickTrigLFP';
 % Fp.add_params = {'sleepwtrackdays', 'excludeNoise', '<4cm/s', 'wavelets4-300Hz'};
-Fp.params = {'referenced','wtrackdays', 'excludePriorFirstWell','<4cm/s', ...
-    '4-300Hz_focusSWR','excludeAfterLastWell', Fp.filtfunction};
+Fp.params = {'referenced', 'valid_ntrodes', 'exemplar_wepochs', 'lickbouts', 'excludePriorFirstWell', ...
+    '4-300Hz_focusSWR', 'excludeAfterLastWell', Fp.Label, Fp.filtfunction};
+
 Fp = load_filter_params(Fp);
 wp = getWaveParams(Fp.waveSet);
 rs = ''; % ripstate
@@ -51,75 +51,72 @@ if run_ff
     F = arrayfun(@(x) setfield(F(x),'datafilter_params',Fp),1:length(F), 'un', 1);
     F = runfilter(F);
     save_data(F, Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, ...
-        'filetail', ['_' Fp.env '_' Fp.eventSourceArea Fp.eventtype]);
+        'filetail', ['_' Fp.Label]);
 end
 if load_ffdata
     F = load_data(Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, Fp.animals, ...
-        'filetail', ['_' Fp.env '_' Fp.eventSourceArea Fp.eventtype]);
+        'filetail', ['_' Fp.Label]);
 end
 %% vectorize swr-trig lfp
-if stack_swrLFP
+if stack_LFP
     lfpstack = stack_riptriglfp(F, Fp);
 end
-if load_swrLFPstack
-    lfpstack = load_data(Fp.paths.resultsDirectory, ...
-        ['riptriglfpstack_',Fp.env], Fp.animals);
+if load_LFPstack
+    lfpstack = load_data(Fp.paths.resultsDirectory, ['tensor_' Fp.Label], Fp.animals);
 end
 %% make rawpwr (all trials) [ntrode time rip freq]
-if make_ASig
+if make_rawpwr
+    % i need to fix this so that it doesn't crash anything but a super computer
+    % make it memory aware, and calculate how many workers i can run at
+    % once. 
     [rawpwr, ~] = computeAnalyticSignal(lfpstack, 'waveSet', Fp.waveSet, 'saveOutput',1, ...
-        'lfptype', Fp.uselfptype, 'env', Fp.env);
+        'lfptype', Fp.uselfptype, 'env', Fp.env, 'eventType', Fp.eventType); % uses parfor
 end
 if load_rawpwr
     rawpwr = load_data(sprintf('%s/analyticSignal/', pconf.andef{2}), ...
-        sprintf('AS_waveSet-%s_%s_%s_power', wp.waveSet, Fp.uselfptype, Fp.env), ...
-        Fp.animals);
+        sprintf('LFPpower_%s_%s_%s_%s', wp.waveSet, Fp.uselfptype, Fp.env, ...
+        Fp.eventType), Fp.animals);
 end
 %% make design mat to slice the rawpwr trials
 if make_expvarCat
     outdir = 'expvarCatBurst';
-    expvarCat = makeExpvarCatDesignMat(lfpstack, 'outdir', outdir, 'expvars', {'all', ...
-        'lickbouts', 'nolickbouts'}, 'lfptype', Fp.uselfptype);
+    expvarCat = makeExpvarCatDesignMat(lfpstack, 'outdir', outdir, 'expvars', {'all'}, ...
+        'lfptype', Fp.uselfptype, 'eventType', Fp.eventType);
 end
 if load_expvarCat
     outdir = 'expvarCatBurst';
     outpath = [pconf.andef{2},outdir,'/'];
-    expvarCat = load_data(outpath, [outdir,'_',Fp.env], Fp.animals);
+    expvarCat = load_data(outpath, [outdir,'_',Fp.env,'_',Fp.eventType], Fp.animals);
 end
-%% exclude noise
-if makeNoiseEvents
-    noiseEvents = make_noiseEvents(lfpstack);
-end
-if loadNoiseEvents
-    noiseEvents = load_data('filterframework','noiseEvents', Fp.animals, 'animpos', 0);
-end
+
 %% get mean power per condition
 if make_expvarCatMeanPwr % :expvarCat @mean /ntTF $time
-    expvarCatMeanPwr = getPower(expvarCat, rawpwr, Fp, 'run_perm', 0, 'noiseEvents',...
-        noiseEvents);
+    evMPwr = getPower(expvarCat, rawpwr, Fp, 'run_perm', 0, 'eventType', Fp.eventType);
 end
 if load_expvarCatMeanPwr
     outdir = 'expvarCatMeanPwr';
     outpath = [pconf.andef{2},outdir,'/'];
-    expvarCatMeanPwr = load_data(outpath, [outdir,'_', Fp.env] ,Fp.animals);
+    evMPwr = load_data(outpath, [outdir,'_', Fp.env '_' Fp.eventType], Fp.animals);
 end
-%% mean per area per condition
+
+%% combine perArea perCondition
 if combineArea
-    for ani = 1:length(expvarCatMeanPwr) % for each animal
-        animal = expvarCatMeanPwr(ani).animal;
+    for ani = 1:length(evMPwr) % for each animal
+        animal = evMPwr(ani).animal;
         aninfo = animaldef(animal);
         ntinfo = loaddatastruct(aninfo{2}, animal, 'tetinfo');
-        ntrodes = evaluatefilter(ntinfo, 'strcmp($valid, ''yes'')');
-        ntrodes = unique(ntrodes(:,3));
+%         ntrodes = evaluatefilter(ntinfo, 'strcmp($valid, ''yes'') && 'ref'');
+%         ntrodes = unique(ntrodes(:,3));
+        ntrodes = evMPwr(ani).ntrode;
         for ia = 1:length(area)
             ntsInArea = evaluatefilter(ntinfo,...
                 sprintf('isequal($area,''%s'') && isequal($subarea,''%s'')', area{ia}{1}, ...
                 area{ia}{2}));
-            ntsA = unique(ntsInArea(:,3));
-%             ntsAIdx = %find(1&sort(ntsA));
-            for iv = 1:length(expvarCatMeanPwr(ani).expvars)
-                areaData = expvarCatMeanPwr(ani).meandbpower{iv}.pwr_mean_db(ntsA,:,:);
-                meanPwrArea{ia}{iv} = squeeze(nanmean(areaData,1))';
+            ntsInArea = unique(ntsInArea(:,3));
+            ntsAIdx = knnsearch(ntrodes, ntsInArea);
+            for iv = 1:length(evMPwr(ani).expvars)
+                areaData = evMPwr(ani).data{iv}.pwr_mean_db(ntsAIdx,:,:);
+                evMPwrArea{ia}{iv} = squeeze(nanmean(areaData,1))';
             end
         end
     end
@@ -130,23 +127,23 @@ end
 
 %% plot per area
 if plot_ByArea
-    figname = 'expvarCatMeanPwrByArea';
-    for ani = 1:length(expvarCatMeanPwr) % for each animal
-        animal = expvarCatMeanPwr(ani).animal;
+    figname = 'evMeanPwrArea';
+    for ani = 1:length(evMPwr) % for each animal
+        animal = evMPwr(ani).animal;
         
-        for iv = 1:length(expvarCatMeanPwr(ani).expvars)
+        for iv = 1:length(evMPwr(ani).expvars)
             
             Pp=load_plotting_params({'defaults','areaTFspect'}, 'pausefigs', pausefigs, ...
                     'savefigs', savefigs);
-            f = 0;
+            sf = {};
             for ia = 1:length(area)
                 f = f+1;
-                sf{ia} = subaxis(1,length(area),f);
-                frequency = round(expvarCatMeanPwr(ani).wp.frex);
+                sf{ia} = subaxis(1,length(area),ia);
+                frequency = round(evMPwr(ani).wp.frex);
                 time = wp.win(1):1/(wp.srate/wp.dsamp):wp.win(2);
                 trim = knnsearch(time',Pp.win(1)):knnsearch(time', Pp.win(2));
                 ttime = time(trim);
-                tdata = meanPwrArea{ia}{iv}(:,trim);
+                tdata = evMPwrArea{ia}{iv}(:,trim);
                 contourf(ttime,frequency,tdata,40,'linecolor','none')
                 set(gca,'ydir','normal','yscale','log');
                 colormap(Pp.usecolormap)
@@ -165,8 +162,8 @@ if plot_ByArea
             ylabel(sf{1},'frequency Hz')
             xlabel(sf{1}, 'time s')
             %%
-            stit = sprintf('%s %s %s %s %s',figname, expvarCatMeanPwr(ani).expvars{iv}, animal, ...
-                Fp.env, Fp.waveSet);
+            stit = sprintf('%s %s %s %s %s %s',figname, evMPwr(ani).expvars{iv}, Fp.eventType, ...
+                animal, Fp.env, Fp.waveSet);
             setSuperAxTitle(stit);
             if pausefigs
                 pause
@@ -177,32 +174,35 @@ if plot_ByArea
         end
 
     end
-    end
+end
 
 %% plot MeanPower varCat TFzmap /nt
 if plot_expvarCatMeanPwr
-    figname = 'expvarCatMeanPwr';
-    for ani = 1:length(expvarCatMeanPwr) % for each animal
+    figname = 'evMeanPwr';
+    wp = getWaveParams(Fp.waveSet);
+    for ani = 1:length(evMPwr) % for each animal
         Pp=load_plotting_params({'defaults','powerTFmap'}, 'pausefigs', pausefigs, ...
             'savefigs', savefigs);
-        animal = expvarCatMeanPwr(ani).animal;
+        animal = evMPwr(ani).animal;
         aninfo = animaldef(animal);
         ntinfo = loaddatastruct(aninfo{2}, animal, 'tetinfo');
-        ntrodes = evaluatefilter(ntinfo, 'strcmp($valid, ''yes'')');
-        ntrodes = unique(ntrodes(:,3));
+%         ntrodes = evaluatefilter(ntinfo, 'strcmp($valid, ''yes'')');
+%         ntrodes = unique(ntrodes(:,3));
+%         ntrodes = F(ani).eegdata{1}{1};
+        ntrodes = evMPwr(ani).ntrode;
         den = cellfetch(ntinfo, 'area');
         matidx = unique(den.index(:,3));
         matidx = circshift(matidx,-1);
-        anidx = find(strcmp({expvarCatMeanPwr.animal}, animal));
-        evanidx = find(strcmp({expvarCatMeanPwr.animal}, animal));
+        anidx = find(strcmp({evMPwr.animal}, animal));
+        evanidx = find(strcmp({evMPwr.animal}, animal));
         % exclude invalid tets
         invalidtets = evaluatefilter(ntinfo, 'isequal($valid, ''no'')');
         invalidtets = unique(invalidtets(:,3));
         if isempty(rs)
-            rs = expvarCatMeanPwr(evanidx).expvars;
+            rs = evMPwr(evanidx).expvars;
         end
         for i = 1:length(rs);
-            iv = find(strcmp(rs{i}, expvarCatMeanPwr(evanidx).expvars));
+            iv = find(strcmp(rs{i}, evMPwr(evanidx).expvars));
             numcols = 8;
             numrows = 4; %ceil(length(ntrodes) / numcols);
             for nti = 1:length(ntrodes)
@@ -222,11 +222,11 @@ if plot_expvarCatMeanPwr
                 if isnumeric(subarea)
                     subarea = num2str(subarea);
                 end
-                ntidx = find(matidx == nt);
+                ntidx = find(ntrodes == nt);
                 idata2plot = squeeze(...
-                    expvarCatMeanPwr(anidx).meandbpower{iv}.pwr_mean_db(ntidx,:,:))';
-                idata2plot = trim2win(idata2plot, Fp.srate, Pp.pwin, ...
-                    'dsamp', expvarCatMeanPwr(anidx).wp.dsamp);
+                    evMPwr(anidx).data{iv}.pwr_mean_db(ntidx,:,:))';
+                idata2plot = trim2win(idata2plot, wp.srate, Pp.pwin, ...
+                    'dsamp', evMPwr(anidx).wp.dsamp);
                 time = linspace(-Pp.pwin(1), Pp.pwin(2), length(idata2plot(1,:)));
                 contourf(sf, time, wp.frex, idata2plot, Pp.contourRes, ...
                     'linecolor','none');
@@ -244,7 +244,7 @@ if plot_expvarCatMeanPwr
             %%
             %         allAxesInFigure = findall(gcf,'type','axes');
             %         linkaxes(allAxesInFigure, 'xy');
-            stit = sprintf('%s %s %s %s %s',figname, expvarCatMeanPwr(anidx).expvars{iv}, animal, ...
+            stit = sprintf('%s %s %s %s %s',figname, evMPwr(anidx).expvars{iv}, animal, ...
                 Fp.env, Fp.waveSet);
             setSuperAxTitle(stit);
             if pausefigs

@@ -10,6 +10,7 @@ function out = makeExpvarCatDesignMat(lfpstack, varargin)
     outdir = 'expvarCat';
     defaults = {'wtrackdays', 'excludeNoise','excludePriorFirstWell'};
     lfptype = 'eeg';
+    eventType = 'swr';
     if ~isempty(varargin)
         assign(varargin{:})
     end
@@ -19,9 +20,9 @@ function out = makeExpvarCatDesignMat(lfpstack, varargin)
         t = find(strcmp(lfpstack(ian).lfptypes, lfptype));
         animal = lfpstack(ian).animal;
         out(ian).animal = animal;
-        out(ian).dims = {'ripple', 'expvar'};
+        out(ian).dims = {'event', 'expvar'};
         out(ian).evStart = lfpstack(ian).evStart{t};
-        out(ian).evEnd = lfpstack(ian).evEnd{t};
+%         out(ian).evEnd = lfpstack(ian).evEnd{t};
         out(ian).dayeps = [lfpstack(ian).day{t} lfpstack(ian).epoch{t}];
         out(ian).expvars = expvars;
         out(ian).dm = zeros(length(out(ian).evStart), length(expvars));
@@ -79,7 +80,7 @@ function out = makeExpvarCatDesignMat(lfpstack, varargin)
         end
     end
     if saveout
-        save_data(out, outpath, [outdir,'_',Fp.env]); 
+        save_data(out, outpath, [outdir,'_',Fp.env,'_',eventType]); 
     end
 end
 

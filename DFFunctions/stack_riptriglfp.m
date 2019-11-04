@@ -13,7 +13,11 @@ end
 
 out = struct;
 for ian = 1:length(data) % per animal
-    animal = data(ian).animal{3};
+    try
+        animal = data(ian).animal{3};
+    catch
+        animal = data(ian).animal;
+    end
     out(ian).animal = animal;
     out(ian).lfptypes = data(ian).datafilter_params.LFPtypes;
     try
@@ -47,16 +51,16 @@ for ian = 1:length(data) % per animal
             end
             dataTnsr{1,ide} = epDataTnsr(:,:,vEvents);
             evStartIdx{ide,1} = data(ian).output{ide}.eventStartIndices(vEvents);
-            evEndIdx{ide,1} = data(ian).output{ide}.eventEndIndices(vEvents);
+%             evEndIdx{ide,1} = data(ian).output{ide}.eventEndIndices(vEvents);
             
             % collect day/epoch level info
             numEvPerEp{ide,1} = numValid;
             evDay{ide,1} = day*ones(numValid, 1);
             evEpoch{ide,1} = epoch*ones(numValid, 1);
             evStart{ide,1} = data(ian).output{ide}.LFPtimes(evStartIdx{ide});
-            evEnd{ide,1} = data(ian).output{ide}.LFPtimes(evEndIdx{ide});
+%             evEnd{ide,1} = data(ian).output{ide}.LFPtimes(evEndIdx{ide});
         end
-        out(ian).time{t} = data(ian).datafilter_params.time;
+%         out(ian).time{t} = data(ian).datafilter_params.time;
         out(ian).day{t} = cell2mat(evDay);
         out(ian).epoch{t} = cell2mat(evEpoch);
         out(ian).ntrodes{t} = unique(cell2mat(cellfun(@(x) x(:,3), {data(ian).output{ide}.index}, ...
@@ -65,9 +69,9 @@ for ian = 1:length(data) % per animal
         out(ian).data{t} = cell2mat(permute(dataTnsr, [1 3 2])); % stack all rips
         out(ian).numEvPerEp{t} = cell2mat(numEvPerEp);
         out(ian).evStartIdx{t} = cell2mat(evStartIdx);
-        out(ian).evEndIdx{t} = cell2mat(evEndIdx);
+%         out(ian).evEndIdx{t} = cell2mat(evEndIdx);
         out(ian).evStart{t} = cell2mat(evStart);
-        out(ian).evEnd{t} = cell2mat(evEnd);
+%         out(ian).evEnd{t} = cell2mat(evEnd);
     end
 %     % collapse data across collected epochs into one matrix
 %     for t = 1:length(out(ian).lfptypes) % LFP type
@@ -75,7 +79,7 @@ for ian = 1:length(data) % per animal
 %     end
 end
 if saveout
-    save_data(out, Fp.paths.resultsDirectory,['riptriglfpstack_',Fp.env]);
+    save_data(out, Fp.paths.resultsDirectory, ['tensor_' Fp.Label]);
 end
 
 end

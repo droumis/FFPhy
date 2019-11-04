@@ -139,9 +139,9 @@ for s = Fp.params
                 
         case 'ripples'
             TF = 1;
-            eventtype = 'rippleskons';
+            eventType = 'rippleskons';
             eventSourceArea = 'ca1';
-            eventDataLabel = [eventSourceArea eventtype];
+            eventDataLabel = [eventSourceArea eventType];
             consensus_numtets = 2;   % minimum # of tets for consensus event detection
             minstdthresh = 3;        % STD. how big your ripples are
             exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
@@ -280,10 +280,11 @@ for s = Fp.params
         case 'pausefigs'
             savefigs = 0;
             pausefigs = 1;
+            
         case 'dfa_plotDataChunks'
             splitSize = 30; % seconds
             Yoffset = 600; 
-            eventtype = 'ca1rippleskons';
+            eventType = 'ca1rippleskons';
             consensus_numtets = 2;   % minimum # of tets for consensus event detection
             minstdthresh = 2;        % STD. how big your ripples are
             exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
@@ -312,9 +313,9 @@ for s = Fp.params
             
         case 'dfa_getPeriEventVelocity'
             win = [2 2];
-            eventtype = 'rippleskons';
+            eventType = 'rippleskons';
             eventSourceArea = 'ca1';
-            eventDataLabel = [eventSourceArea eventtype];
+            eventDataLabel = [eventSourceArea eventType];
             consensus_numtets = 2;   % minimum # of tets for consensus event detection
             minstdthresh = 3;        % STD. how big your ripples are
             exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
@@ -325,24 +326,38 @@ for s = Fp.params
                 'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
                 'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
                 'minvelocity', minvelocity,'maxvelocity',maxvelocity};            
-            options = {'eventtype', [eventSourceArea eventtype], 'win', win};
+            options = {'eventtype', [eventSourceArea eventType], 'win', win};
             filtfunction = 'dfa_getPeriEventVelocity';
             iterator = 'singleepochanal';
-            datatypes = {[eventSourceArea eventtype], 'pos'};
+            datatypes = {[eventSourceArea eventType], 'pos'};
+            
+        case 'wtrackLickTrigLFP'
+            eventData = 'lick';
+            eventType = 'lick';
+            
+        case 'dfa_eventTrigLFP'
+            LFPtypes = {'eeg'};%, 'theta', 'ripple'}; %'lowgamma', 'fastgamma', 'ripple'};
+            LFPrangesHz = {'1-400'};%, '6-9', '140-250'}; %'20-50', '65-140',};
+            win = [1.5 1.5];
+            
+            iterator = 'multitetrodeanal';
+            filtfunction = 'dfa_eventTrigLFP';
+            datatypes = {eventData, LFPtypes{:}};
+            options = {'eventtype', eventType, 'LFPtypes', LFPtypes, 'win', win};
             
         case 'dfa_riptriglfp'
 %             LFPtypes = {'eeggnd', 'eeg', 'theta', };
             eventSourceArea = 'ca1';
-            eventtype = 'rippleskons';
+            eventType = 'rippleskons';
             LFPtypes = {'eeggnd', 'eeg'};%, 'theta', 'ripple'}; %'lowgamma', 'fastgamma', 'ripple'};
             LFPrangesHz = {'1-400', '1-400'};%, '6-9', '140-250'}; %'20-50', '65-140',};
             srate = 1500;
             win = [1.5 1.5];
             time = -win(1):1/srate:win(2);
             TF = 1;
-            eventtype = 'rippleskons';
+            eventType = 'rippleskons';
             eventSourceArea = 'ca1';
-            eventDataLabel = [eventSourceArea eventtype];
+            eventDataLabel = [eventSourceArea eventType];
             consensus_numtets = 2;   % minimum # of tets for consensus event detection
             minstdthresh = 3;        % STD. how big your ripples are
             exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
@@ -353,12 +368,12 @@ for s = Fp.params
                 'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
                 'minvelocity', minvelocity,'maxvelocity',maxvelocity};
             
-            options = {'eventtype', [eventSourceArea eventtype], 'LFPtypes', LFPtypes, ...
+            options = {'eventtype', [eventSourceArea eventType], 'LFPtypes', LFPtypes, ...
                 'win', win};
             
             filtfunction = 'dfa_riptriglfp';
             iterator = 'multitetrodeanal';
-            datatypes = {[eventSourceArea eventtype], LFPtypes{:}};
+            datatypes = {[eventSourceArea eventType], LFPtypes{:}};
             %             params{end+1} = {'allLFPtypes', '1s_win'};
             %             F = createfilter('animal', Fp.animals, 'epochs', Fp.epochfilter, ...
             % 'eegtetrodes', Fp.tetfilter, 'excludetime', Fp.timefilter, 'iterator', Fp.iterator);
@@ -376,17 +391,28 @@ for s = Fp.params
             filtfunction = 'dfa_occNormFiring';
             datatypes = {'spikes', 'linpos', 'pos', 'task'};
             
+        case 'dfa_eventTrigSpiking'
+            eventType = 'ca1rippleskons';
+            srate = 1500;
+            win = [1 1];
+            bin = .001;
+            frbinsize= 0.01; % 10 ms for population FR plotting
+            
+            iterator = 'singlecellanal';
+            filtfunction = 'dfa_eventTrigSpiking';
+            datatypes = {'spikes', 'ca1rippleskons'};
+            options = {'win', win, 'bin', bin, 'frbinsize', frbinsize};
+            
         case 'dfa_riptrigspiking'
-            eventtype = 'rippleskons';
+            eventType = 'rippleskons';
             srate = 1500;
             win = [1 1];
             binsize = .001;
             eventName = 'swr';
             time = -win(1):1/srate:win(2);
             TF = 1;
-            eventtype = 'rippleskons';
             eventSourceArea = 'ca1';
-            eventDataLabel = [eventSourceArea eventtype];
+            eventDataLabel = [eventSourceArea eventType];
             consensus_numtets = 1;   % minimum # of tets for consensus event detection
             minstdthresh = 2;        % STD. how big your ripples are
             exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored

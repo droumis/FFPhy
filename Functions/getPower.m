@@ -7,13 +7,14 @@ function out = getPower(expvarCat, rawpwr, Fp, varargin)
 
 pconf = paramconfig;
 me = animaldef('Demetris');
-noiseEvents = struct;
+noiseEvents = [];
 lfptype = 'eeg';
 expvars = {}; %,'rewarded', 'unrewarded', 'inbound' , 'outbound', 'proximalWell', ...
 %     'distalWell'};
 saveout = 1;
 run_perm = 1;
 outdir = 'expvarCatMeanPwr';
+eventType = 'swr';
 if ~isempty(varargin)
     assign(varargin{:});
 end
@@ -57,10 +58,11 @@ for ian = 1:length(rawpwr)
     out(ian).wp = wp;
     out(ian).Fp = Fp;
     out(ian).lfptype = lfptype;
-    out(ian).meandbpower = meandbpower;
+    out(ian).data = meandbpower;
+    out(ian).ntrode = rawpwr(ian).ntrode;
     
     if saveout
-        save_data(out, [pconf.andef{2},outdir,'/'], [outdir, '_', Fp.env])
+        save_data(out, [pconf.andef{2},outdir,'/'], [outdir, '_', Fp.env '_' eventType])
     end
 end
 end

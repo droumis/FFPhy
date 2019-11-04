@@ -35,9 +35,14 @@ for s = param_set
             tickSz = 8; % tick labels font size
             set(0,'defaultAxesFontSize',10)
             
-        case 'Reactivation PerPC'
+        case 'RxnFull'
             position = [.1 .1 .5 .5];
-            winSE = [-2 2];
+            winSE = [-.5 .5];
+            interpBy = 10;
+            
+        case 'RxnPerPC'
+            position = [.1 .1 .5 .5];
+            winSE = [-.5 .5];
             
         case 'areaTFspect'
 %             area = {{'mec', 'sup'}, {'mec', 'deep'}, {'ca1', 'd'}};
@@ -45,9 +50,7 @@ for s = param_set
             win = [-.5 .5];
             usecolormap = hot;
             tickFsize = 8;
-        case 'Reactivation Full'
-            position = [.1 .1 .5 .5];
-            winSE = [-2 2];
+
         case 'wetVDryILIphaseSWR'
             position = [.1 .1 .5 .5];
             

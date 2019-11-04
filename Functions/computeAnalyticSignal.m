@@ -1,23 +1,22 @@
 
 function [powerout, phaseout] = computeAnalyticSignal(lfpstack, varargin)
-% compute the analytic signal for the input rip triggered LFP
-
+% compute the analytic signal for a stack of LFP clips, e.g. swr centered.
 % lfpstack is a struct array per animal: data, ntrodes, lfptypes, animal
 % lfpstack(ian).data = {eegtype}(ntrode x sample x ripple mat)
-
 % power and phase : (ntrode x sample x ripple x frequency)
-
-% Demetris Roumis 2019
+% DR 19
 
 saveOutput = 1;
 lfptype = 'eeg';
 waveSet = '4-300Hz';
 env = 'ep';
+eventType = 'swr';
 if ~isempty(varargin)
     assign(varargin{:});
 end
 
 for ian = 1:length(lfpstack)
+    tic
     animal = lfpstack(ian).animal;
     fprintf('computing Analytic Signal for %s %s\n', animal, lfptype);
     fprintf('waveSet: %s\n', waveSet);
@@ -30,28 +29,32 @@ for ian = 1:length(lfpstack)
     nsamps = size(dsampdata,2);
     nData = nsamps*nevents*nNtrodes;
     timeWin = wp.win(1):1/(wp.srate/wp.dsamp):wp.win(2);
-    baseind(1,1) = dsearchn(timeWin',wp.basewin(1));
-    baseind(1,2) = dsearchn(timeWin',wp.basewin(2));
+    %     baseind(1,1) = dsearchn(timeWin',wp.basewin(1));
+    %     baseind(1,2) = dsearchn(timeWin',wp.basewin(2));
     lenWave = length(timeWin);
-    hws = (length(timeWin)-1)/2; % half_wave_size    
+    hws = (length(timeWin)-1)/2; % half_wave_size
     nConv = lenWave+nData-1; % length of the result of convolution
     nConv2pow = 2^nextpow2(nConv); % next pwr of 2 for FFT speedup
     zpad2pow = nConv2pow - nConv; % zero padding added by nextpow2
-
-    waveletFFT = createCMWfft(wp, nConv2pow);
     
-    tic
-    dataFFT = zeros(nConv2pow, 1);
-    astmp = zeros(nConv2pow, wp.numfrex);
-    as = zeros(nsamps, nNtrodes, nevents, wp.numfrex);
-     % flatten all the data, then fft. i make time as dim 1 because rows stack first
-    dataFFT = fft(reshape(permute(dsampdata, [2 1 3]),nData,1),nConv2pow);
-    astmp = bsxfun(@times,dataFFT,waveletFFT);% time convolution in freq domain
-    astmp = ifft(astmp,nConv2pow);
-    % trim length wavlet, padding and reshape to ntrode x sample x ripple x frequency
-    as = reshape(astmp(hws+1:end-(hws+zpad2pow),:), nsamps, nNtrodes, nevents, wp.numfrex);
-    as = permute(as, [2 1 3 4]);
-    
+%     waveletFFT = zeros(nConv2pow, wp.numfrex);
+    as = zeros(nNtrodes, nsamps, nevents, wp.numfrex);
+    parfor fi=1:wp.numfrex % use parfor
+        waveletFFT = createCMWfft(wp.frex(fi), wp.nWavecycles(fi), wp.win, wp.srate,...
+            wp.dsamp, nConv2pow);
+    %     dataFFT = zeros(nConv2pow, 1);
+    %     astmp = zeros(nConv2pow, wp.numfrex);
+    %     as = zeros(nsamps, nNtrodes, nevents, wp.numfrex);
+        % flatten all the data, then fft. i make time as dim 1 because rows stack first
+        astmp = fft(reshape(permute(dsampdata, [2 1 3]),nData,1),nConv2pow);
+        astmp = bsxfun(@times,astmp,waveletFFT);% time convolution in freq domain
+        tic
+        astmp = ifft(astmp,nConv2pow);
+        fprintf('running ifft took %.02f s\n', toc);
+        % trim length wavlet, padding and reshape to ntrode x sample x ripple x frequency
+        astmp = reshape(astmp(hws+1:end-(hws+zpad2pow),:), nsamps, nNtrodes, nevents, 1);
+        as(:,:,:,fi) = permute(astmp, [2 1 3 4]);
+    end
     % Phase
     fprintf('getting phase \n');
     phaseout(ian).ph =  single(angle(as)); % convert to single to save diskspace
@@ -60,7 +63,7 @@ for ian = 1:length(lfpstack)
     phaseout(ian).day = lfpstack(ian).day{t};
     phaseout(ian).epoch = lfpstack(ian).epoch{t};
     phaseout(ian).evStart = lfpstack(ian).evStart{t};
-    phaseout(ian).evEnd = lfpstack(ian).evEnd{t};
+    %     phaseout(ian).evEnd = lfpstack(ian).evEnd{t};
     phaseout(ian).ntrode = lfpstack(ian).ntrodes{t};
     phaseout(ian).frequency = wp.frex;
     phaseout(ian).lfptype = lfptype;
@@ -71,13 +74,13 @@ for ian = 1:length(lfpstack)
     
     % Power
     fprintf('getting power \n');
-    powerout(ian).pwr =  single(abs(as).^2);
+    powerout(ian).pwr =  single(abs(as).^2); % convert to single to save diskspace
     powerout(ian).wp = wp;
     powerout(ian).animal = animal;
     powerout(ian).day = lfpstack(ian).day{t};
     powerout(ian).epoch = lfpstack(ian).epoch{t};
     powerout(ian).evStart = lfpstack(ian).evStart{t};
-    powerout(ian).evEnd = lfpstack(ian).evEnd{t};
+    %     powerout(ian).evEnd = lfpstack(ian).evEnd{t};
     powerout(ian).ntrode = lfpstack(ian).ntrodes{t};
     powerout(ian).frequency = wp.frex;
     powerout(ian).lfptype = lfptype;
@@ -85,39 +88,34 @@ for ian = 1:length(lfpstack)
     powerout(ian).dsamp = wp.dsamp;
     powerout(ian).time = timeWin;
     powerout(ian).dims = {'ntrode', 'sample', 'event', 'frequency'};
+    
     fprintf('%.02f seconds to compute AS, pwr, ph \n', toc);
     
     %% ---------------- Save Output ---------------------------------------------------
     if saveOutput == 1
-        fprintf('saving AS\n')
+        fprintf('saving\n')
         andef = animaldef(lower('Demetris'));
         save_data(phaseout(ian), sprintf('%s/analyticSignal/', andef{2}), ...
-            sprintf('AS_waveSet-%s_%s_%s_phase', waveSet, lfptype, env))
+            sprintf('LFPphase_%s_%s_%s_%s', waveSet, lfptype, env, eventType))
         save_data(powerout(ian), sprintf('%s/analyticSignal/', andef{2}), ...
-            sprintf('AS_waveSet-%s_%s_%s_power', waveSet, lfptype, env))
+            sprintf('LFPpower_%s_%s_%s_%s', waveSet, lfptype, env, eventType))
     end
 end
 end
 
-function waveletFFT=createCMWfft(wp, nConv2pow)
+function wavefft = createCMWfft(freq, nWaves, win, srate, dsamp, nConv2pow)
 % create complex morlet wavelets and return FFT
 tic
-waveletFFT = zeros(nConv2pow, wp.numfrex);
-% fwhm = linspace(.8, .7, wp.numfrex);
-timeWin = wp.win(1):1/(wp.srate/wp.dsamp):wp.win(2);
-parfor fi=1:wp.numfrex % can use parfor
-    sine_wave = exp(2*1i*pi*wp.frex(fi).*timeWin); % complex sine wave
-    bn = wp.nWavecycles(fi)/(2*pi*wp.frex(fi)); % std of gaussian, dependent on freq and #cycles
-    gaus_win = exp(-timeWin.^2./(2*bn^2)); % gaussian
-    wavelet = sine_wave .* gaus_win;
-%     gaus_fwhm = exp(-(4*log(2)*timeWin).^2/fwhm(fi).^2);
-% i think this will ensure that the wavelett and data fft have same
-    % freq resolution
-    wavefft = fft(wavelet,nConv2pow); % fft of the wavelet, pad to next power of 2 of data
-    
-    % normalize wavelet to a maximum of 1 to ensure convolution units are same as data
-    waveletFFT(:,fi) = (wavefft ./ max(wavefft))';
-    fprintf('creating wavelet for freq %d of %d \n',fi,wp.numfrex);
-end
-fprintf('%.02f seconds to make CMWFFT\n', toc);
+% waveletFFT = zeros(nConv2pow, 1);
+% gaus_fwhm = exp(-(4*log(2)*timeWin).^2/fwhm(fi).^2); % ignore this
+timeWin = win(1):1/(srate/dsamp):win(2);
+sine_wave = exp(2*1i*pi*freq.*timeWin); % complex sine wave
+bn = nWaves/(2*pi*freq); % std of gaussian, dependent on freq and #cycles
+gaus_win = exp(-timeWin.^2./(2*bn^2)); % gaussian
+wavelet = sine_wave .* gaus_win;
+% ensure that the wavelett and data fft have same freq resolution
+wavefft = fft(wavelet,nConv2pow); % fft of the wavelet, pad to next power of 2 of data
+% normalize wavelet to a maximum of 1 to ensure convolution units are same as data
+wavefft = (wavefft ./ max(wavefft))';
+fprintf('creating waveletFFT for freq %.02f took %.02f s\n', freq, toc);
 end

@@ -25,15 +25,15 @@ load_ffdata = 0;
 createSummaryData = 1;
 
 plotfigs = 1;
-plotETAFull = 0;
-plotETAPerPC = 1;
+plotETAFull = 1;
+plotETAPerPC = 0;
 plotTrace = 0;
 plotPCdemo = 0;
 pausefigs = 0;
 savefigs = 1;
 
 %% FF
-Fp.animals = {'JZ1'};
+Fp.animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ2', 'JZ4'};
 Fp.filtfunction = 'dfa_reactivationPSTH';
 Fp.params = {'ripples', 'ca1SU', 'wtrackdays', 'excludePriorFirstWell', Fp.filtfunction};
 Fp = load_filter_params(Fp);
@@ -53,7 +53,7 @@ if load_ffdata
     F = load_data(Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, Fp.animals, ...
         'filetail', ['_' Fp.env]);
 end
-%% create summary data
+%% Concat and Create results across epochs per animal
 if createSummaryData
     D = struct;
     for i = 1:length(F)
@@ -62,174 +62,185 @@ if createSummaryData
         D(i).etTime = F(i).output{end}.etaTime;
         D(i).swrReactETAfull = cell2mat(cellfun(@(x) x', {f.swrReactETAfull}', 'un', 0)')';
         D(i).swrReactETAfullMean = nanmean(D(i).swrReactETAfull);
-        D(i).swrReactETAfullShufs = cell2mat(cellfun(@(x) x', {f.swrReactETAfullShufs}', 'un', 0)')';
-        D(i).swrReactETAfullShufMean = nanmean(D(i).swrReactETAfullShufs);
+%         D(i).swrReactETAfullShufs = cell2mat(cellfun(@(x) x', {f.swrReactETAfullShufs}', 'un', 0)')';
+%         D(i).swrReactETAfullShufMean = nanmean(D(i).swrReactETAfullShufs);
         
         D(i).swrBurstReactETAfull = cell2mat(cellfun(@(x) x', {f.swrBurstReactETAfull}', 'un', 0)')';
         D(i).swrBurstReactETAfullMean = nanmean(D(i).swrBurstReactETAfull);
-        D(i).swrBurstReactETAfullShufs = cell2mat(cellfun(@(x) x', {f.swrBurstReactETAfullShufs}', 'un', 0)')';
-        D(i).swrBurstReactETAfullShufMean = nanmean(D(i).swrBurstReactETAfullShufs);
+%         D(i).swrBurstReactETAfullShufs = cell2mat(cellfun(@(x) x', {f.swrBurstReactETAfullShufs}', 'un', 0)')';
+%         D(i).swrBurstReactETAfullShufMean = nanmean(D(i).swrBurstReactETAfullShufs);
         
         D(i).lickReactETAfull = cell2mat(cellfun(@(x) x', {f.lickReactETAfull}', 'un', 0)')';
         D(i).lickReactETAfullMean = nanmean(D(i).lickReactETAfull);
-        D(i).lickReactETAfullShufs = cell2mat(cellfun(@(x) x', {f.lickReactETAfullShufs}', 'un', 0)')';
-        D(i).lickReactETAfullShufMean = nanmean(D(i).lickReactETAfullShufs);
+%         D(i).lickReactETAfullShufs = cell2mat(cellfun(@(x) x', {f.lickReactETAfullShufs}', 'un', 0)')';
+%         D(i).lickReactETAfullShufMean = nanmean(D(i).lickReactETAfullShufs);
         
         % per pc
-        D(i).eigValSortSig = {f.eigValSortSig};
+        u = all([~cellfun(@isempty, {f.swrReactETAPerPC}, 'un', 1); ...
+             ~cellfun(@isempty, {f.swrBurstReactETAPerPC}, 'un', 1); ...
+             ~cellfun(@isempty, {f.lickReactETAPerPC}, 'un', 1)]);
+         
+        D(i).dayEpoch = cell2mat({f(u).idx}');
+        D(i).eigValSortSig = {f(u).eigValSortSig};
         
-        D(i).swrReactETAPerPC = cellfun(@(x) cell2mat(cellfun(@(y) y',x,'un',0)),{f.swrReactETAPerPC},'un', 0);
+        D(i).swrReactETAPerPC = cellfun(@(x) cell2mat(cellfun(@(y) y',x,'un',0)),{f(u).swrReactETAPerPC},'un', 0);
         D(i).swrReactETAPerPCMean = cellfun(@(x) nanmean(x,2), D(i).swrReactETAPerPC,'un', 0);
         %         D(i).swrReactETAfullShufs = cellfun(@(x) cell2mat(cellfun(@(y) y',x,'un',0)),{data.swrReactETAPerPC},'un', 0);
         %         D(i).swrReactETAfullShufMean = nanmean(D(i).swrReactETAfullShufs);
-        D(i).swrBurstReactETAPerPC = cellfun(@(x) cell2mat(cellfun(@(y) y',x,'un',0)),{f.swrBurstReactETAPerPC},'un', 0);
+        
+        D(i).swrBurstReactETAPerPC = cellfun(@(x) cell2mat(cellfun(@(y) y',x,'un',0)),{f(u).swrBurstReactETAPerPC},'un', 0);
         D(i).swrBurstReactETAPerPCMean = cellfun(@(x) nanmean(x,2), D(i).swrBurstReactETAPerPC,'un', 0);
         
-        D(i).lickReactETAPerPC = cellfun(@(x) cell2mat(cellfun(@(y) y',x,'un',0)),{f.lickReactETAPerPC},'un', 0);
+        D(i).lickReactETAPerPC = cellfun(@(x) cell2mat(cellfun(@(y) y',x,'un',0)),{f(u).lickReactETAPerPC},'un', 0);
         D(i).lickReactETAPerPCMean = cellfun(@(x) nanmean(x,2), D(i).lickReactETAPerPC,'un', 0);
     end
 end
 
-
-
-%% plot
+%% ------------------------------plot------------------------------
+%% plot perAnimal allEventGroups rxn ETA full
 if plotfigs
     if plotETAFull
-        %% plot Full ETA w sem errorbars per animal
-        figname = 'Reactivation Full';
+        figname = 'RxnFull';
         for i = 1:length(D)
+            %% Fig start
             Pp=load_plotting_params({'defaults',figname}, 'pausefigs', pausefigs, ...
                 'savefigs', savefigs);
-            
             time = D(i).etTime';
             winidx = knnsearch(time, Pp.winSE');
             time = time(winidx(1):winidx(2));
             
-            subplot(1,1,1)
+            %% plot all swr rxn ETA full
             Rs = D(i).swrReactETAfull(:,winidx(1):winidx(2));
+            interptime = [time(1):diff(time(1:2))/Pp.interpBy:time(end)]';
+            RsP = interp1(time, Rs', interptime, 'spline')';
             R = D(i).swrReactETAfullMean(:,winidx(1):winidx(2));
-            shs = D(i).swrReactETAfullShufs(:,winidx(1):winidx(2));
-            sh = D(i).swrReactETAfullShufMean(:,winidx(1):winidx(2));
-            Rsem = nanstd(Rs)/sqrt(size(Rs,1));
-            shssem = nanstd(shs)/sqrt(size(shs,1));
-            
-            plot(time, R, 'g', 'linewidth', 1.5)
+            RP = interp1(time, R, interptime, 'spline')';
+            Rsem = nanstd(RsP)/sqrt(size(RsP,1));
+%             shs = D(i).swrReactETAfullShufs(:,winidx(1):winidx(2));
+%             sh = D(i).swrReactETAfullShufMean(:,winidx(1):winidx(2));
+%             shssem = nanstd(shs)/sqrt(size(shs,1));            
+%             plot(time, sh, 'k', 'linewidth', 1.5)
+%             fill([time; flipud(time)]',[sh-shssem flipud(sh+shssem)]','k','linestyle','none', ...
+%                 'facealpha', .1)
+            fill([interptime; flipud(interptime)],[RP'+Rsem'; flipud(RP'-Rsem')],'k', ...
+                'linestyle','none', 'facealpha', .1)
             hold on;
-            plot(time, sh, 'k', 'linewidth', 1.5)
-            fill([time; flipud(time)],[R'+Rsem'; flipud(R'-Rsem')],'g','linestyle','none', ...
-                'facealpha', .1)
-            fill([time; flipud(time)]',[sh-shssem flipud(sh+shssem)]','k','linestyle','none', ...
-                'facealpha', .1)
-            ylabel('rxn strength')
+            f1 = plot(interptime, RP, 'k', 'linewidth', 1, 'DisplayName','SWR');
             
-            % plot swr burst ETA with ebars, shuff
+            %% plot swrBurst rxn ETA full
             Rs = D(i).swrBurstReactETAfull(:,winidx(1):winidx(2));
+            RsP = interp1(time, Rs', interptime, 'spline')';
             R = D(i).swrBurstReactETAfullMean(:,winidx(1):winidx(2));
-            shs = D(i).swrBurstReactETAfullShufs(:,winidx(1):winidx(2));
-            sh = D(i).swrBurstReactETAfullShufMean(:,winidx(1):winidx(2));
-            Rsem = nanstd(Rs)/sqrt(size(Rs,1));
-            shssem = nanstd(shs)/sqrt(size(shs,1));
-            
-            plot(time, R, 'b', 'linewidth', 1.5)
+            RP = interp1(time, R, interptime, 'spline')';
+            Rsem = nanstd(RsP)/sqrt(size(RsP,1));
+            fill([interptime; flipud(interptime)],[RP'+Rsem'; flipud(RP'-Rsem')],'r', ...
+                'linestyle','none', 'facealpha', .1)
             hold on;
-            plot(time, sh, 'k', 'linewidth', 1.5)
-            fill([time; flipud(time)],[R'+Rsem'; flipud(R'-Rsem')],'b','linestyle','none', ...
-                'facealpha', .1)
-            fill([time; flipud(time)]',[sh-shssem flipud(sh+shssem)]','k','linestyle','none', ...
-                'facealpha', .1)
+            f2 = plot(interptime, RP, 'r', 'linewidth', 1, 'DisplayName','BurstSWR');
             
-            % plot lick ETA with ebars, shuff
-            Rs = D(i).lickReactETAfull(:,winidx(1):winidx(2));
+            %% plot lickBurst rxn ETA full
+            Rs = D(i).lickReactETAfullMean(:,winidx(1):winidx(2));
             R = D(i).lickReactETAfullMean(:,winidx(1):winidx(2));
-            shs = D(i).lickReactETAfullShufs(:,winidx(1):winidx(2));
-            sh = D(i).lickReactETAfullShufMean(:,winidx(1):winidx(2));
-            Rsem = nanstd(Rs)/sqrt(size(Rs,1));
-            shssem = nanstd(shs)/sqrt(size(shs,1));
-            
-            plot(time, R, 'm', 'linewidth', 1.5)
+            RP = interp1(time, R, interptime, 'spline')';
+            Rsem = nanstd(RsP)/sqrt(size(RsP,1));
+            fill([interptime; flipud(interptime)],[RP'+Rsem'; flipud(RP'-Rsem')],'b', ...
+                'linestyle','none', 'facealpha', .1)
             hold on;
-            plot(time, sh, 'k', 'linewidth', 1.5)
-            fill([time; flipud(time)],[R'+Rsem'; flipud(R'-Rsem')],'m','linestyle','none', ...
-                'facealpha', .1)
-            fill([time; flipud(time)]',[sh-shssem flipud(sh+shssem)]','k','linestyle','none', ...
-                'facealpha', .1)
+            f3 = plot(interptime, RP, 'b', 'linewidth', 1, 'DisplayName','BurstLick');
+            
             axis tight
-            line([0 0], ylim, 'color', 'k', 'linestyle', '--', 'linewidth', .5)
             ylabel('rxn strength')
             xlabel('Time from lickDin (s)')
+            line([0 0], ylim, 'color', 'k', 'linestyle', '--', 'linewidth', .5)
+            legend([f1 f2 f3]);
             hold off;
             
-            %%
+            %% End Fig
             try
-                stit = [figname D(i).animal{3} Fp.env];
+                animal = D(i).animal{3};
             catch
-                stit = [figname D(i).animal Fp.env];
+                animal = D(i).animal;
             end
+            stit = sprintf('%s %s %s', animal, figname, Fp.env);
             setSuperAxTitle(stit);
-            if pausefigs
-                pause;
-            end
+            
+            if pausefigs; pause; end
             if savefigs
-                save_figure([pconf.andef{4} '/' figname], stit);
+                save_figure(strjoin({pconf.andef{4}, figname, animal}, '/'), stit);
             end
         end
     end
-    %% plot per PC ETA
+    
+    %% plot perEpoch perEventGroup perPC rxn ETA
     if plotETAPerPC
-        figname = 'Reactivation PerPC';
+        figname = 'RxnPerPC';
         for i = 1:length(D) % animal
             for iep = 1:length(D(i).swrReactETAPerPC) % epoch
+                %% Fig start
                 Pp=load_plotting_params({'defaults',figname}, 'pausefigs', pausefigs, ...
                     'savefigs', savefigs);
                 time = D(i).etTime';
                 winidx = knnsearch(time, Pp.winSE');
                 time = time(winidx(1):winidx(2));
                 c = vals2rgb(1-D(i).eigValSortSig{iep}', 'parula');
-                %%
+                
+                %% subplot epoch all swr rxn ETA perPC
                 s1 = subplot(3,1,1);
                 Rs = D(i).swrReactETAPerPC{iep}(winidx(1):winidx(2),:)';
                 hold on;
                 arrayfun(@(x) plot(time, Rs(x,:), 'color', c(x,:), 'linewidth', 1), 1:size(c,1), 'un', 0);
                 axis tight
+                hold off;
+                line([0 0], ylim, 'color', 'k', 'linestyle', '--', 'linewidth', .5)
                 ylabel('swr rxn')
                 
-                %% plot swr burst ETA with ebars, shuff
+                %% subplot epoch all swrBurst rxn ETA perPC
                 s2 = subplot(3,1,2);
                 Rs = D(i).swrBurstReactETAPerPC{iep}(winidx(1):winidx(2),:)';
                 hold on;
                 arrayfun(@(x) plot(time, Rs(x,:), 'color', c(x,:), 'linewidth', 1), 1:size(c,1), 'un', 0);
                 axis tight
+                hold off;
+                line([0 0], ylim, 'color', 'k', 'linestyle', '--', 'linewidth', .5)
                 ylabel('swrBurst rxn')
                 
-                %% plot lick ETA with ebars, shuff
+                %% subplot epoch lickBurst rxn ETA perPC
                 s3 = subplot(3,1,3);
                 Rs = D(i).lickReactETAPerPC{iep}(winidx(1):winidx(2),:)';
                 hold on;
                 arrayfun(@(x) plot(time, Rs(x,:), 'color', c(x,:), 'linewidth', 1), 1:size(c,1), 'un', 0);
                 axis tight
+                hold off;
+                line([0 0], ylim, 'color', 'k', 'linestyle', '--', 'linewidth', .5)
                 ylabel('lickBurst rxn')
                 xlabel('Time from event (s)')
-                line([0 0], ylim, 'color', 'k', 'linestyle', '--', 'linewidth', .5)
-                hold off;
-                %%
+                
+               %% End Fig
                 allAxesInFigure = findall(gcf,'type','axes');
                 linkaxes(allAxesInFigure, 'y');
                 try
-                    stit = [figname ' ' D(i).animal{3} ' ' Fp.env];
+                    animal = D(i).animal{3};
                 catch
-                    stit = [figname ' ' D(i).animal ' ' Fp.env];
+                    animal = D(i).animal;
                 end
+                stit = sprintf('%s %d %d %s %s', animal, D(i).dayEpoch(iep,:), ...
+                    figname, Fp.env);
                 setSuperAxTitle(stit);
-                if pausefigs
-                    pause;
-                end
+                
+                if pausefigs; pause; end
                 if savefigs
-                    save_figure([pconf.andef{4} '/' figname], stit);
+                    save_figure(strjoin({pconf.andef{4}, figname, animal}, '/'), stit);
                 end
             end
         end
     end
 end
+
+%% plot spatial correspondance to the PC's perEpoch
+
+%% plot perAnimal top 3 PC mean for swr in burst vs licks
+
+
 
 
 

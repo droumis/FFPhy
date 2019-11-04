@@ -49,9 +49,9 @@ for ian = 1:length(Fp.animals)
         end
         [envtypes,~,IndC] = unique(eptypes, 'stable');
         if ic ==1
-            ippF = initialize_riptrigspiking_output(daytetcells(ic,:));
+            ippF = init_out(daytetcells(ic,:));
         else
-            ippF = [ippF initialize_riptrigspiking_output(daytetcells(ic,:))];
+            ippF = [ippF init_out(daytetcells(ic,:))];
         end
         for ienv = 1:size(envtypes,1) %for each environment type
             ienvTypeInds = find(ienv == IndC);
@@ -100,7 +100,7 @@ if saveCombinedEpochs
         'filetail', '_combEps')
 end
 end
-function p = initialize_riptrigspiking_output(daytetcell)
+function p = init_out(daytetcell)
 %% ---------- for each epoch env type, concat the data --------------------------------
 % initialize output .fields
 p.time = [];
