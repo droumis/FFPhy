@@ -14,7 +14,7 @@ should just pass an empty arg there..
 
 function out = getLickBout(datadir, animal, epochs, varargin)
 
-maxIntraBurstILI = .25; % max burst ili threshold in seconds
+maxILIthresh = .25; % max burst ili threshold in seconds
 minBoutLicks = 3; %filter out bouts with less than boutNum licks
 lick = [];
 if ~isempty(varargin)
@@ -40,8 +40,8 @@ for i = 1:size(epochs,1)
         lickTime = lick{day}{epoch}.starttime; % legact name
     end
     ili = diff(lickTime);
-    boutIntvStart = lickTime(find(diff([ili < maxIntraBurstILI]) == 1)+1);
-    boutIntvEnd = lickTime(find(diff([ili > maxIntraBurstILI]) == 1)+1);
+    boutIntvStart = lickTime(find(diff([ili < maxILIthresh]) == 1)+1);
+    boutIntvEnd = lickTime(find(diff([ili > maxILIthresh]) == 1)+1);
     while boutIntvStart(1) > boutIntvEnd(1)
         boutIntvEnd(1) = [];
         if boutIntvEnd(end)<boutIntvStart(end)

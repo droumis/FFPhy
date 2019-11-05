@@ -1,9 +1,10 @@
 
-function ppF = combine_epochs(F,Fp, saveCombinedEpochs, paths, varargin)
+function ppF = combine_epochs(F, Fp, paths, varargin)
 % combine the data for a given day tet cell across epochs of the same type
 % switch flag for different filter output types
 % paths is an object from the constructor make_paths.m
-ppF = struct;
+
+saveCombinedEpochs = 1;
 if ~isempty(varargin)
     assign(varargin{:})
 end
@@ -22,7 +23,7 @@ for ian = 1:length(Fp.animals)
     
     % find the unique day/tet outputs
     idata = [F.output{1}{:}];
-    idata = [idata{:}];
+%     idata = [idata{:}];
     matInds = cell2mat({idata.index}');
     [daytetcells, ~, daytetInds2 ] = unique(matInds(:,[1 3 4]), 'rows', 'stable');
     
@@ -66,17 +67,17 @@ for ian = 1:length(Fp.animals)
                 ippF(ic).psth = [ippF(ic).psth ; iout.psth];
                 ippF(ic).frhist = [ippF(ic).frhist; iout.frhist];
                 ippF(ic).instantFR = [ippF(ic).instantFR ; iout.instantFR];
-                ippF(ic).posteventmatrix = [ippF(ic).posteventmatrix ; iout.posteventmatrix];
-                ippF(ic).eventduration = [ippF(ic).eventduration ; iout.eventduration];
-                ippF(ic).eventtags = [ippF(ic).eventtags ; iout.eventtags];
-                ippF(ic).nospikes = ippF(ic).nospikes + iout.nospikes;
-                ippF(ic).noevents = ippF(ic).noevents + iout.noevents;
+%                 ippF(ic).posteventmatrix = [ippF(ic).posteventmatrix ; iout.posteventmatrix];
+%                 ippF(ic).eventduration = [ippF(ic).eventduration ; iout.eventduration];
+%                 ippF(ic).eventtags = [ippF(ic).eventtags ; iout.eventtags];
+                ippF(ic).numSpikes = ippF(ic).numSpikes + iout.numSpikes;
+%                 ippF(ic).noevents = ippF(ic).noevents + iout.noevents;
                 ippF(ic).epochs = [ippF(ic).epochs epID];
                 % epoch-by-epoch outputs
-                ippF(ic).epoch_types{epID} = iout.epoch_type;
-                ippF(ic).epoch_envs{epID} = iout.epoch_environment;
-                ippF(ic).epoch_nospikes(epID) = sum(iout.nospikes);
-                ippF(ic).epoch_noevents(epID) = sum(iout.noevents);
+%                 ippF(ic).epoch_types{epID} = iout.epoch_type;
+%                 ippF(ic).epoch_envs{epID} = iout.epoch_environment;
+                ippF(ic).epoch_nospikes(epID) = sum(iout.numSpikes);
+%                 ippF(ic).epoch_noevents(epID) = sum(iout.noevents);
                 ippF(ic).epoch_noeventspikes(epID) = sum(sum(iout.psth));
             end
             % if a no data for this cell, ignore
@@ -96,7 +97,7 @@ end
 % end
 % ---------------- Save combined epochs ---------------------------------------------------
 if saveCombinedEpochs
-    save_data(ppF, paths.filtOutputDirectory, paths.filenamesave, ...
+    save_data(ppF, paths.filtOutputDirectory, Fp.Label, ...
         'filetail', '_combEps')
 end
 end
@@ -108,13 +109,13 @@ p.frtime = [];
 p.psth = [];
 p.frhist = [];
 p.instantFR = [];
-p.posteventmatrix = [];
-p.eventduration = [];
-p.eventtags = [];
-p.nospikes = 0;
-p.noevents = 0;                  % number of events reported for the epochs in which the unit was clustered ("events experienced")
+% p.posteventmatrix = [];
+% p.eventduration = [];
+% p.eventtags = [];
+p.numSpikes = 0;
+% p.noevents = 0;                  % number of events reported for the epochs in which the unit was clustered ("events experienced")
 p.epochs = [];
-p.epoch_types = [];            % indices here correspond to epoch #s
+% p.epoch_types = [];            % indices here correspond to epoch #s
 p.epoch_envs = [];             % indices here correspond to epoch #s
 p.epoch_nospikes = [];
 p.epoch_noevents = [];

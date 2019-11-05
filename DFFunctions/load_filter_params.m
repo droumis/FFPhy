@@ -23,8 +23,9 @@ cellfilter = '';
 timefilter = {};
 options = {};
 sysDateTime = clock;
+fprintf('----filter params----\n');
 for s = Fp.params
-    fprintf('%s\n', s{:})
+    fprintf('* %s\n', s{1})
     switch s{1}
         %% EPOCH TETRODE CELL RIPPLE filters
         case 'sleep'
@@ -136,12 +137,20 @@ for s = Fp.params
             timefilter{end+1} = {'getLickBout', ...
                 sprintf('($lickBout == 0) & ($timeFromLick > %d)',minTimeFromLick), ...
                 'maxIntraBurstILI', maxIntraBurstILI, 'minBoutLicks', minBoutLicks};
-                
+            
+        case 'licks'
+            eventType = 'lick';            
+            maxIntraBurstILI = 0.01;  % max burst ili threshold in seconds
+            minBoutLicks = 1; %filter out bouts with less than boutNum licks
+            % timefilt1: lick bouts, 
+            timefilter{end+1} = {'getLickBout', '($lickBout == 1)', ...
+                'maxIntraBurstILI', maxIntraBurstILI, ...
+                'minBoutLicks', minBoutLicks};
+            
         case 'ripples'
             TF = 1;
-            eventType = 'rippleskons';
+            eventType = 'ca1rippleskons';
             eventSourceArea = 'ca1';
-            eventDataLabel = [eventSourceArea eventType];
             consensus_numtets = 2;   % minimum # of tets for consensus event detection
             minstdthresh = 3;        % STD. how big your ripples are
             exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
@@ -231,48 +240,54 @@ for s = Fp.params
             iterator = 'singlecellanal';
             datatypes = {'lick', 'task', 'DIO', 'spikes', 'cellinfo'};
             
+        case 'lickTrigSpikingMod'
+            respwin = [0 200]; % response period in ms rel to swr on
+            basewin = [-300 -100]; % baseline period in ms rel to swr on
+            minNumSwr = 10;
+            % minNumSwrSpikes = 10;
+            nshuffs = 1000;
+            shuffms = 700;
+            dmatIdx = {'lickbout'};
+            
         case 'dfa_lickswrcorr'
-            % dfa params
-            plotfigs = 1;
-            pausefigs = 0;
-            savefigs = 1;
-            savefigas = {'png', 'eps'};
+            maxTimeSinceRew = 5;
             bin = .01;
             tmax = 1;
-            boutNum = 10;
-            lickgap = .500;
-            excShortBin = bin*2;
-            excLongBin = .250;
+            eventType = 'ca1rippleskons';
             minILIthresh = .06; % seconds
             maxILIthresh = .250; % seconds
+            minBoutLicks = 3;
+            % xcorr
+            excShortBin = bin*2;
+            excLongBin = .250;
             rmsmincounts = 1; % min bin count within rmstamax. otherwise nan
             rmstmax = .25; % seconds
+            % shuf
             compute_shuffle = 1;
             numshuffs = 200;
             shuffOffset = 250; %ms
-            sigpct = .975;
-
-            % timefilter params
-            consensus_numtets = 2;   % minimum # of tets for consensus event detection
-            minstdthresh = 2;        % STD. how big your ripples are
-            exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
-            minvelocity = 0;
-            maxvelocity = 4;
-            
+            % func
             iterator = 'singleepochanal';
             filtfunction = 'dfa_lickswrcorr';
-            timefilter{end+1} = {'getconstimes', '($cons == 1)', ...
-                'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
-                'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
-                'minvelocity', minvelocity,'maxvelocity',maxvelocity};            
             datatypes = {'ca1rippleskons','task', 'lick', 'DIO'};
-            options = {'plotfigs', plotfigs, 'pausefigs', pausefigs,'savefigs', savefigs,...
-                'savefigas', savefigas, 'bin', bin, 'tmax', tmax, 'boutNum', boutNum, ...
-                'lickgap', lickgap, 'excShortBin', excShortBin, 'excLongBin', excLongBin, ...
+            options = {'bin', bin, 'tmax', tmax, 'eventType', eventType, ...
+                'excShortBin', excShortBin, 'excLongBin', excLongBin, ...
                 'minILIthresh', minILIthresh, 'maxILIthresh', maxILIthresh, ...
                 'rmsmincounts', rmsmincounts, 'rmstmax', rmstmax, 'compute_shuffle', ...
                 compute_shuffle, 'numshuffs', numshuffs, 'shuffOffset', shuffOffset, ...
-                'sigpct', sigpct};            
+                'minBoutLicks', minBoutLicks};     
+%             
+%             % timefilter params
+%             consensus_numtets = 2;   % minimum # of tets for consensus event detection
+%             minstdthresh = 2;        % STD. how big your ripples are
+%             exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
+%             minvelocity = 0;
+%             maxvelocity = 4;
+%             timefilter{end+1} = {'getconstimes', '($cons == 1)', ...
+%                 'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
+%                 'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
+%                 'minvelocity', minvelocity,'maxvelocity',maxvelocity}; 
+       
             
         case 'savefigs'
             savefigs = 1;
@@ -392,7 +407,6 @@ for s = Fp.params
             datatypes = {'spikes', 'linpos', 'pos', 'task'};
             
         case 'dfa_eventTrigSpiking'
-            eventType = 'ca1rippleskons';
             srate = 1500;
             win = [1 1];
             bin = .001;
@@ -400,8 +414,8 @@ for s = Fp.params
             
             iterator = 'singlecellanal';
             filtfunction = 'dfa_eventTrigSpiking';
-            datatypes = {'spikes', 'ca1rippleskons'};
-            options = {'win', win, 'bin', bin, 'frbinsize', frbinsize};
+            datatypes = {'spikes', eventType};
+            options = {'win', win, 'bin', bin, 'frbinsize', frbinsize, 'eventType', eventType};
             
         case 'dfa_riptrigspiking'
             eventType = 'rippleskons';
@@ -472,9 +486,12 @@ for s = Fp.params
             filtfunction = 'dfa_perripspikingcorr';
             datatypes = {'spikes', 'ca1rippleskons'};
         otherwise
-            filtfunction = s{1};
+            error('invalid filter param: %s\n', s{1});
+%             filtfunction = s{1};
     end
+    
 end
+fprintf('---------------------\n');
 w = whos;
 for a = 1:length(w)
     Fp.(w(a).name) = eval(w(a).name);

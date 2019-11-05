@@ -1,4 +1,4 @@
-function out = dfa_eventTrigLFP(idx, excludeperiods, varargin)
+function out = dfa_eventTrigLFP(idx, excludeIntervals, varargin)
 
 % gathers lfp around event times
 % DR 19
@@ -48,7 +48,7 @@ catch
 end
 
 ecbefore = size(eventtimes,1);
-eventtimes = eventtimes(~isExcluded(eventtimes(:,1),excludeperiods),:);
+eventtimes = eventtimes(~isExcluded(eventtimes(:,1),excludeIntervals),:);
 ecafter = size(eventtimes,1);
 fprintf('%d of %d events discarded bc excluded periods in timefilter: d%d e%d\n',...
     ecbefore-ecafter, ecbefore, day,ep)
@@ -88,7 +88,7 @@ out.clockrate = eeg{day}{ep}{idx(1,3)}.clockrate;
 out.samprate = samprate;
 % out.eventEndIndices = endidx;
 out.win = win;
-out.excludeperiods = excludeperiods;
+out.excludeperiods = excludeIntervals;
 out.index = idx;
 end
 

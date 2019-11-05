@@ -19,7 +19,7 @@ end
 eventType = 'ca1rippleskons';
 win = [0.5 0.5]; % in sec
 bin = 0.001; % 1 ms for rasters
-frbinsize= 0.01; % 10 ms for population FR plotting
+frbin= 0.01; % 10 ms for population FR plotting
 
 if ~isempty(varargin)
     assign(varargin{:})
@@ -78,17 +78,43 @@ try
 catch
     spiketimes = [];
 end
-time = -win(1)-0.5*bin : bin : win(2)+0.5*bin;
+
 %% psth
-out.data = cell2mat(arrayfun(@(r) histc(spiketimes , r + time), eventTimes(:,1), 'un', 0)')';
+time = -win(1)-0.5*bin : bin : win(2)+0.5*bin;
+psth = cell2mat(arrayfun(@(r) histc(spiketimes , r + time), eventTimes(:,1), 'un', 0)')';
+
+frtime = (-win(1)-0.5*frbin):frbin:(win(2)+0.5*frbin);
+frhist = cell2mat(arrayfun(@(r) histc(spiketimes , r + frtime), eventTimes(:,1), 'un', 0)')';
+
+instantFR = cell2mat(arrayfun(@(x) instantfr(spiketimes, x + time),eventTimes(:,1),'un',0));
+%
 out.dims = {'event', 'time'};
 out.eventTimes = eventTimes;
+out.numSpikes = length(spiketimes);
+out.time = time;
+out.psth = psth;
 
+out.frtime = frtime;
+out.frhist = frhist;
+
+out.instantFR = instantFR;
+
+% out.posteventmatrix = posteventmatrix;
+% out.eventduration = eventduration;
+% out.nospikes = nospikes;
+% out.noevents = noevents;
 end
 
 function out = init_out()
 out.index = [];
-out.data = [];
 out.dims = [];
 out.eventTimes = [];
+out.numSpikes = [];
+out.time = [];
+out.psth = [];
+
+out.frtime = [];
+out.frhist = [];
+
+out.instantFR = [];
 end
