@@ -1,14 +1,15 @@
 
 
 function out = dfa_lickswrcorr(idx, excludeIntervals, varargin)
+
 %{
 run with filterframework via singleepochanal
 - gets swr (burst) x lick (burst) xcorr and phase clustering
-- plot epoch result (move this out to script).
+- example script: swrlickxcorr_20191031.m
 
 idx: [day epoch]
-excludeIntervals: [start end; ...] timefilter
-varargin required data: {'ca1rippleskons','task', 'lick', 'DIO'}
+excludeIntervals: [start end; ...] timefilter (applied to recover swrs)
+varargin required data: {'ca1rippleskons', 'lick'}
 
 - phase modulation score as used in karalis sirota 2018/19
 - uses the circ stats toolbox's circ_rtest to get the pval and z which is (R^2/n)..
@@ -20,14 +21,13 @@ the times of interest..
 %}
 
 fprintf('%d %d\n',idx)
-reqData = {'ca1rippleskons','task', 'lick', 'DIO'};
+reqData = {'ca1rippleskons', 'lick'};
 for s = 1:length(reqData)
     if ~any(cellfun(@(x) strcmp(x,reqData{s}), varargin(1:2:end), 'un', 1))
         error(sprintf('missing data: %s ', reqData{~ismember(reqData,varargin(1:2:end))}));
     end
 end
 
-pconf = paramconfig;
 bin = .01;
 tmax = 1;
 excShortBin = bin*2;
@@ -39,8 +39,7 @@ rmsmincounts = 1; % min bin count within rmstamax. otherwise nan
 rmstmax = .25; % seconds
 compute_shuffle = 1;
 numshuffs = 100;
-shuffOffset = 250; %ms
-% sigpct = .975;
+maxShift = 500; %ms
 eventType = 'ca1rippleskons';
 if ~isempty(varargin)
     assign(varargin{:});
@@ -52,31 +51,32 @@ out = init_out(); % init output
 out.index = idx;
 out.animal = animal;
 
-%% Get SWR events
+%% Recover SWR events
+
 evid = find(contains(varargin(1:2:end), eventType));
 o = [1:2:length(varargin)]+1;
-events = varargin{o(evid)};
-eventTimes = [];
+swr = varargin{o(evid)};
+swrTimes = [];
 try
-    eventTimes = events{day}{ep}{1}.starttime;
+    swrTimes = swr{day}{ep}{1}.starttime;
 catch
     try
-        eventTimes = events{day}{ep}.starttime;
+        swrTimes = swr{day}{ep}.starttime;
     catch
-        fprintf('no events detected for day%d ep%d\n', day,ep)
+        fprintf('no swr events detected for day%d ep%d\n', day, ep)
         return
     end
 end
-ecbefore = size(eventTimes,1);
-eventTimes = eventTimes(~isExcluded(eventTimes(:,1),excludeIntervals),:);
-ecafter = size(eventTimes,1);
-fprintf('%d of %d events discarded bc excluded periods in timefilter: d%d e%d\n',...
+ecbefore = size(swrTimes,1);
+swrTimes = swrTimes(~isExcluded(swrTimes(:,1), excludeIntervals),:); % isIncluded
+ecafter = size(swrTimes,1);
+fprintf('%d of %d swr events discarded bc excluded periods in timefilter: d%d e%d\n',...
     ecbefore-ecafter, ecbefore, day,ep)
-if isempty(eventTimes)
+if isempty(swrTimes)
     return
 end
 
-%% Get SWR, Lick events within lick-burst intervals
+%% Get lick-burst intervals
 licksVecs = getLickBout([], animal, [day ep], 'lick', lick, 'maxIntraBurstILI', ...
     maxILIthresh, 'minBoutLicks', minBoutLicks);
 try
@@ -85,67 +85,24 @@ catch
     fprintf('error defining lick bouts for %d %d \n', day, ep)
     return
 end
-% filter for swr within lick-bursts (this should already be done with
-% timefilter.. but whatevs)
-swrInBurstStart = eventTimes(logical(isExcluded(eventTimes, burstIntvs)));
-swrInBurstStart = sort(swrInBurstStart(~isnan(swrInBurstStart)));
-fprintf('swrs within %d lickbouts:  %d (%.02f pct swrs) \n', size(burstIntvs,1), ...
-    numel(swrInBurstStart), length(swrInBurstStart)/length(eventTimes)*100)
-if isempty(swrInBurstStart)
-    fprintf('no swrs in lick bouts for %d %d.. skipping\n', day, ep)
-    return
-end
-% filter for licks within lick-bursts
+
+%% get licks within lick-burst intervals
 licks = lick{day}{ep}.starttime;
 idlicks = lick{day}{ep}.id;
-lbLicks = licks(logical(isExcluded(licks, burstIntvs)));
+lbLicks = licks(logical(isExcluded(licks, burstIntvs))); % isIncluded
 fprintf('licks within %d bursts: %d (%.02f pct) \n',size(burstIntvs,1), ...
     numel(lbLicks), length(lbLicks)/length(licks)*100)
 
-[~,~,swrLickBinidx] = histcounts(swrInBurstStart, lbLicks);
-% exclude swr's in 0 bin. how does this happen? maybe if same time as first lick
-swrLickBinidx = swrLickBinidx(swrLickBinidx > 0);
-swrInBurstStart = swrInBurstStart(swrLickBinidx > 0);
-
-%% time since last lick within valid ILI
-swrTimeSinceLick = swrInBurstStart - lbLicks(swrLickBinidx);
-if any(swrTimeSinceLick) < 0
-    error('swr rel time must be pos')
-end
-% get inter lick interval for each swr
-swrBinILI = lbLicks(swrLickBinidx+1) - lbLicks(swrLickBinidx);
-% exclude ili out of lick burst range
-swrValidILI = all([swrBinILI > minILIthresh swrBinILI < maxILIthresh],2);
-fprintf('lBurst swrs in valid ILI: %d (%.02f pct swrs) \n', sum(swrValidILI), ...
-    sum(swrValidILI)/length(eventTimes)*100)
-swrInBurstStart = swrInBurstStart(swrValidILI);
-if isempty(swrInBurstStart)
-    return
-end
-swrBinILI = swrBinILI(swrValidILI);
-swrTimeSinceLick = swrTimeSinceLick(swrValidILI);
-% save burst start/end time for each enclosed and valid swr
-[~,~,swrLickBurstIdx] = histcounts(swrInBurstStart, [burstIntvs(:,1); inf]);
-swrBurstInterval = burstIntvs(swrLickBurstIdx,:);
-out.swrStart = eventTimes;
-out.licks = licks;
-out.idlicks = idlicks;
-out.boutIntvs = burstIntvs;
-out.swrBinILI = swrBinILI;
-out.swrInBurstStart = swrInBurstStart;
-out.swrTimeSinceLick = swrTimeSinceLick;
-out.swrBurstInterval = swrBurstInterval;
-out.dayEpoch = repmat([day ep], length(swrInBurstStart),1);
-%% xcorr
+%% calc swr vs lick xcorr
 time = (-tmax+bin/2):bin:(tmax-bin/2);
+xc = spikexcorr(swrTimes, lbLicks, bin, tmax);
+normxc = xc.c1vsc2 ./ sqrt(xc.nspikes1 * xc.nspikes2); % normalize xc
 nstd = round(excShortBin/bin);
 g1 = gaussian(nstd, 2*nstd+1);
-xc = spikexcorr(swrInBurstStart, lbLicks, bin, tmax);
-normxc = xc.c1vsc2 ./ sqrt(xc.nspikes1 * xc.nspikes2); % normalize xc
 smthxc = smoothvect(normxc, g1); % smooth xc
 excorr = nanmean(excesscorr(xc.time, xc.c1vsc2, xc.nspikes1, xc.nspikes2, excShortBin, ...
     excLongBin));
-T = abs(diff(events{day}{ep}{1}.timerange)); %total ep time
+T = abs(diff(swr{day}{ep}{1}.timerange)); %total ep time
 xcrms = xcorrrms(xc.time, xc.c1vsc2, rmstmax, rmsmincounts); % RMS
 p1 = xc.nspikes1/T;
 p2 = xc.nspikes2/T; % fr in Hz
@@ -161,20 +118,68 @@ out.p1 = p1;
 out.p2 = p2;
 out.expProb = expProb;
 
-%% phasemod
-swrPctSinceLick = swrTimeSinceLick ./ swrBinILI;
-swrLickPhase = 2*pi*swrPctSinceLick; % pct of full cycle.. cart to polar
-meanvec = mean(exp(1i*swrLickPhase));
-meanMRVmag = abs(meanvec);
-vecang = angle(meanvec);
-[pval, z] = circ_rtest(swrLickPhase); % pval is the stat rayleigh test. z is mean res vec
-phasemod = log(z); % i think log makes it 'variance normalized' (karalis,sirota)
+%% phasemod stuff
+%% get swr events within lick-burst intervals
+burstSWRStart = swrTimes(logical(isExcluded(swrTimes, burstIntvs)));
+burstSWRStart = sort(burstSWRStart(~isnan(burstSWRStart)));
+fprintf('swrs within %d lickbouts:  %d (%.02f pct swrs) \n', size(burstIntvs,1), ...
+    numel(burstSWRStart), length(burstSWRStart)/length(swrTimes)*100)
+if isempty(burstSWRStart)
+    fprintf('no swrs in lick bouts for %d %d.. skipping\n', day, ep)
+    return
+end
 
-out.vecang = vecang;
-out.swrLickPhase = swrLickPhase;
+%% Get the containing licks for each swr
+% histc given licks as edges: get bin idx. lickedges(binidx) is the prior edge of bin 
+[~,~,swrLickBinidx] = histcounts(burstSWRStart, lbLicks);
+% exclude swr's in 0 bin, before first lick edge
+swrLickBinidx = swrLickBinidx(swrLickBinidx > 0); 
+burstSWRStart = burstSWRStart(swrLickBinidx > 0);
+
+% time since pre-containing lick
+swrTimeSinceLick = burstSWRStart - lbLicks(swrLickBinidx);
+
+% get inter lick interval containing each swr
+swrBinILI = lbLicks(swrLickBinidx+1) - lbLicks(swrLickBinidx); % +1 is post-containing lick
+
+% exclude swr-containing ili out of lick burst range 60 : 250 ms
+swrValidILI = all([swrBinILI > minILIthresh swrBinILI < maxILIthresh],2);
+fprintf('lBurst swrs in valid ILI: %d (%.02f pct swrs) \n', sum(swrValidILI), ...
+    sum(swrValidILI)/length(swrTimes)*100)
+burstSWRStart = burstSWRStart(swrValidILI);
+if isempty(burstSWRStart)
+    return
+end
+swrBinILI = swrBinILI(swrValidILI);
+swrTimeSinceLick = swrTimeSinceLick(swrValidILI);
+
+% save swr-containing burst id
+[~,~,swrLickBurstIdx] = histcounts(burstSWRStart, [burstIntvs(:,1); inf]);
+burstContainSwr = burstIntvs(swrLickBurstIdx,:);
+
+% phasemod
+swrPctSinceLick = swrTimeSinceLick ./ swrBinILI;
+swrLickPhase = 2*pi*swrPctSinceLick; % pct of full cycle
+meanvec = mean(exp(1i*swrLickPhase)); % get mean resultant vector
+meanMRVmag = abs(meanvec); % vector magnitude
+vecang = angle(meanvec);
+[~, z] = circ_rtest(swrLickPhase); % z is mean res vec
+phasemod = log(z); % log variance normalizes (karalis,sirota)
+
+out.swrStart = swrTimes;
+out.licks = licks;
+out.idlicks = idlicks;
+out.boutIntvs = burstIntvs;
+out.swrTimeSinceLick = swrTimeSinceLick;
+out.swrBinILI = swrBinILI;
+out.burstSWRStart = burstSWRStart;
+out.burstContainSwr = burstContainSwr;
+out.dayEpoch = repmat([day ep], length(burstSWRStart),1);
 out.swrPctSinceLick = swrPctSinceLick;
-out.phasemod = phasemod;
+out.swrLickPhase = swrLickPhase;
 out.meanMRVmag = meanMRVmag;
+out.vecang = vecang; % for polar scatter plots
+out.phasemod = phasemod;
 
 %% Compute shuffled lickDin x swr
 if compute_shuffle
@@ -184,37 +189,13 @@ if compute_shuffle
     excorr = [];
     phasemod = [];
     % shuffle swr start time
-    r = randi([-shuffOffset shuffOffset],length(eventTimes(:,1)),numshuffs)/1e3;
-    swrStartShuf = bsxfun(@plus,eventTimes(:,1),r); %, make shuffle array
-    out.swrStartShuf = swrStartShuf;
+    r = randi([-maxShift maxShift],length(swrTimes(:,1)),numshuffs)/1e3;
+    swrStartShuf = sort(bsxfun(@plus,swrTimes(:,1),r)); %, make shuffle array
+%     out.swrStartShuf = swrStartShuf;
     %%
     for i = 1:numshuffs
-        swrInBurstStart = swrStartShuf(logical(isExcluded(swrStartShuf(:,i), burstIntvs)),i);
-        swrInBurstStart = sort(swrInBurstStart(~isnan(swrInBurstStart)));
-        if isempty(swrInBurstStart)
-            continue
-        end
-        [~,~,swrLickBinidx] = histcounts(swrInBurstStart, lbLicks);
-        swrLickBinidx = swrLickBinidx(swrLickBinidx > 0);
-        swrInBurstStart = swrInBurstStart(swrLickBinidx > 0);
-        swrTimeSinceLick = swrInBurstStart - lbLicks(swrLickBinidx);
-        if any(swrTimeSinceLick) < 0
-            error('swr rel time must be pos')
-        end
-        swrBinILI = lbLicks(swrLickBinidx+1) - lbLicks(swrLickBinidx);
-        swrValidILI = all([swrBinILI > minILIthresh swrBinILI < maxILIthresh],2);
-        swrInBurstStart = swrInBurstStart(swrValidILI);
-        swrBinILI = swrBinILI(swrValidILI);
-        swrTimeSinceLick = swrTimeSinceLick(swrValidILI);
-        [~,~,swrLickBurstIdx] = histcounts(swrInBurstStart, [burstIntvs(:,1); inf]);
-        swrBurstInterval = burstIntvs(swrLickBurstIdx,:);
-        out.swrBinILIShuf{end+1} = swrBinILI;
-        out.swrInBurstStartShuf{end+1} = swrInBurstStart;
-        out.swrTimeSinceLickShuf{end+1} = swrTimeSinceLick;
-        out.swrBurstIntervalShuf{end+1} = swrBurstInterval;
-        
-        %% xcorr
-        xc = spikexcorr(sort(swrInBurstStart), lbLicks, bin, tmax);
+                %% xcorr
+        xc = spikexcorr(swrStartShuf(:,i), lbLicks, bin, tmax);
         normxc = xc.c1vsc2 ./ sqrt(xc.nspikes1 * xc.nspikes2); % normalize xc
         try
             smthxc = smoothvect(normxc, g1);
@@ -237,7 +218,32 @@ if compute_shuffle
         out.p2Shuf{end+1} = p2;
         out.expProbShuf{end+1} = expProb;
         
-        %% phasemod
+        %% phasemod stuff
+       %% get spike events within lick-burst intervals
+        burstSWRStart = swrStartShuf(logical(isExcluded(swrStartShuf(:,i), burstIntvs)),i);
+        burstSWRStart = burstSWRStart(~isnan(burstSWRStart));
+        if isempty(burstSWRStart)
+            continue
+        end
+        
+        % histc given licks as edges: get bin idx. lickedges(binidx) is the prior edge of bin 
+        [~,~,swrLickBinidx] = histcounts(burstSWRStart, lbLicks);
+        % exclude swrs in 0 bin, before first lick edge
+        swrLickBinidx = swrLickBinidx(swrLickBinidx > 0);
+        burstSWRStart = burstSWRStart(swrLickBinidx > 0);
+        % time since pre-containing lick
+        swrTimeSinceLick = burstSWRStart - lbLicks(swrLickBinidx);
+        % get inter lick interval containing each swr
+        swrBinILI = lbLicks(swrLickBinidx+1) - lbLicks(swrLickBinidx);
+        % exclude swr-containing ili out of lick burst range 60 : 250 ms
+        swrValidILI = all([swrBinILI > minILIthresh swrBinILI < maxILIthresh],2);
+        burstSWRStart = burstSWRStart(swrValidILI);
+        swrBinILI = swrBinILI(swrValidILI);
+        swrTimeSinceLick = swrTimeSinceLick(swrValidILI);
+        [~,~,swrLickBurstIdx] = histcounts(burstSWRStart, [burstIntvs(:,1); inf]);
+        burstContainSwr = burstIntvs(swrLickBurstIdx,:);
+        
+        % phasemod
         swrPctSinceLick = swrTimeSinceLick ./ swrBinILI;
         swrLickPhase = 2*pi*(swrPctSinceLick);
         meanvec = mean(exp(1i*swrLickPhase));
@@ -246,12 +252,17 @@ if compute_shuffle
         [~, z] = circ_rtest(swrLickPhase); % pval is the stat rayleigh test. z is mean res vec
         phasemod = log(z); % i think log makes it 'variance normalized' (karalis,sirota)
         
-        out.swrBurstIntervalShuf{end+1} = swrBurstInterval;
-        out.swrInBurstStartShuf{end+1} = swrInBurstStart;
-        out.swrTimeSinceLickShuf{end+1} = swrTimeSinceLick;
-        out.meanMRVmagShuf{end+1} = meanMRVmag;
+%         out.swrBinILIShuf{end+1} = swrBinILI;
+%         out.swrInBurstStartShuf{end+1} = burstSWRStart;
+%         out.swrTimeSinceLickShuf{end+1} = swrTimeSinceLick;
+%         out.swrBurstIntervalShuf{end+1} = burstContainSwr;
+
+%         out.swrBurstIntervalShuf{end+1} = burstContainSwr;
+%         out.swrInBurstStartShuf{end+1} = burstSWRStart;
+%         out.swrTimeSinceLickShuf{end+1} = swrTimeSinceLick;
+%         out.swrPctSinceLickShuf{end+1} = swrPctSinceLick;
         out.swrLickPhaseShuf{end+1} = swrLickPhase;
-        out.swrPctSinceLickShuf{end+1} = swrPctSinceLick;
+        out.meanMRVmagShuf{end+1} = meanMRVmag;
         out.vecangShuf{end+1} = vecang;
         out.phasemodShuf{end+1} = phasemod;
     end
@@ -289,7 +300,7 @@ out.vecang = [];
 out.phasemod = [];
 
 %% shuffle
-out.swrStartShuf = [];
+% out.swrStartShuf = [];
 % xcTime
 out.xcShuf = {};
 out.normxcShuf = {};

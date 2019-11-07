@@ -1,10 +1,19 @@
 
 function [out] = dfa_eventTrigSpiking(idx, excludeperiods, varargin)
 
-% gathers spiking around event times
-% idx [day epoch ntrode cell]
+%{
+run with filterframework via singlcellanal
+- gathers spiking around event times (generalized from swr, lick- versions)
+- example script: licktrigSUmod_20191106.m
 
-% DR 19
+idx: [day epoch ntrode cluster]
+excludeIntervals: [start end; ...] timefilter (applies to events, spikes)
+varargin required data: {<eventType>, 'spikes'}, eventType
+
+$DR19
+%}
+
+
 
 fprintf('%d %d %d %d\n',idx)
 
@@ -32,6 +41,7 @@ day = idx(1);
 ep = idx(2);
 nt = idx(3);
 clust = idx(4);
+
 %% get events from ~excludeperiods
 try
     evid = find(contains(varargin(1:2:end), eventType));

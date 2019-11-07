@@ -39,7 +39,7 @@ for an = 1:length(animals)
             F = tmp.F;
     end
     out(an) = F(1);
-    out(an).animal = animal;
+    out(an).animal = andef;
 end
 % data = [data{:}]'; % merge the cell array of structs to match filter output form
 fprintf('took %.02f sec\n',toc);

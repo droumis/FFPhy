@@ -1,17 +1,24 @@
 
+
+function modF = calcSUmod(dmat, cF, varargin)
 %{
- select clusters and swr-designmat,
-then cacluate swr mod, shuff, mod-shuffrank
+calculate event-triggered modulation of SU spiking
+F is a struct array with F.animal and F.data
+F.data contains at least fields:
+- time, psth, instantFR
+-
 %}
 
-function modF = calcSUmod(F, filtF, varargin)
 pconf = paramconfig;
 % filtF filter to select animal, epochs, ntrode, clusers
-respwin = [0 200]; % response period in ms rel to swr on
-basewin = [-300 -100]; % baseline period in ms rel to swr on
-minNumSwr = 10;
+rwin = [0 200]; % response period in ms rel to swr on
+bwin = [-300 -100]; % baseline period in ms rel to swr on
+minNumEvents = 10;
+minSpikesResp = 100;
+minSpikesBase = 100;
 % minNumSwrSpikes = 10;
-nshuffs = 1000;
+runShuffle = 1;
+nshuffs = 200;
 shuffms = 700;
 saveResult = 1;
 filetail = '';
@@ -20,111 +27,113 @@ if ~isempty(varargin)
 end
 
 modF = struct;
-for ian = 1:length(F)
-    animal = F(ian).animal;
+for ian = 1:length(cF)
+    animal = cF(ian).animal;
     modF(ian).data = struct;
-    cn = 0;
-    % filter for certain clusters
-    Fdtc = [];
-    for ie = 1:size(filtF(ian).epochs{1},1)
-        ieTC = filtF(ian).data{1}{ie};
-        d = repmat(filtF(ian).epochs{1}(ie,1), size(ieTC,1),1);
-        Fdtc = [Fdtc; d ieTC];
-    end
-    modFdata = F(ian).data(ismember(cell2mat({F(ian).data.dtc}'), Fdtc, 'rows'));
+    modF(ian).animal = animal;
+    cn = 1;
+    %     %% create filter for certain clusters
+    %     Fdtc = [];
+    %     for ie = 1:size(cF(ian).epochs{1},1)
+    %         ieTC = cF(ian).data{1}{ie};
+    %         d = repmat(cF(ian).epochs{1}(ie,1), size(ieTC,1),1);
+    %         Fdtc = [Fdtc; d ieTC];
+    %     end
+    %     % apply filter
+    %     inData = F(ian).data(ismember(cell2mat({F(ian).data.index}'), Fdtc, 'rows'));
+    % for each filtered cluster from this animal
     
-    for ic = 1:length(modFdata)
-        % make swr-design mat for this cluster e.g. [allswr, lickbout-swrs]
-        dtc = modFdata(ic).dtc;
-        swrStart = modFdata(ic).eventtags(:,2); % col 2 is swr starttime
-        epIdx = find(filtF(ian).epochs{1}(:,1) == dtc(1));
-        DayexIntervals = [];
-        for iep = 1:numel(epIdx)
-            DayexIntervals = [DayexIntervals; filtF(ian).excludetime{1}{epIdx(iep)}];
-        end
-        dmat = logical([ones(size(swrStart,1),1) ~isExcluded(swrStart, DayexIntervals)]);
-        if sum(dmat(:,2)) < minNumSwr % filter num lickbout-swrs
-            fprintf('%d %d %d only %d swrs in lickbouts. skipping\n',dtc, ...
-                sum(dmat(:,2)));
-            continue
-        end
-        %% meanmod score for this cluster, per condition
-        clear pctRespAboveShuff meanPctSwrResp pctRespAboveShuff
-        for id = 1:size(dmat,2)
-            ilickFRpsth = modFdata(ic).instantFR(dmat(:,id),:);
-%             meanpsthFR{id} = nanmean(ilickFRpsth);
-            time = modFdata(ic).time;
-            % response
-            respIdx = [knnsearch(time', respwin(1)/1000) knnsearch(time', respwin(2)/1000)];
-            respmeanperSWR = nanmean(ilickFRpsth(:,respIdx(1):respIdx(2)),2)+1e-6;
-            numSpikesResp{id} = sum(sum(modFdata(ic).psth(dmat(:,id),respIdx(1):respIdx(2))));
-            % baseline
-            baseIdx = [knnsearch(time', basewin(1)/1000) knnsearch(time', basewin(2)/1000)];
-            basemeanperSWR = nanmean(ilickFRpsth(:,baseIdx(1):baseIdx(2)),2)+1e-6;
-            numSpikesBase{id} = sum(sum(modFdata(ic).psth(dmat(:,id),baseIdx(1):baseIdx(2))));
-            % mean pct change from baseline
-            pctSwrResp = 100*(respmeanperSWR-basemeanperSWR)./basemeanperSWR;
-            meanPctSwrResp{id} = mean(pctSwrResp);
-            if numSpikesResp{id} < 100
-                fprintf('%d %d %d only %d spikes in response period\n',dtc, ...
-                numSpikesResp{id});
-            end
-            if numSpikesBase{id} < 100
-                fprintf('%d %d %d only %d spikes in baseline period\n',dtc, ...
-                numSpikesBase{id});
-            end
-            
-            % Shuffle
-            numSamples = size(ilickFRpsth,2);
-            r = randi([-shuffms shuffms],size(ilickFRpsth,1), nshuffs); % shuff shift offsets
-            shuffMeanPctSwrResp{id} = nan(nshuffs,1);
-            %%
-            tic
-            for ish = 1:nshuffs
-                % circshift 
-%                 ishLickFRpsth = cell2mat(arrayfun(@(x,y) circshift(ilickFRpsth(x,:), ...
-%                     r(x,ish),2),1:size(ilickFRpsth,1), 'uni',0)');
-                respShmeanperSWR = nan(size(ilickFRpsth,1),1);
-                respShmeanperSWR = nanmean(cell2mat(arrayfun(@(x,y) ...
-                    ilickFRpsth(x,respIdx(1)+y:respIdx(2)+y), ...
-                    1:size(ilickFRpsth,1), r(:,ish)', 'uni',0)'),2);
-                baseShmeanperSWR = nan(size(ilickFRpsth,1),1);
-                baseShmeanperSWR = nanmean(cell2mat(arrayfun(@(x,y) ...
-                    ilickFRpsth(x,(baseIdx(1)+y):(baseIdx(2)+y)), ...
-                    1:size(ilickFRpsth,1), r(:,ish)', 'uni',0)'),2);
-                % instead of circshifting.. which i think is taking a long
-                % time.. randomly select selection indices and just slice 
-                % response
-%                 respShmeanperSWR = nanmean(ishLickFRpsth(:,respIdx(1):respIdx(2)),2);
-%                 % baseline
-%                 baseShmeanperSWR = nanmean(ishLickFRpsth(:,baseIdx(1):baseIdx(2)),2);
-                % mean pct change from baseline
-                pctSwrResp = 100*(respShmeanperSWR-baseShmeanperSWR)./baseShmeanperSWR;
-                pctSwrResp(pctSwrResp == inf) = [];
-                shuffMeanPctSwrResp{id}(ish,1) = nanmean(pctSwrResp);
-            end
-            %%
-            % real-mod shuff-pct
-            pctRespAboveShuff{id} = 100*(1-(sum(shuffMeanPctSwrResp{id} > ...
-                meanPctSwrResp{id})./nshuffs));
-            fprintf('%s %d %d %d cond%d mod is > %.02f pct of shuffs. took %.03f seconds\n', animal, dtc,id,...
-                pctRespAboveShuff{id}, toc)
-        end
-        %% ouput
-        cn = cn +1;
-        modF(ian).animal = animal;
-        modF(ian).data(cn).dtc = dtc;
-        modF(ian).data(cn).time = time;
-        modF(ian).data(cn).inputdata = modFdata(ic); % save the parent data
+    for ic = 1:length(cF(ian).data)
+        % collect event design mat for this cluster (per day)
+        idx = cF(ian).data.index;
+        fprintf('%d %d %d\n', idx);
+        dayIdx = dmat(ian).dayeps(:,1) == idx(1);
+        dayDM = dmat(ian).dm(dayIdx,:);
+        dayET = dmat(ian).evStart(dayIdx,:);
         
+        modF(ian).data(cn).index = idx;
+        time = cF(ian).data(ic).time;
+        modF(ian).data(cn).time = time;
+        modF(ian).data(cn).inpData = cF(ian).data(ic); % save the parent data
         modF(ian).data(cn).dmat = dmat;
         modF(ian).data(cn).dmatIdx = {'all', 'lickbout'};
-%         modF(ian).data(cn).meanpsthFR = meanpsthFR;
-        modF(ian).data(cn).numSpikesResp = numSpikesResp;
-        modF(ian).data(cn).numSpikesBase = numSpikesBase;
-        modF(ian).data(cn).meanPctSwrResp = meanPctSwrResp;
-        modF(ian).data(cn).shuffMeanPctSwrResp = shuffMeanPctSwrResp;
-        modF(ian).data(cn).respAboveShuffPct = pctRespAboveShuff;
+        %         evTime = inData(ic).eventTimes; % col 2 is swr starttime
+        %         epIdx = find(cF(ian).epochs{1}(:,1) == idx(1));
+        %         % collect design mat exclusion periods across epochs for this cluster
+        %         allExclude = [];
+        %         for iep = 1:numel(epIdx)
+        %             allExclude = [allExclude; cF(ian).excludetime{1}{epIdx(iep)}];
+        %         end
+        %
+        %         % find the events within lickbouts for this cluster's epochs
+        %         dmat = logical([ones(size(evTime,1),1) ~isExcluded(evTime, allExclude)]);
+        %         if sum(dmat(:,2)) < minNumEvents % filter num lickbout-swrs
+        %             fprintf('%d %d %d only %d events in timefilter. skipping\n',idx, ...
+        %                 sum(dmat(:,2)));
+        %             continue
+        %         end
+        
+        %% meanmod score for this cluster, per condition
+        % right now i'm just using the instantFR for computing mod, but num
+        % spikes for thresholding within win is from the psth
+        for iv = 1:numel(dmat(ian).expvars)
+            try
+                evIFR = cF(ian).data(ic).instantFR(dayDM(:,iv),:);
+            catch
+                fprintf('no valid events\n')
+                continue
+            end
+            %             meanpsthFR{id} = nanmean(ilickFRpsth);
+            
+            % response mean FR
+            rIdx = [knnsearch(time', rwin(1)/1000) knnsearch(time', rwin(2)/1000)];
+            evRespM = nanmean(evIFR(:,rIdx(1):rIdx(2)),2)+1e-6;
+            numRSpikes{iv} = sum(sum(cF(ian).data(ic).psth(dayDM(:,iv),rIdx(1):rIdx(2))));
+            fprintf('spikes in response: %d \n', numRSpikes{iv});
+            if numRSpikes{iv} < minSpikesResp
+                fprintf('skipping\n')
+                continue
+            end
+            % baseline mean FR
+            bIdx = [knnsearch(time', bwin(1)/1000) knnsearch(time', bwin(2)/1000)];
+            evBaseM = nanmean(evIFR(:,bIdx(1):bIdx(2)),2)+1e-6;
+            numBSpikes{iv} = sum(sum(cF(ian).data(ic).psth(dayDM(:,iv),bIdx(1):bIdx(2))));
+            fprintf('spikes in baseline period: %d \n', numBSpikes{iv});
+            if numBSpikes{iv} < minSpikesBase
+                fprintf('skipping\n')
+                continue
+            end
+            
+            % mean pct change from baseline
+            mPctChange = nanmean((evRespM-evBaseM)./evBaseM*100);
+            modF(ian).data(cn).numRSpikes{iv} = numRSpikes;
+            modF(ian).data(cn).numBSpikes{iv} = numBSpikes;
+            modF(ian).data(cn).mPctChange{iv} = mPctChange;
+            %% Shuffle
+            numEv = size(evIFR,1);
+            r = randi([-shuffms shuffms], numEv, nshuffs); % shuff shift offsets
+            mPctChangeSh = nan(nshuffs,1);
+            parfor i = 1:nshuffs
+                % for each event, select a shuf shifted slice as r and b, then mean
+                evRespMSh = nanmean(cell2mat(arrayfun(@(x,y) ...
+                    evIFR(x,rIdx(1)+y:rIdx(2)+y), 1:numEv, r(:,i)', 'uni',0)'),2);
+                %                     baseShmeanperSWR = nan(size(evIFR,1),1);
+                evBaseMSh = nanmean(cell2mat(arrayfun(@(x,y) ...
+                    evIFR(x,bIdx(1)+y:bIdx(2)+y), 1:numEv, r(:,i)', 'uni',0)'),2);
+                % mean pct change from baseline
+                pctSwrResp = (evRespMSh-evBaseMSh)./evBaseMSh*100;
+                pctSwrResp(pctSwrResp == inf) = [];
+                mPctChangeSh(i) = nanmean(pctSwrResp);
+            end
+           %%
+            % real-mod shuff-pct
+            modPctRank = 100*(1-(sum(mPctChangeSh > mPctChange)./nshuffs));
+            fprintf('%d %d %d cond%d mod is > %.02f pct of shuffs.\n',idx, iv, modPctRank)
+            
+            modF(ian).data(cn).mPctChangeSh{iv} = mPctChangeSh;
+            modF(ian).data(cn).modPctRank{iv} = modPctRank;
+        end
+        cn = cn +1;
     end
 end
 % ---------------- Save result ---------------------------------------------------

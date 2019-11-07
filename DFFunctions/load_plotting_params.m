@@ -34,7 +34,9 @@ for s = param_set
             SupFontS = 12;
             tickSz = 8; % tick labels font size
             set(0,'defaultAxesFontSize',10)
-            
+        case 'lickTrigSpikingPSTH'
+            position = [.1 .1 .5 .5];
+            psthSize = 5; 
         case 'RxnFull'
             position = [.1 .1 .5 .5];
             winSE = [-.5 .5];
@@ -352,8 +354,12 @@ plot_params.posparams = {'SpacingVert', SpVt, 'SpacingHoriz', SpHz, ...
     'MarginBottom', MgBm};
 end
 % init fig
-if savefigs && ~pausefigs; close all;
+if savefigs && ~pausefigs
+    close all;
     ifig = figure('Visible','off','units','normalized','position', plot_params.position, ...
-        'color','white'); else
-    ifig = figure('units','normalized','position',plot_params.position, 'color','white'); end
+        'color','white', 'InvertHardcopy', 'off'); 
+else
+    ifig = figure('units','normalized','position',plot_params.position, 'color','white', ...
+        'InvertHardcopy', 'off');
+end
 end

@@ -1,29 +1,32 @@
 
-function out = makeExpvarCatDesignMat(lfpstack, varargin)
+function out = makeExpvarCatDesignMat(data, varargin)
     % given a set of animal, day, epoch, timestamp.. evaluate the state filters
     % return design matrix of experiment variables [rip var]
-    % Demetris Roumis 2019
+    % input data should have fields: animal, evStart, day, epoch, 
+    % DR 2019
     pconf = paramconfig;
-    expvars = {'all', 'rewarded', 'unrewarded', 'inbound' , 'outbound', ...
-         'proximalWell', 'distalWell', 'rewarded_outbound', 'rewarded_inbound'};
+    expvars = {'all'}; %, 'rewarded', 'unrewarded', 'inbound' , 'outbound', ...
+%          'proximalWell', 'distalWell', 'rewarded_outbound', 'rewarded_inbound'};
     saveout = 1;
     outdir = 'expvarCat';
     defaults = {'wtrackdays', 'excludeNoise','excludePriorFirstWell'};
-    lfptype = 'eeg';
+%     lfptype = 'eeg';
     eventType = 'swr';
+    
     if ~isempty(varargin)
         assign(varargin{:})
     end
     fprintf('defaults: %s\n', defaults{:})
     outpath = [pconf.andef{2},outdir,'/'];
-    for ian = 1:length(lfpstack)
-        t = find(strcmp(lfpstack(ian).lfptypes, lfptype));
-        animal = lfpstack(ian).animal;
+    
+    for ian = 1:length(data)
+%         t = find(strcmp(lfpstack(ian).lfptypes, lfptype));
+        animal = data(ian).animal;
         out(ian).animal = animal;
         out(ian).dims = {'event', 'expvar'};
-        out(ian).evStart = lfpstack(ian).evStart{t};
+        out(ian).evStart = data(ian).evStart;
 %         out(ian).evEnd = lfpstack(ian).evEnd{t};
-        out(ian).dayeps = [lfpstack(ian).day{t} lfpstack(ian).epoch{t}];
+        out(ian).dayeps = [data(ian).day data(ian).epoch];
         out(ian).expvars = expvars;
         out(ian).dm = zeros(length(out(ian).evStart), length(expvars));
         Fp = struct;
@@ -32,18 +35,18 @@ function out = makeExpvarCatDesignMat(lfpstack, varargin)
             switch expvars{ss}
                 case 'all'
                     % all defaults
-                case 'lickbouts'
-                    Fp.params{end+1} = 'lickbouts';
-                case 'nolickbouts'
-                    Fp.params{end+1} = 'nolickbouts';
+%                 case 'lickbouts'
+%                     Fp.params{end+1} = 'lickbouts';
+%                 case 'nolickbouts'
+%                     Fp.params{end+1} = 'nolickbouts';
                 case 'rewarded'
                     Fp.params{end+1} = 'correcttrials';
                 case 'unrewarded'
                     Fp.params{end+1} = 'errortrials';
-                case 'outbound'
-                    Fp.params{end+1} = 'outbound';
-                case 'inbound'
-                    Fp.params{end+1} = 'inbound';
+%                 case 'outbound'
+%                     Fp.params{end+1} = 'outbound';
+%                 case 'inbound'
+%                     Fp.params{end+1} = 'inbound';
                 case 'rewarded_outbound'
                     Fp.params{end+1} = 'correcttrials';
                     Fp.params{end+1} = 'outbound';
@@ -56,12 +59,12 @@ function out = makeExpvarCatDesignMat(lfpstack, varargin)
                 case 'unrewarded_inbound'
                     Fp.params{end+1} = 'errortrials';
                     Fp.params{end+1} = 'inbound';
-                case 'proximalWell'
-                    Fp.params{end+1} = 'proximalWell';
-                case 'distalWell'
-                    Fp.params{end+1} = 'distalWell';
+%                 case 'proximalWell'
+%                     Fp.params{end+1} = 'proximalWell';
+%                 case 'distalWell'
+%                     Fp.params{end+1} = 'distalWell';
                 otherwise
-                    error('condition string %s unrecognized', expvars{ss});
+                    Fp.params{end+1} = expvars{ss};
             end
             fprintf('============ %s =============\n', expvars{ss});
             Fp = load_filter_params(Fp);

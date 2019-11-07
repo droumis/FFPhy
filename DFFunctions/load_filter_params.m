@@ -223,12 +223,15 @@ for s = Fp.params
             
         case 'dfa_lickXCorrSpikes'
             eventName = 'lick';
-            filtfunction = 'dfa_lickXCorrSpikes';
-            iterator = 'singlecellanal';
             tmax = 1;
             bin = .02;
+            numShufs = 1000;
+            
+            filtfunction = 'dfa_lickXCorrSpikes';
+            iterator = 'singleDayCellAnal';
             datatypes = {'lick', 'spikes', 'cellinfo'};
-            options = {'savefigas', 'png', 'bin', bin, 'tmax',tmax,'eventName',eventName};
+            options = {'savefigas', 'png', 'bin', bin, 'tmax',tmax,'eventName',eventName, ...
+                '};
             
         case 'dfa_licktrigspiking'
             window = [1 1];

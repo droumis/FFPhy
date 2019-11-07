@@ -17,7 +17,7 @@ saveplots = 1;
 %% data filter params
 Fp.animals = {'JZ3'};
 Fp.filtfunction = 'dfa_lickXCorrSpikes';
-Fp.add_params = {'savefigs', 'wtrackdays', 'valid_ntrodes', 'nonMU_cells'}; %'exemplar_wepochs'
+Fp.add_params = {'savefigs', 'wtrackdays', 'lickbouts', 'valid_ntrodes', 'nonMU_cells'}; %'exemplar_wepochs'
 %% FF
 Fp = load_filter_params(Fp, 'add_params', Fp.add_params);
 if create_filter

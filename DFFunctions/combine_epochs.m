@@ -29,7 +29,8 @@ for ian = 1:length(Fp.animals)
     
     % ---------- for each cell, get all epochs--------------------------------
     % for each allepoch-unique cell
-    for ic = 1:size(daytetcells,1);
+    ippF = init_out();
+    for ic = 1:size(daytetcells,1)
         cellID = daytetcells(ic, 3);
         % indices into (F)ilter output for this day tet cell
         icellFoutInds = find(ic == daytetInds2);
@@ -44,25 +45,22 @@ for ian = 1:length(Fp.animals)
         load(sprintf('%s%s%s%02d.mat',FFanimdir, animal, 'task', day));
         % ---------- get unique epoch environment types  --------------------------------
         eptypes = [];
-        for iepoch = 1:numeps;
+        for iepoch = 1:numeps
             epoch = epochInds(iepoch,2);
             eptypes{iepoch,1} = task{day}{epoch}.environment;
         end
         [envtypes,~,IndC] = unique(eptypes, 'stable');
-        if ic ==1
-            ippF = init_out(daytetcells(ic,:));
-        else
-            ippF = [ippF init_out(daytetcells(ic,:))];
-        end
+        ippF(ic).index = daytetcells(ic,:);
         for ienv = 1:size(envtypes,1) %for each environment type
             ienvTypeInds = find(ienv == IndC);
             ienvFInds = icellFoutInds(ienvTypeInds);
             
-            % the business end
+            % combine each epoch of data appropriately for the data type
             for iepienv = 1:length(ienvFInds)
                 epID = epochInds(ienvTypeInds(iepienv),2);
                 iout = idata(ienvFInds(iepienv));
                 ippF(ic).time = iout.time;   % (all time vectors are the same..)
+                ippF(ic).eventTimes = [ippF(ic).eventTimes; iout.eventTimes];
                 ippF(ic).frtime = iout.frtime;
                 ippF(ic).psth = [ippF(ic).psth ; iout.psth];
                 ippF(ic).frhist = [ippF(ic).frhist; iout.frhist];
@@ -76,9 +74,9 @@ for ian = 1:length(Fp.animals)
                 % epoch-by-epoch outputs
 %                 ippF(ic).epoch_types{epID} = iout.epoch_type;
 %                 ippF(ic).epoch_envs{epID} = iout.epoch_environment;
-                ippF(ic).epoch_nospikes(epID) = sum(iout.numSpikes);
+                ippF(ic).perEpNumSpikes(epID) = sum(iout.numSpikes);
 %                 ippF(ic).epoch_noevents(epID) = sum(iout.noevents);
-                ippF(ic).epoch_noeventspikes(epID) = sum(sum(iout.psth));
+                ippF(ic).perEpNumEventSpikes(epID) = sum(sum(iout.psth));
             end
             % if a no data for this cell, ignore
             if isempty(ippF(ic).psth)
@@ -101,7 +99,7 @@ if saveCombinedEpochs
         'filetail', '_combEps')
 end
 end
-function p = init_out(daytetcell)
+function p = init_out()
 %% ---------- for each epoch env type, concat the data --------------------------------
 % initialize output .fields
 p.time = [];
@@ -111,7 +109,7 @@ p.frhist = [];
 p.instantFR = [];
 % p.posteventmatrix = [];
 % p.eventduration = [];
-% p.eventtags = [];
+p.eventTimes = [];
 p.numSpikes = 0;
 % p.noevents = 0;                  % number of events reported for the epochs in which the unit was clustered ("events experienced")
 p.epochs = [];
@@ -122,8 +120,8 @@ p.epoch_noevents = [];
 p.epoch_noeventspikes = [];
 p.psthsum = [];
 p.instantFRmean = [];
-
-p.dtc = daytetcell;
+p.index = [];
+p.index_id = {'day', 'ntrode', 'cluster'};
 p.eventtags_descript = '[ epochnum eventtime epochtype]';
 
 end
