@@ -1,5 +1,5 @@
 
-function [out] = dfa_eventTrigSpiking(idx, excludeperiods, varargin)
+function [out] = dfa_eventTrigSpiking(idx, excludeIntervals, varargin)
 
 %{
 run with filterframework via singlcellanal
@@ -14,13 +14,12 @@ $DR19
 %}
 
 
-
 fprintf('%d %d %d %d\n',idx)
 
 % check for required data in varargin
 reqData = {'spikes'};
 for s = 1:length(reqData)
-    if ~any(cellfun(@(x) strcmp(x,reqData{s}), varargin(1:2:end), 'un', 1))
+    if ~any(cell2mat(cellfun(@(x) strcmp(x,reqData{s}), varargin(1:2:end), 'un', 0)))
         error(sprintf('missing data: %s ', reqData{~ismember(reqData,varargin(1:2:end))}));
     end
 end
@@ -29,7 +28,7 @@ eventType = 'ca1rippleskons';
 win = [0.5 0.5]; % in sec
 bin = 0.001; % 1 ms for rasters
 frbin= 0.01; % 10 ms for population FR plotting
-
+byDay = 0;
 if ~isempty(varargin)
     assign(varargin{:})
 end
@@ -38,10 +37,15 @@ end
 out = init_out();
 out.index = idx;
 day = idx(1);
-ep = idx(2);
-nt = idx(3);
-clust = idx(4);
-
+if byDay
+    ep = idx(4:5);
+    nt = idx(2);
+    clust = idx(3);
+else
+    ep = idx(2);
+    nt = idx(3);
+    clust = idx(4);
+end
 %% get events from ~excludeperiods
 try
     evid = find(contains(varargin(1:2:end), eventType));
@@ -52,28 +56,39 @@ catch
     return
 end
 eventTimes = [];
-try
-    eventTimes = events{day}{ep}{1}.starttime;
-catch
+numEventsPerEp = [];
+for e = 1:length(ep)
     try
-        eventTimes = events{day}{ep}.starttime;
+        epEv = events{day}{ep(e)}{1}.starttime;
     catch
-        fprintf('no events detected for day%d ep%d\n', day, ep)
-        return
+        try
+            epEv = events{day}{ep(e)}.starttime;
+        catch
+            fprintf('no events detected for day%d ep%d\n', day, ep(e))
+            continue
+        end
     end
+    epEvInc = epEv(~isExcluded(epEv(:,1), excludeIntervals),:);
+    eventTimes = [eventTimes; epEvInc];
+    numEventsPerEp = [numEventsPerEp length(epEvInc)];
 end
-
-evbefore = size(eventTimes,1);
-eventTimes = eventTimes(~isExcluded(eventTimes(:,1),excludeperiods),:);
-evafter = size(eventTimes,1);
-fprintf('%d of %d events discarded bc excluded periods in timefilter: d%d e%d\n',...
-    evbefore-evafter, evbefore, day,ep)
+% evbefore = size(eventTimes,1);
+% evafter = size(eventTimes,1);
+% fprintf('%d of %d events discarded bc excluded periods in timefilter: d%d \n',...
+%     evbefore-evafter, evbefore, day)
 
 if isempty(eventTimes)
+    fprintf('eventTimes is empty\n');
     return
 end
-epStartTime = spikes{day}{ep}{nt}{clust}.timerange(1);
-epEndTime = spikes{day}{ep}{nt}{clust}.timerange(2);
+epStartTime = [];
+epEndTime = [];
+for e = 1:length(ep)
+    epStartTime = [epStartTime spikes{day}{ep(e)}{nt}{clust}.timerange(1)];
+    epEndTime = [epEndTime spikes{day}{ep(e)}{nt}{clust}.timerange(2)];
+end
+epStartTime = min(epStartTime);
+epEndTime = max(epEndTime);
 % Remove triggering events that are too close to the beginning or end
 while eventTimes(1,1)<(epStartTime+win(1))
     eventTimes(1,:) = [];
@@ -83,12 +98,16 @@ while eventTimes(end,1)>(epEndTime-win(2))
 end
 
 %% spiketimes
-try
-    spiketimes = spikes{day}{ep}{nt}{clust}.data(:,1);
-catch
-    spiketimes = [];
+spiketimes = [];
+numSpikesPerEp = [];
+for e = 1:length(ep)
+    try
+        spiketimes = [spiketimes; spikes{day}{ep(e)}{nt}{clust}.data(:,1)];
+        numSpikesPerEp = [numSpikesPerEp size(spikes{day}{ep(e)}{nt}{clust}.data,1)];
+    catch
+        continue
+    end
 end
-
 %% psth
 time = -win(1)-0.5*bin : bin : win(2)+0.5*bin;
 psth = cell2mat(arrayfun(@(r) histc(spiketimes , r + time), eventTimes(:,1), 'un', 0)')';
@@ -98,6 +117,8 @@ frhist = cell2mat(arrayfun(@(r) histc(spiketimes , r + frtime), eventTimes(:,1),
 
 instantFR = cell2mat(arrayfun(@(x) instantfr(spiketimes, x + time),eventTimes(:,1),'un',0));
 %
+out.numEventsPerEp = numEventsPerEp;
+out.numSpikesPerEp = numSpikesPerEp;
 out.dims = {'event', 'time'};
 out.eventTimes = eventTimes;
 out.numSpikes = length(spiketimes);
@@ -117,6 +138,8 @@ end
 
 function out = init_out()
 out.index = [];
+out.numEventsPerEp = [];
+out.numSpikesPerEp = [];
 out.dims = [];
 out.eventTimes = [];
 out.numSpikes = [];

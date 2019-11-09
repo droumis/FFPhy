@@ -97,10 +97,12 @@ for s = param_set
         case 'dfa_lickXCorrSpikes'
             position = [.1 .1 .3 .5];
             MgBm =  0.07; % margin bottom
-            SpVt = 0.01;
+            SpVt = 0.1;
+            SpHz = 0.1;
             MgLt = .11;
             MgTp = .06;
             psthSize = 5;
+            win = [.5 .5];
             
         case 'combinedAreasTFstats'
             stitFsize = 16;

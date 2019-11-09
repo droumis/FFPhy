@@ -6,7 +6,7 @@
 % get data
 pconf = paramconfig;
 create_filter = 0;
-run_ff = 1;
+run_ff = 0;
 load_ffdata = 0;
 % stack data
 combineEpochs = 0;

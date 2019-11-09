@@ -209,36 +209,37 @@ for s = Fp.params
                 '($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))', ...
                 '($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))';};
             filtfunction = 'dfa_lickBoutSpikeCorr';
-            eventName = 'lick';
+            eventType = 'lick';
             iterator = 'singlecellanal';
             datatypes = {'spikes'};
-            options = {'savefigas', 'png', 'eventName',eventName};
+            options = {'savefigas', 'png', 'eventName',eventType};
 
         case 'dfa_lickphaseSUclustering'
-            eventName = 'lick';
+            eventType = 'lick';
             filtfunction = 'dfa_lickphaseSUclustering';
             iterator = 'singlecellanal';
             datatypes = {'lick', 'spikes', 'cellinfo', 'DIO', 'task'};
-            options = {'savefigas', 'png', 'eventName',eventName};
+            options = {'savefigas', 'png', 'eventName',eventType};
             
         case 'dfa_lickXCorrSpikes'
-            eventName = 'lick';
+            eventType = 'lick';
             tmax = 1;
             bin = .02;
             numShufs = 1000;
+            sigpct = 97.5;
             
             filtfunction = 'dfa_lickXCorrSpikes';
             iterator = 'singleDayCellAnal';
             datatypes = {'lick', 'spikes', 'cellinfo'};
-            options = {'savefigas', 'png', 'bin', bin, 'tmax',tmax,'eventName',eventName, ...
-                '};
+            options = {'savefigas', 'png', 'bin', bin, 'tmax',tmax,'eventType',eventType, ...
+                'numShufs', numShufs};
             
         case 'dfa_licktrigspiking'
             window = [1 1];
             binsize = .001;
-            eventName = 'lick';
+            eventType = 'lick';
             options = {'savefigas', 'png', 'binsize', binsize, 'window', window, 'eventName', ...
-                eventName};
+                eventType};
             filtfunction = 'dfa_licktrigspiking';
             iterator = 'singlecellanal';
             datatypes = {'lick', 'task', 'DIO', 'spikes', 'cellinfo'};
@@ -425,7 +426,7 @@ for s = Fp.params
             srate = 1500;
             win = [1 1];
             binsize = .001;
-            eventName = 'swr';
+            eventType = 'swr';
             time = -win(1):1/srate:win(2);
             TF = 1;
             eventSourceArea = 'ca1';
@@ -468,10 +469,10 @@ for s = Fp.params
                 '($numspikes > 100) && (isequal($area, ''ca1'')) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))', ...
                 '($numspikes > 100) && (isequal($area, ''ca1'')) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))'};
             
-            eventName = 'swr';
+            eventType = 'swr';
             iterator = 'singlecellanal';
             datatypes = {'spikes'};
-            options = {'savefigas', 'png', 'eventName',eventName};
+            options = {'savefigas', 'png', 'eventName',eventType};
             
         case 'mua_calcxcorrmeasures'
             % requires 'tetrodepairs', Fp.tetpairfilter,

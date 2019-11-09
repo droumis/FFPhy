@@ -60,7 +60,7 @@ for a = 1:length(f)
         end
         
         fout = cell(numcells,1);
-        for c = 1:numcells % can use parfor
+        for c = 1:numcells % can use parfor (all cells within this day)
             tet = f(a).data{g}{deIdx(e)}(c,1);
             clust = f(a).data{g}{deIdx(e)}(c,2);
             eps = f(a).epochs{g}(deIdx,2)';
@@ -68,10 +68,10 @@ for a = 1:length(f)
             fprintf(sprintf('%s %s day%d nt%d cl%d :: eps %d %d\n', f(a).function.name, ...
                 f(a).animal{1}, day, tet, clust, eps));
             % run the specified filter function on this set of animal/epoch/ntrodes
-            fout{c} = feval(f(a).function.name, cindex, excludeperiods, foptions{:});
+            fout{c,1} = feval(f(a).function.name, cindex, excludeperiods, foptions{:});
         end
-        f(a).output{g}{d} = fout;
+        f(a).output{g}{d,1} = [fout{:}];
     end
-    f(a).output{g} = f(a).output{g}{:};
+    f(a).output{g} = [f(a).output{g}{:}];
 end
 end

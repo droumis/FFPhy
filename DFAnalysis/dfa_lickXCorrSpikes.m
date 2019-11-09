@@ -56,14 +56,17 @@ end
 
 % init output
 out = init_out();
+out.animal = animal;
 out.index = idx;
 out.bin = bin;
 out.tmax = tmax;
 
 day = idx(1);
+eps = idx(4:5);
 nt = idx(2);
 clust = idx(3);
-eps = idx(4:5);
+out.info = cellinfo{day}{eps(1)}{nt}{clust};
+
 %% spiketimes
 spikeTimes = [];
 for e = eps
@@ -137,7 +140,7 @@ out.excorr = excorr;
 %% get spike events within lick-burst intervals
 burstSpikeTime = spikeTimes(logical(isExcluded(spikeTimes, burstIntvs)));
 burstSpikeTime = sort(burstSpikeTime(~isnan(burstSpikeTime)));
-fprintf('spikes within %d lickbouts:  %d (%.02f pct swrs) \n', size(burstIntvs,1), ...
+fprintf('spikes within %d lickbouts:  %d (%.02f pct) \n', size(burstIntvs,1), ...
     numel(burstSpikeTime), length(burstSpikeTime)/length(spikeTimes)*100)
 if isempty(burstSpikeTime)
     fprintf('no spikes in lick bouts for %d %d %d %d %d skipping\n', idx)
@@ -165,8 +168,8 @@ end
 spikeBinILI = spikeBinILI(spikeValidILI);
 spikeTimeSinceLick = spikeTimeSinceLick(spikeValidILI);
 % save spike-containing burst id
-[~,~,spikeLickBurstIdx] = histcounts(burstSpikeTime, [burstIntvs(:,1); inf]);
-burstContainSpike = burstIntvs(spikeLickBurstIdx,:);
+% [~,~,spikeLickBurstIdx] = histcounts(burstSpikeTime, [burstIntvs(:,1); inf]);
+% burstContainSpike = burstIntvs(spikeLickBurstIdx,:);
 
 %% phasemod
 spikePctSinceLick = spikeTimeSinceLick ./ spikeBinILI;
@@ -184,9 +187,9 @@ phasemod = log(z); % log variance normalizes (karalis,sirota)
 % out.swrTimeSinceLick = spikeTimeSinceLick;
 % out.swrBinILI = spikeBinILI;
 % out.burstSWRStart = burstSpikeTime;
-out.burstContainSpike = burstContainSpike;
+% out.burstContainSpike = burstContainSpike;
 % % out.dayEpoch = repmat([day ep], length(burstSpikeTime),1);
-out.spikePctSinceLick = spikePctSinceLick;
+% out.spikePctSinceLick = spikePctSinceLick;
 out.spikeLickPhase = spikeLickPhase;
 out.meanMRVmag = meanMRVmag;
 out.vecang = vecang;
@@ -280,179 +283,42 @@ if computeShuf
     end
     fprintf('shuffle took %.02f s\n', toc);
 end
-
-%%
-
-
-% 
-% 
-% %% Get the containing licks for each spike
-% [~,~,swrLickBinidx] = histcounts(spikeTimes, lbLicks);
-% % exclude swr's in 0 bin. when would this happen? maybe if same time as first lick
-% swrLickBinidx = swrLickBinidx(swrLickBinidx > 0);
-% swrInBurstStart = swrInBurstStart(swrLickBinidx > 0);
-
+varargin{end+1} = 'byDay';
+varargin{end+1} = 1;
+out.evTrigSpike = dfa_eventTrigSpiking(idx, excludeIntervals, varargin{:});
 end
 
 function out = init_out()
 out.index = [];
 out.animal = [];
+out.info = [];
 out.time = [];
-% out.licks = [];
-% out.idlicks = [];
-out.boutIntvs = [];
-% out.swrStart = [];
-% out.dayEpoch = [];
-% xcTime
+% out.boutIntvs = [];
 out.xc = [];
 out.normxc = [];
 out.smthxc = [];
 out.excorr = [];
-% out.xcrms = [];
-% out.p1 = [];
-% out.p2 = [];
-% out.expProb = [];
+
 % iliPhase
-% out.swrBinILI = [];
-% out.swrBurstInterval = [];
-% out.swrInBurstStart = [];
-% out.swrTimeSinceLick = [];
+% out.burstContainSpike = [];
+% out.spikePctSinceLick = [];
+out.spikeLickPhase = [];
 out.meanMRVmag = [];
-% out.swrLickPhase = [];
-% out.swrPctSinceLick = [];
 out.vecang = [];
 out.phasemod = [];
 
-%% shuffle
-% out.swrStartShuf = [];
+% shuffle
 % xcTime
 out.xcShuf = {};
 out.normxcShuf = {};
 out.smthxcShuf = {};
 out.excorrShuf = {};
-% out.xcrmsShuf = {};
-% out.p1Shuf = {};
-% out.p2Shuf = {};
-% out.expProbShuf = {};
 % iliPhase
-% out.swrBinILIShuf = {};
-% out.swrBurstIntervalShuf = {};
-% out.swrInBurstStartShuf = {};
-% out.swrTimeSinceLickShuf = {};
-out.meanMRVmagShuf = {};
 out.spikeLickPhaseShuf = {};
-% out.swrPctSinceLickShuf = {};
+out.meanMRVmagShuf = {};
 out.vecangShuf = {};
 out.phasemodShuf = {};
+
+% evTrigSpike
+out.evTrigSpike = [];
 end
-
-% %% recover lick times from excludeIntervals ? i should just pass it in no?
-% evvar = varargin{find(cellfun(@(x) ~isempty(x), strfind(varargin(1:2:end), ...
-%     eventType), 'un', 1))*2-1};
-% lick = eval(evvar);
-% try
-%     lickTimes = lick{day}{epoch}.starttime;
-%     id = lick{day}{epoch}.id; % to distinguish events at diff reward wells
-% catch
-%     lickTimes = lick{day}{epoch}{TF}.starttime;
-%     id = lick{day}{epoch}{TF}.id;
-% end
-% 
-% %% timefilter lick events
-% includetimes = ~isExcluded(lickTimes, excludeIntervals); % result: 1 include, 0 exclude
-% lickTimes = lickTimes(includetimes);
-% if isempty(lickTimes)
-%     fprintf('evenTimes empty\n');
-%     return
-% end
-% 
-% out.eventTimes = lickTimes;
-
-%% move plotting to a script
-% if plotfigs
-%     %% plot
-%     Pp=load_plotting_params({'defaults','dfa_lickXCorrSpikes'});
-%     if saveplots && ~displayplots; close all;
-%         ifig = figure('Visible','off','units','normalized','position', Pp.position, ...
-%             'color','white', 'InvertHardcopy', 'off');
-%     else
-%         ifig = figure('units','normalized','position',Pp.position, 'color','white', ...
-%             'InvertHardcopy', 'off');
-%     end
-%     
-%     nrow = 3;
-%     ncol = 1;
-%     %% lick psth
-%     psthtime = (-tmax-0.5*psthbin):psthbin:(tmax+0.5*psthbin);
-%     if ~isempty(eventTimes)
-%         psth = nan(length(eventTimes),length(psthtime));
-%         for r=1:length(eventTimes)
-%             shist = histc(spiketimes, eventTimes(r) + psthtime);
-%             psth(r,:) = logical(shist);
-%         end
-%     end
-%     sf1 = subaxis(nrow,ncol,1,'SpacingVert', Pp.SpVt, 'SpacingHoriz', Pp.SpHz, ...
-%         'MarginLeft', Pp.MgLt, 'MarginRight', Pp.MgRt, 'MarginTop', Pp.MgTp, ...
-%         'MarginBottom', Pp.MgBm); set(gca, 'Tag', 'ripkons');
-%     h=zoom; h.Motion = 'horizontal'; h.Enable = 'on'; p=pan; p.Motion='horizontal';
-%     [xx, yy] = find(psth');
-%     uclr = cell2mat(cellfun(@(x) repmat(x(1),x(2),1),num2cell([id sum(psth,2)],2), ...
-%         'un',0));
-%     f = scatter(xx/1000-1.001,yy,Pp.psthSize, uclr, 'filled');
-%     colormap(cbrewer('qual', 'Accent', 3))
-%     set(gca, 'color', 'k')
-%     sf1.GridColor = 'w';
-%     f.Marker = 'd';
-%     f.MarkerEdgeAlpha = 0;
-%     f.MarkerFaceAlpha = 0.4;
-%     set(gca, 'TickDir','out', 'YGrid', 'off', 'XGrid', 'on', 'TickLength', [0.001 0], ...
-%         'Tag', 'ndata', 'Xticklabel',[]);
-%     axis tight;
-%     ylabel('licknum','FontSize',12,'FontWeight','bold', 'FontName','Arial')
-%     axis tight
-%     line([0 0],ylim, 'color','red', 'linewidth',2, 'Color', [1 0 0 .5]);
-%     %% psth pdf
-%     sf2 = subaxis(nrow,ncol,2);
-%     h = histogram(xx/1000-1.001, psthtime(1:20:end), 'facecolor', 'k', 'Normalization', ...
-%         'pdf'); 
-%     h.EdgeColor = 'none';
-%     axis tight
-%     line([0 0],ylim, 'color','red', 'linewidth',2, 'Color', [1 0 0 .5]);
-%     ylabel('pdf','FontSize',12,'FontWeight','bold', 'FontName','Arial')
-%     set(gca, 'YGrid', 'off', 'XGrid', 'on','TickDir','out', 'TickLength', [0.001 0]);
-%     xticklabels([])
-%     hold off;
-%     %% lick XCORR spikes
-%     sf3 = subaxis(nrow,ncol,3);
-%     realxcs = spikexcorr(spiketimes,eventTimes, bin, tmax);
-%     plot(realxcs.time, realxcs.c1vsc2', 'k', 'linewidth', 2)%, 'facecolor', 'k')%, '-k', 'filled', 'markersize', 5); 
-%     hold on;
-%     axis tight;
-%     plot(xcs.time, xmean, 'color', 'b', 'linewidth', 2); hold on;
-%     fill([xcs.time'; flipud(xcs.time')],[xmean'-xstd';flipud(xmean'+xstd')],'b',...
-%         'linestyle','none', 'facealpha', .1);
-%     line([0 0],ylim, 'color','red', 'linewidth',2, 'Color', [1 0 0 .5]);
-%     hold off
-%     ylabel('xcorr')
-%     xlabel('lag time s')
-%     set(gca, 'YGrid', 'off', 'XGrid', 'on','TickDir','out', 'TickLength', [0.001 0]);
-% 
-%     %% ----- link x axis -----
-%     allAxesInFigure = findall(ifig,'type','axes'); linkaxes(allAxesInFigure, 'x');
-%     % ---- super axis -----
-%     sprtit = sprintf('%s %d %d %d %d lickXCorrSpikes bin%.0f shuff%.0f',animal,day,epoch,...
-%         ntrode, clust, bin*1e3, shuff);
-%     sprax = axes('Position',[0 0 1 1],'Visible','off', 'Parent', ifig);
-%     iStitle = text(.5, .98, {sprtit}, 'Parent', sprax, 'Units', 'normalized');
-%     set(iStitle,'FontWeight','bold','FontName','Arial','horizontalAlignment','center', ...
-%         'FontSize',12);
-%     h = get(gcf,'Children');
-%     set(gcf,'Children',flip(h)); % super axis to bottom. allows for zoom/pan
-%     % ---- pause, save figs ----
-%     if displayplots; pause; end
-%     if saveplots
-%         [~, fname,~] = fileparts(mfilename('fullpath'));
-%         outdir = sprintf('%s/%s/%s/', pconf.andef{4},fname,animal);
-%         save_figure(outdir, sprtit, 'savefigas', savefigas); 
-%     end
-% end
