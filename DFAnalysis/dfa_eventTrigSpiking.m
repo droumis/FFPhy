@@ -2,7 +2,8 @@
 function [out] = dfa_eventTrigSpiking(idx, excludeIntervals, varargin)
 
 %{
-run with filterframework via singlcellanal
+run with filterframework via singlcellanal or singleDayCellAnal via byDay
+flag
 - gathers spiking around event times (generalized from swr, lick- versions)
 - example script: licktrigSUmod_20191106.m
 
@@ -13,8 +14,7 @@ varargin required data: {<eventType>, 'spikes'}, eventType
 $DR19
 %}
 
-
-fprintf('%d %d %d %d\n',idx)
+% fprintf('%d %d %d %d\n',idx)
 
 % check for required data in varargin
 reqData = {'spikes'};
@@ -25,10 +25,10 @@ for s = 1:length(reqData)
 end
 
 eventType = 'ca1rippleskons';
-win = [0.5 0.5]; % in sec
+win = [1 1]; % in sec
 bin = 0.001; % 1 ms for rasters
 frbin= 0.01; % 10 ms for population FR plotting
-byDay = 0;
+byDay = 1;
 if ~isempty(varargin)
     assign(varargin{:})
 end

@@ -170,6 +170,8 @@ for s = Fp.params
             %         Fp.welldist);
 
             %% filter function specific params
+        case 'lickTrigSUmod'
+            eventType = 'lick';
             
         case 'dfa_reactivationPSTH'
             bin = 0.025; % seconds
@@ -411,15 +413,18 @@ for s = Fp.params
             datatypes = {'spikes', 'linpos', 'pos', 'task'};
             
         case 'dfa_eventTrigSpiking'
+            % define an eventType first
             srate = 1500;
             win = [1 1];
             bin = .001;
             frbinsize= 0.01; % 10 ms for population FR plotting
+            byDay = 1;
             
-            iterator = 'singlecellanal';
+            iterator = 'singleDayCellAnal';
             filtfunction = 'dfa_eventTrigSpiking';
             datatypes = {'spikes', eventType};
-            options = {'win', win, 'bin', bin, 'frbinsize', frbinsize, 'eventType', eventType};
+            options = {'win', win, 'bin', bin, 'frbinsize', frbinsize, ...
+                'eventType', eventType, 'byDay', byDay};
             
         case 'dfa_riptrigspiking'
             eventType = 'rippleskons';

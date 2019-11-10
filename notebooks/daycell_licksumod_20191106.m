@@ -1,15 +1,14 @@
 
 % get data
 pconf = paramconfig;
-create_filter = 0;
-run_ff = 0;
+create_filter = 1;
+run_ff = 1;
 load_ffdata = 0;
 
 % plot
 plotPerCell = 1;
 pausefigs = 1;
 savefigs = 0;
-
 
 %% filter params
 Fp.animals = {'D10'}; %, 'D12', 'D13', 'JZ1', 'JZ2', 'JZ4'};
@@ -57,23 +56,43 @@ if plotPerCell
             s = knnsearch(time, -Pp.win(1));
             e = knnsearch(time, Pp.win(2));
             time = time(s:e);
+            
+           %% spike raster 
+            sf1 = subaxis(3,2,1,Pp.posparams{:});
+            sf1.Tag = 'SUraster';
+            ptime = F(a).output{1}(ic).evTrigSpike.time';
+            ps = knnsearch(ptime, -Pp.win(1));
+            pe = knnsearch(ptime, Pp.win(2));
+            [xx, yy] = find(F(a).output{1}(ic).evTrigSpike.psth(:, ps:pe)');
+            scatter(xx/100-Pp.win(1), yy, 10, '.k', 'markeredgealpha', .6)
+            hold on;
+            ylabel('swr')
+            xlim([-Pp.win(1) Pp.win(2)])
+            xticks([])
+            yl = ylim;
+            patch([0 .2 .2 0], [yl(1) yl(1) yl(2) yl(2)], [.2 .6 .2], 'facealpha', .1, 'edgealpha', 0)
+            patch([-.3 -.1 -.1 -.3], [yl(1) yl(1) yl(2) yl(2)], [.6 .2 .9], 'facealpha', .1, 'edgealpha', 0)
+            line([0 0], ylim, 'linestyle', '--', 'color', [1 .5 .5 .5])
+            hold off;
+            
             %% Time FRheatrast
-            sf = subaxis(nrows,ncols, 1, Pp.posparams{:});
-            ifrtime = F(a).output{1}(ic).evTrigSpike.time;
-            frs = knnsearch(ifrtime', -Pp.win(1));
-            fre = knnsearch(ifrtime', Pp.win(2));
-            ifrtime = ifrtime(frs:fre);
-            try
-                FRrast = flipud(F(a).output{1}(ic).evTrigSpike.instantFR(:,frs:fre));
-            catch
-                fprintf('evTrigSpike is empty \n');
-                continue
-            end
-            FRrastproc = zscore(smoothdata(smoothdata(FRrast,2,'loess',250),1,'loess',10), [], 2);
-            imagesc(ifrtime, 1:size(FRrastproc,1), FRrastproc)
-            ylabel('lick num')
-            colormap(gray)
-            line([0 0], ylim, 'linestyle', '-', 'color', [1 .5 .5 .5])
+%             sf = subaxis(nrows,ncols, 1, Pp.posparams{:});
+%             ifrtime = F(a).output{1}(ic).evTrigSpike.time;
+%             frs = knnsearch(ifrtime', -Pp.win(1));
+%             fre = knnsearch(ifrtime', Pp.win(2));
+%             ifrtime = ifrtime(frs:fre);
+%             try
+%                 FRrast = flipud(F(a).output{1}(ic).evTrigSpike.instantFR(:,frs:fre));
+%             catch
+%                 fprintf('evTrigSpike is empty \n');
+%                 continue
+%             end
+%             FRrastproc = zscore(smoothdata(smoothdata(FRrast,2,'loess',250),1,'loess',10), [], 2);
+%             imagesc(ifrtime, 1:size(FRrastproc,1), FRrastproc)
+%             ylabel('lick num')
+%             colormap(gray)
+%             line([0 0], ylim, 'linestyle', '-', 'color', [1 .5 .5 .5])
+
             %% Phase FRheatrast
             sf = subaxis(nrows,ncols, 2, Pp.posparams{:});
             

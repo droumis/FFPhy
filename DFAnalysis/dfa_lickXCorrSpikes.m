@@ -147,7 +147,7 @@ if isempty(burstSpikeTime)
     return
 end
 
-%% Get the containing licks for each swr
+%% Get the containing licks for each spike
 % histc given licks as edges: get bin idx. lickedges(binidx) is the prior edge of bin 
 [~,~,spikeLickBinidx] = histcounts(burstSpikeTime, lbLicks);
 % exclude swr's in 0 bin, before first lick edge
@@ -283,9 +283,10 @@ if computeShuf
     end
     fprintf('shuffle took %.02f s\n', toc);
 end
-varargin{end+1} = 'byDay';
-varargin{end+1} = 1;
-out.evTrigSpike = dfa_eventTrigSpiking(idx, excludeIntervals, varargin{:});
+% varargin{end+1} = 'byDay';
+% varargin{end+1} = 1;
+% out.evTrigSpike = dfa_eventTrigSpiking(idx, excludeIntervals, 'byDay', 1, 'eventType', ...
+%     eventType, 'lick', lick, 'spikes', spikes);
 end
 
 function out = init_out()

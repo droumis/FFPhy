@@ -1,12 +1,15 @@
 
 
-function modF = calcSUmod(dmat, cF, varargin)
+function modF = calcSUmod(dmat, F, varargin)
 %{
+need to add this to dfa_eventTrigSpiking.. or add that to this and make
+this a dfa.. ... should be called with singleDayCellAnal and somehow
+receive a dmat.. 
+
 calculate event-triggered modulation of SU spiking
 F is a struct array with F.animal and F.data
 F.data contains at least fields:
 - time, psth, instantFR
--
 %}
 
 pconf = paramconfig;
@@ -27,77 +30,52 @@ if ~isempty(varargin)
 end
 
 modF = struct;
-for ian = 1:length(cF)
-    animal = cF(ian).animal;
+for ian = 1:length(F)
+    animal = F(ian).animal;
     modF(ian).data = struct;
     modF(ian).animal = animal;
     cn = 1;
-    %     %% create filter for certain clusters
-    %     Fdtc = [];
-    %     for ie = 1:size(cF(ian).epochs{1},1)
-    %         ieTC = cF(ian).data{1}{ie};
-    %         d = repmat(cF(ian).epochs{1}(ie,1), size(ieTC,1),1);
-    %         Fdtc = [Fdtc; d ieTC];
-    %     end
-    %     % apply filter
-    %     inData = F(ian).data(ismember(cell2mat({F(ian).data.index}'), Fdtc, 'rows'));
-    % for each filtered cluster from this animal
     
-    for ic = 1:length(cF(ian).data)
+    for ic = 1:length(F(ian).data)
         % collect event design mat for this cluster (per day)
-        idx = cF(ian).data.index;
+        idx = F(ian).data.index;
         fprintf('%d %d %d\n', idx);
         dayIdx = dmat(ian).dayeps(:,1) == idx(1);
         dayDM = dmat(ian).dm(dayIdx,:);
         dayET = dmat(ian).evStart(dayIdx,:);
         
         modF(ian).data(cn).index = idx;
-        time = cF(ian).data(ic).time;
+        time = F(ian).data(ic).time;
         modF(ian).data(cn).time = time;
-        modF(ian).data(cn).inpData = cF(ian).data(ic); % save the parent data
+        modF(ian).data(cn).inpData = F(ian).data(ic); % save the parent data
         modF(ian).data(cn).dmat = dmat;
         modF(ian).data(cn).dmatIdx = {'all', 'lickbout'};
-        %         evTime = inData(ic).eventTimes; % col 2 is swr starttime
-        %         epIdx = find(cF(ian).epochs{1}(:,1) == idx(1));
-        %         % collect design mat exclusion periods across epochs for this cluster
-        %         allExclude = [];
-        %         for iep = 1:numel(epIdx)
-        %             allExclude = [allExclude; cF(ian).excludetime{1}{epIdx(iep)}];
-        %         end
-        %
-        %         % find the events within lickbouts for this cluster's epochs
-        %         dmat = logical([ones(size(evTime,1),1) ~isExcluded(evTime, allExclude)]);
-        %         if sum(dmat(:,2)) < minNumEvents % filter num lickbout-swrs
-        %             fprintf('%d %d %d only %d events in timefilter. skipping\n',idx, ...
-        %                 sum(dmat(:,2)));
-        %             continue
-        %         end
-        
+
         %% meanmod score for this cluster, per condition
         % right now i'm just using the instantFR for computing mod, but num
         % spikes for thresholding within win is from the psth
         for iv = 1:numel(dmat(ian).expvars)
             try
-                evIFR = cF(ian).data(ic).instantFR(dayDM(:,iv),:);
+                evIFR = F(ian).data(ic).instantFR(dayDM(:,iv),:);
             catch
                 fprintf('no valid events\n')
                 continue
             end
-            %             meanpsthFR{id} = nanmean(ilickFRpsth);
-            
+            % meanpsthFR{id} = nanmean(ilickFRpsth);
             % response mean FR
             rIdx = [knnsearch(time', rwin(1)/1000) knnsearch(time', rwin(2)/1000)];
             evRespM = nanmean(evIFR(:,rIdx(1):rIdx(2)),2)+1e-6;
-            numRSpikes{iv} = sum(sum(cF(ian).data(ic).psth(dayDM(:,iv),rIdx(1):rIdx(2))));
+            numRSpikes{iv} = sum(sum(F(ian).data(ic).psth(dayDM(:,iv),rIdx(1):rIdx(2))));
             fprintf('spikes in response: %d \n', numRSpikes{iv});
             if numRSpikes{iv} < minSpikesResp
                 fprintf('skipping\n')
                 continue
             end
+            
             % baseline mean FR
             bIdx = [knnsearch(time', bwin(1)/1000) knnsearch(time', bwin(2)/1000)];
             evBaseM = nanmean(evIFR(:,bIdx(1):bIdx(2)),2)+1e-6;
-            numBSpikes{iv} = sum(sum(cF(ian).data(ic).psth(dayDM(:,iv),bIdx(1):bIdx(2))));
+            numBSpikes{iv} = sum(sum(F(ian).data(ic).psth(dayDM(:,iv),bIdx(1):bIdx(2))));
             fprintf('spikes in baseline period: %d \n', numBSpikes{iv});
             if numBSpikes{iv} < minSpikesBase
                 fprintf('skipping\n')
@@ -109,6 +87,7 @@ for ian = 1:length(cF)
             modF(ian).data(cn).numRSpikes{iv} = numRSpikes;
             modF(ian).data(cn).numBSpikes{iv} = numBSpikes;
             modF(ian).data(cn).mPctChange{iv} = mPctChange;
+            
             %% Shuffle
             numEv = size(evIFR,1);
             r = randi([-shuffms shuffms], numEv, nshuffs); % shuff shift offsets

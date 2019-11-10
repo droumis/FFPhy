@@ -18,56 +18,61 @@ function f = singleDayCellAnal(f,varargin)
 
 %iterate through all animals
 for a = 1:length(f)
+    f(a).output = [];
     %find all unique days
     animaldir = f(a).animal{2};
     animal = f(a).animal{3};
-    foptions = f(a).function.options;
-    foptions = [foptions {'animal', animal}];
-    totalepochs = [];
+    unqEpochs = [];
     for g = 1:length(f(a).epochs)
-        totalepochs = [totalepochs; f(a).epochs{g}];
+        unqEpochs = [unqEpochs; f(a).epochs{g}];
     end
-    unqdays = unique(totalepochs(:,1)); %get all of the days across groups
+    unqDays = unique(unqEpochs(:,1)); %get all of the days across groups
     
     %load all the variables that the function requires except the eeg
     loadstring = [];
     for i = 1:length(f(a).function.loadvariables)
         eval([f(a).function.loadvariables{i}, ...
-    ' = loaddatastruct(animaldir, animal, f(a).function.loadvariables{i}, unqdays);']);
+    ' = loaddatastruct(animaldir, animal, f(a).function.loadvariables{i}, unqDays);']);
         loadstring = [loadstring, f(a).function.loadvariables{i},','];
     end
     % iterate through the days within each data group
-    g = 1;% what is this intended for?
+    g = 1; % this was intended for multiple epoch filter groups, but isn't currently used?
     fprintf(':::::::: single Day Cell iterator :::::::: \n');
     tmp = [];
-    for d = 1:length(unqdays)
-        day = unqdays(d);
-        deIdx = find(f(a).epochs{g}(:,1)==unqdays(d));
+    for d = 1:length(unqDays)
+        day = unqDays(d);
+        foptions = f(a).function.options; % reset per day of data
+        foptions = [foptions {'animal', animal}];
+        deIdx = find(f(a).epochs{g}(:,1)==unqDays(d));
+        % collect day's data and timefilter
         excludeperiods = [];
-        % add this cell's full day of data to foptions
-        % fuck i need to fix this.. looks like cells are not defined for
-        % whole day automatically.. 
         tmp = [];
         for i = 1:length(f(a).function.loadvariables)
             for e = 1:length(deIdx)
                 ep = f(a).epochs{g}(deIdx(e),2);
                 excludeperiods = [excludeperiods; f(a).excludetime{g}{e}];
-                numcells = size(f(a).data{g}{deIdx(e)},1);
                 % add loaded vars to varargin
                 tmp{day}{ep} = eval([f(a).function.loadvariables{i} '{day}{ep}']);
             end
             eval(['foptions = [foptions {f(a).function.loadvariables{i}, tmp}];']);
         end
-        
-        fout = cell(numcells,1);
-        for c = 1:numcells % can use parfor (all cells within this day)
-            tet = f(a).data{g}{deIdx(e)}(c,1);
-            clust = f(a).data{g}{deIdx(e)}(c,2);
+        % get unq cells
+        ntClust = [];
+        for e = 1:length(deIdx)
+            ntClust = [ntClust; f(a).data{g}{deIdx(e)}];
+        end
+        unqNtCell = unique(ntClust, 'rows');
+        numCells = size(unqNtCell,1);
+        % evaluate function per cell
+        fout = cell(numCells,1);
+        for c = 1:numCells % can use parfor (all cells within this day)
+            nt = unqNtCell(c,1);
+            clust = unqNtCell(c,2);
             eps = f(a).epochs{g}(deIdx,2)';
-            cindex = [day f(a).data{g}{deIdx(e)}(c,:) eps];
-            fprintf(sprintf('%s %s day%d nt%d cl%d :: eps %d %d\n', f(a).function.name, ...
-                f(a).animal{1}, day, tet, clust, eps));
-            % run the specified filter function on this set of animal/epoch/ntrodes
+            cindex = [day nt clust eps];
+            fprintf('%s %s day %d nt %d cl %d :: eps %s\n', f(a).function.name, ...
+                f(a).animal{1}, day, nt, clust, strjoin(num2cell(num2str(eps(:)))',' '));
+            % run the specified filter function on this day cell
             fout{c,1} = feval(f(a).function.name, cindex, excludeperiods, foptions{:});
         end
         f(a).output{g}{d,1} = [fout{:}];
@@ -75,3 +80,6 @@ for a = 1:length(f)
     f(a).output{g} = [f(a).output{g}{:}];
 end
 end
+
+% parfor will make a copy of the data needed in the loop, for each worker.
+% So 
