@@ -37,10 +37,10 @@ excLongBin = .250;
 minILIthresh = .06; % seconds
 maxILIthresh = .250; % seconds
 minBoutLicks = 3;
-rmsmincounts = 1; % min bin count within rmstamax. otherwise nan
-rmstmax = .25; % seconds
+% rmsmincounts = 1; % min bin count within rmstamax. otherwise nan
+% rmstmax = .25; % seconds
 computeShuf = 1;
-numShufs = 100;
+numShufs = 1000;
 maxShift = 500; % ms
 
 % eventType = 'lick';
@@ -54,72 +54,83 @@ if ~isempty(varargin)
     assign(varargin{:});
 end
 
-% init output
-out = init_out();
-out.animal = animal;
-out.index = idx;
-out.bin = bin;
-out.tmax = tmax;
-
 day = idx(1);
 eps = idx(4:5);
 nt = idx(2);
 clust = idx(3);
-out.info = cellinfo{day}{eps(1)}{nt}{clust};
 
-%% spiketimes
+% init output
+out = init_out();
+out.index = idx;
+out.animal = animal;
+out.bin = bin;
+out.tmax = tmax;
+
+out.cellInfo = cellinfo{day}{eps(1)}{nt}{clust};
+out.area = cellinfo{day}{eps(1)}{nt}{clust}.area;
+out.subarea = cellinfo{day}{eps(1)}{nt}{clust}.subarea;
+
+%% get spikes, apply timefilter
 spikeTimes = [];
+numSpikesPerEp = [];
 for e = eps
     try
         spikeTimes = [spikeTimes; spikes{day}{e}{nt}{clust}.data(:,1)];
+        numSpikesPerEp = [numSpikesPerEp size(spikes{day}{eps(e)}{nt}{clust}.data,1)];
     catch
         continue
     end
 end
-
-if isempty(spikeTimes)
-    fprintf('spiketimes empty\n');
-    return
-end
-
-includetimes = ~isExcluded(spikeTimes, excludeIntervals);
-spikeTimes = spikeTimes(includetimes);
+spikesBefore = size(spikeTimes,1);
+spikeTimes = spikeTimes(~isExcluded(spikeTimes, excludeIntervals));
 if isempty(spikeTimes)
     fprintf('spikeimes empty\n');
     return
 end
+spikesAfter = size(spikeTimes,1);
+fprintf('%d of %d spikes excluded with timefilter: day %d \n',...
+    spikesBefore-spikesAfter, spikesBefore, day)
 
-%% Get lick-burst intervals
-licksVecs = getLickBout([], animal, [day eps(1); day eps(2)], 'lick', lick, 'maxIntraBurstILI', ...
-    maxILIthresh, 'minBoutLicks', minBoutLicks);
-burstIntvs = [];
+out.numSpikesPerEp = numSpikesPerEp;
+
+%% get licks, apply timefilter
+
+lickTimes = [];
+lickID = [];
+numLicksPerEp = [];
 for e = eps
-try
-    burstIntvs = [burstIntvs; vec2list(licksVecs{day}{e}.lickBout, licksVecs{day}{e}.time)];
-catch
-    fprintf('error defining lick bouts for %d %d \n', day, ep)
+    try
+        lickTimes = [lickTimes; lick{day}{e}.starttime];
+        lickID = [lickID; lick{day}{e}.id];
+        numLicksPerEp = [numLicksPerEp size(lick{day}{e}.starttime,1)];
+    catch
+        continue
+    end
+end
+licksBefore = size(lickTimes,1);
+lickID = lickID(~isExcluded(lickTimes, excludeIntervals));
+lickTimes = lickTimes(~isExcluded(lickTimes, excludeIntervals));
+if isempty(lickTimes)
+    fprintf('lickTimes empty\n');
     return
 end
-end
-%% get licks within lick-burst intervals
-lbLicks = [];
-idlicks = [];
-for e = eps
-    licks = lick{day}{e}.starttime;
-    idlicks = [idlicks; lick{day}{e}.id];
-    lbLicks = [lbLicks; licks(logical(isExcluded(licks, burstIntvs)))]; % isIncluded
-end
-fprintf('%d licks within %d bursts \n',numel(lbLicks), size(burstIntvs,1))
-%% time mod
-%% run spike x lick xcorr
+licksAfter = size(lickTimes,1);
+fprintf('%d of %d lickTimes excluded with timefilter: day %d \n',...
+    licksBefore-licksAfter, licksBefore, day)
+
+out.numLicksPerEp = numLicksPerEp;
+out.lickID = lickID;
+
+%% XCORR, EXCORR
 time = (-tmax+bin/2):bin:(tmax-bin/2);
-xc = spikexcorr(spikeTimes, lbLicks, bin, tmax);
+xc = spikexcorr(spikeTimes, lickTimes, bin, tmax);
 normxc = xc.c1vsc2 ./ sqrt(xc.nspikes1 * xc.nspikes2); % normalize xc
 nstd = round(excShortBin/bin);
 g1 = gaussian(nstd, 2*nstd+1);
 smthxc = smoothvect(normxc, g1); % smooth xc
 excorr = nanmean(excesscorr(xc.time, xc.c1vsc2, xc.nspikes1, xc.nspikes2, excShortBin, ...
     excLongBin));
+
 % T = abs(diff(swr{day}{ep}{1}.timerange)); %total ep time
 % xcrms = xcorrrms(xc.time, xc.c1vsc2, rmstmax, rmsmincounts); % RMS
 % p1 = xc.nspikes1/T;
@@ -136,7 +147,30 @@ out.excorr = excorr;
 % out.p2 = p2;
 % out.expProb = expProb;
 
-%% phasemod stuff
+%% Raleigh, PhaseMod (use lick-burst licks)
+%% Get lick-burst intervals
+dayEpochs = [repmat(day, length(eps), 1), eps'];
+licksVecs = getLickBout([], animal, dayEpochs, 'lick', lick, 'maxIntraBurstILI', ...
+    maxILIthresh, 'minBoutLicks', minBoutLicks);
+burstIntvs = [];
+for e = eps
+    try
+        burstIntvs = [burstIntvs; vec2list(licksVecs{day}{e}.lickBout, licksVecs{day}{e}.time)];
+    catch
+        fprintf('error defining lick bouts for %d %d \n', day, ep)
+        return
+    end
+end
+%% get licks within lick-burst intervals
+lbLicks = [];
+lickID = [];
+for e = eps
+    licks = lick{day}{e}.starttime;
+    
+    lbLicks = [lbLicks; licks(logical(isExcluded(licks, burstIntvs)))]; % isIncluded
+end
+fprintf('%d licks within %d bursts \n',numel(lbLicks), size(burstIntvs,1))
+
 %% get spike events within lick-burst intervals
 burstSpikeTime = spikeTimes(logical(isExcluded(spikeTimes, burstIntvs)));
 burstSpikeTime = sort(burstSpikeTime(~isnan(burstSpikeTime)));
@@ -150,14 +184,14 @@ end
 %% Get the containing licks for each spike
 % histc given licks as edges: get bin idx. lickedges(binidx) is the prior edge of bin 
 [~,~,spikeLickBinidx] = histcounts(burstSpikeTime, lbLicks);
-% exclude swr's in 0 bin, before first lick edge
-spikeLickBinidx = spikeLickBinidx(spikeLickBinidx > 0); 
+% exclude spikes in 0 bin
+spikeLickBinidx = spikeLickBinidx(spikeLickBinidx > 0);
 burstSpikeTime = burstSpikeTime(spikeLickBinidx > 0);
 % time since pre-containing lick
 spikeTimeSinceLick = burstSpikeTime - lbLicks(spikeLickBinidx);
 % get inter lick interval containing each spike
 spikeBinILI = lbLicks(spikeLickBinidx+1) - lbLicks(spikeLickBinidx); % +1 is post-containing lick
-% exclude swr-containing ili out of lick burst range 60 : 250 ms
+% exclude spike-containing ili out of lick burst range 60 : 250 ms
 spikeValidILI = all([spikeBinILI > minILIthresh spikeBinILI < maxILIthresh],2);
 fprintf('lBurst spikes in valid ILI: %d (%.02f pct) \n', sum(spikeValidILI), ...
     sum(spikeValidILI)/length(spikeTimes)*100)
@@ -167,9 +201,18 @@ if isempty(burstSpikeTime)
 end
 spikeBinILI = spikeBinILI(spikeValidILI);
 spikeTimeSinceLick = spikeTimeSinceLick(spikeValidILI);
+out.spikeTimeSinceLick = spikeTimeSinceLick;
 % save spike-containing burst id
-% [~,~,spikeLickBurstIdx] = histcounts(burstSpikeTime, [burstIntvs(:,1); inf]);
-% burstContainSpike = burstIntvs(spikeLickBurstIdx,:);
+[~,~,spikeLickBurstIdx] = histcounts(burstSpikeTime, [burstIntvs(:,1); inf]);
+out.spikeBurstInterval = burstIntvs(spikeLickBurstIdx,:);
+out.spikeTimeSinceBurstStart = burstSpikeTime - out.spikeBurstInterval(:,1);
+% save the spike-containing burst lick order
+[~, ~, lickBurstBinIdx] = histcounts(lbLicks, [burstIntvs(:,1); inf]);
+out.lickBurstBinIdx = lickBurstBinIdx;
+Y = cell2mat(splitapply(@(x) {[1:length(x)]'}, lickBurstBinIdx, lickBurstBinIdx));
+out.spikeBurstLickNum = Y(spikeLickBinidx(spikeValidILI));
+% spikePctSinceBurst
+out.spikePctSinceBurst = out.spikeTimeSinceBurstStart ./ diff(out.spikeBurstInterval,[],2);
 
 %% phasemod
 spikePctSinceLick = spikeTimeSinceLick ./ spikeBinILI;
@@ -190,6 +233,7 @@ phasemod = log(z); % log variance normalizes (karalis,sirota)
 % out.burstContainSpike = burstContainSpike;
 % % out.dayEpoch = repmat([day ep], length(burstSpikeTime),1);
 % out.spikePctSinceLick = spikePctSinceLick;
+out.spikePctSinceLick = spikePctSinceLick;
 out.spikeLickPhase = spikeLickPhase;
 out.meanMRVmag = meanMRVmag;
 out.vecang = vecang;
@@ -198,14 +242,14 @@ out.phasemod = phasemod;
 
 %% Compute shuffled lickDin x swr
 if computeShuf
-    tic
+%     tic
     for i = 1:numShufs
         % shuffle spike times locally 
         r = randi([-maxShift maxShift],length(spikeTimes(:,1)),1)/1e3;
         spikeTimesShuf = sort(spikeTimes+r);
        %% time mod
        %% run spike x lick xcorr
-        xc = spikexcorr(spikeTimesShuf, lbLicks, bin, tmax);
+        xc = spikexcorr(spikeTimesShuf, lickTimes, bin, tmax);
         normxc = xc.c1vsc2 ./ sqrt(xc.nspikes1 * xc.nspikes2); % normalize xc
         try
             smthxc = smoothvect(normxc, g1);
@@ -249,7 +293,7 @@ if computeShuf
         spikeBinILI = lbLicks(spikeLickBinidx+1) - lbLicks(spikeLickBinidx);
         % exclude spike-containing ili out of lick burst range 60 : 250 ms
         spikeValidILI = all([spikeBinILI > minILIthresh spikeBinILI < maxILIthresh],2);
-        burstSpikeTime = burstSpikeTime(spikeValidILI);
+%         burstSpikeTime = burstSpikeTime(spikeValidILI);
         spikeBinILI = spikeBinILI(spikeValidILI);
         spikeTimeSinceLick = spikeTimeSinceLick(spikeValidILI);
 %         [~,~,spikeLickBurstIdx] = histcounts(burstSpikeTime, [burstIntvs(:,1); inf]);
@@ -281,7 +325,7 @@ if computeShuf
 %         out.swrBurstIntervalShuf{end+1} = burstContainSwr;
         
     end
-    fprintf('shuffle took %.02f s\n', toc);
+%     fprintf('shuffle took %.02f s\n', toc);
 end
 % varargin{end+1} = 'byDay';
 % varargin{end+1} = 1;
@@ -292,7 +336,17 @@ end
 function out = init_out()
 out.index = [];
 out.animal = [];
-out.info = [];
+out.bin = [];
+out.tmax = [];
+
+out.cellInfo = []; 
+out.area = '';
+out.subarea = '';
+
+out.numSpikesPerEp = [];
+out.numLicksPerEp = [];
+out.lickID = [];
+
 out.time = [];
 % out.boutIntvs = [];
 out.xc = [];
@@ -301,8 +355,13 @@ out.smthxc = [];
 out.excorr = [];
 
 % iliPhase
-% out.burstContainSpike = [];
-% out.spikePctSinceLick = [];
+out.spikeTimeSinceLick = [];
+out.spikeBurstInterval = [];
+out.spikeTimeSinceBurstStart = [];
+out.lickBurstBinIdx = [];
+out.spikeBurstLickNum = [];
+
+out.spikePctSinceLick = [];
 out.spikeLickPhase = [];
 out.meanMRVmag = [];
 out.vecang = [];
@@ -314,6 +373,7 @@ out.xcShuf = {};
 out.normxcShuf = {};
 out.smthxcShuf = {};
 out.excorrShuf = {};
+
 % iliPhase
 out.spikeLickPhaseShuf = {};
 out.meanMRVmagShuf = {};
@@ -321,5 +381,5 @@ out.vecangShuf = {};
 out.phasemodShuf = {};
 
 % evTrigSpike
-out.evTrigSpike = [];
+% out.evTrigSpike = [];
 end

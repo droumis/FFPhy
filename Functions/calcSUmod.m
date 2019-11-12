@@ -1,6 +1,6 @@
 
 
-function modF = calcSUmod(dmat, F, varargin)
+function out = calcSUmod(F, varargin)
 %{
 need to add this to dfa_eventTrigSpiking.. or add that to this and make
 this a dfa.. ... should be called with singleDayCellAnal and somehow
@@ -16,47 +16,56 @@ pconf = paramconfig;
 % filtF filter to select animal, epochs, ntrode, clusers
 rwin = [0 200]; % response period in ms rel to swr on
 bwin = [-300 -100]; % baseline period in ms rel to swr on
-minNumEvents = 10;
-minSpikesResp = 100;
-minSpikesBase = 100;
+% minNumEvents = 10;
+minSpikesResp = 10;
+minSpikesBase = 10;
 % minNumSwrSpikes = 10;
-runShuffle = 1;
+% runShuffle = 1;
 nshuffs = 200;
 shuffms = 700;
 saveResult = 1;
 filetail = '';
+dmat = [];
 if ~isempty(varargin)
     assign(varargin{:})
 end
 
-modF = struct;
-for ian = 1:length(F)
-    animal = F(ian).animal;
-    modF(ian).data = struct;
-    modF(ian).animal = animal;
-    cn = 1;
-    
-    for ic = 1:length(F(ian).data)
+out = struct;
+for a = 1:length(F)
+    animal = F(a).animal{3};
+    out(a).animal = F(a).animal{3};
+    fprintf('=========== %s ===========\n', animal);
+    out(a).data = struct;
+    ic = 0;
+    for c = 1:length(F(a).output{1}) % for each cluster
+        OP = init_out();
         % collect event design mat for this cluster (per day)
-        idx = F(ian).data.index;
-        fprintf('%d %d %d\n', idx);
-        dayIdx = dmat(ian).dayeps(:,1) == idx(1);
-        dayDM = dmat(ian).dm(dayIdx,:);
-        dayET = dmat(ian).evStart(dayIdx,:);
+        idata = F(a).output{1}(c);
+        idx = idata.index;
+        day = idx(1);
+        nt = idx(2);
+        cl = idx(3);
+        eps = idx(4:end);
+        fprintf('%d %d %d\n', day, nt, cl);
+        dayDM = ones(length(idata.eventTimes),1);
+        if ~isempty(dmat)
+            % get the dmat for this day's events
+            dayIdx = dmat(a).dayeps(:,1) == idx(1);
+            dayDM = dmat(a).dm(dayIdx,:);
+            % dayET = dmat(ian).evStart(dayIdx,:);
+            OP.dmat = dmat;
+            OP.dmatIdx = {'all', 'lickbout'};
+        end
         
-        modF(ian).data(cn).index = idx;
-        time = F(ian).data(ic).time;
-        modF(ian).data(cn).time = time;
-        modF(ian).data(cn).inpData = F(ian).data(ic); % save the parent data
-        modF(ian).data(cn).dmat = dmat;
-        modF(ian).data(cn).dmatIdx = {'all', 'lickbout'};
-
+        OP.index = idx;
+        time = idata.time;
+        OP.time = time;
         %% meanmod score for this cluster, per condition
         % right now i'm just using the instantFR for computing mod, but num
         % spikes for thresholding within win is from the psth
-        for iv = 1:numel(dmat(ian).expvars)
+        for iv = 1:size(dayDM,2)
             try
-                evIFR = F(ian).data(ic).instantFR(dayDM(:,iv),:);
+                evIFR = idata.instantFR(dayDM(:,iv),:);
             catch
                 fprintf('no valid events\n')
                 continue
@@ -65,9 +74,9 @@ for ian = 1:length(F)
             % response mean FR
             rIdx = [knnsearch(time', rwin(1)/1000) knnsearch(time', rwin(2)/1000)];
             evRespM = nanmean(evIFR(:,rIdx(1):rIdx(2)),2)+1e-6;
-            numRSpikes{iv} = sum(sum(F(ian).data(ic).psth(dayDM(:,iv),rIdx(1):rIdx(2))));
-            fprintf('spikes in response: %d \n', numRSpikes{iv});
-            if numRSpikes{iv} < minSpikesResp
+            numRSpikes = sum(sum(idata.psth(dayDM(:,iv),rIdx(1):rIdx(2))));
+            fprintf('spikes in response: %d \n', numRSpikes);
+            if numRSpikes < minSpikesResp
                 fprintf('skipping\n')
                 continue
             end
@@ -75,24 +84,24 @@ for ian = 1:length(F)
             % baseline mean FR
             bIdx = [knnsearch(time', bwin(1)/1000) knnsearch(time', bwin(2)/1000)];
             evBaseM = nanmean(evIFR(:,bIdx(1):bIdx(2)),2)+1e-6;
-            numBSpikes{iv} = sum(sum(F(ian).data(ic).psth(dayDM(:,iv),bIdx(1):bIdx(2))));
-            fprintf('spikes in baseline period: %d \n', numBSpikes{iv});
-            if numBSpikes{iv} < minSpikesBase
+            numBSpikes = sum(sum(idata.psth(dayDM(:,iv),bIdx(1):bIdx(2))));
+            fprintf('spikes in baseline period: %d \n', numBSpikes);
+            if numBSpikes < minSpikesBase
                 fprintf('skipping\n')
                 continue
             end
             
             % mean pct change from baseline
             mPctChange = nanmean((evRespM-evBaseM)./evBaseM*100);
-            modF(ian).data(cn).numRSpikes{iv} = numRSpikes;
-            modF(ian).data(cn).numBSpikes{iv} = numBSpikes;
-            modF(ian).data(cn).mPctChange{iv} = mPctChange;
+            OP.numRSpikes{iv} = numRSpikes;
+            OP.numBSpikes{iv} = numBSpikes;
+            OP.mPctChange{iv} = mPctChange;
             
             %% Shuffle
             numEv = size(evIFR,1);
             r = randi([-shuffms shuffms], numEv, nshuffs); % shuff shift offsets
             mPctChangeSh = nan(nshuffs,1);
-            parfor i = 1:nshuffs
+            for i = 1:nshuffs % can use parfor
                 % for each event, select a shuf shifted slice as r and b, then mean
                 evRespMSh = nanmean(cell2mat(arrayfun(@(x,y) ...
                     evIFR(x,rIdx(1)+y:rIdx(2)+y), 1:numEv, r(:,i)', 'uni',0)'),2);
@@ -107,16 +116,35 @@ for ian = 1:length(F)
            %%
             % real-mod shuff-pct
             modPctRank = 100*(1-(sum(mPctChangeSh > mPctChange)./nshuffs));
-            fprintf('%d %d %d cond%d mod is > %.02f pct of shuffs.\n',idx, iv, modPctRank)
+            fprintf('iv%d mod > %.02f pctShuffs.\n', iv, modPctRank)
             
-            modF(ian).data(cn).mPctChangeSh{iv} = mPctChangeSh;
-            modF(ian).data(cn).modPctRank{iv} = modPctRank;
+            OP.mPctChangeSh{iv} = mPctChangeSh;
+            OP.modPctRank{iv} = modPctRank;
+            OP.area = idata.area;
+            OP.subarea = idata.subarea;
         end
-        cn = cn +1;
+        ic = ic +1;
+        out(a).output{1}(ic) = OP;
     end
 end
+
 % ---------------- Save result ---------------------------------------------------
 if saveResult
-    save_data(modF, 'results', 'sumod', 'filetail', filetail)
+    save_data(out, 'results', 'sumod', 'filetail', filetail)
 end
+end
+
+function op = init_out()
+op.dmat = [];
+op.dmatIdx = [];
+op.index = [];
+op.time = [];
+
+op.numRSpikes = [];
+op.numBSpikes = [];
+op.mPctChange = [];
+
+op.mPctChangeSh = [];
+op.modPctRank = [];
+
 end

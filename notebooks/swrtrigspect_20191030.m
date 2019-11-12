@@ -4,6 +4,7 @@
 just get a per-animal, all-swr-trig spect.. focusing on the higher
 frequencies
 %}
+
 % get data
 pconf = paramconfig;
 create_filter = 1;

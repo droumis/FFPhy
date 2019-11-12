@@ -34,9 +34,26 @@ for s = param_set
             SupFontS = 12;
             tickSz = 8; % tick labels font size
             set(0,'defaultAxesFontSize',10)
+        case 'ILIvIBI'
+            position = [.1 .1 .5 .6];
+            SpHz = 0.1; %spacing horizontal
+            SpVt = 0.1; % spacing vertical
+            
+        case 'HeatRastSUmod'
+            position = [.1 .1 .4 .7];
+            
+        case 'lickTrigSUmod'
+            position = [.1 .1 .4 .7];
+            spikeSz = 50;
+            win = [.5 .5];
+            spikeAlpha = .6;
+            bin = .010; %sec
+            SpVt= 0;
+            
         case 'lickTrigSpikingPSTH'
             position = [.1 .1 .5 .5];
             psthSize = 5; 
+            
         case 'RxnFull'
             position = [.1 .1 .5 .5];
             winSE = [-.5 .5];
@@ -93,6 +110,17 @@ for s = param_set
             position = [.1 .1 .5 .5];
             SpHz = 0.15; %spacing horizontal
             SpVt = 0.15; % spacing vertical
+            
+        case 'xcorrPhasemodSU'
+            sigpct = 97.5; % pct
+            position = [.1 .1 .6 .6];
+            MgBm =  0.07; % margin bottom
+            SpVt = 0.1;
+            SpHz = 0.1;
+            MgLt = .11;
+            MgTp = .06;
+            psthSize = 5;
+            win = [.5 .5];
             
         case 'dfa_lickXCorrSpikes'
             position = [.1 .1 .3 .5];

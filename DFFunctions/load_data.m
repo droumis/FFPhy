@@ -7,6 +7,7 @@ if ~isa(animals, 'cell')
     animals = {animals};
 end
 % Author: Demetris Roumis June 2019
+pconf = paramconfig;
 filtfunction = ' ';
 filetail = '';
 animpos = 1; % animal name position. 0 at beginning without underscore. 1 for end with it
@@ -20,6 +21,8 @@ for an = 1:length(animals)
     andef = animaldef(animal);
     if strcmp(filtOutputDirectory, 'filterframework')
         dirout = andef{2};
+    elseif strcmp(filtOutputDirectory, 'results')
+        dirout = [pconf.andef{3} '/' filename, '/'];
     else
         dirout = filtOutputDirectory;
     end

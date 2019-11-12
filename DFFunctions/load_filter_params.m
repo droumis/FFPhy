@@ -170,6 +170,9 @@ for s = Fp.params
             %         Fp.welldist);
 
             %% filter function specific params
+        case 'lickSpikeXC'
+            eventType = 'lick';
+            
         case 'lickTrigSUmod'
             eventType = 'lick';
             
@@ -226,9 +229,9 @@ for s = Fp.params
         case 'dfa_lickXCorrSpikes'
             eventType = 'lick';
             tmax = 1;
-            bin = .02;
+            bin = .01;
             numShufs = 1000;
-            sigpct = 97.5;
+%             sigpct = 97.5;
             
             filtfunction = 'dfa_lickXCorrSpikes';
             iterator = 'singleDayCellAnal';
@@ -422,7 +425,7 @@ for s = Fp.params
             
             iterator = 'singleDayCellAnal';
             filtfunction = 'dfa_eventTrigSpiking';
-            datatypes = {'spikes', eventType};
+            datatypes = {'spikes', 'cellinfo', eventType};
             options = {'win', win, 'bin', bin, 'frbinsize', frbinsize, ...
                 'eventType', eventType, 'byDay', byDay};
             

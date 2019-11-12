@@ -2,7 +2,8 @@
 function [out] = dfa_eventTrigSpiking(idx, excludeIntervals, varargin)
 
 %{
-run with filterframework via singlcellanal or singleDayCellAnal via byDay
+$version = FFPhy0.1
+run with via runfilter, singleDayCellAnal
 flag
 - gathers spiking around event times (generalized from swr, lick- versions)
 - example script: licktrigSUmod_20191106.m
@@ -16,37 +17,67 @@ $DR19
 
 % fprintf('%d %d %d %d\n',idx)
 
+eventType = 'ca1rippleskons';
+win = [1 1]; % seconds. 
+bin = 0.001; % seconds. rasters
+% frbin= 0.01; % seconds. FR plotting
+wbin = .02; % seconds. wider psth
+smbins = 10; % bins. smooth across x bins (wbin x smbins = range of influence)
+byDay = 1;
+if ~isempty(varargin)
+    assign(varargin{:})
+end
+
 % check for required data in varargin
-reqData = {'spikes'};
+reqData = {'spikes', 'cellinfo', eventType};
 for s = 1:length(reqData)
     if ~any(cell2mat(cellfun(@(x) strcmp(x,reqData{s}), varargin(1:2:end), 'un', 0)))
         error(sprintf('missing data: %s ', reqData{~ismember(reqData,varargin(1:2:end))}));
     end
 end
 
-eventType = 'ca1rippleskons';
-win = [1 1]; % in sec
-bin = 0.001; % 1 ms for rasters
-frbin= 0.01; % 10 ms for population FR plotting
-byDay = 1;
-if ~isempty(varargin)
-    assign(varargin{:})
+day = idx(1);
+if byDay
+    eps = idx(4:5);
+    nt = idx(2);
+    clust = idx(3);
+else
+    eps = idx(2);
+    nt = idx(3);
+    clust = idx(4);
 end
 
 % init output
 out = init_out();
 out.index = idx;
-day = idx(1);
-if byDay
-    ep = idx(4:5);
-    nt = idx(2);
-    clust = idx(3);
-else
-    ep = idx(2);
-    nt = idx(3);
-    clust = idx(4);
+
+out.cellInfo = cellinfo{day}{eps(1)}{nt}{clust};
+out.area = cellinfo{day}{eps(1)}{nt}{clust}.area;
+out.subarea = cellinfo{day}{eps(1)}{nt}{clust}.subarea;
+
+%% get spikes, apply timefilter
+spikeTimes = [];
+numSpikesPerEp = [];
+for e = 1:length(eps)
+    try
+        spikeTimes = [spikeTimes; spikes{day}{eps(e)}{nt}{clust}.data(:,1)];
+        numSpikesPerEp = [numSpikesPerEp size(spikes{day}{eps(e)}{nt}{clust}.data,1)];
+    catch
+        continue
+    end
 end
-%% get events from ~excludeperiods
+spikesBefore = size(spikeTimes,1);
+spikeTimes = spikeTimes(~isExcluded(spikeTimes, excludeIntervals));
+if isempty(spikeTimes)
+    fprintf('spikeimes empty\n');
+    return
+end
+spikesAfter = size(spikeTimes,1);
+fprintf('%d of %d spikes excluded with timefilter: day %d \n',...
+    spikesBefore-spikesAfter, spikesBefore, day)
+
+out.numSpikesPerEp = numSpikesPerEp;
+%% get events, apply timefilter
 try
     evid = find(contains(varargin(1:2:end), eventType));
     o = [1:2:length(varargin)]+1;
@@ -57,39 +88,42 @@ catch
 end
 eventTimes = [];
 numEventsPerEp = [];
-for e = 1:length(ep)
+evbefore = 0;
+for e = 1:length(eps)
     try
-        epEv = events{day}{ep(e)}{1}.starttime;
+        epEv = events{day}{eps(e)}{1}.starttime;
     catch
         try
-            epEv = events{day}{ep(e)}.starttime;
+            epEv = events{day}{eps(e)}.starttime;
         catch
-            fprintf('no events detected for day%d ep%d\n', day, ep(e))
+            fprintf('no events detected for day%d ep%d\n', day, eps(e))
             continue
         end
     end
+    evbefore = evbefore+size(epEv,1);
     epEvInc = epEv(~isExcluded(epEv(:,1), excludeIntervals),:);
-    eventTimes = [eventTimes; epEvInc];
     numEventsPerEp = [numEventsPerEp length(epEvInc)];
+    eventTimes = [eventTimes; epEvInc];
 end
-% evbefore = size(eventTimes,1);
-% evafter = size(eventTimes,1);
-% fprintf('%d of %d events discarded bc excluded periods in timefilter: d%d \n',...
-%     evbefore-evafter, evbefore, day)
+evafter = size(eventTimes,1);
+fprintf('%d of %d events excluded with timefilter: d%d \n',...
+    evbefore-evafter, evbefore, day)
 
 if isempty(eventTimes)
     fprintf('eventTimes is empty\n');
     return
 end
+
+%% Remove events that are too close to the beginning or end
 epStartTime = [];
 epEndTime = [];
-for e = 1:length(ep)
-    epStartTime = [epStartTime spikes{day}{ep(e)}{nt}{clust}.timerange(1)];
-    epEndTime = [epEndTime spikes{day}{ep(e)}{nt}{clust}.timerange(2)];
+for e = 1:length(eps)
+    epStartTime = [epStartTime spikes{day}{eps(e)}{nt}{clust}.timerange(1)];
+    epEndTime = [epEndTime spikes{day}{eps(e)}{nt}{clust}.timerange(2)];
 end
 epStartTime = min(epStartTime);
 epEndTime = max(epEndTime);
-% Remove triggering events that are too close to the beginning or end
+
 while eventTimes(1,1)<(epStartTime+win(1))
     eventTimes(1,:) = [];
 end
@@ -97,57 +131,69 @@ while eventTimes(end,1)>(epEndTime-win(2))
     eventTimes(end,:) = [];
 end
 
-%% spiketimes
-spiketimes = [];
-numSpikesPerEp = [];
-for e = 1:length(ep)
-    try
-        spiketimes = [spiketimes; spikes{day}{ep(e)}{nt}{clust}.data(:,1)];
-        numSpikesPerEp = [numSpikesPerEp size(spikes{day}{ep(e)}{nt}{clust}.data,1)];
-    catch
-        continue
-    end
-end
 %% psth
 time = -win(1)-0.5*bin : bin : win(2)+0.5*bin;
-psth = cell2mat(arrayfun(@(r) histc(spiketimes , r + time), eventTimes(:,1), 'un', 0)')';
+wtime = -win(1)-0.5*wbin : wbin : win(2)+0.5*wbin;
+% frtime = -win(1)-0.5*frbin: frbin: win(2)+0.5*frbin;
 
-frtime = (-win(1)-0.5*frbin):frbin:(win(2)+0.5*frbin);
-frhist = cell2mat(arrayfun(@(r) histc(spiketimes , r + frtime), eventTimes(:,1), 'un', 0)')';
+% spike psth
+psth = cell2mat(arrayfun(@(r) histc(spikeTimes , r + time), eventTimes(:,1), 'un', 0)')';
+psthWZ = zscore(cell2mat(arrayfun(@(r) histcounts(spikeTimes , r + wtime), eventTimes(:,1), 'un', 0)),[],2);
+psthWZM = nanmean(psthWZ);
+psthWZMS = smoothdata(psthWZM, 'loess', smbins);
 
-instantFR = cell2mat(arrayfun(@(x) instantfr(spiketimes, x + time),eventTimes(:,1),'un',0));
-%
+% instantaneous firing rate 
+psfr = cell2mat(arrayfun(@(x) instantfr(spikeTimes, x + time),eventTimes(:,1),'un',0));
+psfrWZ = zscore(cell2mat(arrayfun(@(x) instantfr(spikeTimes, x + wtime), eventTimes(:,1),'un',0)),[],2);
+psfrWZM = nanmean(psfrWZ);
+psfrWZMS = smoothdata(psfrWZM, 'loess', smbins);
+
+% binned firing rate
+% frhist = cell2mat(arrayfun(@(r) histc(spiketimes , r + frtime), eventTimes(:,1), 'un', 0)')';
+
+%%
 out.numEventsPerEp = numEventsPerEp;
 out.numSpikesPerEp = numSpikesPerEp;
 out.dims = {'event', 'time'};
 out.eventTimes = eventTimes;
-out.numSpikes = length(spiketimes);
+out.numSpikes = length(spikeTimes);
+
 out.time = time;
+out.wtime = wtime;
+
 out.psth = psth;
+out.psthWZ = psthWZ;
+out.psthWZM = psthWZM;
+out.psthWZMS = psthWZMS;
 
-out.frtime = frtime;
-out.frhist = frhist;
+out.psfr = psfr;
+out.psfrWZ = psfrWZ;
+out.psfrWZM = psfrWZM;
+out.psfrWZMS = psfrWZMS;
 
-out.instantFR = instantFR;
-
-% out.posteventmatrix = posteventmatrix;
-% out.eventduration = eventduration;
-% out.nospikes = nospikes;
-% out.noevents = noevents;
 end
 
 function out = init_out()
 out.index = [];
+out.cellInfo = []; 
+out.area = '';
+out.subarea = '';
 out.numEventsPerEp = [];
 out.numSpikesPerEp = [];
 out.dims = [];
 out.eventTimes = [];
 out.numSpikes = [];
+
 out.time = [];
+out.wtime = [];
+
 out.psth = [];
+out.psthWZ = [];
+out.psthWZM = [];
+out.psthWZMS = [];
 
-out.frtime = [];
-out.frhist = [];
-
-out.instantFR = [];
+out.psfr = [];
+out.psfrWZ = [];
+out.psfrWZM = [];
+out.psfrWZMS = [];
 end
