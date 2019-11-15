@@ -7,8 +7,10 @@ function plot_params = load_plotting_params(param_set, varargin)
 
 % helpful: 
 % 'FontSize',Pp.FontS,'FontWeight',Pp.FontW,'FontName', Pp.FontNm
-pausefigs = 1;
-savefigs = 0;
+% pausefigs = 1;
+% savefigs = 0;
+
+% init_fig = 1;
 if ~isempty(varargin)
     assign(varargin{:})
 end
@@ -34,13 +36,39 @@ for s = param_set
             SupFontS = 12;
             tickSz = 8; % tick labels font size
             set(0,'defaultAxesFontSize',10)
+            
+        case 'SULickILPC_cdfPolar'
+            position = [.1 .1 .2 .4];
+            logZBins = 200;
+            sigPct = .95;
+            SpVt = 0.15;
+            MgLt = 0.15;
+            
+        case 'suILPC'
+            position = [.1 .1 .2 .4];
+            MgLt = 0.15;
+            SpVt = 0.01;
+            numBins = 16;
+            bin = .010; %sec
+            win = [.5 .5];
+            SpHz = 0.05;
+            
+        case 'spikeILPC'
+            position = [.1 .1 .5 .7];
+            bin = .010; %sec
+            win = [.5 .5];
+            SpHz = 0.05;
+            
         case 'ILIvIBI'
             position = [.1 .1 .5 .6];
             SpHz = 0.1; %spacing horizontal
             SpVt = 0.1; % spacing vertical
             
         case 'HeatRastSUmod'
-            position = [.1 .1 .4 .7];
+            position = [.1 .1 .5 .7];
+            bin = .010; %sec
+            win = [.5 .5];
+            SpHz = 0.05;
             
         case 'lickTrigSUmod'
             position = [.1 .1 .4 .7];
@@ -383,13 +411,7 @@ plot_params.posparams = {'SpacingVert', SpVt, 'SpacingHoriz', SpHz, ...
     'MarginLeft', MgLt, 'MarginRight', MgRt, 'MarginTop', MgTp, ...
     'MarginBottom', MgBm};
 end
-% init fig
-if savefigs && ~pausefigs
-    close all;
-    ifig = figure('Visible','off','units','normalized','position', plot_params.position, ...
-        'color','white', 'InvertHardcopy', 'off'); 
-else
-    ifig = figure('units','normalized','position',plot_params.position, 'color','white', ...
-        'InvertHardcopy', 'off');
-end
+% if init_fig
+%     init_plot(showfigs, 'position', plot_params.position)
+% end
 end

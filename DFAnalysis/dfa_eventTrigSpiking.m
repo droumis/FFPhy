@@ -18,6 +18,7 @@ $DR19
 % fprintf('%d %d %d %d\n',idx)
 
 eventType = 'ca1rippleskons';
+applyTFtoSpikes = 0;
 win = [1 1]; % seconds. 
 bin = 0.001; % seconds. rasters
 % frbin= 0.01; % seconds. FR plotting
@@ -27,7 +28,7 @@ byDay = 1;
 if ~isempty(varargin)
     assign(varargin{:})
 end
-
+fprintf('eventType %s\n', eventType)
 % check for required data in varargin
 reqData = {'spikes', 'cellinfo', eventType};
 for s = 1:length(reqData)
@@ -66,16 +67,17 @@ for e = 1:length(eps)
         continue
     end
 end
-spikesBefore = size(spikeTimes,1);
-spikeTimes = spikeTimes(~isExcluded(spikeTimes, excludeIntervals));
-if isempty(spikeTimes)
-    fprintf('spikeimes empty\n');
-    return
+if applyTFtoSpikes
+    spikesBefore = size(spikeTimes,1);
+    spikeTimes = spikeTimes(~isExcluded(spikeTimes, excludeIntervals));
+    if isempty(spikeTimes)
+        fprintf('spikeimes empty\n');
+        return
+    end
+    spikesAfter = size(spikeTimes,1);
+    fprintf('%d of %d spikes excluded with timefilter: day %d \n',...
+        spikesBefore-spikesAfter, spikesBefore, day)
 end
-spikesAfter = size(spikeTimes,1);
-fprintf('%d of %d spikes excluded with timefilter: day %d \n',...
-    spikesBefore-spikesAfter, spikesBefore, day)
-
 out.numSpikesPerEp = numSpikesPerEp;
 %% get events, apply timefilter
 try

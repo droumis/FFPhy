@@ -168,8 +168,12 @@ for s = Fp.params
             %         Fp.minstdthresh,'maxvelocity',Fp.maxvelocity,'minvelocity', ...
             %         Fp.minvelocity, 'consensus_numtets',Fp.consensus_numtets,'welldist', ...
             %         Fp.welldist);
-
+            
             %% filter function specific params
+            
+        case 'swrTrigSUmod'
+            eventType = 'ca1rippleskons';
+            
         case 'lickSpikeXC'
             eventType = 'lick';
             
@@ -230,7 +234,7 @@ for s = Fp.params
             eventType = 'lick';
             tmax = 1;
             bin = .01;
-            numShufs = 1000;
+            numShufs = 200;
 %             sigpct = 97.5;
             
             filtfunction = 'dfa_lickXCorrSpikes';

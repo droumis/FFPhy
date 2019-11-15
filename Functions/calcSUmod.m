@@ -26,6 +26,7 @@ shuffms = 700;
 saveResult = 1;
 filetail = '';
 dmat = [];
+dmatIdx = {'all'};
 if ~isempty(varargin)
     assign(varargin{:})
 end
@@ -33,9 +34,10 @@ end
 out = struct;
 for a = 1:length(F)
     animal = F(a).animal{3};
-    out(a).animal = F(a).animal{3};
+    out(a).animal = F(a).animal;
     fprintf('=========== %s ===========\n', animal);
-    out(a).data = struct;
+    out(a).output = {};
+    out(a).dmatIdx = dmatIdx;
     ic = 0;
     for c = 1:length(F(a).output{1}) % for each cluster
         OP = init_out();
@@ -51,12 +53,8 @@ for a = 1:length(F)
         if ~isempty(dmat)
             % get the dmat for this day's events
             dayIdx = dmat(a).dayeps(:,1) == idx(1);
-            dayDM = dmat(a).dm(dayIdx,:);
-            % dayET = dmat(ian).evStart(dayIdx,:);
-            OP.dmat = dmat;
-            OP.dmatIdx = {'all', 'lickbout'};
+            dayDM = dmat(a).dm(dayIdx,:);            
         end
-        
         OP.index = idx;
         time = idata.time;
         OP.time = time;
@@ -65,7 +63,7 @@ for a = 1:length(F)
         % spikes for thresholding within win is from the psth
         for iv = 1:size(dayDM,2)
             try
-                evIFR = idata.instantFR(dayDM(:,iv),:);
+                evIFR = idata.psfr(dayDM(:,iv),:);
             catch
                 fprintf('no valid events\n')
                 continue
@@ -80,7 +78,6 @@ for a = 1:length(F)
                 fprintf('skipping\n')
                 continue
             end
-            
             % baseline mean FR
             bIdx = [knnsearch(time', bwin(1)/1000) knnsearch(time', bwin(2)/1000)];
             evBaseM = nanmean(evIFR(:,bIdx(1):bIdx(2)),2)+1e-6;
@@ -90,9 +87,10 @@ for a = 1:length(F)
                 fprintf('skipping\n')
                 continue
             end
-            
             % mean pct change from baseline
             mPctChange = nanmean((evRespM-evBaseM)./evBaseM*100);
+            
+            OP.evMean{iv} = nanmean(evIFR,1); % full mean per DM.
             OP.numRSpikes{iv} = numRSpikes;
             OP.numBSpikes{iv} = numBSpikes;
             OP.mPctChange{iv} = mPctChange;
@@ -127,11 +125,6 @@ for a = 1:length(F)
         out(a).output{1}(ic) = OP;
     end
 end
-
-% ---------------- Save result ---------------------------------------------------
-if saveResult
-    save_data(out, 'results', 'sumod', 'filetail', filetail)
-end
 end
 
 function op = init_out()
@@ -140,11 +133,15 @@ op.dmatIdx = [];
 op.index = [];
 op.time = [];
 
+op.evMean = [];
+
 op.numRSpikes = [];
 op.numBSpikes = [];
 op.mPctChange = [];
 
 op.mPctChangeSh = [];
 op.modPctRank = [];
+op.area = '';
+op.subarea = '';
 
 end

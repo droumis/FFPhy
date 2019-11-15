@@ -70,7 +70,7 @@ for a = 1:length(f)
             clust = unqNtCell(c,2);
             eps = f(a).epochs{g}(deIdx,2)';
             cindex = [day nt clust eps];
-            fprintf('%s %s day %d nt %d cl %d :: eps %s\n', f(a).function.name, ...
+            fprintf('--%s %s day %d nt %d cl %d :: eps %s\n', f(a).function.name, ...
                 f(a).animal{1}, day, nt, clust, strjoin(num2cell(num2str(eps(:)))',' '));
             % run the specified filter function on this day cell
             fout{c,1} = feval(f(a).function.name, cindex, excludeperiods, foptions{:});

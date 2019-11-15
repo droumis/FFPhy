@@ -157,7 +157,7 @@ for e = eps
     try
         burstIntvs = [burstIntvs; vec2list(licksVecs{day}{e}.lickBout, licksVecs{day}{e}.time)];
     catch
-        fprintf('error defining lick bouts for %d %d \n', day, ep)
+        fprintf('error defining lick bouts for %d %d \n', day, e)
         return
     end
 end
@@ -340,8 +340,8 @@ out.bin = [];
 out.tmax = [];
 
 out.cellInfo = []; 
-out.area = '';
-out.subarea = '';
+out.area = [];
+out.subarea = [];
 
 out.numSpikesPerEp = [];
 out.numLicksPerEp = [];
@@ -360,6 +360,7 @@ out.spikeBurstInterval = [];
 out.spikeTimeSinceBurstStart = [];
 out.lickBurstBinIdx = [];
 out.spikeBurstLickNum = [];
+out.spikePctSinceBurst = [];
 
 out.spikePctSinceLick = [];
 out.spikeLickPhase = [];

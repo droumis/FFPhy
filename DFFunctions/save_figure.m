@@ -6,11 +6,12 @@
 
 % 2019 Demetris Roumis
 
-function save_figure(figdirectory, filename, varargin)
+function strsave = save_figure(figdirectory, filename, varargin)
 
 set(gcf, 'PaperPositionMode', 'auto'); %saves the png in the dimensions defined for the fig
 subdir = '';
 savefigas = {'png'};
+
 if ~isempty(varargin)
     assign(varargin{:});
 end
