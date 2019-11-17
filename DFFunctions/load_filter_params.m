@@ -118,6 +118,7 @@ for s = Fp.params
             timefilter{end+1} = {'getpostlastwell', '($postlast == 0)'};
         case 'referenced'
             uselfptype = 'eeg';
+            
         case 'unreferenced'
             uselfptype = 'eeggnd';
             
@@ -207,6 +208,8 @@ for s = Fp.params
         case '4-300Hz_focusSWR'
             waveSet = '4-300Hz_focusSWR';
 %             wp = getWaveParams(waveSet);
+        case '4-350Hz'
+            waveSet = '4-350Hz';
             
         case 'reactivationPLTH'
             iterator = 'singleepochanal';
@@ -230,13 +233,13 @@ for s = Fp.params
             datatypes = {'lick', 'spikes', 'cellinfo', 'DIO', 'task'};
             options = {'savefigas', 'png', 'eventName',eventType};
             
-        case 'dfa_lickXCorrSpikes'
+        case 'lickSpikesXC'
             eventType = 'lick';
             tmax = 1;
             bin = .01;
             numShufs = 200;
-%             sigpct = 97.5;
             
+        case 'dfa_lickXCorrSpikes'
             filtfunction = 'dfa_lickXCorrSpikes';
             iterator = 'singleDayCellAnal';
             datatypes = {'lick', 'spikes', 'cellinfo'};
@@ -360,17 +363,17 @@ for s = Fp.params
             datatypes = {[eventSourceArea eventType], 'pos'};
             
         case 'wtrackLickTrigLFP'
-            eventData = 'lick';
             eventType = 'lick';
+            win = [1.5 1.5];
+            LFPtypes = {'eeg'};
             
         case 'dfa_eventTrigLFP'
-            LFPtypes = {'eeg'};%, 'theta', 'ripple'}; %'lowgamma', 'fastgamma', 'ripple'};
-            LFPrangesHz = {'1-400'};%, '6-9', '140-250'}; %'20-50', '65-140',};
-            win = [1.5 1.5];
-            
+%             LFPtypes = {'eeg'};%, 'theta', 'ripple'}; %'lowgamma', 'fastgamma', 'ripple'};
+%             LFPrangesHz = {'1-400'};%, '6-9', '140-250'}; %'20-50', '65-140',};
+%             win = [1.5 1.5];
             iterator = 'multitetrodeanal';
             filtfunction = 'dfa_eventTrigLFP';
-            datatypes = {eventData, LFPtypes{:}};
+            datatypes = {eventType, LFPtypes{:}};
             options = {'eventtype', eventType, 'LFPtypes', LFPtypes, 'win', win};
             
         case 'dfa_riptriglfp'

@@ -1,21 +1,39 @@
 
-function [out] = dfa_eventTrigSpiking(idx, excludeIntervals, varargin)
-
+function [out] = dfa_eventTrigSpiking(idx, timeFilter, varargin)
+% [out] = dfa_eventTrigSpiking(idx, timeFilter, varargin)
+% Gather Spikes around event times
+%               
+%                   Redolent Rat
+%           ,,==.
+%          //    `
+%         ||      ,--~~~~-._ _(\--,_
+%          \\._,-~   \      '    *  `o
+%           `---~\( _/,___( /_/`---~~
+%                 ``==-    `==-,
+% Iterator:
+% - singleDayCellAnal
+% 
+% args:
+% idx: [day epoch ntrode cluster]
+% timeFilter: intervals to exclude. [start end; ...] applies to events, spikes
+% 
+% varargs:
+% - data: (i.e. 'spikes', spikes)
+% - win:
+% - eventType:
+% - applyTFtoSpikes:
+% - win: seconds. 
+% - bin: seconds.
+% - wbin: seconds. wider psth
+% - smbins: bins. smooth across bins
 %{
-$version = FFPhy0.1
-run with via runfilter, singleDayCellAnal
-flag
+Notes:
 - gathers spiking around event times (generalized from swr, lick- versions)
-- example script: licktrigSUmod_20191106.m
+- example notebook: licktrigSUmod_20191106.m
 
-idx: [day epoch ntrode cluster]
-excludeIntervals: [start end; ...] timefilter (applies to events, spikes)
-varargin required data: {<eventType>, 'spikes'}, eventType
-
-$DR19
+FFPhy V0.1
+@DKR
 %}
-
-% fprintf('%d %d %d %d\n',idx)
 
 eventType = 'ca1rippleskons';
 applyTFtoSpikes = 0;
@@ -25,9 +43,11 @@ bin = 0.001; % seconds. rasters
 wbin = .02; % seconds. wider psth
 smbins = 10; % bins. smooth across x bins (wbin x smbins = range of influence)
 byDay = 1;
+
 if ~isempty(varargin)
     assign(varargin{:})
 end
+
 fprintf('eventType %s\n', eventType)
 % check for required data in varargin
 reqData = {'spikes', 'cellinfo', eventType};
@@ -51,7 +71,6 @@ end
 % init output
 out = init_out();
 out.index = idx;
-
 out.cellInfo = cellinfo{day}{eps(1)}{nt}{clust};
 out.area = cellinfo{day}{eps(1)}{nt}{clust}.area;
 out.subarea = cellinfo{day}{eps(1)}{nt}{clust}.subarea;
@@ -69,14 +88,14 @@ for e = 1:length(eps)
 end
 if applyTFtoSpikes
     spikesBefore = size(spikeTimes,1);
-    spikeTimes = spikeTimes(~isExcluded(spikeTimes, excludeIntervals));
+    spikeTimes = spikeTimes(~isExcluded(spikeTimes, timeFilter));
     if isempty(spikeTimes)
         fprintf('spikeimes empty\n');
         return
     end
     spikesAfter = size(spikeTimes,1);
-    fprintf('%d of %d spikes excluded with timefilter: day %d \n',...
-        spikesBefore-spikesAfter, spikesBefore, day)
+    fprintf('spikes excluded by timeFilter: %d of %d spikes\n',...
+        spikesBefore-spikesAfter, spikesBefore)
 end
 out.numSpikesPerEp = numSpikesPerEp;
 %% get events, apply timefilter
@@ -103,20 +122,20 @@ for e = 1:length(eps)
         end
     end
     evbefore = evbefore+size(epEv,1);
-    epEvInc = epEv(~isExcluded(epEv(:,1), excludeIntervals),:);
+    epEvInc = epEv(~isExcluded(epEv(:,1), timeFilter),:);
     numEventsPerEp = [numEventsPerEp length(epEvInc)];
     eventTimes = [eventTimes; epEvInc];
 end
 evafter = size(eventTimes,1);
-fprintf('%d of %d events excluded with timefilter: d%d \n',...
-    evbefore-evafter, evbefore, day)
+fprintf('events excluded by timefilter: %d of %d\n',...
+    evbefore-evafter, evbefore)
 
 if isempty(eventTimes)
     fprintf('eventTimes is empty\n');
     return
 end
 
-%% Remove events that are too close to the beginning or end
+% Remove events that are too close to the beginning or end
 epStartTime = [];
 epEndTime = [];
 for e = 1:length(eps)
@@ -133,7 +152,7 @@ while eventTimes(end,1)>(epEndTime-win(2))
     eventTimes(end,:) = [];
 end
 
-%% psth
+%% stack the event trig spikes
 time = -win(1)-0.5*bin : bin : win(2)+0.5*bin;
 wtime = -win(1)-0.5*wbin : wbin : win(2)+0.5*wbin;
 % frtime = -win(1)-0.5*frbin: frbin: win(2)+0.5*frbin;

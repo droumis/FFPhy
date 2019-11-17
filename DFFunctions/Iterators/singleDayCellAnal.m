@@ -5,6 +5,16 @@ function f = singleDayCellAnal(f,varargin)
 % f().function.loadvariables{:}.  Also the function call appends any
 % options in the f().function.options{} cell array.
 %
+%                     Blithesome Barn
+%                                x
+%                     .-. _______|
+%                     |=|/     /  \
+%                     | |_____|_""_|
+%                     |_|_[X]_|____|
+% funcs:
+% - rat: dfa_eventTrigSpiking
+
+%
 % Each function call is for one cluster, across epochs in a day, and it is assumed that
 % the function's first input is the index to the cell ([day ntrode cell]).  
 % The second input is a list of exclusion periods [starttime endtime].

@@ -1,73 +1,112 @@
-function out = dfa_eventTrigLFP(idx, excludeIntervals, varargin)
+function out = dfa_eventTrigLFP(idx, timeFilter, varargin)
+% out = dfa_eventTrigLFP(idx, excludeIntervals, varargin)
+% Gather LFP around event times
+%
+%                 Bellicose Bear
+%             .--.              .--.
+%            : (\ ". _......_ ." /) :
+%             '.    `        `    .'
+%              /'   _        _   `\
+%             /     0}      {0     \
+%            |       /      \       |
+%            |     /'        `\     |
+%             \   | .  .==.  . |   /
+%              '._ \.' \__/ './ _.'
+%              /  ``'._-''-_.'``  \
 
-% gathers lfp around event times
-% DR 19
+%{
 
-fprintf('%d %d %d %d\n',idx)
-win = [0.5 0.5];
+Iterator:
+- multitetrodeanal
+timeFilter: reconstructs events (CHANGE THIS)
+
+args:
+- idx [day epoch]
+- excludeIntervals
+
+varargs:
+- data: (i.e. 'eeg', eeg)
+- win:
+- eventType:
+- LFPTypes: 
+
+FFPhy V0.1
+@DR
+%}
+
+
 eventType = 'lick';
-LFPtypes = [];
+LFPtypes = {'eeg', 'ripple'};
+win = [0.5 0.5];
 if ~isempty(varargin)
     assign(varargin{:});
+end
+
+fprintf('eventType %s\n', eventType)
+% check for required data in varargin
+reqData = {LFPtypes{:}, eventType};
+for s = 1:length(reqData)
+    if ~any(cell2mat(cellfun(@(x) strcmp(x,reqData{s}), varargin(1:2:end), 'un', 0)))
+        error(sprintf('missing data: %s ', reqData{~ismember(reqData,varargin(1:2:end))}));
+    end
 end
 
 day = idx(1,1);
 ep = idx(1,2);
 nts = idx(:,3);
+win = abs(win);
+% init output
 out = init_out();
-win = abs(win); % sometimes the preceding-event-window is negative..
+% out.ntinfo = tetinfo{day}{ep}{nt};
 
-%% LFP
+%% get LFP
 
-if isempty(LFPtypes)
-    disp('no lfp types given, using default: ''eeg'', ''ripple''')
-    LFPtypes = {'eeg', 'ripple'};
-end
 lfpTypeIdx = find(contains(varargin(1:2:end), LFPtypes{1}));
 o = [1:2:length(varargin)]+1;
 e = varargin{o(lfpTypeIdx)};
 num_samp = length(e{day}{ep}{nts(end)}.data);
-epStartTime = double(e{day}{ep}{nts(end)}.starttime);
 samprate = e{day}{ep}{nts(end)}.samprate;
+epStartTime = double(e{day}{ep}{nts(end)}.starttime);
 epEndTime = (num_samp/samprate) + epStartTime;
 w = win*samprate;
 
-%% get events from ~excludeperiods
+%% get events from ~excludeperiods (CHANGE THIS)
 evid = find(contains(varargin(1:2:end), eventType));
 events = varargin{o(evid)};
-eventtimes = [];
+eventTimes = [];
 try
-    eventtimes = events{day}{ep}{1}.starttime;
+    eventTimes = events{day}{ep}{1}.starttime;
 catch
     try
-        eventtimes = events{day}{ep}.starttime;
+        eventTimes = events{day}{ep}.starttime;
     catch
         fprintf('no events detected for day%d ep%d\n', day,ep)
         return
     end
 end
 
-ecbefore = size(eventtimes,1);
-eventtimes = eventtimes(~isExcluded(eventtimes(:,1),excludeIntervals),:);
-ecafter = size(eventtimes,1);
-fprintf('%d of %d events discarded bc excluded periods in timefilter: d%d e%d\n',...
-    ecbefore-ecafter, ecbefore, day,ep)
+evbefore = size(eventTimes,1);
+eventTimes = eventTimes(~isExcluded(eventTimes(:,1),timeFilter),:);
+evafter = size(eventTimes,1);
+fprintf('events excluded by timefilter: %d of %d\n',...
+    evbefore-evafter, evbefore)
 
-if isempty(eventtimes)
+if isempty(eventTimes)
+    fprintf('eventTimes is empty\n');
     return
 end
 
 % Remove triggering events that are too close to the beginning or end
-while eventtimes(1,1)<(epStartTime+win(1))
-    eventtimes(1,:) = [];
+while eventTimes(1,1)<(epStartTime+win(1))
+    eventTimes(1,:) = [];
 end
-while eventtimes(end,1)>(epEndTime-win(2))
-    eventtimes(end,:) = [];
+while eventTimes(end,1)>(epEndTime-win(2))
+    eventTimes(end,:) = [];
 end
 
 %% stack the event trig LFP
 LFPtime=(epStartTime:1/samprate:epEndTime)';
-evIdx = lookup(eventtimes(:,1),LFPtime);
+evIdx = lookup(eventTimes(:,1),LFPtime);
 for r=1:length(evIdx)
     for n = 1:length(nts)
         for l = 1:length(LFPtypes)
@@ -88,7 +127,7 @@ out.clockrate = eeg{day}{ep}{idx(1,3)}.clockrate;
 out.samprate = samprate;
 % out.eventEndIndices = endidx;
 out.win = win;
-out.excludeperiods = excludeIntervals;
+out.excludeperiods = timeFilter;
 out.index = idx;
 end
 

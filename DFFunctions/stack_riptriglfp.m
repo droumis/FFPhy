@@ -4,8 +4,10 @@ function out = stack_riptriglfp(data, Fp, varargin)
 
 % compile results from F(anim).output{dayep}.data{lfptype}{ripN: ntXsamp}
 % into out(ian).data{lfptype}(ntrode x sample x ripple)
-
-% Demetris Roumis June 2019
+%{
+FFPhy V0.1
+@DR
+%}
 saveout = 1;
 if ~isempty(varargin)
     assign(varargin)

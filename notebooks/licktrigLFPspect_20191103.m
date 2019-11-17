@@ -177,6 +177,7 @@ if plot_ByArea
 end
 
 %% plot MeanPower varCat TFzmap /nt
+% does this work?
 if plot_expvarCatMeanPwr
     figname = 'evMeanPwr';
     wp = getWaveParams(Fp.waveSet);

@@ -5,6 +5,14 @@ function f = multitetrodeanal(f, varargin)
 % f().function.loadvariables{:}.  Also the function call appends any
 % options in the f().function.options{} cell array.
 %
+%                     Fecund Forest
+%        ^  ^  ^   ^      ___I_      ^  ^   ^  ^  ^   ^  ^
+%       /|\/|\/|\ /|\    /\-_--\    /|\/|\ /|\/|\/|\ /|\/|\
+%       /|\/|\/|\ /|\   /  \_-__\   /|\/|\ /|\/|\/|\ /|\/|\
+%       /|\/|\/|\ /|\   |[]| [] |   /|\/|\ /|\/|\/|\ /|\/|\
+% funcs:
+% - bear: dfa_eventTrigLFP
+
 % Each function call is for one epoch, and it is assumed that
 % the function's first input is a list of indices to the cell or tetrode ([day epoch tetrode
 % cell]).  The second input is a list of exclusion periods [starttime endtime].

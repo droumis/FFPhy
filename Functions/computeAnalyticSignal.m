@@ -17,7 +17,11 @@ end
 
 for ian = 1:length(lfpstack)
     tic
-    animal = lfpstack(ian).animal;
+    try
+        animal = lfpstack(ian).animal{3};
+    catch 
+        animal = lfpstack(ian).animal;
+    end
     fprintf('computing Analytic Signal for %s %s\n', animal, lfptype);
     fprintf('waveSet: %s\n', waveSet);
     wp = getWaveParams(waveSet);

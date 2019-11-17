@@ -65,7 +65,7 @@ switch waveSet
 %         numfrex = floor((max_freq - min_freq)/frexres);
 %         frex = logspace(log10(min_freq),log10(max_freq),numfrex);
 
-case '4-300Hz_focusSWR'
+case '4-350Hz'
         srate = 1500;
         win = [-1.5 1.5];
         dsamp = 3;

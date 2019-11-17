@@ -14,10 +14,13 @@ run_dfa = 0;
 plotfigs = 1;
 displayplots = 0;
 saveplots = 1;
+
 %% data filter params
 Fp.animals = {'JZ3'};
-Fp.filtfunction = 'dfa_lickXCorrSpikes';
-Fp.add_params = {'savefigs', 'wtrackdays', 'lickbouts', 'valid_ntrodes', 'nonMU_cells'}; %'exemplar_wepochs'
+Fp.Label = 'lickSpikesXC';
+Fp.add_params = {'wtrackdays', 'lickbouts', 'valid_ntrodes', 'nonMU_cells', ...
+    Fp.Label, 'dfa_lickXCorrSpikes'};
+
 %% FF
 Fp = load_filter_params(Fp, 'add_params', Fp.add_params);
 if create_filter

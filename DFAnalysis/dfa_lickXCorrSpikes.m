@@ -1,24 +1,37 @@
 
 
-function out = dfa_lickXCorrSpikes(idx, excludeIntervals, varargin)
-
+function out = dfa_lickXCorrSpikes(idx, timeFilter, varargin)
+% out = dfa_lickXCorrSpikes(idx, excludeIntervals, varargin)
+% Gets spikes v lick xcorr, excorr, and ILI phase clustering
+%
+%                  Pendulous Pig   
+%                       _
+%                  <`--'\>______
+%                  /. .  `'     \
+%                 (`')  ,        @
+%                  `-._,        /
+%                     )-)_/--( >
+%                    ''''  ''''
+% Iterator:
+% - singleDayCellAnal
+% 
+% args:
+% - idx: [day ntrode cluster eps:]
+% - excludeIntervals: [start end; ...]
+% varargs:
+%  - required data: {'spikes', 'lick'}
 %{
-run with filterframework via singleDayCellAnal
-- this should really be done after epochs are combined... 
-- gets spikes (burst) x lick (burst) xcorr and phase clustering
+Notes: 
 - example script: lickXcorrSU_20190916.m
-
-idx: [day ntrode cluster eps:]
-excludeIntervals: [start end; ...] timefilter (applied to spiketimes)
-varargin required data: {'spikes', 'lick'}
-
 - phase modulation score as used in karalis sirota 2018/19
 - uses the circ stats toolbox's circ_rtest to get the pval and z which is (R^2/n)..
 log(R^2/n) where R is the normed mean resultant vector and n is num samples
 circ_r gets you the mean resultant vector, r
 - note, karalis and sirota don't use any point process with less than 200 points in
 the times of interest..
-$DR19
+
+FFPhy V0.1
+@DKR
 %}
 
 fprintf('%d %d %d %d %d\n', idx)
@@ -82,7 +95,7 @@ for e = eps
     end
 end
 spikesBefore = size(spikeTimes,1);
-spikeTimes = spikeTimes(~isExcluded(spikeTimes, excludeIntervals));
+spikeTimes = spikeTimes(~isExcluded(spikeTimes, timeFilter));
 if isempty(spikeTimes)
     fprintf('spikeimes empty\n');
     return
@@ -108,8 +121,8 @@ for e = eps
     end
 end
 licksBefore = size(lickTimes,1);
-lickID = lickID(~isExcluded(lickTimes, excludeIntervals));
-lickTimes = lickTimes(~isExcluded(lickTimes, excludeIntervals));
+lickID = lickID(~isExcluded(lickTimes, timeFilter));
+lickTimes = lickTimes(~isExcluded(lickTimes, timeFilter));
 if isempty(lickTimes)
     fprintf('lickTimes empty\n');
     return

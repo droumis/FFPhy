@@ -1,4 +1,7 @@
 function ifig = init_plot(showfigs, varargin)
+% initialize plot
+% ifig = init_plot(showfigs, varargin)
+% DR 19
 position = [.1 .1 .5 .5];
 if ~isempty(varargin)
     assign(varargin{:})
