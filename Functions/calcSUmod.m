@@ -1,15 +1,40 @@
 
 
 function out = calcSUmod(F, varargin)
+% [out] = calcSUmod(F, varargin)
+% calculate event-triggered modulation of SU spiking
+%
+%                         Wheedling Wheelbarrow
+%                                               _______
+%                  ___________________________.'.------`
+%                 '---------------------------.'
+%                   `.                      .'
+%                 .-//`.                  .'
+%              .' .//.'/`================'
+%             =[=:====:=]=           \\||
+%              '. `--' .'             \_|
+%                `-  -'
+% args:
+% - F: struct with F.animal and F.data
+%   - F.data: time, psth, instantFR
+% varargs:
+% - dmat: struct with:
+%       - dayeps: [day ep;...] per ev 
+%       - dm: binary. (event x set)
+
 %{
+Notes:
+    - barn:rat:wheelbarrow
+- dmat is an vararg.. 
+            dayIdx = dmat(a).dayeps(:,1) == idx(1);
+            dayDM = dmat(a).dm(dayIdx,:);      
+
 need to add this to dfa_eventTrigSpiking.. or add that to this and make
 this a dfa.. ... should be called with singleDayCellAnal and somehow
-receive a dmat.. 
+receive a dmat..  ?? or not?
 
-calculate event-triggered modulation of SU spiking
-F is a struct array with F.animal and F.data
-F.data contains at least fields:
-- time, psth, instantFR
+FFPhy V0.1
+@DR
 %}
 
 pconf = paramconfig;

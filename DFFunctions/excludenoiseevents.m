@@ -1,8 +1,8 @@
 function out = excludenoiseevents(animaldir,animal, epochs, eventconsname, varargin)
 
 tetfilter = 1;
-exclpad = 0; % in seconds. padding pre and post event start/end to also exclude
-stdthresh = 0;
+exclpad = .5; % in seconds. padding pre and post event start/end to also exclude
+stdthresh = 5;
 excludeman = 0;
 if ~isempty(varargin)
     assign(varargin{:})
@@ -39,9 +39,9 @@ for i = 1:size(epochs,1)
     if isnumeric(tetfilter)
         TF = tetfilter;
     else
-       error('bum bum bummmmmmm')
+        error('bum bum bummmmmmm')
     end
-
+    
     ec = eventcons{epochs(i,1)}{epochs(i,2)}{TF};
     if stdthresh
         y = ec.maxthresh > stdthresh;
@@ -69,7 +69,7 @@ for i = 1:size(epochs,1)
         ec.excludeman = manNoiseEvents;
     end
     ectimes = [ec.starttime(:)-exclpad ec.endtime(:)+exclpad];
-    noise = list2vec(ectimes,times)';
+    noise = list2vec(ectimes, times)';
     noisetime = (sum(noise)/ec.samprate/60);
     totaltime = (ec.timerange(end) - ec.timerange(1))/60;
     fprintf('day%d ep%d -- %.02f of %.02f minutes noise\n', epochs(i,1),epochs(i,2), ...
@@ -77,7 +77,5 @@ for i = 1:size(epochs,1)
     out{epochs(i,1)}{epochs(i,2)} = ec;
     out{epochs(i,1)}{epochs(i,2)}.time = times;
     out{epochs(i,1)}{epochs(i,2)}.noise = noise;
-    
 end
-
 end

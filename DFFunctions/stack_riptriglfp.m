@@ -1,10 +1,27 @@
 function out = stack_riptriglfp(data, Fp, varargin)
 % make single data matrix per animal
-% exclude any events containing at least one nan in any tetrode
-
-% compile results from F(anim).output{dayep}.data{lfptype}{ripN: ntXsamp}
+% from F(anim).output{dayep}.data{lfptype}{ripN: ntXsamp}
 % into out(ian).data{lfptype}(ntrode x sample x ripple)
+% exclude any events containing at least one nan in any tetrode
+%
+%        Comely Cactus
+% 
+%        _x_x__x_____x     
+%       x  / x | x x  \    
+%      x  x x| x |x x  x   
+%      |  | |x | || |  |   
+%      |  x || x x| |  x   
+%     __\__x_x_|_x_x__/__  
+%     \                 /  
+%      `---------------'   
+%       |              |    
+%       \_____________/                            
+%
+%
 %{
+Notes:
+- forest:bear:cactus:mushroom:leaf
+
 FFPhy V0.1
 @DR
 %}

@@ -4,7 +4,31 @@ function [powerout, phaseout] = computeAnalyticSignal(lfpstack, varargin)
 % lfpstack is a struct array per animal: data, ntrodes, lfptypes, animal
 % lfpstack(ian).data = {eegtype}(ntrode x sample x ripple mat)
 % power and phase : (ntrode x sample x ripple x frequency)
-% DR 19
+%
+%            Mendacious Mushroom
+%                 __.....__
+%              .'" _  o    "`.
+%            .' O (_)     () o`.
+%           .           O       .
+%          . ()   o__...__    O  .
+%         . _.--"""       """--._ .
+%         :"                     ";
+%          `-.__    :   :    __.-'
+%               """-:   :-"""
+%                  J     L
+%                  :     :
+%                 J       L
+%                 :       :
+%                 `._____.' 
+%
+%{ 
+Notes:
+- forest:bear:cactus:mushroom:beer:leaf
+
+FFPhy V0.1
+@DR
+%}
+
 
 saveOutput = 1;
 lfptype = 'eeg';
@@ -43,7 +67,7 @@ for ian = 1:length(lfpstack)
     
 %     waveletFFT = zeros(nConv2pow, wp.numfrex);
     as = zeros(nNtrodes, nsamps, nevents, wp.numfrex);
-    parfor fi=1:wp.numfrex % use parfor
+    for fi=1:wp.numfrex % can use parfor (but be currfull)
         waveletFFT = createCMWfft(wp.frex(fi), wp.nWavecycles(fi), wp.win, wp.srate,...
             wp.dsamp, nConv2pow);
     %     dataFFT = zeros(nConv2pow, 1);

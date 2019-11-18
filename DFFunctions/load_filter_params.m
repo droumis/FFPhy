@@ -27,7 +27,63 @@ fprintf('----filter params----\n');
 for s = Fp.params
     fprintf('* %s\n', s{1})
     switch s{1}
-        %% EPOCH TETRODE CELL RIPPLE filters
+
+%% ========= 'dfa_eventTrigSpiking'=========
+        case 'dfa_eventTrigSpiking'           
+            iterator = 'singleDayCellAnal';
+            filtfunction = 'dfa_eventTrigSpiking';
+            datatypes = {'spikes', 'cellinfo', eventType};
+            options = {'win', win, 'bin', bin, 'wbin', wbin, ...
+                'eventType', eventType, 'smbins', smbins};
+        
+        case 'wtrackSWRTrigSpiking'
+            % for dfa_eventTrigSpiking
+            win = [1.5 1.5];
+            bin = .001;
+            wbin = .02; % seconds. wider psth
+            smbins = 10; % bins. smooth across x bins (wbin x smbins = range of influence)
+            eventType = 'ca1rippleskons';
+            
+        case 'wtrackLickTrigSpiking'
+            % for dfa_eventTrigSpiking
+            win = [1.5 1.5];
+            bin = .001;
+            wbin = .02; % seconds. wider psth
+            smbins = 10; % bins. smooth across x bins (wbin x smbins = range of influence)
+            eventType = 'lick';            
+            
+%% ========= 'dfa_eventTrigLFP'=========
+        case 'dfa_eventTrigLFP'
+            iterator = 'multitetrodeanal';
+            filtfunction = 'dfa_eventTrigLFP';
+            datatypes = {eventType, LFPtypes{:}};
+            options = {'eventtype', eventType, 'LFPtypes', LFPtypes, 'win', win};
+        
+        case 'wtrackSWRTrigLFP'
+            % for dfa_eventTrigLFP
+            eventType = 'ca1rippleskons';
+            win = [1.5 1.5];
+            LFPtypes = {'eeg'};
+            
+        case 'wtrackLickTrigLFP'
+            % for dfa_eventTrigLFP
+            eventType = 'lick';
+            win = [1.5 1.5];
+            LFPtypes = {'eeg'};
+            
+%% ========= EPOCH TETRODE CELL RIPPLE filters
+        case 'ripples'
+            eventType = 'ca1rippleskons';
+            consensus_numtets = 2;   % minimum # of tets for consensus event detection
+            minstdthresh = 3;        % STD. how big your ripples are
+            exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
+            minvelocity = 0;
+            maxvelocity = 4;
+            timefilter{end+1} = {'getconstimes', '($cons == 1)', ...
+                'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
+                'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
+                'minvelocity', minvelocity,'maxvelocity',maxvelocity};
+            
         case 'sleep'
             env = 'sleep';
             epochfilter = sprintf('(isequal($environment,''%s''))', ...
@@ -109,7 +165,7 @@ for s = Fp.params
             
         case 'excludeNoise'
             timefilter{end+1} = {'excludenoiseevents', '($noise == 0)', 'ca1noisekons', ...
-                'exclpad', 1, 'stdthresh', 15, 'excludeman', 1}; %15
+                'exclpad', .5, 'stdthresh', 1, 'excludeman', 1}; %15
             
         case 'excludePriorFirstWell'
             timefilter{end+1} = {'getpriortofirstwell', '($prefirst == 0)'};
@@ -147,34 +203,13 @@ for s = Fp.params
             timefilter{end+1} = {'getLickBout', '($lickBout == 1)', ...
                 'maxIntraBurstILI', maxIntraBurstILI, ...
                 'minBoutLicks', minBoutLicks};
-            
-        case 'ripples'
-            TF = 1;
-            eventType = 'ca1rippleskons';
-            eventSourceArea = 'ca1';
-            consensus_numtets = 2;   % minimum # of tets for consensus event detection
-            minstdthresh = 3;        % STD. how big your ripples are
-            exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
-            minvelocity = 0;
-            maxvelocity = 4;
-            
-            welldist = [];
-            timefilter{end+1} = {'getconstimes', '($cons == 1)', ...
-                'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
-                'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
-                'minvelocity', minvelocity,'maxvelocity',maxvelocity};
-            %     F = setfilterfunction(F, Fp.filtfunction, Fp.datatypes,...
-            %         'TF',Fp.TF,'window',Fp.window, ...
-            %         'binsize',Fp.binsize,'frbinsize',Fp.frbinsize,'minthresh', ...
-            %         Fp.minstdthresh,'maxvelocity',Fp.maxvelocity,'minvelocity', ...
-            %         Fp.minvelocity, 'consensus_numtets',Fp.consensus_numtets,'welldist', ...
-            %         Fp.welldist);
-            
+    
             %% filter function specific params
             
         case 'swrTrigSUmod'
             eventType = 'ca1rippleskons';
             
+
         case 'lickSpikeXC'
             eventType = 'lick';
             
@@ -362,20 +397,8 @@ for s = Fp.params
             iterator = 'singleepochanal';
             datatypes = {[eventSourceArea eventType], 'pos'};
             
-        case 'wtrackLickTrigLFP'
-            eventType = 'lick';
-            win = [1.5 1.5];
-            LFPtypes = {'eeg'};
-            
-        case 'dfa_eventTrigLFP'
-%             LFPtypes = {'eeg'};%, 'theta', 'ripple'}; %'lowgamma', 'fastgamma', 'ripple'};
-%             LFPrangesHz = {'1-400'};%, '6-9', '140-250'}; %'20-50', '65-140',};
-%             win = [1.5 1.5];
-            iterator = 'multitetrodeanal';
-            filtfunction = 'dfa_eventTrigLFP';
-            datatypes = {eventType, LFPtypes{:}};
-            options = {'eventtype', eventType, 'LFPtypes', LFPtypes, 'win', win};
-            
+
+
         case 'dfa_riptriglfp'
 %             LFPtypes = {'eeggnd', 'eeg', 'theta', };
             eventSourceArea = 'ca1';
@@ -421,20 +444,6 @@ for s = Fp.params
             iterator = 'singlecellanal';
             filtfunction = 'dfa_occNormFiring';
             datatypes = {'spikes', 'linpos', 'pos', 'task'};
-            
-        case 'dfa_eventTrigSpiking'
-            % define an eventType first
-            srate = 1500;
-            win = [1 1];
-            bin = .001;
-            frbinsize= 0.01; % 10 ms for population FR plotting
-            byDay = 1;
-            
-            iterator = 'singleDayCellAnal';
-            filtfunction = 'dfa_eventTrigSpiking';
-            datatypes = {'spikes', 'cellinfo', eventType};
-            options = {'win', win, 'bin', bin, 'frbinsize', frbinsize, ...
-                'eventType', eventType, 'byDay', byDay};
             
         case 'dfa_riptrigspiking'
             eventType = 'rippleskons';

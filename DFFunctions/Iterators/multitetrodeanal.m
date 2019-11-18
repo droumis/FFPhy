@@ -1,5 +1,5 @@
 function f = multitetrodeanal(f, varargin)
-% f = multicellanal(f)
+% [f] = multicellanal(f)
 % Iterator for a filter object.  Calls the function designated in
 % f().function.name, after loading the variables designated as strings in
 % f().function.loadvariables{:}.  Also the function call appends any

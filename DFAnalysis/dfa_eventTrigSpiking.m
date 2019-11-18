@@ -28,8 +28,9 @@ function [out] = dfa_eventTrigSpiking(idx, timeFilter, varargin)
 % - smbins: bins. smooth across bins
 %{
 Notes:
+- barn:rat:wheelbarrow
 - gathers spiking around event times (generalized from swr, lick- versions)
-- example notebook: licktrigSUmod_20191106.m
+- probably outdated example notebook: licktrigSUmod_20191106.m
 
 FFPhy V0.1
 @DKR
@@ -37,7 +38,7 @@ FFPhy V0.1
 
 eventType = 'ca1rippleskons';
 applyTFtoSpikes = 0;
-win = [1 1]; % seconds. 
+win = [1.5 1.5]; % seconds. 
 bin = 0.001; % seconds. rasters
 % frbin= 0.01; % seconds. FR plotting
 wbin = .02; % seconds. wider psth

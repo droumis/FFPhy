@@ -21,7 +21,6 @@ function f = singleDayCellAnal(f,varargin)
 % The next inputs are the load variables, and the final inputs are the options.
 % out = fname(index, excludeperiods, var1, var2, ..., option1, option2,...).
 %
-% The output of the call function can either be a 1 by N vector, or a structure.
 % The outputs are stored in f().output, grouped using the same groupings as
 % in the filter.
 % $DR19
@@ -90,6 +89,3 @@ for a = 1:length(f)
     f(a).output{g} = [f(a).output{g}{:}];
 end
 end
-
-% parfor will make a copy of the data needed in the loop, for each worker.
-% So 

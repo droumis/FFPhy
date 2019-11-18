@@ -36,6 +36,14 @@ for s = param_set
             SupFontS = 12;
             tickSz = 8; % tick labels font size
             set(0,'defaultAxesFontSize',10)
+
+        case 'SWRTrigHeatraster'
+            position = [.1 .1 .3 .5];
+            bin = .010; %sec
+            win = [.5 .5];
+            SpHz = 0.05;
+            MgLt = 0.1; % margin left
+            MgBm = 0.1; % margin bottom
             
         case 'SULickILPC_cdfPolar'
             position = [.1 .1 .2 .4];

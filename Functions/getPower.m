@@ -1,9 +1,36 @@
 
 
 function out = getPower(expvarCat, rawpwr, Fp, varargin)
+% [out] = getPower(expvarCat, rawpwr, Fp, varargin)
 % rawpwr is a struct array per animal 
 % Fp = filter params (see load_filter_params)
 % wp = wave params (see getWaveParams)
+%
+%               Lachrymose Leaf
+%                       |       
+%                     |.|      
+%                    |\./|     
+%                    |\./|
+%     .              |\./|              .     
+%     \^.\          |\\.//|          /.^/      
+%      \--.|\       |\\.//|       /|.--/          
+%        \--.| \    |\\.//|    / |.--/
+%         \---.|\    |\./|    /|.---/     
+%            \--.|\  |\./|  /|.--/        
+%               \ .\  |.|  /. /          
+%     _ -_^_^_^_-  \ \\ // /  -_^_^_^_- _   
+%       - -/_/_/- ^ ^  |  ^ ^ -\_\_\- -      
+%                 /-./ | \.-\
+%                /-/   |   \-\              
+%               ;|`         '|;
+%
+%{
+Notes:
+- forest:bear:cactus:mushroom:leaf
+
+FFPhy V0.1
+@DR
+%}
 
 pconf = paramconfig;
 me = animaldef('Demetris');

@@ -13,22 +13,23 @@ function out = dfa_eventTrigLFP(idx, timeFilter, varargin)
 %             \   | .  .==.  . |   /
 %              '._ \.' \__/ './ _.'
 %              /  ``'._-''-_.'``  \
-
+%Iterator:
+% - multitetrodeanal
+% timeFilter: reconstructs events (CHANGE THIS)
+% 
+% args:
+% - idx [day epoch]
+% - excludeIntervals
+% 
+% varargs:
+% - data: (i.e. 'eeg', eeg)
+% - win:
+% - eventType:
+% - LFPTypes: 
 %{
 
-Iterator:
-- multitetrodeanal
-timeFilter: reconstructs events (CHANGE THIS)
-
-args:
-- idx [day epoch]
-- excludeIntervals
-
-varargs:
-- data: (i.e. 'eeg', eeg)
-- win:
-- eventType:
-- LFPTypes: 
+Notes:
+- forest:bear:cactus:mushroom:leaf
 
 FFPhy V0.1
 @DR

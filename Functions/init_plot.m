@@ -1,8 +1,11 @@
-function ifig = init_plot(showfigs, varargin)
-% initialize plot
-% ifig = init_plot(showfigs, varargin)
-% DR 19
-position = [.1 .1 .5 .5];
+function ifig = init_plot(showfigs, position, varargin)
+% initialize plot to my defaults
+% ifig = init_plot(showfigs, position)
+% FFPhy V0.1
+% @DR
+if nargin == 1
+    position = [.1 .1 .5 .5];
+end
 if ~isempty(varargin)
     assign(varargin{:})
 end

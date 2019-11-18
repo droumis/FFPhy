@@ -162,8 +162,7 @@ end
 %% plot per SU ILPC With that cell's area's heatraster.
 if plotClustILPC
     figname = 'suILPC';
-    Pp=load_plotting_params({'defaults', figname}, 'pausefigs', pausefigs, ...
-        'savefigs', savefigs, 'init_fig', 0);
+    Pp=load_plotting_params({'defaults', figname});
     binphase = linspace(0, 2*pi, Pp.numBins);
     binphC = binphase(1:end-1) + diff(1:2)/2;
     x = [binphC binphC+max(binphC)];
@@ -233,7 +232,7 @@ if plotClustILPC
         end
     end
 end
-%% plot just the heatraster.. this was a predecessor
+%% plot just the heatraster.. this was a predecessor of the above
 if plotILPTHeatRaster
     figname = 'spikeILPC';
     for a = 1:length(F)
