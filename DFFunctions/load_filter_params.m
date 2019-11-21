@@ -81,6 +81,14 @@ case 'ripples'
         'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
         'minvelocity', minvelocity,'maxvelocity',maxvelocity};
 
+case 'wetLickBursts'
+    timefilter{end+1} = {'getWetLickBouts', ...
+        '($wetLB == 1)'};
+    
+case 'dryLickBursts'
+    timefilter{end+1} = {'getWetLickBouts', ...
+        '($dryLB == 1)'};   
+    
 case 'sleep'
     env = 'sleep';
     epochfilter = sprintf('(isequal($environment,''%s''))', ...

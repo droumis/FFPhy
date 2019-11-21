@@ -76,9 +76,13 @@ for a = 1:length(F)
         fprintf('%s %d %d %d\n', animal, day, nt, cl);
         dayDM = ones(length(idata.eventTimes),1);
         if ~isempty(dmat)
-            % get the dmat for this day's events
-            dayIdx = dmat(a).dayeps(:,1) == idx(1);
-            dayDM = dmat(a).dm(dayIdx,:);            
+            try
+                % get the dmat for this day's events
+                dayIdx = dmat(a).dayeps(:,1) == idx(1);
+                dayDM = logical(dmat(a).dm(dayIdx,:));
+            catch
+                error('dmat needs valid dayeps and dm')
+            end
         end
         OP.index = idx;
         use_psfr = 1;

@@ -36,17 +36,7 @@ case 'defaults'
     set(0,'defaultAxesFontSize',10)
 
 
-%% ========= 'eventTrigSpiking'=========
-
-case 'wtrackLickSU'
-    position = [.1 .1 .25 .4];
-    bin = .010; %sec
-    win = [.5 .5];
-    SpVt = 0.01;
-    MgLt = 0.1; % margin left
-    MgBm = 0.1; % margin bottom
-    spikeSz = 50; 
-    spikeAlpha = .5;
+%% ========= SWR 'eventTrigSpiking'=========
 
 case 'wtrackSWRSU'
     position = [.1 .1 .25 .4];
@@ -57,7 +47,15 @@ case 'wtrackSWRSU'
     MgBm = 0.1; % margin bottom
     spikeSz = 50; 
     spikeAlpha = .5;
-
+    
+case 'wtrackSWRHeatrast'
+    position = [.1 .1 .8 .5];
+    bin = .010; %sec
+    win = [.3 .3];
+    SpHz = 0.05;
+    MgLt = 0.1; % margin left
+    MgBm = 0.1; % margin bottom
+    
 case 'wtrackSWRHeatRastAllAn'
     position = [.1 .1 .3 .5];
     bin = .010; %sec
@@ -66,6 +64,28 @@ case 'wtrackSWRHeatRastAllAn'
     MgLt = 0.1; % margin left
     MgBm = 0.1; % margin bottom
 
+case 'wtrackSWRModCDF'
+    
+%% ========= Lick 'eventTrigSpiking'=========
+
+case 'wtrackLickSU'
+    position = [.1 .1 .25 .4];
+    bin = .010; %sec
+    win = [.5 .5];
+    SpVt = 0.01;
+    MgLt = 0.1; % margin left
+    MgBm = 0.1; % margin bottom
+    spikeSz = 50; 
+    spikeAlpha = .5;
+    
+case 'wtrackLickHeatrast'
+    position = [.1 .1 .3 .5];
+    bin = .010; %sec
+    win = [.3 .3];
+    SpHz = 0.05;
+    MgLt = 0.1; % margin left
+    MgBm = 0.1; % margin bottom    
+    
 case 'wtrackLickHeatRastAllAn'
     position = [.1 .1 .3 .5];
     bin = .010; %sec
@@ -74,12 +94,10 @@ case 'wtrackLickHeatRastAllAn'
     MgLt = 0.1; % margin left
     MgBm = 0.1; % margin bottom
 
-case 'wtrackSWRModCDF'
-
 case 'wtrackLickModCDF'
 
-
-
+%% ========= 
+    
 case 'SWRTrigHeatraster'
     position = [.1 .1 .3 .5];
     bin = .010; %sec

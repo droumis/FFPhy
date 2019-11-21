@@ -35,8 +35,8 @@ eventTrigLFP::
 %}
 
 pconf = paramconfig;
-eventTrigLFP = 0; % forest.bear.cactus.mushroom.beer.leaf == eventSet mean Spect
-eventTrigSpiking = 1; % barn.rat.beer.wheelbarrow == eventSet SU mod
+eventTrigLFP = 0; % PIPE:forest.bear.cactus.mushroom.beer.leaf == eventSet mean Spect
+eventTrigSpiking = 1; % PIPE:barn.rat.beer.wheelbarrow == eventSet SU mod
 eventType = 'lick'; %lick swr
 
 % run FF
@@ -45,13 +45,13 @@ run_ff = 0;
 load_ffdata = 0;
 
 %% create condition design mat
-make_expvarCat = 0; % beer
+make_expvarCat = 1; % beer
 load_expvarCat = 0;
 
 %% spike
 calcSUMod = 0; % wheelbarrow
-loadSUMod = 1; 
-gatherResults = 1; % combines across animals. keeps eventSet results seperate per unit
+loadSUMod = 0; 
+gatherResults = 0; % combines across animals. keeps eventSet results seperate per unit
 
 %% LFP
 % stack data
@@ -67,25 +67,20 @@ load_expvarCatMeanPwr = 0;
 % combineArea = 0;
 
 %% plot
-plotfigs = 1;
+plotfigs = 0;
 showfigs = 1;
 pausefigs = 1;
 savefigs = 1;
 
 % swr
-plotEventTrigSU = 0;         % per eventSet, per SU
-% plotEventTrigHeatrastPerAni = 0; % per eventSet, per area, per animal and all animals
-plotEventTrigHeatrastAllAni = 1; % requires gatherResults
-plotEventTrigModCDF = 1;     % requires gatherResults// per eventSet, per area, per animal and all animals
-
-% lick
-plotLickTrigSU = 0;         % per eventSet, per SU
-plotLickTrigHeatRaster = 0; % per eventSet, per area, per animal and all animals
-plotLickTrigModCDF = 0;     % per eventSet, per area, per animal and all animals
+plotEventSU = 0;         % per eventSet, per SU
+plotEventHeatRast = 1; % per eventSet, per area, per animal and all animals
+plotEventHeatRastAllAni = 0; % requires gatherResults
+plotEventModCDF = 0;     % requires gatherResults// per eventSet, per area, per animal and all animals
 
 %%
 Fp = [];
-Fp.animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ2', 'JZ4'}; %, };
+Fp.animals = {'D10'}; %, 'D13', 'JZ1', 'JZ4'}; %, };
 Fp.areas = {{'ca1', 'd'}, {'mec', 'deep'}, {'mec', 'supf'}};
 
 if eventTrigLFP
@@ -102,10 +97,12 @@ if eventTrigLFP
 elseif eventTrigSpiking
     Fp.filtfunction = 'dfa_eventTrigSpiking'; % Redolent Rat
     if strcmp(eventType, 'lick')
+        expvars = {'all', 'wetLickBursts', 'dryLickBursts'};
         Fp.Label = 'wtrackLickTrigSpiking';
         Fp.params = {'wtrackdays', 'valid_ntrodes', 'excludePriorFirstWell', ...
             'excludeAfterLastWell', 'nonMU_cells', Fp.Label, Fp.filtfunction};
     elseif strcmp(eventType, 'swr') %'excludeNoise', 
+        expvars = {'all', 'lickbouts', 'nolickbouts'};
         Fp.Label = 'wtrackSWRTrigSpiking';
         Fp.params = {'wtrackdays', 'valid_ntrodes', 'excludePriorFirstWell', ...
             'excludeAfterLastWell', 'nonMU_cells', 'ripples', ...
@@ -139,19 +136,35 @@ end
 
 %% make design mat to slice the rawpwr trials
 if make_expvarCat
-    outdir = 'expvarCatBurst';
-    expvarCat = makeExpvarCatDesignMat(lfpstack, 'outdir', outdir, 'expvars', {'all'}, ...
-        'lfptype', Fp.uselfptype, 'eventType', Fp.eventType);
+    data = [];
+    for a = 1:length(F)
+        data(a).animal = F(a).animal;
+        idx = cell2mat({F(a).output{1}.index}');
+        [~, dayUnqIdx] = unique(idx(:,1));
+        days = idx(dayUnqIdx,[1]);
+        eps = idx(dayUnqIdx,[4:5]);
+        numEvPerDay = cell2mat({F(a).output{1}(dayUnqIdx).numEventsPerEp}');
+        data(a).day = [];
+        data(a).epoch = [];
+        for d = 1:size(eps,1)
+            for e = 1:size(eps,2)
+                data(a).day = [data(a).day; repmat(days(d), numEvPerDay(d,e), 1)];
+                data(a).epoch = [data(a).epoch; repmat(eps(d,e), numEvPerDay(d,e),1)];
+            end
+        end
+        data(a).evStart = cell2mat({F(a).output{1}(dayUnqIdx).eventTimes}');
+    end
+    expvarCat = makeExpvarCatDesignMat(data, expvars, 'eventType', Fp.eventType);
 end
 if load_expvarCat
-    outdir = 'expvarCatBurst';
+    outdir = 'expvarCat';
     outpath = [pconf.andef{2},outdir,'/'];
     expvarCat = load_data(outpath, [outdir,'_',Fp.env,'_',Fp.eventType], Fp.animals);
 end
 
 %% calc su modulation
 if calcSUMod % wheelbarrow
-    modF = calcSUmod(F);
+    modF = calcSUmod(F, 'dmat', expvarCat, 'dmatIdx', expvars);
     save_data(modF, 'results', Fp.Label);
 end
 if loadSUMod
@@ -200,7 +213,7 @@ if plotfigs
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Spikes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% %%%% SWR %%%%%%
     %% su raster
-    if plotEventTrigSU
+    if plotEventSU
         if strcmp(eventType, 'swr')
             figname = 'wtrackSWRSU';
         elseif strcmp(eventType, 'lick')
@@ -245,7 +258,7 @@ if plotfigs
                 [xx,yy] = find(F(a).output{1}(c).psth');
                 spikeTwin = (xx*1e-3)-abs(fulltime(1));
                 h = histc(spikeTwin, bintime);
-                hs = smoothdata(h, 1,'loess',20);
+                hs = smoothdata(h, 1,'loess', 20);
                 area(bintime(sB:eB), hs(sB:eB), 'facecolor', 'k')
                 axis tight
                 xlabel('time s')
@@ -268,64 +281,91 @@ if plotfigs
         end
     end
     
-%     %% heatraster per animal
-%     if plotSWRTrigHeatrastPerAni
-%         figname = 'SWRTrigHeatraster';
-%         Pp = load_plotting_params({'defaults', figname}); % load params
-%         for a = 1:length(modF) % per animal
-%             animal = modF(a).animal{3};
-%             for ar = 1:length(Fp.areas) % per area
-%                 numESet = length(modF(a).dmatIdx);
-%                 % find cells in this area
-%                 areaIdx = strcmp({modF(a).output{1}.area}', Fp.areas{ar}{1});
-%                 subareaIdx = ~cellfun(@isempty, strfind({modF(a).output{1}.subarea}', ...
-%                     Fp.areas{ar}{2}));
-%                 iareaIdx = find(all([areaIdx subareaIdx],2));
-%                 iareaIdx = iareaIdx(~arrayfun(@(x) isempty(modF(a).output{1}(x).mPctChange), ...
-%                     iareaIdx,'un',1));
-%                 if isempty(iareaIdx)
-%                     continue
-%                 end
-%                 ifig = init_plot(showfigs, Pp.position); % init fig per area
-%                 for iv = 1:numESet % per eventSet in dmat
-%                     setID = modF(a).dmatIdx{iv};
-%                     sf = subaxis(1, numESet, iv, Pp.posparams{:});
-%                     sf.Tag = 'heatraster';
-%                     % make firing rate heatraster from all the clusters in this area
-%                     iFRHR = cell2mat(arrayfun(@(x) modF(a).output{1}(x).evMean{iv}, ...
+    %% heatraster per animal
+    if plotEventHeatRast
+        if strcmp(eventType, 'swr')
+            figname = 'wtrackSWRHeatrast';
+        elseif strcmp(eventType, 'lick')
+            figname = 'wtrackLickHeatRast';
+        end
+        Pp = load_plotting_params({'defaults', figname}); % load params
+        for a = 1:length(modF) % per animal
+            animal = modF(a).animal{3};
+            for ar = 1:length(Fp.areas) % per area
+                numESet = length(modF(a).dmatIdx);
+                % find cells in this area
+                areaIdx = strcmp({modF(a).output{1}.area}', Fp.areas{ar}{1});
+                subareaIdx = ~cellfun(@isempty, strfind({modF(a).output{1}.subarea}', ...
+                    Fp.areas{ar}{2}));
+                iareaIdx = find(all([areaIdx subareaIdx],2));
+                iareaIdx = iareaIdx(~arrayfun(@(x) isempty(modF(a).output{1}(x).mPctChange), ...
+                    iareaIdx,'un',1));
+                if isempty(iareaIdx)
+                    continue
+                end
+                ifig = init_plot(showfigs, Pp.position); % init fig per area
+                for iv = 1:numESet % per eventSet in dmat
+                    setID = modF(a).dmatIdx{iv};
+                    sf = subaxis(1, numESet, iv, Pp.posparams{:});
+                    sf.Tag = 'heatraster';
+                    pctChange = [];
+                    dumpy = [];
+                    gud = [];
+                    for i = 1:length(iareaIdx)
+                        try
+                            if ~isempty(modF(a).output{1}(iareaIdx(i)).mPctChange{iv})
+                                
+                                pctChange = [pctChange; modF(a).output{1}(iareaIdx(i)).mPctChange{iv}];
+                                gud = [gud; i];
+                                
+                            else
+                                dumpy = [dumpy; i];
+                            end
+                        catch
+                            dumpy = [dumpy; i];
+                        end
+                    end
+                    iareaIdx = iareaIdx(gud);
+                    % make firing rate heatraster from all the clusters in this area
+                    iFRHRz = cell2mat(arrayfun(@(x) modF(a).output{1}(x).evMeanZ{iv}, ...
+                        iareaIdx,'un',0));
+                    iFRHRzsm = smoothdata(iFRHRz,2,'loess', 10);
+                    
+%                     pctChange = cell2mat(arrayfun(@(x) modF(a).output{1}(x).mPctChange{iv}, ...
 %                         iareaIdx,'un',0));
-%                     iFRHRzsm = smoothdata(zscore(iFRHR,[],2),2,'loess', 100);
-%                     pctChange = arrayfun(@(x) modF(a).output{1}(x).mPctChange{iv}, ...
-%                         iareaIdx,'un',1);
-%                     [~, srtIdx] = sort(pctChange, 1, 'descend');
-%                     iFRHRsmzSorted =  iFRHRzsm(srtIdx,:);                   
-%                     imagesc(modF(a).output{1}(iareaIdx(1)).time, 1:length(iareaIdx), ...
-%                         iFRHRsmzSorted);
-%                    
-%                     caxis(sf,'auto')
-%                     cm = colormap(1-brewermap(100, 'spectral'));
-%                     colormap(cm);
-%                     h = colorbar;
-%                     ylabel(h, 'zfr')
-%                     line([0 0], ylim, 'Color', 'k')
-%                     xlabel('time s')
-%                 end
-%                 stit = sprintf('%s %s %s %s %s', figname, animal, Fp.env, setID, strjoin(Fp.areas{:,ar}));
-%                 setSuperAxTitle(stit);
-%                 if pausefigs
-%                     pause
-%                 end
-%                 if savefigs
-%                     strsave = save_figure([pconf.andef{4} '/' figname '/' animal], stit);
-%                     F(a).figs.spikePhaseCumPolar{ar} = strsave;
-%                 end
-%             end
-%         end
-%     end
+                    [~, srtIdx] = sort(pctChange, 1, 'descend');
+                    iFRHRsmzSorted =  iFRHRzsm(srtIdx,:);       
+                    time = modF(a).output{1}(iareaIdx(1)).time';
+                    s = knnsearch(time, -Pp.win(1));
+                    e = knnsearch(time, Pp.win(2));
+                    time = time(s:e);
+                    imagesc(time, 1:length(iareaIdx), iFRHRsmzSorted(:,s:e));
+                   
+                    colormap(viridis);
+                    h = colorbar;
+                    caxis(sf,[-4 4])
+                    ylabel(h, 'zscore firing rate')
+                    line([0 0], ylim, 'Color', 'k', 'linestyle', '--')
+                    title(modF(a).dmatIdx{iv})
+                    xlabel('time s')
+                    ylabel('Unit #')
+                end
+                stit = sprintf('%s %s %s %s', figname, animal, strjoin(Fp.areas{:,ar}));
+                setSuperAxTitle(stit);
+                if pausefigs
+                    pause
+                end
+                if savefigs
+                    strsave = save_figure([pconf.andef{4} '/' figname '/' animal], stit);
+                    F(a).figs.spikePhaseCumPolar{ar} = strsave;
+                end
+            end
+        end
+    end
     
     %% heatraster all animals
     % need to trim to bin
-    if plotEventTrigHeatrastAllAni
+    if plotEventHeatRastAllAni
         if strcmp(eventType, 'swr')
             figname = 'wtrackSWRHeatRastAllAn';
         elseif strcmp(eventType, 'lick')
@@ -365,7 +405,7 @@ if plotfigs
     end
     
     %% cdf and stingray
-    if plotEventTrigModCDF
+    if plotEventModCDF
         % for each area, plot CDF of eventSets vs shuf
         if strcmp(eventType, 'swr')
             figname = 'wtrackSWRModCDF';

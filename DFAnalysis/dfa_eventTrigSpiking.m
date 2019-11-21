@@ -122,11 +122,24 @@ for e = 1:length(eps)
             continue
         end
     end
+
     evbefore = evbefore+size(epEv,1);
     epEvInc = epEv(~isExcluded(epEv(:,1), timeFilter),:);
+    
+    % Remove events that are too close to the beginning or end
+    epStartTime = spikes{day}{eps(e)}{nt}{clust}.timerange(1);
+    epEndTime = spikes{day}{eps(e)}{nt}{clust}.timerange(2);
+    while epEvInc(1,1)<(epStartTime+win(1))
+        epEvInc(1,:) = [];
+    end
+    while epEvInc(end,1)>(epEndTime-win(2))
+        epEvInc(end,:) = [];
+    end
+    
     numEventsPerEp = [numEventsPerEp length(epEvInc)];
     eventTimes = [eventTimes; epEvInc];
 end
+
 evafter = size(eventTimes,1);
 fprintf('events excluded by timefilter: %d of %d\n',...
     evbefore-evafter, evbefore)
@@ -136,22 +149,22 @@ if isempty(eventTimes)
     return
 end
 
-% Remove events that are too close to the beginning or end
-epStartTime = [];
-epEndTime = [];
-for e = 1:length(eps)
-    epStartTime = [epStartTime spikes{day}{eps(e)}{nt}{clust}.timerange(1)];
-    epEndTime = [epEndTime spikes{day}{eps(e)}{nt}{clust}.timerange(2)];
-end
-epStartTime = min(epStartTime);
-epEndTime = max(epEndTime);
-
-while eventTimes(1,1)<(epStartTime+win(1))
-    eventTimes(1,:) = [];
-end
-while eventTimes(end,1)>(epEndTime-win(2))
-    eventTimes(end,:) = [];
-end
+% 
+% epStartTime = [];
+% epEndTime = [];
+% for e = 1:length(eps)
+%     epStartTime = [epStartTime spikes{day}{eps(e)}{nt}{clust}.timerange(1)];
+%     epEndTime = [epEndTime spikes{day}{eps(e)}{nt}{clust}.timerange(2)];
+% end
+% epStartTime = min(epStartTime);
+% epEndTime = max(epEndTime);
+% 
+% while eventTimes(1,1)<(epStartTime+win(1))
+%     eventTimes(1,:) = [];
+% end
+% while eventTimes(end,1)>(epEndTime-win(2))
+%     eventTimes(end,:) = [];
+% end
 
 %% stack the event trig spikes
 time = -win(1)-(bin/2) : bin : win(2)+(bin/2);

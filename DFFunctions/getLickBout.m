@@ -1,3 +1,7 @@
+
+
+function out = getLickBout(datadir, animal, epochs, varargin)
+
 %{
 get the lick bout intervals
 inputs:
@@ -11,8 +15,6 @@ epochs = n x 2 where n = [day epoch]
 calls the time funcs... but i don't use it so outside of setfiltertime i
 should just pass an empty arg there..
 %}
-
-function out = getLickBout(datadir, animal, epochs, varargin)
 
 maxILIthresh = .25; % max burst ili threshold in seconds
 minBoutLicks = 3; %filter out bouts with less than boutNum licks

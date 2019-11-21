@@ -1,7 +1,11 @@
 
-function [out] = makeExpvarCatDesignMat(data, varargin)
+function [out] = makeExpvarCatDesignMat(data, expvars, varargin)
 % [out] = makeExpvarCatDesignMat(data, varargin)
-% evaluate state filters for animal, day, epoch, timestamp
+% evaluate expvars timefilter groups for data.animal, day, epoch, evStart
+% ** expvar groups refers to timefilter functions and their filter strings that exist in
+%  load_filter_params.m **
+% This is merely a way to group and evaluate multiple timefilters
+% I use the returned design matrix to slice into data arrays per expvar\
 %
 %     Baleful Beer
 %         .~~~~.
@@ -13,25 +17,25 @@ function [out] = makeExpvarCatDesignMat(data, varargin)
 % args:
 % - data: struct:
 %         - animal, evStart, day, epoch
+%         - expvars: cell array of strings
 % varargs:
 %
+%
 % output:
-% - design matrix of eventSet (event, set)
-%
-%
-%
-%
+% - out.dm: design matrix of eventSet (event, set)
 %
 
+%{
+FFPhy V0.1
+@DR
+%}
 
-% DR 2019
 pconf = paramconfig;
-expvars = {'all'}; %, 'rewarded', 'unrewarded', 'inbound' , 'outbound', ...
+% expvars = {'all'}; %, 'rewarded', 'unrewarded', 'inbound' , 'outbound', ...
 %          'proximalWell', 'distalWell', 'rewarded_outbound', 'rewarded_inbound'};
 saveout = 1;
 outdir = 'expvarCat';
-defaults = {'wtrackdays', 'excludeNoise','excludePriorFirstWell'};
-%     lfptype = 'eeg';
+defaults = {'wtrackdays', 'excludePriorFirstWell', 'excludeAfterLastWell'};
 eventType = 'swr';
 
 if ~isempty(varargin)
@@ -42,7 +46,11 @@ outpath = [pconf.andef{2},outdir,'/'];
 
 for ian = 1:length(data)
     %         t = find(strcmp(lfpstack(ian).lfptypes, lfptype));
-    animal = data(ian).animal;
+    try
+        animal = data(ian).animal;
+    catch
+        animal = data(ian).animal{3};
+    end
     out(ian).animal = animal;
     out(ian).dims = {'event', 'expvar'};
     out(ian).evStart = data(ian).evStart;
@@ -56,10 +64,14 @@ for ian = 1:length(data)
         switch expvars{ss}
             case 'all'
                 % all defaults
-                %                 case 'lickbouts'
-                %                     Fp.params{end+1} = 'lickbouts';
-                %                 case 'nolickbouts'
-                %                     Fp.params{end+1} = 'nolickbouts';
+            case 'wetLickBursts'
+                Fp.params{end+1} = 'wetLickBursts';
+            case 'dryLickBursts'
+                Fp.params{end+1} = 'dryLickBursts';                
+            case 'lickbouts'
+                Fp.params{end+1} = 'lickbouts';
+            case 'nolickbouts'
+                Fp.params{end+1} = 'nolickbouts';
             case 'rewarded'
                 Fp.params{end+1} = 'correcttrials';
             case 'unrewarded'
@@ -89,16 +101,16 @@ for ian = 1:length(data)
         end
         fprintf('============ %s =============\n', expvars{ss});
         Fp = load_filter_params(Fp);
-        F = createfilter('animal', {out(ian).animal}, 'epochs', ...
+        F = createfilter('animal', {out(ian).animal{3}}, 'epochs', ...
             Fp.epochfilter, 'excludetime', Fp.timefilter);
         for de = 1:length(F.epochs{1}(:,1))
             day = F.epochs{1}(de,1);
             epoch = F.epochs{1}(de,2);
             % events in current epoch
-            ieprips = ismember(out(ian).dayeps, [day epoch], 'rows');
+            ievs = ismember(out(ian).dayeps, [day epoch], 'rows');
             % events in current timefilter
-            out(ian).dm(ieprips,ss) = ...
-                ~isExcluded(out(ian).evStart(ieprips), ...
+            out(ian).dm(ievs,ss) = ...
+                ~isExcluded(out(ian).evStart(ievs), ...
                 F.excludetime{1}{de});
         end
     end
