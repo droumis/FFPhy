@@ -37,12 +37,12 @@ FFPhy V0.1
 %}
 
 eventType = 'ca1rippleskons';
-applyTFtoSpikes = 0;
-win = [1.5 1.5]; % seconds. 
-bin = 0.001; % seconds. rasters
+applyTFtoSpikes = 0; % (0)
+win = [1.5 1.5]; % seconds. ([1.5 1.5])
+bin = 0.001; % seconds. rasters (.001)
 % frbin= 0.01; % seconds. FR plotting
-wbin = .02; % seconds. wider psth
-smbins = 10; % bins. smooth across x bins (wbin x smbins = range of influence)
+wbin = .01; % seconds. wider psth (.01)
+% smbins = 10; % bins. smooth across x bins (wbin x smbins = range of influence)
 byDay = 1;
 
 if ~isempty(varargin)
@@ -154,24 +154,24 @@ while eventTimes(end,1)>(epEndTime-win(2))
 end
 
 %% stack the event trig spikes
-time = -win(1)-0.5*bin : bin : win(2)+0.5*bin;
-wtime = -win(1)-0.5*wbin : wbin : win(2)+0.5*wbin;
+time = -win(1)-(bin/2) : bin : win(2)+(bin/2);
+wtime = -win(1)-(wbin/2) : wbin : win(2)+(wbin/2);
 % frtime = -win(1)-0.5*frbin: frbin: win(2)+0.5*frbin;
 
 % spike psth
 psth = cell2mat(arrayfun(@(r) histc(spikeTimes , r + time), eventTimes(:,1), 'un', 0)')';
-psthWZ = zscore(cell2mat(arrayfun(@(r) histcounts(spikeTimes , r + wtime), eventTimes(:,1), 'un', 0)),[],2);
-psthWZM = nanmean(psthWZ);
-psthWZMS = smoothdata(psthWZM, 'loess', smbins);
+% firing rate psth in wbin resolution
+psfr = cell2mat(arrayfun(@(r) histcounts(spikeTimes, r + wtime), eventTimes(:,1), ...
+    'un', 0))*(1/wbin);
+
+% psthWZM = nanmean(zscore(psthW,[],2);
+% psthWZMS = smoothdata(psthWZM, 'loess', smbins);
 
 % instantaneous firing rate 
-psfr = cell2mat(arrayfun(@(x) instantfr(spikeTimes, x + time),eventTimes(:,1),'un',0));
-psfrWZ = zscore(cell2mat(arrayfun(@(x) instantfr(spikeTimes, x + wtime), eventTimes(:,1),'un',0)),[],2);
-psfrWZM = nanmean(psfrWZ);
-psfrWZMS = smoothdata(psfrWZM, 'loess', smbins);
-
-% binned firing rate
-% frhist = cell2mat(arrayfun(@(r) histc(spiketimes , r + frtime), eventTimes(:,1), 'un', 0)')';
+psifr = cell2mat(arrayfun(@(x) instantfr(spikeTimes, x + time), eventTimes(:,1), 'un',0));
+% psfrW = cell2mat(arrayfun(@(x) instantfr(spikeTimes, x + wtime), eventTimes(:,1),'un',0));
+% psfrWZM = nanmean(zscore(psfrWZ,[],2));
+% psfrWZMS = smoothdata(psfrWZM, 'loess', smbins);
 
 %%
 out.numEventsPerEp = numEventsPerEp;
@@ -184,15 +184,15 @@ out.time = time;
 out.wtime = wtime;
 
 out.psth = psth;
-out.psthWZ = psthWZ;
-out.psthWZM = psthWZM;
-out.psthWZMS = psthWZMS;
+% out.psthW = psthW;
+% out.psthWZM = psthWZM;
+% out.psthWZMS = psthWZMS;
 
 out.psfr = psfr;
-out.psfrWZ = psfrWZ;
-out.psfrWZM = psfrWZM;
-out.psfrWZMS = psfrWZMS;
-
+% out.psfrW = psfrW;
+% out.psfrWZM = psfrWZM;
+% out.psfrWZMS = psfrWZMS;
+out.psifr = psifr;
 end
 
 function out = init_out()
@@ -210,12 +210,13 @@ out.time = [];
 out.wtime = [];
 
 out.psth = [];
-out.psthWZ = [];
-out.psthWZM = [];
-out.psthWZMS = [];
+% out.psthW = [];
+% out.psthWZM = [];
+% out.psthWZMS = [];
 
 out.psfr = [];
-out.psfrWZ = [];
-out.psfrWZM = [];
-out.psfrWZMS = [];
+% out.psfrW = [];
+% out.psfrWZM = [];
+% out.psfrWZMS = [];
+out.psifr = [];
 end

@@ -99,7 +99,7 @@ if plotClustPSTH
             %% lick triggered raster plot
             sf = subaxis(3,1,[1 2],Pp.posparams{:});
             sf.Tag = 'raster';
-            
+            % trim
             time = F(a).output{1}(c).time';
             s = knnsearch(time, -Pp.win(1));
             e = knnsearch(time, Pp.win(2));

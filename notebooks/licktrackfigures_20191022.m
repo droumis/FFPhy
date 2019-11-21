@@ -8,6 +8,7 @@ clockrate=30000;
 likethresh = .999;
 animal = 'Lotus';
 %% load data
+% /stelmo/demetris/lick_tracking/DLC/projects/lickTrack_20191017
 data_dir='/stelmo/demetris/Lotus/AJ_processed/20191016/20191016_Lotus_03_lineartrack/';
 filename = '20191016_Lotus_03_lineartrackDeepCut_resnet50_lineartrackOct17shuffle1_1030000.csv';
 DLC_tracking = csvread([data_dir filename], 3);
