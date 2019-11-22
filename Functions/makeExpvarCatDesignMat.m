@@ -47,9 +47,9 @@ outpath = [pconf.andef{2},outdir,'/'];
 for ian = 1:length(data)
     %         t = find(strcmp(lfpstack(ian).lfptypes, lfptype));
     try
-        animal = data(ian).animal;
-    catch
         animal = data(ian).animal{3};
+    catch
+        animal = animaldef(data(ian).animal);
     end
     out(ian).animal = animal;
     out(ian).dims = {'event', 'expvar'};

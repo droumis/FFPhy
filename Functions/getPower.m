@@ -35,7 +35,7 @@ FFPhy V0.1
 pconf = paramconfig;
 me = animaldef('Demetris');
 noiseEvents = [];
-lfptype = 'eeg';
+% lfptype = 'eeg';
 expvars = {}; %,'rewarded', 'unrewarded', 'inbound' , 'outbound', 'proximalWell', ...
 %     'distalWell'};
 saveout = 1;
@@ -56,9 +56,9 @@ for ian = 1:length(rawpwr)
     tetinfo = loaddatastruct(andef{2}, animal, 'tetinfo');
     den = cellfetch(tetinfo, '');
     ntrodes = unique(den.index(:,3));
-    fprintf('lfptype %s \n', lfptype);
+%     fprintf('lfptype %s \n', lfptype);
     meandbpower = cell(1,length(expvars));
-    evcatanidx = find(strcmp({expvarCat.animal}, animal));
+    evcatanidx = find(strcmp({expvarCat.animal{3}}, animal));
     userips = ones(length(rawpwr(ian).day),1);
     if ~isempty(noiseEvents)
         % exclude invalid rips
@@ -71,7 +71,7 @@ for ian = 1:length(rawpwr)
     end
     % for each state/condition, compute dbpower, run timeshift permtest vs baseline
     for stset = 1:length(expvars)
-        fprintf('ripstate %s \n', expvars{stset});
+        fprintf('================== ripstate %s ================== \n', expvars{stset});
         stidx = find(strcmp(expvars{stset}, expvarCat(evcatanidx).expvars));
         sripidx = expvarCat(evcatanidx).dm(:,stidx);
         sripidx = find(all([sripidx, userips], 2));
@@ -84,7 +84,7 @@ for ian = 1:length(rawpwr)
     out(ian).expvars = expvars;
     out(ian).wp = wp;
     out(ian).Fp = Fp;
-    out(ian).lfptype = lfptype;
+%     out(ian).lfptype = lfptype;
     out(ian).data = meandbpower;
     out(ian).ntrode = rawpwr(ian).ntrode;
     

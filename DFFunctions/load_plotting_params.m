@@ -36,7 +36,7 @@ case 'defaults'
     set(0,'defaultAxesFontSize',10)
 
 
-%% ========= SWR 'eventTrigSpiking'=========
+%% ========= SWR Spikes =========
 
 case 'wtrackSWRSU'
     position = [.1 .1 .25 .4];
@@ -57,7 +57,7 @@ case 'wtrackSWRHeatrast'
     MgBm = 0.1; % margin bottom
     
 case 'wtrackSWRHeatRastAllAn'
-    position = [.1 .1 .3 .5];
+    position = [.1 .1 .8 .5];
     bin = .010; %sec
     win = [.3 .3];
     SpHz = 0.05;
@@ -65,8 +65,16 @@ case 'wtrackSWRHeatRastAllAn'
     MgBm = 0.1; % margin bottom
 
 case 'wtrackSWRModCDF'
+%% ========= SWR LFP =========    
+    case 'wtrackSWRPwrAreaPerAn'
+%             area = {{'mec', 'sup'}, {'mec', 'deep'}, {'ca1', 'd'}};
+    position = [.1 .1 .8 .5];
+    win = [-.5 .5];
+    cm = colormap(1-brewermap(100, 'spectral'));
+    usecolormap = cm;
+    tickFsize = 8;
     
-%% ========= Lick 'eventTrigSpiking'=========
+%% ========= Lick Spikes =========
 
 case 'wtrackLickSU'
     position = [.1 .1 .25 .4];
@@ -78,16 +86,16 @@ case 'wtrackLickSU'
     spikeSz = 50; 
     spikeAlpha = .5;
     
-case 'wtrackLickHeatrast'
-    position = [.1 .1 .3 .5];
+case 'wtrackLickHeatRast'
+    position = [.1 .1 .8 .5];
     bin = .010; %sec
     win = [.3 .3];
     SpHz = 0.05;
     MgLt = 0.1; % margin left
-    MgBm = 0.1; % margin bottom    
+    MgBm = 0.1; % margin bottom      
     
 case 'wtrackLickHeatRastAllAn'
-    position = [.1 .1 .3 .5];
+    position = [.1 .1 .8 .5];
     bin = .010; %sec
     win = [.3 .3];
     SpHz = 0.05;
@@ -160,12 +168,7 @@ case 'RxnPerPC'
     position = [.1 .1 .5 .5];
     winSE = [-.5 .5];
 
-case 'areaTFspect'
-%             area = {{'mec', 'sup'}, {'mec', 'deep'}, {'ca1', 'd'}};
-    position = [.1 .1 .8 .5];
-    win = [-.5 .5];
-    usecolormap = hot;
-    tickFsize = 8;
+
 
 case 'wetVDryILIphaseSWR'
     position = [.1 .1 .5 .5];

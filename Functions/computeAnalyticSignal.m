@@ -31,7 +31,7 @@ FFPhy V0.1
 
 
 saveOutput = 1;
-lfptype = 'eeg';
+% lfptype = 'eeg';
 waveSet = '4-300Hz';
 env = 'ep';
 eventType = 'swr';
@@ -46,12 +46,12 @@ for ian = 1:length(lfpstack)
     catch 
         animal = lfpstack(ian).animal;
     end
-    fprintf('computing Analytic Signal for %s %s\n', animal, lfptype);
+    fprintf('computing Analytic Signal for %s \n', animal);
     fprintf('waveSet: %s\n', waveSet);
     wp = getWaveParams(waveSet);
-    t = find(strcmp(lfpstack(ian).lfptypes, lfptype));
+%     t = find(strcmp(lfpstack(ian).lfptypes, lfptype));
     
-    dsampdata = lfpstack(ian).data{t}(:,1:wp.dsamp:end,:);
+    dsampdata = lfpstack(ian).data(:,1:wp.dsamp:end,:);
     nNtrodes = size(dsampdata,1);
     nevents = size(dsampdata,3);
     nsamps = size(dsampdata,2);
@@ -88,13 +88,13 @@ for ian = 1:length(lfpstack)
     phaseout(ian).ph =  single(angle(as)); % convert to single to save diskspace
     phaseout(ian).wp = wp;
     phaseout(ian).animal = animal;
-    phaseout(ian).day = lfpstack(ian).day{t};
-    phaseout(ian).epoch = lfpstack(ian).epoch{t};
-    phaseout(ian).evStart = lfpstack(ian).evStart{t};
+    phaseout(ian).day = lfpstack(ian).day;
+    phaseout(ian).epoch = lfpstack(ian).epoch;
+    phaseout(ian).evStart = lfpstack(ian).evStart;
     %     phaseout(ian).evEnd = lfpstack(ian).evEnd{t};
-    phaseout(ian).ntrode = lfpstack(ian).ntrodes{t};
+    phaseout(ian).ntrode = lfpstack(ian).ntrodes;
     phaseout(ian).frequency = wp.frex;
-    phaseout(ian).lfptype = lfptype;
+%     phaseout(ian).lfptype = lfptype;
     phaseout(ian).dsampsrate = wp.win(1):1/(wp.srate/wp.dsamp):wp.win(2);
     phaseout(ian).dsamp = wp.dsamp;
     phaseout(ian).time = timeWin;
@@ -105,13 +105,13 @@ for ian = 1:length(lfpstack)
     powerout(ian).pwr =  single(abs(as).^2); % convert to single to save diskspace
     powerout(ian).wp = wp;
     powerout(ian).animal = animal;
-    powerout(ian).day = lfpstack(ian).day{t};
-    powerout(ian).epoch = lfpstack(ian).epoch{t};
-    powerout(ian).evStart = lfpstack(ian).evStart{t};
+    powerout(ian).day = lfpstack(ian).day;
+    powerout(ian).epoch = lfpstack(ian).epoch;
+    powerout(ian).evStart = lfpstack(ian).evStart;
     %     powerout(ian).evEnd = lfpstack(ian).evEnd{t};
-    powerout(ian).ntrode = lfpstack(ian).ntrodes{t};
+    powerout(ian).ntrode = lfpstack(ian).ntrodes;
     powerout(ian).frequency = wp.frex;
-    powerout(ian).lfptype = lfptype;
+%     powerout(ian).lfptype = lfptype;
     powerout(ian).dsampsrate = wp.win(1):1/(wp.srate/wp.dsamp):wp.win(2);
     powerout(ian).dsamp = wp.dsamp;
     powerout(ian).time = timeWin;
@@ -124,9 +124,9 @@ for ian = 1:length(lfpstack)
         fprintf('saving\n')
         andef = animaldef(lower('Demetris'));
         save_data(phaseout(ian), sprintf('%s/analyticSignal/', andef{2}), ...
-            sprintf('LFPphase_%s_%s_%s_%s', waveSet, lfptype, env, eventType))
+            sprintf('LFPphase_%s_%s_%s', waveSet, env, eventType))
         save_data(powerout(ian), sprintf('%s/analyticSignal/', andef{2}), ...
-            sprintf('LFPpower_%s_%s_%s_%s', waveSet, lfptype, env, eventType))
+            sprintf('LFPpower_%s_%s_%s', waveSet, env, eventType))
     end
 end
 end

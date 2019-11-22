@@ -71,7 +71,7 @@ epStartTime = double(e{day}{ep}{nts(end)}.starttime);
 epEndTime = (num_samp/samprate) + epStartTime;
 w = win*samprate;
 
-%% get events from ~excludeperiods (CHANGE THIS)
+%% get event times, apply timefilter
 evid = find(contains(varargin(1:2:end), eventType));
 events = varargin{o(evid)};
 eventTimes = [];

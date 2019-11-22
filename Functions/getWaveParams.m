@@ -1,9 +1,17 @@
 
 function wavepms = getWaveParams(waveSet)
+% wavelet param sets
+%{ 
+Notes:
+- forest:bear:cactus:mushroom:beer:leaf
+
+FFPhy V0.1
+@DR
+%}
+
 wavepms = setParams(waveSet);
 end
 
-%add custom wavelet param sets as cases below
 
 function out = setParams(waveSet)
 allNTDataCat = [];
@@ -69,7 +77,7 @@ case '4-350Hz'
         srate = 1500;
         win = [-1.5 1.5];
         dsamp = 3;
-        basewin = [-.5 -.2]; % in seconds, period before event start to use as baseline
+        basewin = [-.7 -.2]; % in seconds, period before event start to use as baseline
         pval = 0.05;
         voxel_pval = 0.01;
         mcc_voxel_pval = 0.05;
@@ -85,8 +93,6 @@ case '4-350Hz'
         frex = logspace(log10(min_freq),log10(max_freq),numfrex);
         nWavecycles = logspace(log10(range_cycles(1)),log10(range_cycles(end)),numfrex); %number of wavelet cycles per freq
 %         hws = (length(timeWin)-1)/2; % half_wave_size 
-
-
 
     case '4-30Hz'
         srate = 1500;

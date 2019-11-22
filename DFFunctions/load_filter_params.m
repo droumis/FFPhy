@@ -54,7 +54,7 @@ case 'dfa_eventTrigLFP'
     iterator = 'multitetrodeanal';
     filtfunction = 'dfa_eventTrigLFP';
     datatypes = {eventType, LFPtypes{:}};
-    options = {'eventtype', eventType, 'LFPtypes', LFPtypes, 'win', win};
+    options = {'eventType', eventType, 'LFPtypes', LFPtypes, 'win', win};
 
 case 'wtrackSWRTrigLFP'
     % for dfa_eventTrigLFP
