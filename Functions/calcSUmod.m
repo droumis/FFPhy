@@ -1,6 +1,6 @@
 
 
-function out = calcSUmod(F, varargin)
+function out = calcSUmod(F, dmat, varargin)
 % [out] = calcSUmod(F, varargin)
 % calculate event-triggered modulation of SU spiking
 %
@@ -17,12 +17,13 @@ function out = calcSUmod(F, varargin)
 % args:
 % - F: struct with F.animal and F.data
 %   - F.data: time, psth, instantFR
-%
-% varargs:
 % - dmat: struct (make with beer)
 %       - dayeps: [day ep;...] per ev 
 %       - dm: binary. (event x set)
-
+%       - expvars: dmat labels as cell array of strings
+% varargs:
+%
+%
 %{
 Notes:
     - barn:rat:beer:wheelbarrow
@@ -48,8 +49,8 @@ nshuffs = 100;
 shuffbyMax = .7; % s to rand shuff by
 saveResult = 1;
 filetail = '';
-dmat = [];
-dmatIdx = {'all'};
+% dmat = [];
+% dmatIdx = {'all'};
 
 if ~isempty(varargin)
     assign(varargin{:})
@@ -61,7 +62,7 @@ for a = 1:length(F)
     out(a).animal = F(a).animal;
     fprintf('=========== %s ===========\n', animal);
     out(a).output = {};
-    out(a).dmatIdx = dmatIdx;
+    out(a).dmatIdx = dmat(a).expvars;
     ic = 0;
     for c = 1:length(F(a).output{1}) % for each cluster
         OP = init_out();

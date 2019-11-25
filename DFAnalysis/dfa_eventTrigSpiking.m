@@ -206,6 +206,7 @@ out.psfr = psfr;
 % out.psfrWZM = psfrWZM;
 % out.psfrWZMS = psfrWZMS;
 out.psifr = psifr;
+    
 end
 
 function out = init_out()
@@ -232,4 +233,10 @@ out.psfr = [];
 % out.psfrWZM = [];
 % out.psfrWZMS = [];
 out.psifr = [];
+
+out.spikePctSinceLick = [];
+out.spikeLickPhase = [];
+out.meanMRVmag = [];
+out.vecang = [];
+out.phasemod = [];
 end

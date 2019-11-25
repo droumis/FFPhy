@@ -73,9 +73,24 @@ case 'wtrackSWRModCDF'
     cm = colormap(1-brewermap(100, 'spectral'));
     usecolormap = cm;
     tickFsize = 8;
-    
+%% ========= Lick LFP =========    
+    case 'wtrackLickPwrAreaPerAn'
+%             area = {{'mec', 'sup'}, {'mec', 'deep'}, {'ca1', 'd'}};
+    position = [.1 .1 .8 .5];
+    win = [-.5 .5];
+    cm = colormap(1-brewermap(100, 'spectral'));
+    usecolormap = cm;
+    tickFsize = 8;    
 %% ========= Lick Spikes =========
-
+case 'suLickPhaseModHeatRastWtrack'
+    position = [.1 .1 .3 .5];
+    numBins = 120;
+    bin = .010; %sec
+    win = [.3 .3];
+    SpHz = 0.05;
+    MgLt = 0.1; % margin left
+    MgBm = 0.1; % margin bottom
+        
 case 'wtrackLickSU'
     position = [.1 .1 .25 .4];
     bin = .010; %sec
@@ -178,7 +193,7 @@ case 'FeatureTracking'
     Msz = 30;
     lickClr = [.5 0 1 .2];
     rewClr = [.3 .3 .3];
-    position = [.1 .1 .3 .4];
+    position = [.1 .1 1 1];
 
 case 'lickBoutSUswrmod'
     position = [.1 .1 .6 .7];

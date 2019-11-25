@@ -1,8 +1,6 @@
 
 % get occ norm firing rate of all single units
 
-
-
 run_ff = 0;
 savedata = run_ff;
 

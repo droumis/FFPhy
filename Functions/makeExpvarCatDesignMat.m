@@ -101,7 +101,7 @@ for ian = 1:length(data)
         end
         fprintf('============ %s =============\n', expvars{ss});
         Fp = load_filter_params(Fp);
-        F = createfilter('animal', {out(ian).animal{3}}, 'epochs', ...
+        F = createfilter('animal', {animal}, 'epochs', ...
             Fp.epochfilter, 'excludetime', Fp.timefilter);
         for de = 1:length(F.epochs{1}(:,1))
             day = F.epochs{1}(de,1);

@@ -32,60 +32,77 @@ eventTrigLFP::
         -> makeEventSet (beer:: ) ->
         -> get_power (cactus:: eventSetPowerTrace) ->
 
+% holy shit.. jz1 licktrigspiking is like 10 times the size on ram than it
+is on disk... i need to curate the licks to a subset
+
+also need to filter licks and ILI to those within lickburst range
 %}
 
 pconf = paramconfig;
-eventTrigLFP = 1; % PIPE:forest.bear.cactus.mushroom.beer.leaf == eventSet mean Spect
-eventTrigSpiking = 0; % PIPE:barn.rat.beer.wheelbarrow == eventSet SU mod
-eventType = 'swr'; %lick swr
+eventTrigLFP = 0; % PIPE:forest.bear.cactus.mushroom.beer.leaf == eventSet mean Spect
+eventTrigSpiking = 1; % PIPE:barn.rat.beer.wheelbarrow == eventSet SU mod
+eventType = 'lick'; %lick swr
 
 % run FF
-create_filter = 1;
-run_ff = 1;
+create_filter = 0;
+run_ff = 0;
 load_ffdata = 0;
 
-%% LFP
+%% LFP to Analytic Signal Stack
 % stack data
-stack_LFP = 1; % Comely cactus
+stack_LFP = 0; % Comely cactus
 load_LFPstack = 0;
 % get power, phase of all
-make_rawpwr = 1;
+make_rawpwr = 0; % Mendacious Mushroom
 load_rawpwr = 0;
 
-%% LFP AND SPIKE :: create condition design mat
-make_expvarCat = 1; % Baleful beer
+%% DESIGN MAT MAKER.. WORKS WITH SPIKE AND LFP
+make_expvarCat = 0; % Baleful beer
 load_expvarCat = 0;
 
-%% LFP
-% compute per condition
-make_expvarCatMeanPwr = 1; % Lachrymose leaf
+%% LFP Mean Power Per ExpVar
+make_expvarCatMeanPwr = 0; % Lachrymose leaf
 load_expvarCatMeanPwr = 0;
 % combine per area
-combineArea = 1;
+combineArea = 0;
 
-%% spike
+%% LFP ITPC Per ExpVar
+
+%% Spike Event Time Modulation
 calcSUMod = 0; % Wheedling wheelbarrow
 loadSUMod = 0;
-gatherResults = 0; % combines across animals. keeps eventSet results seperate per unit
+
+%% Spike Event PhaseModulation
+calcSUphasemod = 0;
+loadSUPhaseMod = 0;
+%Gather across animals, per area, condition
+gatherTimeModResults = 0;
+gatherPhaseModResults = 1;
+
+%% Spike Event Phasic Modulation
+phaseSpikeMod = 0;
+
+%% SWR x Event Phasic Modulation
 
 %% plot
-plotfigs = 1;
-showfigs = 0;
-pausefigs = 0;
+plotfigs = 0;
+showfigs = 1;
+pausefigs = 1;
 savefigs = 1;
 
-% swr
+% LFP
+plotLFPPerAreaAllAn = 0;
+
+% spike
 plotEventSU = 0;         % per eventSet, per SU
 plotEventHeatRast = 0; % per eventSet, per area, per animal and all animals
 plotEventHeatRastAllAni = 0; % requires gatherResults
 plotEventModCDF = 0;     % requires gatherResults// per eventSet, per area, per animal and all animals
-
-% LFP
-plotLFPPerAreaAllAn = 1;
-
+% spike phasemod lick
+plotSpikePhaseModHeatRast = 0;
 %%
 Fp = [];
-Fp.animals = {'JZ4'}; %, };
+Fp.animals = {'D10', 'JZ1', 'JZ4'};
 Fp.areas = {{'ca1', 'd'}, {'mec', 'deep'}, {'mec', 'supf'}};
 
 if eventTrigLFP
@@ -146,6 +163,50 @@ if load_ffdata
         'filetail', ['_' Fp.Label]);
 end
 
+% %% phasic spike mod
+% if phaseSpikeMod
+%     for a = 1:length(F)
+%         animal = F(a).animal{3};
+%         for c = 1:length(F(a).output{1})
+%             eT = F(a).output{1}(c).eventTimes;
+%             ILI = diff(eT);
+% %             o(a).output(e).ILI = deT;
+%              bin = diff(F(a).output{1}(c).time(1:2)); % should be ~1 ms
+%              cIdx = knnsearch(F(a).output{1}(c).time', 0);
+%              deTIdx = knnsearch(F(a).output{1}(c).time', ILI);
+% %              o(a).output(e).ILIidx = deTIdx;
+%             pinceLick = [];
+%             for e = 1:length(ILI)
+%                 spIli = F(a).output{1}(c).psth(e,cIdx:deTIdx(e));
+%                 if any(spIli)
+%                     spkOffset = find(spIli)*bin; % idx distance from center (event), scaled to time
+%                     pinceLick{e,1} = [spkOffset ./ ILI(e)]';
+%                 end
+%             end
+%             spikePctSinceLick = cell2mat(pinceLick);
+%             if ~isempty(spikePctSinceLick)
+%                 spikeILIphase = spikePctSinceLick*2*pi;
+%                 meanvec = mean(exp(1i*spikeILIphase));
+%                 meanMRVmag = abs(meanvec);
+%                 vecang = angle(meanvec);
+%                 [~, z] = circ_rtest(spikeILIphase);
+%                 phasemod = log(z);
+%                 F(a).output{1}(c).spikePctSinceLick = spikePctSinceLick;
+%                 F(a).output{1}(c).spikeLickPhase = spikeILIphase;
+%                 F(a).output{1}(c).meanMRVmag = meanMRVmag;
+%                 F(a).output{1}(c).vecang = vecang;
+%                 F(a).output{1}(c).phasemod = phasemod;
+%             else
+%                 F(a).output{1}(c).spikePctSinceLick = [];
+%                 F(a).output{1}(c).spikeLickPhase = [];
+%                 F(a).output{1}(c).meanMRVmag = [];
+%                 F(a).output{1}(c).vecang = [];
+%                 F(a).output{1}(c).phasemod = [];
+%             end
+%         end
+%     end
+% end
+
 %% vectorize swr-trig lfp
 if stack_LFP
     lfpstack = stack_riptriglfp(F, Fp);
@@ -168,7 +229,7 @@ if load_rawpwr
         Fp.eventType), Fp.animals);
 end
 
-%% make design mat to slice the rawpwr trials
+%% FOR SPIKES make design mat to slice trials
 if make_expvarCat
     if eventTrigSpiking
         data = [];
@@ -192,18 +253,18 @@ if make_expvarCat
     else
         data = lfpstack;
     end
-    expvarCat = makeExpvarCatDesignMat(data, expvars, 'eventType', Fp.eventType);
+    dmat = makeExpvarCatDesignMat(data, expvars, 'eventType', Fp.eventType);
 end
 
 if load_expvarCat
     outdir = 'expvarCat';
     outpath = [pconf.andef{2},outdir,'/'];
-    expvarCat = load_data(outpath, [outdir,'_',Fp.env,'_',Fp.eventType], Fp.animals);
+    dmat = load_data(outpath, [outdir,'_',Fp.env,'_',Fp.eventType], Fp.animals);
 end
 
 %% LFP POWER per condition
 if make_expvarCatMeanPwr % :expvarCat @mean /ntTF $time
-    evMPwr = getPower(expvarCat, rawpwr, Fp, 'run_perm', 0, 'eventType', Fp.eventType);
+    evMPwr = getPower(dmat, rawpwr, Fp, 'run_perm', 0, 'eventType', Fp.eventType);
 end
 if load_expvarCatMeanPwr
     outdir = 'expvarCatMeanPwr';
@@ -211,22 +272,84 @@ if load_expvarCatMeanPwr
     evMPwr = load_data(outpath, [outdir,'_', Fp.env '_' Fp.eventType], Fp.animals);
 end
 
+%% Spike Phase mod
+if calcSUphasemod
+    pmodF = calcPhaseMod(F, dmat);
+    save_data(pmodF, 'results', [Fp.Label '_phasemod']);
+end
+if loadSUPhaseMod
+    pmodF = load_data('results', [Fp.Label '_phasemod'], Fp.animals);
+end
+
+%% SPIKE Gather all Phasemod su per area, eventSet
+if gatherPhaseModResults
+    areaPhasemod = {};
+    allAnPmodF = cell2mat(arrayfun(@(x) pmodF(x).output{1}', 1:length(pmodF), 'un', 0)');
+    numESet = length(pmodF(1).dmatIdx);
+%     iMPctCh = [];
+%     iMPctChSh = [];
+%     PhModSorted = {};
+    for ar = 1:length(Fp.areas) % per area
+        % find cells in this area
+        areaIdx = strcmp({allAnPmodF.area}', Fp.areas{ar}{1});
+        subareaIdx = ~cellfun(@isempty, strfind({allAnPmodF.subarea}', Fp.areas{ar}{2}), 'un', 1);
+        iareaIdx = find(all([areaIdx subareaIdx],2));
+        iareaIdx = iareaIdx(arrayfun(@(x) ~isempty(allAnPmodF(x).phasemod), ...
+            iareaIdx,'un',1));
+        
+        for iv = 1:numESet % per eventSet    
+            gud = [];
+            dumpy = [];
+            phasemod = [];
+            mPctChangeSh = [];
+            for i = 1:length(iareaIdx)
+                try
+                    m = allAnPmodF(iareaIdx(i)).phasemod{iv};
+%                     mSh = allAnPmodF(iareaIdx(i)).mPctChangeSh{iv};
+                    if ~isempty(m)
+                        phasemod = [phasemod; m];
+                        mPctChangeSh = [mPctChangeSh; mSh];
+                        gud = [gud; i];
+                    end
+                catch
+                    continue
+                end
+            end
+            areaPhasemod{ar,iv} = phasemod; %cell2mat(arrayfun(@(x) allmodF(x).mPctChange{iv}, iareaIdx,'un',0));
+%             iMPctChSh{ar,iv} = mPctChangeSh; %cell2mat(arrayfun(@(x) allmodF(x).mPctChangeSh{iv}, iareaIdx,'un',0));
+            
+            % Firing Rate HeatRaster concat, normalize, smooth, sort
+%             iFRHRz = cell2mat(arrayfun(@(x) allAnPmodF(x).evMeanZ{iv}, iareaIdx(gud),'un',0));
+%             iFRHRzsm = smoothdata(iFRHRz, 2, 'loess', 10);
+% %             mPctChange = cell2mat(arrayfun(@(x) allmodF(x).mPctChange{iv}, iareaIdx,'un',0));
+%             [~, srtIdx] = sort(mPctChange, 1, 'descend');
+%             iFRHRsmzSorted =  iFRHRzsm(srtIdx,:);
+%             try
+%                 FRHeatrast{ar,iv} = [FRHeatrast{ar,iv}; iFRHRsmzSorted];
+%             catch
+%                 FRHeatrast{ar,iv} = iFRHRsmzSorted;
+%             end
+        end
+    end
+end
+
 %% calc su modulation
 if calcSUMod % wheelbarrow
-    modF = calcSUmod(F, 'dmat', expvarCat, 'dmatIdx', expvars);
+    modF = calcSUmod(F, dmat);
     save_data(modF, 'results', Fp.Label);
 end
 if loadSUMod
     modF = load_data('results', Fp.Label, Fp.animals);
 end
 
-%% Gather all su per area, eventSet
-if gatherResults
+%% SPIKE Gather all su per area, eventSet
+if gatherTimeModResults
     FRHeatrast = {};
     allmodF = cell2mat(arrayfun(@(x) modF(x).output{1}', 1:length(modF), 'un', 0)');
     numESet = length(modF(1).dmatIdx);
     iMPctCh = [];
     iMPctChSh = [];
+    PhModSorted = {};
     for ar = 1:length(Fp.areas) % per area
         % find cells in this area
         areaIdx = strcmp({allmodF.area}', Fp.areas{ar}{1});
@@ -276,10 +399,14 @@ if gatherResults
     end
 end
 
-%% combine perArea perCondition
+%% LFP combine perArea perCondition
 if combineArea
     for ani = 1:length(evMPwr) % for each animal
-        animal = evMPwr(ani).animal;
+        try
+            animal = evMPwr(ani).animal{3};
+        catch
+            animal = evMPwr(ani).animal;
+        end
         evMPwrArea(ani).animal = animal;
         evMPwrArea(ani).expvars = evMPwr(ani).expvars;
         aninfo = animaldef(animal);
@@ -304,8 +431,62 @@ end
 
 %% PLOT=====================================================================
 if plotfigs
+    %% plot phasemod heatrast per animal
+    if plotSpikePhaseModHeatRast
+        figname = 'suLickPhaseModHeatRastWtrack';
+        Pp=load_plotting_params({'defaults', figname});
+        binphase = linspace(0, 2*pi, Pp.numBins);
+        binphC = binphase(1:end-1) + diff(1:2)/2;
+        x = [binphC]; % binphC+max(binphC)];
+        for a = 1:length(pmodF)
+            animal = pmodF(a).animal{3};
+            fprintf('%s\n', animal);
+            for ar = 1:length(Fp.areas)
+                ifig = init_plot(showfigs, Pp.position);
+                % find cells in this area
+                areaIdx = strcmp({pmodF(a).output{1}.area}', Fp.areas{ar}{1});
+                subareaIdx = ~cellfun(@isempty, strfind({pmodF(a).output{1}.subarea}', Fp.areas{ar}{2}));
+                iareaIdx = find(all([areaIdx subareaIdx],2));
+                for iv = 1:length(pmodF(a).dmatIdx)
+                % make heatraster from all the clusters in this area,
+                % condition
+                spikeLickPhaseHist = cell2mat(arrayfun(@(x) ...
+                    histcounts(pmodF(a).output{1}(x).spikeLickPhase{iv}, binphase, 'Normalization', ...
+                    'probability'), iareaIdx, 'un', 0));
+%                 spikeLickPhaseHistShift = circshift(spikeLickPhaseHist, round(size(spikeLickPhaseHist,2)/2), 2);
+                [~, imx] = max(spikeLickPhaseHist,[],2);
+                %             [~, modsortIdx] = sort(max(spikeLickPhase,[],2), 1, 'descend');
+                [~, modsortIdx] = sort(imx, 1, 'descend');
+                spikeLickPhaseSort = spikeLickPhaseHist(modsortIdx,:);
+                spikeLickPhaseZ = zscore(smoothdata(spikeLickPhaseSort, 2, 'loess', 6), [],2);
+
+                %% all su in area heatraster
+                sf = subaxis(1,1,1, Pp.posparams{:});
+                sf.Tag = 'heatrast';
+                imagesc(x, 1:length(iareaIdx), spikeLickPhaseZ);
+                caxis(sf,'auto')
+                colormap('jet');
+                line([0 0], ylim, 'Color', 'k')
+                ylabel(sprintf('%s SU num', strjoin(Fp.areas{:,ar})))
+                %                 title(sprintf('%s %s', Fp.areas{ar}{1}, Fp.areas{ar}{2}))
+                xlabel('lick phase rad')
+                %%
+                %             allAxesInFigure = findall(gcf,'type','axes');
+                %             linkaxes(allAxesInFigure, 'x');
+                stit = sprintf('%s %s %s %s', figname, animal, Fp.env, strjoin(Fp.areas{:,ar}));
+                setSuperAxTitle(stit);
+                if pausefigs
+                    pause;
+                end
+                if savefigs
+                    save_figure([pconf.andef{4} '/' figname '/' animal], stit);
+                end
+                end
+            end
+        end
+    end
     
-    %% plot per area
+    %% plot LFP PWR per area per condition
     if plotLFPPerAreaAllAn
         if strcmp(eventType, 'swr')
             figname = 'wtrackSWRPwrAreaPerAn';
@@ -328,13 +509,18 @@ if plotfigs
                     set(gca,'ydir','normal','yscale','log');
                     
                     colormap(Pp.usecolormap)
-%                     caxis(sf, 'auto')
-%                     cax = caxis;
-                    if ia == 1
-                        caxis([-4 4]); %cax(2)])
-                    else
-                        caxis([-1.5 1.5]); %cax(2)])
+                    if iv == 1
+                        caxis(sf, 'auto')
+                        cax = [-max(abs(caxis)) max(abs(caxis))];
                     end
+                    caxis(sf, cax) % normalize to the 'all' condition
+                    
+                    
+%                     if ia == 1
+%                         caxis([-4 4]); %cax(2)])
+%                     else
+%                         caxis([-1.5 1.5]); %cax(2)])
+%                     end
                     ytickskip = 2:4:wp.numfrex;
                     set(gca,'ytick', round(wp.frex(ytickskip)), 'FontSize', Pp.tickFsize)
                     title(sprintf('%s',evMPwr(ani).expvars{iv}))
@@ -575,6 +761,7 @@ if plotfigs
                 [shufh, shufb] = histcounts(iMPctChSh{ar,iv}, numbins,'Normalization','cdf');
                 plot(shufb(1:end-1)+diff(shufb(1:2)) / 2, shufh, 'k')
                 hold on;
+                
                 [h, b] = histcounts(iMPctCh{ar,iv}, numbins, 'Normalization', 'cdf');
                 plot(b(1:end-1) + diff(b(1:2)) / 2, h, 'color', 'b')
 %                 set(gca, 'XScale', 'log')
@@ -627,36 +814,20 @@ if plotfigs
         end
     end
 end
-%     %% %%%%%% Lick %%%%%%
-%     if plotLickTrigSU
-%        
-%         
-%     end
-%     %% Plot all lickburst licks. (all an, events) (per area, celltype)
-%     if plotLickTrigHeatRaster
-%         % time =
-%         % mod_Area1_type1_lickTrigSpiking =
-%         % mod_Area1_type1_lickTrigSpiking_sh =
-%         
-%         plot(time, Area1_type1_lickTrigSpiking)
-%     end
-%     %% sig plot, testing
-%     if plotLickTrigModCDF
-%         % cdf plot vs shuf
-%         [h, e] = histcounts(mod_Area1_type1_lickTrigSpiking, 200, 'Normalization', 'cdf');
-%         [hsh, e] = histcounts(mod_Area1_type1_lickTrigSpiking_sh, 200, 'Normalization', 'cdf');
-%         
-%         plot(e, h);
-%         hold on;
-%         
-%         if pctSU_sigmod_CA1_PN_lickTrigSpiking > .05 %?
-%             fprintf('result: area %s is sig mod', iarea)
-%         end
-%     end
-% end
 
 %% %%%%%% ILI Phase %%%%%%
 %% all lickburst ILI. (all an, events) (per area, celltype)
+% pm = [F(a).output{1}.phasemod];
+% 
+
+[h, b] = histcounts(areaPhasemod{1,1}, 200, 'Normalization', 'cdf');
+plot(b(1:end-1) + diff(b(1:2)) / 2, h)
+xlabel('phasemod')
+ylabel('% units');
+ax = gca;
+ax.YDir = 'reverse';
+axis tight
+hold on
 
                 % get signal with uniform prior distribution.
                 % compute circular ranks of the phase distribution
