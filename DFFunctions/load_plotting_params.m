@@ -82,15 +82,7 @@ case 'wtrackSWRModCDF'
     usecolormap = cm;
     tickFsize = 8;    
 %% ========= Lick Spikes =========
-case 'suLickPhaseModHeatRastWtrack'
-    position = [.1 .1 .3 .5];
-    numBins = 120;
-    bin = .010; %sec
-    win = [.3 .3];
-    SpHz = 0.05;
-    MgLt = 0.1; % margin left
-    MgBm = 0.1; % margin bottom
-        
+
 case 'wtrackLickSU'
     position = [.1 .1 .25 .4];
     bin = .010; %sec
@@ -100,6 +92,16 @@ case 'wtrackLickSU'
     MgBm = 0.1; % margin bottom
     spikeSz = 50; 
     spikeAlpha = .5;
+    
+case 'suLickPhaseModHeatRastWtrack'
+    position = [.1 .1 .6 .5];
+    numBins = 40;
+    bin = .010; %sec
+    win = [.3 .3];
+    SpHz = 0.05;
+    MgRt = 0.04;
+    MgLt = 0.1; % margin left
+    MgBm = 0.1; % margin bottom
     
 case 'wtrackLickHeatRast'
     position = [.1 .1 .8 .5];
@@ -118,7 +120,15 @@ case 'wtrackLickHeatRastAllAn'
     MgBm = 0.1; % margin bottom
 
 case 'wtrackLickModCDF'
-
+        
+case 'SULickILPC_cdfPolar'
+case 'wXPSU-cdfPolar'
+    position = [.1 .1 .6 .5];
+    logZBins = 200;
+    sigPct = .95;
+    SpHz = 0.05;
+    SpVt = 0.15;
+    MgLt = 0.05;
 %% ========= 
     
 case 'SWRTrigHeatraster'
@@ -129,12 +139,7 @@ case 'SWRTrigHeatraster'
     MgLt = 0.1; % margin left
     MgBm = 0.1; % margin bottom
 
-case 'SULickILPC_cdfPolar'
-    position = [.1 .1 .2 .4];
-    logZBins = 200;
-    sigPct = .95;
-    SpVt = 0.15;
-    MgLt = 0.15;
+
 
 case 'suILPC'
     position = [.1 .1 .2 .4];

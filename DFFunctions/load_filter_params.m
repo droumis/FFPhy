@@ -26,6 +26,14 @@ fprintf('* %s\n', s{1})
 switch s{1}
 
 %% ========= 'dfa_eventTrigSpiking'=========
+case 'lickboutlicks'
+%     minILIthresh = .06; % seconds
+%     maxILIthresh = .250; % seconds
+%     minBoutLicks = 3;
+%     timefilter{end+1} = {'getLickBoutLicks', '($LBlick == 1)', ...
+%         'minILIthresh', minILIthresh, 'maxILIthresh', maxILIthresh, ...
+%         'minBoutLicks', minBoutLicks};
+
 case 'dfa_eventTrigSpiking'           
     iterator = 'singleDayCellAnal';
     filtfunction = 'dfa_eventTrigSpiking';
@@ -47,7 +55,7 @@ case 'wtrackLickTrigSpiking'
     bin = .001;
     wbin = .01; % seconds. wider psth
 %             smbins = 10; % bins. smooth across x bins (wbin x smbins = range of influence)
-    eventType = 'lick';            
+    eventType = 'lick';
 
 %% ========= 'dfa_eventTrigLFP'=========
 case 'dfa_eventTrigLFP'

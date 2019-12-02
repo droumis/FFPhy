@@ -29,7 +29,8 @@ Notes:
 FFPhy V0.1
 @DR
 %}
-
+comuteShuf = 1;
+numShuf = 1000;
 pconf = paramconfig;
 bin = .001;
 try
@@ -75,22 +76,30 @@ for a = 1:length(F)
             cIdx = knnsearch(time', 0);
             ILIidx = knnsearch(time', ILI);
             pSinceLick = [];
+            spkOffsetAll = [];
             for e = 1:length(ILI)
-                spIli = psth(e,cIdx:ILIidx(e));
-                if any(spIli)
-                    spkOffset = find(spIli)*bin; % idx distance from center (event), scaled to time
-                    pSinceLick{e,1} = [spkOffset ./ ILI(e)]';
+                if ILI(e) < .250 && ILI(e) > .060
+                    spIliIdx = find(psth(e,cIdx:ILIidx(e)));
+                    if ~isempty(spIliIdx)
+                        spkOffset = spIliIdx*bin; % idx distance from center (event), scaled to time
+                        pSinceLick{e,1} = [spkOffset ./ ILI(e)]';
+                        spkOffsetAll{e,1} = spkOffset;
+                    end
+                else
+                    continue
                 end
             end
-            pSinceLick = pSinceLick;
             spikePctSinceLick = cell2mat(pSinceLick);
             if ~isempty(spikePctSinceLick)
-                spikeILIphase = spikePctSinceLick*2*pi;
+                spikeILIphase = 2*pi*spikePctSinceLick;
                 meanvec = mean(exp(1i*spikeILIphase));
                 meanMRVmag = abs(meanvec);
                 vecang = angle(meanvec);
-                [~, z] = circ_rtest(spikeILIphase);
+                [pval, z] = circ_rtest(spikeILIphase);
                 phasemod = log(z);
+                OP.pval{iv} = pval;
+                OP.ILI{iv} = ILI;
+                OP.spkOffsetAll{iv} = spkOffsetAll;
                 OP.spikePctSinceLick{iv} = spikePctSinceLick;
                 OP.spikeLickPhase{iv} = spikeILIphase;
                 OP.meanMRVmag{iv} = meanMRVmag;
@@ -99,6 +108,20 @@ for a = 1:length(F)
                 
                 OP.area = idata.area;
                 OP.subarea = idata.subarea;
+                if comuteShuf
+                    r = rand(length(spikePctSinceLick), numShuf);
+                    for s = 1:numShuf
+                        spikeILIphase = 2*pi*r(:,s);
+                        meanvec = mean(exp(1i*spikeILIphase));
+                        meanMRVmag = abs(meanvec);
+                        vecang = angle(meanvec);
+                        [~, z] = circ_rtest(spikeILIphase);
+                        phasemodSh{s} = log(z);
+                    end
+                    OP.meanMRVmagSh{iv} = meanMRVmag;
+                    OP.vecangSh{iv} = vecang;
+                    OP.phasemodSh{iv} = cell2mat(phasemodSh);
+                end
             end
         end
         ic = ic +1;
@@ -107,6 +130,9 @@ for a = 1:length(F)
 end
 end
 function out = init_out()
+out.pval = [];
+out.ILI = [];
+out.spkOffsetAll = [];
 out.spikePctSinceLick = [];
 out.spikeLickPhase = [];
 out.meanMRVmag = [];
@@ -116,4 +142,7 @@ out.phasemod = [];
 out.area = '';
 out.subarea = '';
 
+out.meanMRVmagSh = [];
+out.vecangSh = [];
+out.phasemodSh = [];
 end

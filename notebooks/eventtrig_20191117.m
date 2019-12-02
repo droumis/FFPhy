@@ -79,9 +79,6 @@ loadSUPhaseMod = 0;
 gatherTimeModResults = 0;
 gatherPhaseModResults = 1;
 
-%% Spike Event Phasic Modulation
-phaseSpikeMod = 0;
-
 %% SWR x Event Phasic Modulation
 
 %% plot

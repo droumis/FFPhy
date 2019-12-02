@@ -163,7 +163,11 @@ swrLickPhase = 2*pi*swrPctSinceLick; % pct of full cycle
 meanvec = mean(exp(1i*swrLickPhase)); % get mean resultant vector
 meanMRVmag = abs(meanvec); % vector magnitude
 vecang = angle(meanvec);
+Z = meanMRVmag^2/n;
 [~, z] = circ_rtest(swrLickPhase); % z is mean res vec
+if Z ~= z
+    error('-----wut?')
+end
 phasemod = log(z); % log variance normalizes (karalis,sirota)
 
 out.swrStart = swrTimes;

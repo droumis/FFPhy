@@ -15,7 +15,8 @@ function [out] = dfa_eventTrigSpiking(idx, timeFilter, varargin)
 % 
 % args:
 % idx: [day epoch ntrode cluster]
-% timeFilter: intervals to exclude. [start end; ...] applies to events, spikes
+% timeFilter: intervals to exclude. [start end; ...] applies only to events,
+% unless applyTFtoSpikes varargin set to 1.
 % 
 % varargs:
 % - data: (i.e. 'spikes', spikes)
@@ -136,8 +137,18 @@ for e = 1:length(eps)
         epEvInc(end,:) = [];
     end
     
-    numEventsPerEp = [numEventsPerEp length(epEvInc)];
     eventTimes = [eventTimes; epEvInc];
+end
+
+if strcmp(eventType, 'lick')
+    lickTimesLB = getLickBoutLicks(animal, [repmat(day,length(eps),1) eps'], varargin);
+    eventTimes = lickTimesLB(ismember(lickTimesLB, eventTimes));
+end
+numEventsPerEp = [];
+for e = 1:length(eps)
+    epStartTime = spikes{day}{eps(e)}{nt}{clust}.timerange(1);
+    epEndTime = spikes{day}{eps(e)}{nt}{clust}.timerange(2);
+    numEventsPerEp = [numEventsPerEp; sum(logical(isExcluded(eventTimes, [epStartTime epEndTime])))];
 end
 
 evafter = size(eventTimes,1);
@@ -149,7 +160,6 @@ if isempty(eventTimes)
     return
 end
 
-% 
 % epStartTime = [];
 % epEndTime = [];
 % for e = 1:length(eps)
