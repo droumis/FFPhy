@@ -27,12 +27,14 @@ Notes:
     - barn:rat:beer:saw
 
 FFPhy V0.1
-@DR
+@DKR
 %}
 comuteShuf = 1;
 numShuf = 1000;
 pconf = paramconfig;
 bin = .001;
+minILIthresh = .06; % seconds
+maxILIthresh = .250; % seconds
 try
     assign(varagin{:})
 catch
@@ -68,7 +70,6 @@ for a = 1:length(F)
         end
         OP.index = idx;
         for iv = 1:size(dayDM,2)
-            
             eT = F(a).output{1}(c).eventTimes(dayDM(:,iv));
             time = F(a).output{1}(c).time;
             psth = F(a).output{1}(c).psth(dayDM(:,iv),:);
@@ -78,7 +79,7 @@ for a = 1:length(F)
             pSinceLick = [];
             spkOffsetAll = [];
             for e = 1:length(ILI)
-                if ILI(e) < .250 && ILI(e) > .060
+                if ILI(e) < maxILIthresh && ILI(e) > minILIthresh
                     spIliIdx = find(psth(e,cIdx:ILIidx(e)));
                     if ~isempty(spIliIdx)
                         spkOffset = spIliIdx*bin; % idx distance from center (event), scaled to time
@@ -121,6 +122,10 @@ for a = 1:length(F)
                     OP.meanMRVmagSh{iv} = meanMRVmag;
                     OP.vecangSh{iv} = vecang;
                     OP.phasemodSh{iv} = cell2mat(phasemodSh);
+
+                    % real-mod shuff-pct
+                    OP.modPctRank{iv} = 100*(1-(sum(OP.phasemodSh{iv} > OP.phasemod{iv})./numShuf));
+                    fprintf('iv%d mod > %.02f pctShufs.\n', iv, modPctRank)
                 end
             end
         end
@@ -138,6 +143,7 @@ out.spikeLickPhase = [];
 out.meanMRVmag = [];
 out.vecang = [];
 out.phasemod = [];
+out.modPctRank = [];
 
 out.area = '';
 out.subarea = '';

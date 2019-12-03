@@ -136,7 +136,7 @@ out.lickID = lickID;
 
 %% XCORR, EXCORR
 time = (-tmax+bin/2):bin:(tmax-bin/2);
-xc = spikexcorr(spikeTimes, lickTimes, bin, tmax);
+xc = spikexcorr(spikeTimes, lickTimes, bin, tmax); % arg 2 is the reference signal
 normxc = xc.c1vsc2 ./ sqrt(xc.nspikes1 * xc.nspikes2); % normalize xc
 nstd = round(excShortBin/bin);
 g1 = gaussian(nstd, 2*nstd+1);
@@ -160,8 +160,8 @@ out.excorr = excorr;
 % out.p2 = p2;
 % out.expProb = expProb;
 
-%% Raleigh, PhaseMod (use lick-burst licks)
-%% Get lick-burst intervals
+%% Raleigh, PhaseMod (use burst XP)
+% Get lick-burst intervals
 dayEpochs = [repmat(day, length(eps), 1), eps'];
 licksVecs = getLickBout([], animal, dayEpochs, 'lick', lick, 'maxIntraBurstILI', ...
     maxILIthresh, 'minBoutLicks', minBoutLicks);
@@ -185,41 +185,44 @@ end
 fprintf('%d licks within %d bursts \n',numel(lbLicks), size(burstIntvs,1))
 
 %% get spike events within lick-burst intervals
-burstSpikeTime = spikeTimes(logical(isExcluded(spikeTimes, burstIntvs)));
-burstSpikeTime = sort(burstSpikeTime(~isnan(burstSpikeTime)));
+LBSpikeTime = spikeTimes(logical(isExcluded(spikeTimes, burstIntvs)));
+LBSpikeTime = sort(LBSpikeTime(~isnan(LBSpikeTime)));
 fprintf('spikes within %d lickbouts:  %d (%.02f pct) \n', size(burstIntvs,1), ...
-    numel(burstSpikeTime), length(burstSpikeTime)/length(spikeTimes)*100)
-if isempty(burstSpikeTime)
+    numel(LBSpikeTime), length(LBSpikeTime)/length(spikeTimes)*100)
+if isempty(LBSpikeTime)
     fprintf('no spikes in lick bouts for %d %d %d %d %d skipping\n', idx)
     return
 end
 
 %% Get the containing licks for each spike
 % histc given licks as edges: get bin idx. lickedges(binidx) is the prior edge of bin 
-[~,~,spikeLickBinidx] = histcounts(burstSpikeTime, lbLicks);
+[~,~,spikeLickBinidx] = histcounts(LBSpikeTime, lbLicks);
 % exclude spikes in 0 bin
 spikeLickBinidx = spikeLickBinidx(spikeLickBinidx > 0);
-burstSpikeTime = burstSpikeTime(spikeLickBinidx > 0);
+LBSpikeTime = LBSpikeTime(spikeLickBinidx > 0);
 % time since pre-containing lick
-spikeTimeSinceLick = burstSpikeTime - lbLicks(spikeLickBinidx);
+spikeTimeSinceLick = LBSpikeTime - lbLicks(spikeLickBinidx);
 % get inter lick interval containing each spike
-spikeBinILI = lbLicks(spikeLickBinidx+1) - lbLicks(spikeLickBinidx); % +1 is post-containing lick
+ILI = lbLicks(spikeLickBinidx+1) - lbLicks(spikeLickBinidx); % +1 is post-containing lick
 % exclude spike-containing ili out of lick burst range 60 : 250 ms
-spikeValidILI = all([spikeBinILI > minILIthresh spikeBinILI < maxILIthresh],2);
+spikeValidILI = all([ILI > minILIthresh ILI < maxILIthresh],2);
 fprintf('lBurst spikes in valid ILI: %d (%.02f pct) \n', sum(spikeValidILI), ...
     sum(spikeValidILI)/length(spikeTimes)*100)
-burstSpikeTime = burstSpikeTime(spikeValidILI);
-if isempty(burstSpikeTime)
+LBSpikeTime = LBSpikeTime(spikeValidILI);
+if isempty(LBSpikeTime)
     return
 end
-spikeBinILI = spikeBinILI(spikeValidILI);
+ILI = ILI(spikeValidILI);
 spikeTimeSinceLick = spikeTimeSinceLick(spikeValidILI);
 out.spikeTimeSinceLick = spikeTimeSinceLick;
 % save spike-containing burst id
-[~,~,spikeLickBurstIdx] = histcounts(burstSpikeTime, [burstIntvs(:,1); inf]);
+[~,~,spikeLickBurstIdx] = histcounts(LBSpikeTime, [burstIntvs(:,1); inf]);
 out.spikeBurstInterval = burstIntvs(spikeLickBurstIdx,:);
-out.spikeTimeSinceBurstStart = burstSpikeTime - out.spikeBurstInterval(:,1);
+out.spikeTimeSinceBurstStart = LBSpikeTime - out.spikeBurstInterval(:,1);
 % save the spike-containing burst lick order
+% ultimately I want the count, relative to burst, for each spike-containing ILI
+% so group the licks by lickburst ID, then get a per-burst cumcount with
+% splitapply.. then, bc it's same dim as LBlicks, index from cumcount for each spike-containing ILI idx
 [~, ~, lickBurstBinIdx] = histcounts(lbLicks, [burstIntvs(:,1); inf]);
 out.lickBurstBinIdx = lickBurstBinIdx;
 Y = cell2mat(splitapply(@(x) {[1:length(x)]'}, lickBurstBinIdx, lickBurstBinIdx));
@@ -228,7 +231,7 @@ out.spikeBurstLickNum = Y(spikeLickBinidx(spikeValidILI));
 out.spikePctSinceBurst = out.spikeTimeSinceBurstStart ./ diff(out.spikeBurstInterval,[],2);
 
 %% phasemod
-spikePctSinceLick = spikeTimeSinceLick ./ spikeBinILI;
+spikePctSinceLick = spikeTimeSinceLick ./ ILI;
 spikeLickPhase = 2*pi*spikePctSinceLick; % pct of full cycle
 meanvec = mean(exp(1i*spikeLickPhase)); % get mean resultant vector
 meanMRVmag = abs(meanvec); % vector magnitude
@@ -255,6 +258,7 @@ out.phasemod = phasemod;
 
 %% Compute shuffled lickDin x swr
 if computeShuf
+    error('the phasemod here is getting shuffled in time, but should be in pct/phase..see calcPhaseMod')
 %     tic
     for i = 1:numShufs
         % shuffle spike times locally 
@@ -287,27 +291,27 @@ if computeShuf
 
        %% phasemod stuff
        %% get spike events within lick-burst intervals
-        burstSpikeTime = spikeTimesShuf(logical(isExcluded(spikeTimesShuf, burstIntvs)));
-        burstSpikeTime = sort(burstSpikeTime(~isnan(burstSpikeTime)));
+        LBSpikeTime = spikeTimesShuf(logical(isExcluded(spikeTimesShuf, burstIntvs)));
+        LBSpikeTime = sort(LBSpikeTime(~isnan(LBSpikeTime)));
 %         fprintf('spikes within %d lickbouts:  %d (%.02f pct swrs) \n', size(burstIntvs,1), ...
 %             numel(burstSpikeTime), length(burstSpikeTime)/length(spikeTimesShuf)*100)
-        if isempty(burstSpikeTime)
+        if isempty(LBSpikeTime)
             continue
         end
         
         % histc given licks as edges: get bin idx. lickedges(binidx) is the prior edge of bin 
-        [~,~,spikeLickBinidx] = histcounts(burstSpikeTime, lbLicks);
+        [~,~,spikeLickBinidx] = histcounts(LBSpikeTime, lbLicks);
         % exclude spikes in 0 bin, before first lick edge
         spikeLickBinidx = spikeLickBinidx(spikeLickBinidx > 0);
-        burstSpikeTime = burstSpikeTime(spikeLickBinidx > 0);
+        LBSpikeTime = LBSpikeTime(spikeLickBinidx > 0);
         % time since pre-containing lick
-        spikeTimeSinceLick = burstSpikeTime - lbLicks(spikeLickBinidx);
+        spikeTimeSinceLick = LBSpikeTime - lbLicks(spikeLickBinidx);
         % get inter lick interval containing each spike
-        spikeBinILI = lbLicks(spikeLickBinidx+1) - lbLicks(spikeLickBinidx);
+        ILI = lbLicks(spikeLickBinidx+1) - lbLicks(spikeLickBinidx);
         % exclude spike-containing ili out of lick burst range 60 : 250 ms
-        spikeValidILI = all([spikeBinILI > minILIthresh spikeBinILI < maxILIthresh],2);
+        spikeValidILI = all([ILI > minILIthresh ILI < maxILIthresh],2);
 %         burstSpikeTime = burstSpikeTime(spikeValidILI);
-        spikeBinILI = spikeBinILI(spikeValidILI);
+        ILI = ILI(spikeValidILI);
         spikeTimeSinceLick = spikeTimeSinceLick(spikeValidILI);
 %         [~,~,spikeLickBurstIdx] = histcounts(burstSpikeTime, [burstIntvs(:,1); inf]);
 %         burstContainSpike = burstIntvs(spikeLickBurstIdx,:);
@@ -315,7 +319,7 @@ if computeShuf
             return
         end
        % phasemod
-        spikePctSinceLick = spikeTimeSinceLick ./ spikeBinILI;
+        spikePctSinceLick = spikeTimeSinceLick ./ ILI;
         spikeLickPhase = 2*pi*(spikePctSinceLick);
         meanvec = mean(exp(1i*spikeLickPhase));
         meanMRVmag = abs(meanvec);

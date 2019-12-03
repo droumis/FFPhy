@@ -1,26 +1,21 @@
 
-%{
-remake final swr-lick xcorr figure for all animals.
 
-remake reactivtion figure for all animals
-
-%}
 
 pconf = paramconfig;
 create_filter = 1;
-run_ff = 0;
+run_ff = 1;
 load_ffdata = 0;
 % combineEpochs = 0;
 
-plotfigs = 1;
+plotfigs = 0;
 pausefigs = 1;
 savefigs = 1;
 savefigas = {'png', 'eps'};
 
 %% data filter params
-Fp.animals = {'JZ4'}; %, 'JZ2', 'JZ4'};
+Fp.animals = {'D10'}; %, 'D13', 'JZ1', 'JZ4'};
 Fp.filtfunction = 'dfa_lickswrcorr';
-Fp.params = {'wtrackdays', Fp.filtfunction};
+Fp.params = {'wtrackdays','excludePriorFirstWell','excludeAfterLastWell', Fp.filtfunction};
 
 %% FF
 Fp = load_filter_params(Fp);
@@ -37,7 +32,7 @@ if run_ff
 end
 if load_ffdata
     F = load_data(Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, Fp.animals, ...
-        'filetail', sprintf('_%s', Fp.epochEnvironment));
+        'filetail', sprintf('_%s', Fp.env));
 end
 
 %% plot per epoch
@@ -221,31 +216,3 @@ for ani = 1:length(F)
     end
 end
 %% plot all data
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

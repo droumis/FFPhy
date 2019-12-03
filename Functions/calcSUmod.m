@@ -32,7 +32,7 @@ need to add just add this func to dfa_eventTrigSpiking..
 or add that to this and make this a dfa.. 
 
 FFPhy V0.1
-@DR
+@DKR
 %}
 
 pconf = paramconfig;
@@ -158,13 +158,10 @@ for a = 1:length(F)
                 % time-mean fr in response period
                 evRespMSh = nanmean(cell2mat(arrayfun(@(x,y) evIFR(x,rIdx(1)+y:rIdx(2)+y), ...
                     1:size(r,1), r(:,i)', 'uni',0)'),2);
-                
                 evBaseMSh = nanmean(cell2mat(arrayfun(@(x,y) ...
                     evIFR(x,bIdx(1)+y:bIdx(2)+y), 1:size(r,1), r(:,i)', 'uni',0)'),2);
-                
                 evBaseSTDSh = nanstd(cell2mat(arrayfun(@(x,y) ...
                     evIFR(x,bIdx(1)+y:bIdx(2)+y), 1:size(r,1), r(:,i)', 'uni',0)'),[],2);
-
                 % mean pct change from baseline
                 useB = ~(evBaseMSh == 0);
                 mPctChangeSh(i) = nanmean((evRespMSh(useB)-evBaseMSh(useB))./evBaseMSh(useB))*100;

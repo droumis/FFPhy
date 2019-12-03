@@ -24,7 +24,39 @@ fprintf('----filter params----\n');
 for s = Fp.params
 fprintf('* %s\n', s{1})
 switch s{1}
-
+    
+%% ========= XP-SWR mod 'space.alien' =========
+case 'wXPTrigSWR'
+    %     maxTimeSinceRew = 5;
+    bin = .01;
+    tmax = 1;
+    eventType = 'ca1rippleskons';
+    minILIthresh = .06; % seconds
+    maxILIthresh = .250; % seconds
+    minBoutLicks = 3;
+    % xcorr / excorr
+    excShortBin = bin*2;
+    excLongBin = .250;
+    rmsmincounts = 1; % min bin count within rmstamax. otherwise nan
+    rmstmax = .25; % seconds
+    % shuf
+    compute_shuffle = 1;
+    numshuffs = 1000;
+    maxShift = 250; %ms
+    
+case 'dfa_lickswrcorr'
+    % make sure to include a 'ripples' timefilter in the paramset
+    % func
+    iterator = 'singleepochanal';
+    filtfunction = 'dfa_lickswrcorr';
+    datatypes = {'ca1rippleskons','task', 'lick', 'DIO'};
+    options = {'bin', bin, 'tmax', tmax, 'eventType', eventType, ...
+        'excShortBin', excShortBin, 'excLongBin', excLongBin, ...
+        'minILIthresh', minILIthresh, 'maxILIthresh', maxILIthresh, ...
+        'rmsmincounts', rmsmincounts, 'rmstmax', rmstmax, 'compute_shuffle', ...
+        compute_shuffle, 'numshuffs', numshuffs, 'shuffOffset', maxShift, ...
+        'minBoutLicks', minBoutLicks};     
+    
 %% ========= 'dfa_eventTrigSpiking'=========
 case 'lickboutlicks'
 %     minILIthresh = .06; % seconds
@@ -312,45 +344,6 @@ case 'lickTrigSpikingMod'
     nshuffs = 1000;
     shuffms = 700;
     dmatIdx = {'lickbout'};
-
-case 'dfa_lickswrcorr'
-    maxTimeSinceRew = 5;
-    bin = .01;
-    tmax = 1;
-    eventType = 'ca1rippleskons';
-    minILIthresh = .06; % seconds
-    maxILIthresh = .250; % seconds
-    minBoutLicks = 3;
-    % xcorr
-    excShortBin = bin*2;
-    excLongBin = .250;
-    rmsmincounts = 1; % min bin count within rmstamax. otherwise nan
-    rmstmax = .25; % seconds
-    % shuf
-    compute_shuffle = 1;
-    numshuffs = 200;
-    shuffOffset = 250; %ms
-    % func
-    iterator = 'singleepochanal';
-    filtfunction = 'dfa_lickswrcorr';
-    datatypes = {'ca1rippleskons','task', 'lick', 'DIO'};
-    options = {'bin', bin, 'tmax', tmax, 'eventType', eventType, ...
-        'excShortBin', excShortBin, 'excLongBin', excLongBin, ...
-        'minILIthresh', minILIthresh, 'maxILIthresh', maxILIthresh, ...
-        'rmsmincounts', rmsmincounts, 'rmstmax', rmstmax, 'compute_shuffle', ...
-        compute_shuffle, 'numshuffs', numshuffs, 'shuffOffset', shuffOffset, ...
-        'minBoutLicks', minBoutLicks};     
-%             
-%             % timefilter params
-%             consensus_numtets = 2;   % minimum # of tets for consensus event detection
-%             minstdthresh = 2;        % STD. how big your ripples are
-%             exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
-%             minvelocity = 0;
-%             maxvelocity = 4;
-%             timefilter{end+1} = {'getconstimes', '($cons == 1)', ...
-%                 'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
-%                 'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
-%                 'minvelocity', minvelocity,'maxvelocity',maxvelocity}; 
 
 
 case 'savefigs'

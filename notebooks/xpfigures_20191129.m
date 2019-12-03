@@ -1,27 +1,51 @@
 
 %{
-continuation of eventrig_20191117
+continuation of eventrig_20191117.. that was more about swr and lick time
+based mod... this is focused on phase based mod. (but they need to be
+combined?)
 
+- beer is dmat maker compatible with output of forest.bear.cactus as well as barn.rat
+- event trig LFP spect power: forest.bear.cactus.mushroom.leaf
+
+- barn:rat is new, general Event-SU, with dmat:beer
+    - barn:pig is old XP-SU time and phase mod
+    - dfa_riptrigspiking is old SWR-SU
+
+- barn:rat:beer:wheelbarrow is Event-SU timeMod
+- barn:rat:beer:saw         is Event-SU phaseMod
+
+- get spike containing ILI number within burst.. 
+    - i had been within pig.. rat+saw took the place of pig.
+    - also check that rat+saw gives the same result as pig
+
+- space.alien is XP-SWR Time and Phase mod
+    - i don't think i should squish SWR into the barn.rat.saw/wheelbarrow pipeline..
+    - so for now I think keep space.alien, but maybe update it to make sure it's the 
+        - phasemod shuffle phase/pct like in pig/saw
+        - e/xcorr shuffle time like in pig/wheelbarrow
+    - especially the shuffling.. which should be shuffled 0-100% ILI
+        instead of in time
 %}
 
 pconf = paramconfig;
-eventTrigLFP = 0; % PIPE:forest.bear.cactus.mushroom.beer.leaf == eventSet mean Spect
-eventTrigSpiking = 1; % PIPE:barn.rat.beer.saw/wheelbarrow == eventSet SU phasemod
-eventType = 'lick'; %lick swr
+eventTrigSWR = 1; % NOW.. PIPE:space.alien == per condition SWR mod
+eventTrigSpiking = 0; % PIPE:barn.rat.beer.saw/wheelbarrow == per condition/area Spike mod
+eventTrigLFP = 0; % PIPE:forest.bear.cactus.mushroom.beer.leaf == per condition/area LFP mod
 
+eventType = 'lick'; %lick swr
 % run FF
-create_filter = 0;
-run_ff = 0;
+create_filter = 1;
+run_ff = 1;
 load_ffdata = 0;
 
 %% DESIGN MAT MAKER.. WORKS WITH SPIKE AND LFP
-make_expvarCat = 0; % Baleful beer
+make_expvarCat = 0; % beer
 load_expvarCat = 0;
 
 %% Spike Event PhaseModulation
 calcSUphasemod = 0;
 loadSUPhaseMod = 0;
-%Gather across animals, per area, condition
+% Gather across animals, per area, condition
 gatherPhaseModResults = calcSUphasemod;
 
 %% plot
@@ -30,18 +54,19 @@ showfigs = 1;
 pausefigs = 0;
 savefigs = 1;
 savefigas = {'png', 'eps'};
+plotSWRXPmod_perAn = 1;
 % spike phasemod lick
 plotSUphasemod = 0; % TODO?
 plotSpikePhaseModHeatRast = 0;
-plotCdfPolar = 1;
-%% FF Data
+plotCdfPolar = 0;
 
+%% FF Data
 Fp = [];
 Fp.animals = {'D10', 'D13', 'JZ1', 'JZ4'};
 Fp.areas = {{'ca1', 'd'}, {'mec', 'deep'}, {'mec', 'supf'}};
 
 if eventTrigLFP
-    Fp.filtfunction = 'dfa_eventTrigLFP'; % Bellicose Bear
+    Fp.filtfunction = 'dfa_eventTrigLFP'; % Bear
     if strcmp(eventType, 'lick')
         expvars = {'all', 'wetLickBursts', 'dryLickBursts'};
         Fp.Label = 'wtrackLickTrigLFP';
@@ -56,7 +81,7 @@ if eventTrigLFP
     end
     
 elseif eventTrigSpiking
-    Fp.filtfunction = 'dfa_eventTrigSpiking'; % Redolent Rat
+    Fp.filtfunction = 'dfa_eventTrigSpiking'; % Rat
     if strcmp(eventType, 'lick')
         expvars = {'all', 'wetLickBursts', 'dryLickBursts'};
         Fp.Label = 'wtrackLickTrigSpiking';
@@ -68,6 +93,16 @@ elseif eventTrigSpiking
         Fp.params = {'wtrackdays', 'valid_ntrodes', 'excludePriorFirstWell', ...
             'excludeAfterLastWell', 'nonMU_cells', 'ripples', ...
             Fp.Label, Fp.filtfunction}; % 'excludeNoise',
+    end
+elseif eventTrigSWR
+    Fp.filtfunction = 'dfa_lickswrcorr'; % space.alien
+    if strcmp(eventType, 'lick')
+        expvars = {'all', 'wetLickBursts', 'dryLickBursts'};
+        Fp.Label = 'wXPTrigSWR';
+        Fp.params = {'wtrackdays', 'excludePriorFirstWell', 'excludeAfterLastWell', ...
+            'ripples', Fp.Label, Fp.filtfunction};
+    else
+        error('not yet implemented. eventTrigSWR is currently specific to XPtrigSWR')
     end
 end
 Fp = load_filter_params(Fp);
@@ -83,6 +118,9 @@ if create_filter
         F = createfilter('animal', Fp.animals, 'epochs', Fp.epochfilter, 'eegtetrodes',...
             Fp.tetfilter, 'excludetime', Fp.timefilter, 'iterator', Fp.iterator, 'cells',...
             Fp.cellfilter);
+    elseif eventTrigSWR
+        F = createfilter('animal', Fp.animals, 'epochs', Fp.epochfilter, 'excludetime', ...
+            Fp.timefilter, 'iterator', Fp.iterator);
     end
     F = setfilterfunction(F, Fp.filtfunction, Fp.datatypes, Fp.options{:});
 end
@@ -131,7 +169,7 @@ end
 
 %% Spike Phase mod
 if calcSUphasemod
-    pmodF = calcPhaseMod(F, dmat); % Sagacious Saw
+    pmodF = calcPhaseMod(F, dmat); % Saw
     save_data(pmodF, 'results', [Fp.Label '_phasemod']);
 end
 if loadSUPhaseMod
@@ -178,7 +216,109 @@ end
 
 %% PLOT=====================================================================
 if plotfigs
-   %% plot examples
+    if plotSWRXPmod_perAn
+        figname = 'wXPTrigSWR';
+        Pp=load_plotting_params({'defaults','dfa_lickswrcorr'});
+        for a = 1:length(F)
+            animal = F(a).animal{3};
+            ifig = init_plot(showfigs, Pp.position);
+            %% Xcorr norm smooth, shuff mean/std
+            sf1 = subaxis(2,2,1,Pp.posparams{:});
+            sf1.Tag = 'xcorr';
+            % shuffled xcorr mean.std ghost trail
+            idata = [F(a).output{:}];
+            nonempty = find(~cell2mat(cellfun(@isempty, {idata.time}, 'un', 0)));
+            time = cell2mat({idata(nonempty(1)).time}');
+            % xcorr norm smooth
+            smxcmean = nanmean(cell2mat({idata.smthxc}'),1);
+            smxcstd = nanstd(cell2mat({idata.smthxc}'),[],1);
+            plot(time, smxcmean, 'k')
+            hold on;
+            fill([time'; flipud(time')],[smxcmean'-smxcstd';flipud(smxcmean'+smxcstd')],'k',...
+                'linestyle','none', 'facealpha', .1);
+            line([0 0], ylim, 'color', 'k', 'linestyle', '--', 'linewidth', .5)
+            ylabel('xcorr');
+            xlabel('time from lick s');
+            axis tight
+            hold off;
+            
+            %% excorr over shuff excorr cdf distr
+            % relative swr from last lick
+            sf2 = subaxis(2,2,2);
+            anEXCSh = cell2mat([idata.excorrSh]);
+            anEXC = [idata.excorr];
+            grps = [zeros(numel(anEXCSh),1); ones(numel(anEXC),1)];
+            violin({anEXCSh, anEXC},...
+                'facecolor',[.5 .5 .5; .6 .6 1;],'edgecolor','none');
+            hold on
+            b = boxplot([anEXCSh anEXC]',grps, ...
+                'PlotStyle', 'compact', 'Symbol', '.','Color', 'k');
+            set(gca,'XTickLabel',{' '})
+            xticks([1 2])
+            xticklabels({'control', 'real'})
+            set(gca, 'FontSize', 10)
+            legend off
+            hold on;
+            [p,h,stats] = ranksum(anEXCSh, anEXC);
+            title(sprintf('ranksum p%.05f', p),'fontname','arial','fontsize', 10);
+            ylabel('excess corr')
+            hold off;
+            
+            %% polar distr phase clustering, swrLickPhase, meanMRVmag
+            sf3 = subaxis(2,2,3);
+            swrLPh = cell2mat({idata.swrLickPhase}');
+            swrLPhShuf = cell2mat({idata.swrLickphaseSh}');
+            [Rp, z] = circ_rtest(swrLPh);
+            %         [kuippval, k, K] = circ_kuipertest(swrLPh, swrLPhShuff, 1, 1);
+            polarhistogram(swrLPhShuf(:), 32, 'Normalization', 'pdf', 'edgealpha', .1,...
+                'facecolor', [.5 .5 .5]);
+            hold on
+            polarhistogram(swrLPh, 32, 'Normalization', 'pdf', 'edgealpha', .1,...
+                'facealpha', .8, 'facecolor', [.6 .6 1]);
+            title(sprintf('rtest p%.04f', Rp))
+            hold off
+            axis tight
+            
+            %% phase mod
+            sf4 = subaxis(2,2,4);
+            for i = 1:size(swrLPhShuf,2)
+              [~, z] = circ_rtest(swrLPhShuf(:,i));
+              anPHMODSh(i) = log(z);
+            end
+%             anPHMODSh = cell2mat([idata.swrLickphaseSh]);
+            anPHMOD = [idata.phasemod];
+            grps = [zeros(numel(anPHMODSh),1); ones(numel(anPHMOD),1)];
+            violin({anPHMODSh, anPHMOD},...
+                'facecolor',[.5 .5 .5; .6 .6 1;],'edgecolor','none');
+            hold on
+            b = boxplot([anPHMODSh anPHMOD]',grps, ...
+                'PlotStyle', 'compact', 'Symbol', '.','Color', 'k');
+            set(gca,'XTickLabel',{' '})
+            xticks([1 2])
+            xticklabels({'control', 'real'})
+            set(gca, 'FontSize', 10)
+            legend off
+            hold on;
+            [p,h,stats] = ranksum(anPHMODSh, anPHMOD);
+            title(sprintf('ranksum p%.05f', p),'fontname','arial','fontsize', 10);
+            ylabel('phasemod log(Z)')
+            yl = ylim;
+            ylim([yl(1) yl(2)+2])
+            hold off;
+            
+            %% ----
+            stit = sprintf('%s %s', figname, animal);
+            setSuperAxTitle(stit);
+            if pausefigs
+                pause;
+            end
+            if savefigs
+                save_figure([pconf.andef{4} '/' figname '/' animal], stit, 'savefigas', ...
+                    savefigas);
+            end
+        end
+    end
+    %% plot examples
     % for every lick bout, plot SU, group by area
     
     %% plot phasemod per unit

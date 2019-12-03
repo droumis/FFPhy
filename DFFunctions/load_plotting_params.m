@@ -35,7 +35,13 @@ case 'defaults'
     tickSz = 8; % tick labels font size
     set(0,'defaultAxesFontSize',10)
 
+%% ========= SWR-XPmod =========
 
+case 'dfa_lickswrcorr'
+    position = [.1 .1 .5 .5];
+    SpHz = 0.15; %spacing horizontal
+    SpVt = 0.15; % spacing vertical
+    
 %% ========= SWR Spikes =========
 
 case 'wtrackSWRSU'
@@ -226,10 +232,6 @@ case 'fitLM'
     MgTp = 0.07; % margin top
     MgBm =  0.04; % margin bottom
 
-case 'dfa_lickswrcorr'
-    position = [.1 .1 .5 .5];
-    SpHz = 0.15; %spacing horizontal
-    SpVt = 0.15; % spacing vertical
 
 case 'xcorrPhasemodSU'
     sigpct = 97.5; % pct

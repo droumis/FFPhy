@@ -11,10 +11,10 @@ function f = singleDayCellAnal(f,varargin)
 %                     |=|/     /  \
 %                     | |_____|_""_|
 %                     |_|_[X]_|____|
-% funcs:
-% - rat: dfa_eventTrigSpiking
 
-%
+%{
+% Notes:
+%   - barn.rat.beer.saw/wheelbarrow
 % Each function call is for one cluster, across epochs in a day, and it is assumed that
 % the function's first input is the index to the cell ([day ntrode cell]).  
 % The second input is a list of exclusion periods [starttime endtime].
@@ -23,7 +23,9 @@ function f = singleDayCellAnal(f,varargin)
 %
 % The outputs are stored in f().output, grouped using the same groupings as
 % in the filter.
+
 % $DR19
+%}
 
 %iterate through all animals
 for a = 1:length(f)
