@@ -108,7 +108,7 @@ if eventTrigLFP
         expvars = {'all', 'wetLickBursts', 'dryLickBursts'};
         Fp.Label = 'wtrackLickTrigLFP';
         Fp.params = {'wtrackdays', 'valid_ntrodes', 'excludePriorFirstWell', ...
-        'excludeAfterLastWell', 'referenced', '4-350Hz',  Fp.Label, Fp.filtfunction};
+        'excludeAfterLastWell', 'referenced', '4-350Hz', 'lickboutlicks', Fp.Label, Fp.filtfunction};
     elseif strcmp(eventType, 'swr')
         expvars = {'all', 'lickbouts', 'nolickbouts'};
         Fp.Label = 'wtrackSWRTrigLFP';
@@ -124,7 +124,7 @@ elseif eventTrigSpiking
         expvars = {'all', 'wetLickBursts', 'dryLickBursts'};
         Fp.Label = 'wtrackLickTrigSpiking';
         Fp.params = {'wtrackdays', 'valid_ntrodes', 'excludePriorFirstWell', ...
-            'excludeAfterLastWell', 'nonMU_cells', Fp.Label, Fp.filtfunction};
+            'excludeAfterLastWell', 'nonMU_cells', 'lickboutlicks', Fp.Label, Fp.filtfunction};
     elseif strcmp(eventType, 'swr') %'excludeNoise', 
         expvars = {'all', 'lickbouts', 'nolickbouts'};
         Fp.Label = 'wtrackSWRTrigSpiking';

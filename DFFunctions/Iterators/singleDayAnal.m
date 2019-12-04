@@ -1,22 +1,25 @@
-function f = singleDayCellAnal(f,varargin)
-% f = singleDayCellAnal(f)
+function f = singleDayAnal(f,varargin)
+% f = singleDayAnal(f)
 % Iterator for a filter object.  Calls the function designated in
 % f().function.name, after loading the variables designated as strings in
 % f().function.loadvariables{:}.  Also the function call appends any
 % options in the f().function.options{} cell array.
 %
-%                     Blithesome Barn
-%                                x
-%                     .-. _______|
-%                     |=|/     /  \
-%                     | |_____|_""_|
-%                     |_|_[X]_|____|
+%                 Cerulean City
+%                        .|
+%                        | |
+%                        |'|            ._____
+%                ___    |  |            |.   |' .---"|
+%        _    .-'   '-. |  |     .--'|  ||   | _|    |
+%     .-'|  _.|  |    ||   '-__  |   |  |    ||      |
+%     |' | |.    |    ||       | |   |  |    ||      |
+%  ___|  '-'     '    ""       '-'   '-.'    '`      |____
 
 %{
 % Notes:
-%   - barn.rat.beer.saw/wheelbarrow
-% Each function call is for one cluster, across epochs in a day, and it is assumed that
-% the function's first input is the index to the cell ([day ntrode cell]).  
+%   - city.alien
+% Each function call is for all epochs in a day, and it is assumed that
+% the function's first input is the index to the day, then all epochs ([day ep1 ep2..]).  
 % The second input is a list of exclusion periods [starttime endtime].
 % The next inputs are the load variables, and the final inputs are the options.
 % out = fname(index, excludeperiods, var1, var2, ..., option1, option2,...).
@@ -24,7 +27,7 @@ function f = singleDayCellAnal(f,varargin)
 % The outputs are stored in f().output, grouped using the same groupings as
 % in the filter.
 
-% $DR19
+% @DKR
 %}
 
 %iterate through all animals
@@ -48,9 +51,10 @@ for a = 1:length(f)
     end
     % iterate through the days within each data group
     g = 1; % this was intended for multiple epoch filter groups, but isn't currently used?
-    fprintf(':::::::: single Day Cell iterator (Blithesome Barn):::::::: \n');
+    fprintf(':::::::: single Day iterator (Cerulean City):::::::: \n');
     tmp = [];
-    for d = 1:length(unqDays)
+    fout = cell(numel(unqDays),1);
+    for d = 1:numel(unqDays) % can use parfor
         day = unqDays(d);
         foptions = f(a).function.options; % reset per day of data
         foptions = [foptions {'animal', animal}];
@@ -71,27 +75,13 @@ for a = 1:length(f)
             end
             eval(['foptions = [foptions {f(a).function.loadvariables{i}, tmp}];']);
         end
-        % get unq cells
-        ntClust = [];
-        for e = 1:length(deIdx)
-            ntClust = [ntClust; f(a).data{g}{deIdx(e)}];
-        end
-        unqNtCell = unique(ntClust, 'rows');
-        numCells = size(unqNtCell,1);
-        % evaluate function per cell
-        fout = cell(numCells,1);
-        for c = 1:numCells % can use parfor (all cells within this day)
-            nt = unqNtCell(c,1);
-            clust = unqNtCell(c,2);
-            eps = f(a).epochs{g}(deIdx,2)';
-            cindex = [day nt clust eps];
-            fprintf('--%s %s day %d nt %d cl %d :: eps %s\n', f(a).function.name, ...
-                f(a).animal{1}, day, nt, clust, strjoin(num2cell(num2str(eps(:)))',' '));
-            % run the specified filter function on this day cell
-            fout{c,1} = feval(f(a).function.name, cindex, excludeperiods, foptions{:});
-        end
-        f(a).output{g}{d,1} = [fout{:}];
+        eps = f(a).epochs{g}(deIdx,2)';
+        index = [day eps];
+        fprintf('--%s %s day %d :: eps %s\n', f(a).function.name, ...
+            f(a).animal{1}, day, strjoin(num2cell(num2str(eps(:)))',' '));
+        % run the specified filter function on this day
+        fout{d,1} = feval(f(a).function.name, index, excludeperiods, foptions{:});
     end
-    f(a).output{g} = [f(a).output{g}{:}];
+    f(a).output{g} = [fout{:}];
 end
 end

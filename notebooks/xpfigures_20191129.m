@@ -11,7 +11,7 @@ combined?)
     - barn:pig is old XP-SU time and phase mod
     - dfa_riptrigspiking is old SWR-SU
 
-- barn:rat:beer:wheelbarrow is Event-SU timeMod
+- barn:rat:beer:wheelbarrow is Event-SU timeMod (see eventtrig_20191117)
 - barn:rat:beer:saw         is Event-SU phaseMod
 
 - get spike containing ILI number within burst.. 
@@ -19,12 +19,13 @@ combined?)
     - also check that rat+saw gives the same result as pig
 
 - space.alien is XP-SWR Time and Phase mod
-    - i don't think i should squish SWR into the barn.rat.saw/wheelbarrow pipeline..
+- I need to run through space.alien and check its validity
+    - i don't think i should squish XP-SWR into the barn.rat.saw/wheelbarrow pipeline..
+        - because swr are pretty different than spikes
+        - they have different iterators (space vs barn)
     - so for now I think keep space.alien, but maybe update it to make sure it's the 
-        - phasemod shuffle phase/pct like in pig/saw
-        - e/xcorr shuffle time like in pig/wheelbarrow
-    - especially the shuffling.. which should be shuffled 0-100% ILI
-        instead of in time
+        - phasemod shuffle phase/pct like in pig/saw (shuffle 0:100%)
+        - e/xcorr shuffle time like in pig/wheelbarrow (shuffle -.5:.5s)
 %}
 
 pconf = paramconfig;
@@ -34,7 +35,7 @@ eventTrigLFP = 0; % PIPE:forest.bear.cactus.mushroom.beer.leaf == per condition/
 
 eventType = 'lick'; %lick swr
 % run FF
-create_filter = 1;
+create_filter = 0;
 run_ff = 1;
 load_ffdata = 0;
 
@@ -62,7 +63,7 @@ plotCdfPolar = 0;
 
 %% FF Data
 Fp = [];
-Fp.animals = {'D10', 'D13', 'JZ1', 'JZ4'};
+Fp.animals = {'JZ1'};
 Fp.areas = {{'ca1', 'd'}, {'mec', 'deep'}, {'mec', 'supf'}};
 
 if eventTrigLFP
@@ -71,7 +72,7 @@ if eventTrigLFP
         expvars = {'all', 'wetLickBursts', 'dryLickBursts'};
         Fp.Label = 'wtrackLickTrigLFP';
         Fp.params = {'wtrackdays', 'valid_ntrodes', 'excludePriorFirstWell', ...
-            'excludeAfterLastWell', 'referenced', '4-350Hz',  Fp.Label, Fp.filtfunction};
+            'excludeAfterLastWell', 'referenced', '4-350Hz',  'lickboutlicks', Fp.Label, Fp.filtfunction};
     elseif strcmp(eventType, 'swr')
         expvars = {'all', 'lickbouts', 'nolickbouts'};
         Fp.Label = 'wtrackSWRTrigLFP';

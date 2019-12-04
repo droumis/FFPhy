@@ -47,7 +47,7 @@ case 'wXPTrigSWR'
 case 'dfa_lickswrcorr'
     % make sure to include a 'ripples' timefilter in the paramset
     % func
-    iterator = 'singleepochanal';
+    iterator = 'singleDayAnal'; %'singleepochanal';
     filtfunction = 'dfa_lickswrcorr';
     datatypes = {'ca1rippleskons','task', 'lick', 'DIO'};
     options = {'bin', bin, 'tmax', tmax, 'eventType', eventType, ...

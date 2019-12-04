@@ -1,5 +1,5 @@
-function [LickBoutLicks] = getLickBoutLicks(an, eps, varargin)
-% [out] = getWetLickBouts(andir,an,eps,varargin)
+function [intraBoutXP, boutTimes] = getLickBoutLicks(an, eps, varargin)
+% [intraBoutXP, boutTimes] = getLickBoutLicks(an, eps, varargin)
 %
 % args:
 %
@@ -19,7 +19,8 @@ andef = animaldef(an);
 loaddays = unique(eps(:,1));
 lick = loaddatastruct(andef{2}, an, 'lick', loaddays);
 LburstVec = getLickBout([], an, eps, varargin);
-LickBoutLicks = [];
+intraBoutXP = [];
+boutTimes = [];
 for e = 1:size(eps,1)
    day = eps(e,1);
    ep = eps(e,2);
@@ -27,12 +28,20 @@ for e = 1:size(eps,1)
    epS = eeg{day}{ep}{2}.starttime;
    epE = eeg{day}{ep}{2}.endtime;
    times = [epS:.001:epE]';% epoch ms timevec;
-   LBIntervals = vec2list(LburstVec{day}{ep}.lickBout, LburstVec{day}{ep}.time);
+   boutTimes{day}{ep} = vec2list(LburstVec{day}{ep}.lickBout, LburstVec{day}{ep}.time);
    lickTimes = lick{day}{ep}.starttime; 
-   lickTimes = lickTimes(logical(isExcluded(lickTimes, LBIntervals))); %isIncluded
+   lickTimes = lickTimes(isIncluded(lickTimes, boutTimes{day}{ep}));
    lickTimesILI = diff(lickTimes);
    % keep valid lickburst licks
-   f = lickTimesILI > minILIthresh;
-   LickBoutLicks = [LickBoutLicks; lickTimes(find([f(1); f]))];
+   g = 1;
+   while g
+       lickTimesILI = diff(lickTimes);
+       if any(lickTimesILI < minILIthresh)
+            lickTimes(find(lickTimesILI < minILIthresh)+1) = [];   
+       else
+           g = 0; 
+       end
+   end
+   intraBoutXP = [intraBoutXP; lickTimes];
 end
    

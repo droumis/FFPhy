@@ -88,6 +88,7 @@ for e = 1:length(eps)
         continue
     end
 end
+
 if applyTFtoSpikes % rare to use
     spikesBefore = size(spikeTimes,1);
     spikeTimes = spikeTimes(~isExcluded(spikeTimes, timeFilter));
@@ -139,6 +140,7 @@ for e = 1:length(eps)
     
     eventTimes = [eventTimes; epEvInc];
 end
+
 % TODO: bc i'm not applying the timefilter to the spikes, I can use a timefilter to filter events
 if strcmp(eventType, 'lick')
     lickTimesLB = getLickBoutLicks(animal, [repmat(day,length(eps),1) eps'], varargin);
