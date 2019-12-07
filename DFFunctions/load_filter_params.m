@@ -24,25 +24,56 @@ fprintf('----filter params----\n');
 for s = Fp.params
 fprintf('* %s\n', s{1})
 switch s{1}
+%% ========= XP-SWR mod REACTIVATION =========
+case 'dfa_reactivationPSTH'
+    bin = 0.025; % seconds
+    win = [-2 2];
+    perPC = 1;
+    % cellfilter
+    cellfilter = '(isequal($area, ''ca1'')) && ($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))';
+    % ripple filter
+%     eventType = 'ca1rippleskons';
+    consensus_numtets = 2;   % minimum # of tets for consensus event detection
+    minstdthresh = 2;        % STD. how big your ripples are
+    exclusion_dur = .5;  % seconds within which consecutive events are eliminated / ignored
+    minvelocity = 0;
+    maxvelocity = 4;
+    rippleFilter = {{'getconstimes', '($cons == 1)', ...
+        'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
+        'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
+        'minvelocity', minvelocity,'maxvelocity',maxvelocity}};    
+    % lick burst filter
+    maxIntraBurstILI = 0.25;  % max burst ili threshold in seconds
+    minBoutLicks = 3; % filter out bouts with less than boutNum licks
+    minLickTimeFromSwr = 1; % time duration from closest lick
     
-%% ========= XP-SWR mod 'space.alien' =========
+    % template filter
+%     templateFilter = {'get2dstate','($velocity>4)'};
+      
+    iterator = 'singleDayAnal'; % city
+    datatypes = {'cellinfo'};
+    options = {'win', win, 'bin', bin, 'perPC', perPC, 'maxIntraBurstILI', maxIntraBurstILI, ...
+        'minBoutLicks', minBoutLicks, 'cellfilter', cellfilter, ...
+        'rippleFilter', rippleFilter};
+
+%% ========= XP-SWR mod 'city.alien' =========
 case 'wXPTrigSWR'
     %     maxTimeSinceRew = 5;
     bin = .01;
-    tmax = 1;
+    tmax = .5;
     eventType = 'ca1rippleskons';
-    minILIthresh = .06; % seconds
+    minILIthresh = .080; % seconds
     maxILIthresh = .250; % seconds
     minBoutLicks = 3;
     % xcorr / excorr
-    excShortBin = bin*2;
-    excLongBin = .250;
+    excShortBin = bin; 
+    excLongBin = .500;
     rmsmincounts = 1; % min bin count within rmstamax. otherwise nan
     rmstmax = .25; % seconds
     % shuf
     compute_shuffle = 1;
     numshuffs = 1000;
-    maxShift = 250; %ms
+    maxShift = tmax/2; %ms integer. timemod shift
     
 case 'dfa_lickswrcorr'
     % make sure to include a 'ripples' timefilter in the paramset
@@ -120,6 +151,17 @@ case 'ripples'
         'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
         'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
         'minvelocity', minvelocity,'maxvelocity',maxvelocity};
+case 'ripples>2'
+    eventType = 'ca1rippleskons';
+    consensus_numtets = 2;   % minimum # of tets for consensus event detection
+    minstdthresh = 2;        % STD. how big your ripples are
+    exclusion_dur = .5;  % seconds within which consecutive events are eliminated / ignored
+    minvelocity = 0;
+    maxvelocity = 4;
+    timefilter{end+1} = {'getconstimes', '($cons == 1)', ...
+        'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
+        'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
+        'minvelocity', minvelocity,'maxvelocity',maxvelocity};    
 
 case 'wetLickBursts'
     timefilter{end+1} = {'getWetLickBouts', ...
@@ -260,24 +302,6 @@ case 'lickSpikeXC'
 
 case 'lickTrigSUmod'
     eventType = 'lick';
-
-case 'dfa_reactivationPSTH'
-    bin = 0.025; % seconds
-    win = [-2 2];
-    perPC = 1;
-
-    maxIntraBurstILI = 0.25;  % max burst ili threshold in seconds
-    minBoutLicks = 3; % filter out bouts with less than boutNum licks
-    minLickTimeFromSwr = 1; % time duration from closest lick
-
-    iterator = 'singleepochanal';
-    datatypes = {'spikes', 'lick', 'ca1rippleskons', 'cellinfo'};
-    options = {'cellfilter', cellfilter, 'win', win, 'bin', bin, 'perPC', perPC,...
-        'templateFilter', ...
-        {{'get2dstate','($velocity>4)'}}, ...
-        'burstTimeFilter', ...
-        {{'getLickBout', '($lickBout == 1)', 'maxIntraBurstILI', maxIntraBurstILI, ...
-        'minBoutLicks', minBoutLicks}}};
 
 case 'swrlickmod'
     filtfunction = 'swrlickmod';

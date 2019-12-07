@@ -44,7 +44,7 @@ function out = dfa_lickswrcorr(idx, timeFilter, varargin)
 %{
 
 Notes:
-- space:alien
+- city:alien
 - example script: swrlickxcorr_20191031.m
 - phase modulation score as used in karalis sirota 2018/19
 - uses the circ stats toolbox's circ_rtest to get the pval and z which is (R^2/n)..
@@ -122,10 +122,10 @@ for e = 1:length(eps)
     end
 end
 % apply timefilter to swrs
-incSWRs = ~isExcluded(swrTimes(:,1), timeFilter);
+incSWRs = ~isIncluded(swrTimes(:,1), timeFilter);
 fprintf('%d of %d swr events discarded bc excluded periods in timefilter: d%d\n',...
     sum(incSWRs), length(incSWRs), day)
-swrTimes = swrTimes(incSWRs,:); % isIncluded
+swrTimes = swrTimes(incSWRs,:);
 out.maxthresh = maxthresh;
 out.swrEnd = swrEnd;
 
@@ -134,19 +134,12 @@ if isempty(swrTimes)
 end
 
 %% Get licks in lick-burst intervals
-[intraBoutXP, boutTimes] = getLickBoutLicks(animal, [repmat(day,length(eps),1) eps'], varargin);
+[intraBoutXP, boutTimes] = getLickBoutLicks(animal, [repmat(day,length(eps),1) eps'], ...
+    varargin{:});
 boutTimes = cell2mat({boutTimes{day}{eps}}');
+intraBoutXP = cell2mat({intraBoutXP{day}{eps}}');
+intraBoutXP = intraBoutXP(:,1);
 fprintf('%d XP within %d bursts \n', numel(intraBoutXP), size(boutTimes,1))
-
-% xs = boutTimes(:,1);
-% xe = boutTimes(:,2);
-% yl = ylim;
-% patch([xs'; xe'; xe'; xs'],repmat([yl(1) yl(1) yl(2) yl(2)]',1,...
-%     length(xe)),'r', 'FaceAlpha',.2, 'edgecolor','none');
-% hold on
-% l = line(intraBoutXP(:,[1 1])',ylim, 'linewidth',1);
-% hold off
-
 
 % intraBoutXP = lick{day}{ep}.starttime;
 % idlicks = lick{day}{ep}.id;
@@ -157,9 +150,11 @@ fprintf('%d XP within %d bursts \n', numel(intraBoutXP), size(boutTimes,1))
 time = (-tmax+bin/2):bin:(tmax-bin/2);
 xc = spikexcorr(swrTimes, intraBoutXP, bin, tmax); % arg 2 is the referencec signal (should be lick)
 normxc = xc.c1vsc2 ./ sqrt(xc.nspikes1 * xc.nspikes2); % normalize xc
-nstd = round(excShortBin/bin);
+nstd = 1; %round(excShortBin/bin);
 g1 = gaussian(nstd, 2*nstd+1);
 smthxc = smoothvect(normxc, g1); % smooth xc
+plot(smthxc)
+hold on
 excorr = nanmean(excesscorr(xc.time, xc.c1vsc2, xc.nspikes1, xc.nspikes2, excShortBin, ...
     excLongBin));
 T = abs(diff(swr{day}{ep}{1}.timerange)); %total ep time
@@ -183,6 +178,7 @@ if compute_shuffle
     % shuffle swr start time
     r = randi([-maxShift maxShift],length(swrTimes(:,1)), numshuffs)/1e3;
     swrStartSh = sort(swrTimes+r,1);
+    c = 0;
     for i = 1:numshuffs
        %% xcorr
         xc = spikexcorr(swrStartSh(:,i), intraBoutXP, bin, tmax);
@@ -199,10 +195,12 @@ if compute_shuffle
         p2 = xc.nspikes2/T; % fr in Hz
         expProb = p1*p2; % per sec. Expected probability
         
-        out.xcSh{end+1} = xc;
+        c = c+1;
+        out.normxcSh(c,:) = normxc;
+        out.xcSh{c,1} = xc;
 %         out.normxcShuf{end+1} = normxc;
-        out.smthxcSh{end+1} = smthxc;
-        out.excorrSh{end+1} = excorr;
+        out.smthxcSh(c,:) = smthxc;
+        out.excorrSh(c) = excorr;
 %         out.xcrmsShuf{end+1} = xcrms;
 %         out.p1Shuf{end+1} = p1;
 %         out.p2Shuf{end+1} = p2;
@@ -221,11 +219,19 @@ if isempty(burstSWRTimes)
     return
 end
 % Get the swr-containing licks
-% histc given licks as edges: get bin idx. lickedges(binidx) is the prior edge of bin 
+% histc given licks as edges: get bin idx. lickedges(binidx) is the prior edge of bin, 
+% aka the swr-preceding lick 
 [~,~,swrLickBinidx] = histcounts(burstSWRTimes, intraBoutXP);
 % exclude swr's in 0 bin, before first lick edge
 % swrLickBinidx = swrLickBinidx(swrLickBinidx > 0); 
 % burstSWRTimes = burstSWRTimes(swrLickBinidx > 0);
+% for r = 1:length(burstSWRTimes)
+%     
+% end
+% k = bsxfun(@minus, intraBoutXP(:), burstSWRTimes(:)'); 
+% k(k >= 0) = -inf;
+% [~,swrLickBinidx] = max(k);
+% swrLickBinidx(all(k == -inf)) = 0;
 
 % time since last lick
 swrTimeSinceLick = burstSWRTimes - intraBoutXP(swrLickBinidx);
@@ -234,24 +240,28 @@ if any(swrTimeSinceLick > .250)
 end
 % swr-containing ILI
 for b = 1:length(burstSWRTimes)
-    pre = max(intraBoutXP(intraBoutXP<burstSWRTimes(b)));
-    pst = min(intraBoutXP(intraBoutXP>burstSWRTimes(b)));
+    pre = max(intraBoutXP(intraBoutXP<=burstSWRTimes(b)));
+    pst = min(intraBoutXP(intraBoutXP>=burstSWRTimes(b)));
     ili(b) = pst-pre;
 end
 
 %%
-xs = boutTimes(:,1);
-xe = boutTimes(:,2);
-yl = ylim;
-patch([xs'; xe'; xe'; xs'],repmat([yl(1) yl(1) yl(2) yl(2)]',1,...
-    length(xe)),'r', 'FaceAlpha',.2, 'edgecolor','none');
-hold on
-l = line(intraBoutXP(:,[1 1])',ylim, 'linewidth',1);
-hold off
-
-l = line(burstSWRTimes(:,[1 1])',ylim, 'linewidth',1, 'color', 'k');
+% 
+% figure
+% % clf
+% xs = boutTimes(:,1);
+% xe = boutTimes(:,2);
+% yl = ylim;
+% patch([xs'; xe'; xe'; xs'],repmat([yl(1) yl(1) yl(2) yl(2)]',1,...
+%     length(xe)),'r', 'FaceAlpha',.2, 'edgecolor','none');
+% 
+% hold on
+% l = line(intraBoutXP(:,[1 1])',ylim, 'linewidth',1, 'color', 'k');
+% l = line(burstSWRTimes(:,[1 1])',ylim, 'linewidth',1, 'color', 'r');
+% hold off
+% 
+% l = line(burstSWRTimes(:,[1 1])',ylim, 'linewidth',1, 'color', 'k');
 %%
-
 
 swrBinILI = intraBoutXP(swrLickBinidx+1) - intraBoutXP(swrLickBinidx); % +1 is post-containing lick
 if any(swrBinILI > .250)
@@ -287,7 +297,7 @@ meanvec = mean(exp(1i*swrLickPhase)); % get mean resultant vector
 meanMRVmag = abs(meanvec); % vector magnitude
 vecang = angle(meanvec);
 % Z = meanMRVmag^2/n;
-[~, z] = circ_rtest(swrLickPhase); % z is mean res vec
+[pv, z] = circ_rtest(swrLickPhase); % z is mean res vec
 % if Z ~= z
 %     error('-----wut?')
 % end
@@ -296,7 +306,7 @@ phasemod = log(z); % log variance normalizes (karalis,sirota)
 out.swrStart = swrTimes;
 out.licks = intraBoutXP;
 % out.idlicks = idlicks;
-out.boutIntvs = burstIntvs;
+out.boutTimes = boutTimes;
 out.swrTimeSinceLick = swrTimeSinceLick;
 out.swrBinILI = swrBinILI;
 out.burstSWRStart = burstSWRTimes;
@@ -314,7 +324,11 @@ out.phasemod = phasemod;
 if compute_shuffle
     %% phasemod shuff
     out.swrLickphaseSh = 2*pi*rand(length(swrPctSinceLick), numshuffs);
-    fprintf('shuffle took %.02f s\n', toc);
+    for s = 1:size(out.swrLickphaseSh,2)
+        [~, z] = circ_rtest(out.swrLickphaseSh(:,s)); % z is mean res vec
+        out.phasemodSh(s) = log(z); % log variance normalizes (karalis,sirota)
+    end
+%     fprintf('shuffle took %.02f s\n', toc);
 end
 end
 
@@ -337,7 +351,7 @@ out.expProb = [];
 out.swrStart = [];
 out.licks = [];
 % out.idlicks = [];
-out.boutIntvs = [];
+out.boutTimes = [];
 % iliPhase
 out.swrTimeSinceLick = [];
 out.swrBinILI = [];
@@ -356,10 +370,10 @@ out.phasemod = [];
 %% shuffle
 % out.swrStartShuf = [];
 % xcTime
-out.xcSh = {};
-% out.normxcShuf = {};
-out.smthxcSh = {};
-out.excorrSh = {};
+out.xcSh = [];
+out.normxcSh = [];
+out.smthxcSh = [];
+out.excorrSh = [];
 % out.xcrmsShuf = {};
 % out.p1Shuf = {};
 % out.p2Shuf = {};
@@ -373,6 +387,6 @@ out.excorrSh = {};
 % out.swrLickPhaseShuf = {};
 % out.swrPctSinceLickShuf = {};
 % out.vecangShuf = {};
-% out.phasemodSh = {};
+out.phasemodSh = [];
 out.swrLickphaseSh = [];
 end

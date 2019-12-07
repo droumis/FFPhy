@@ -26,6 +26,10 @@ combined?)
     - so for now I think keep space.alien, but maybe update it to make sure it's the 
         - phasemod shuffle phase/pct like in pig/saw (shuffle 0:100%)
         - e/xcorr shuffle time like in pig/wheelbarrow (shuffle -.5:.5s)
+
+if im going to have conditions on swr-xp mod via, df alien.. i think i'll
+need to 
+either pass dmat 
 %}
 
 pconf = paramconfig;
@@ -36,7 +40,7 @@ eventTrigLFP = 0; % PIPE:forest.bear.cactus.mushroom.beer.leaf == per condition/
 eventType = 'lick'; %lick swr
 % run FF
 create_filter = 0;
-run_ff = 1;
+run_ff = 0;
 load_ffdata = 0;
 
 %% DESIGN MAT MAKER.. WORKS WITH SPIKE AND LFP
@@ -63,7 +67,7 @@ plotCdfPolar = 0;
 
 %% FF Data
 Fp = [];
-Fp.animals = {'JZ1'};
+Fp.animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ3', 'JZ4'};
 Fp.areas = {{'ca1', 'd'}, {'mec', 'deep'}, {'mec', 'supf'}};
 
 if eventTrigLFP
@@ -96,12 +100,12 @@ elseif eventTrigSpiking
             Fp.Label, Fp.filtfunction}; % 'excludeNoise',
     end
 elseif eventTrigSWR
-    Fp.filtfunction = 'dfa_lickswrcorr'; % space.alien
+    Fp.filtfunction = 'dfa_lickswrcorr'; % city.alien % not using space anymore
     if strcmp(eventType, 'lick')
-        expvars = {'all', 'wetLickBursts', 'dryLickBursts'};
+%         expvars = {'all', 'wetLickBursts', 'dryLickBursts'};
         Fp.Label = 'wXPTrigSWR';
         Fp.params = {'wtrackdays', 'excludePriorFirstWell', 'excludeAfterLastWell', ...
-            'ripples', Fp.Label, Fp.filtfunction};
+            'ripples>2', Fp.Label, Fp.filtfunction};
     else
         error('not yet implemented. eventTrigSWR is currently specific to XPtrigSWR')
     end
@@ -218,64 +222,106 @@ end
 %% PLOT=====================================================================
 if plotfigs
     if plotSWRXPmod_perAn
-        figname = 'wXPTrigSWR';
-        Pp=load_plotting_params({'defaults','dfa_lickswrcorr'});
+        figname = 'wXPmodSWR';
+        Pp=load_plotting_params({'defaults','dfa_lickswrcorr', figname});
         for a = 1:length(F)
             animal = F(a).animal{3};
             ifig = init_plot(showfigs, Pp.position);
-            %% Xcorr norm smooth, shuff mean/std
+            %% Xcorr norm 
             sf1 = subaxis(2,2,1,Pp.posparams{:});
             sf1.Tag = 'xcorr';
             % shuffled xcorr mean.std ghost trail
             idata = [F(a).output{:}];
             nonempty = find(~cell2mat(cellfun(@isempty, {idata.time}, 'un', 0)));
             time = cell2mat({idata(nonempty(1)).time}');
-            % xcorr norm smooth
-            smxcmean = nanmean(cell2mat({idata.smthxc}'),1);
-            smxcstd = nanstd(cell2mat({idata.smthxc}'),[],1);
-            plot(time, smxcmean, 'k')
             hold on;
-            fill([time'; flipud(time')],[smxcmean'-smxcstd';flipud(smxcmean'+smxcstd')],'k',...
-                'linestyle','none', 'facealpha', .1);
-            line([0 0], ylim, 'color', 'k', 'linestyle', '--', 'linewidth', .5)
-            ylabel('xcorr');
-            xlabel('time from lick s');
+            % plot norm cross corr
+            nxc = cell2mat({idata.normxc}');
+            NormxcMean = nanmean(nxc, 1);
+            NormxcSem = sem(nxc,1);
+            bar(time, NormxcMean,'FaceColor','k')
+%             errorbar(time,NormxcMean,NormxcSem,'.','Color',[0.5 0.5 0.5])
             axis tight
+            title(' MeanNorm perDay')
+            xlabel('Time of SWRs relative to XPs')
+            ylabel({'Norm xcorr'})
+            xlim([-0.5 0.5])
+            line([0 0], ylim, 'color', 'k', 'linestyle', '--', 'linewidth', .5)
+            set(gca,'xtick',[-0.5:0.1:.5])
             hold off;
             
-            %% excorr over shuff excorr cdf distr
-            % relative swr from last lick
-            sf2 = subaxis(2,2,2);
-            anEXCSh = cell2mat([idata.excorrSh]);
-            anEXC = [idata.excorr];
-            grps = [zeros(numel(anEXCSh),1); ones(numel(anEXC),1)];
-            violin({anEXCSh, anEXC},...
-                'facecolor',[.5 .5 .5; .6 .6 1;],'edgecolor','none');
+            %% Xcorr z scored, relative to shuffle
+            sf1 = subaxis(2,2,3,Pp.posparams{:});
+            sf1.Tag = 'xcorr';
+            dNormxcZ = {};
+            for d = 1:length(idata) % for each day
+                % xcorr norm smooth
+                dNormxc = idata(d).smthxc;
+                dNormxcSh = idata(d).smthxcSh;
+                dNormxcZ{d} = (dNormxc - nanmean(dNormxcSh,1)) ./ nanstd(dNormxcSh,[],1);
+            end
+            
+            NormxcZ = cat(1,dNormxcZ{:});
+            NormxcZsem = sem(NormxcZ,1);
+            NormxcZmean = mean(NormxcZ,1);
+
+            plot(time, NormxcZmean', 'k')
             hold on
-            b = boxplot([anEXCSh anEXC]',grps, ...
-                'PlotStyle', 'compact', 'Symbol', '.','Color', 'k');
-            set(gca,'XTickLabel',{' '})
-            xticks([1 2])
-            xticklabels({'control', 'real'})
-            set(gca, 'FontSize', 10)
-            legend off
-            hold on;
-            [p,h,stats] = ranksum(anEXCSh, anEXC);
-            title(sprintf('ranksum p%.05f', p),'fontname','arial','fontsize', 10);
-            ylabel('excess corr')
+            fill([time'; flipud(time')],[NormxcZmean'-NormxcZsem';flipud(NormxcZmean'+NormxcZsem')],'k',...
+                'linestyle','none', 'facealpha', .2);
+
+            axis tight
+            title(' MeanZscoredSmth perDay relShuf')
+            xlabel('Time of SWRs relative to XPs')
+            ylabel({'Z-scored xcorr'})
+            xlim([-0.5 0.5])
+            line([0 0], ylim, 'color', 'k', 'linestyle', '--', 'linewidth', .5)
+            set(gca,'xtick',[-0.5:0.1:.5])
             hold off;
-            
+            %%
+%             %% excorr over shuff excorr cdf distr
+%             % relative swr from last lick
+%             sf2 = subaxis(2,2,3);
+%             anEXCSh = [idata.excorrSh];
+%             anEXC = [idata.excorr];
+%             grps = [zeros(numel(anEXCSh),1); ones(numel(anEXC),1)];
+%             violin({anEXCSh, anEXC},...
+%                 'facecolor',[.5 .5 .5; .6 .6 1;],'edgecolor','none');
+%             hold on
+%             b = boxplot([anEXCSh anEXC]',grps, ...
+%                 'PlotStyle', 'compact', 'Symbol', '.','Color', 'k');
+%             set(gca,'XTickLabel',{' '})
+%             xticks([1 2])
+%             xticklabels({'control', 'real'})
+%             set(gca, 'FontSize', 10)
+%             legend off
+%             hold on;
+%             [p,h,stats] = ranksum(anEXCSh, anEXC);
+%             title(sprintf('ranksum p%.05f', p),'fontname','arial','fontsize', 10);
+%             ylabel('excess corr')
+%             hold off;
+%             
             %% polar distr phase clustering, swrLickPhase, meanMRVmag
-            sf3 = subaxis(2,2,3);
+            sf3 = subaxis(2,2,2);
             swrLPh = cell2mat({idata.swrLickPhase}');
             swrLPhShuf = cell2mat({idata.swrLickphaseSh}');
             [Rp, z] = circ_rtest(swrLPh);
             %         [kuippval, k, K] = circ_kuipertest(swrLPh, swrLPhShuff, 1, 1);
+            k = .7;
             polarhistogram(swrLPhShuf(:), 32, 'Normalization', 'pdf', 'edgealpha', .1,...
-                'facecolor', [.5 .5 .5]);
+                'facecolor', [k k k], 'DisplayName', 'shuffled');
             hold on
             polarhistogram(swrLPh, 32, 'Normalization', 'pdf', 'edgealpha', .1,...
-                'facealpha', .8, 'facecolor', [.6 .6 1]);
+                'facealpha', .9, 'facecolor', [.5 .5 .9], 'DisplayName', 'phasemod /Day');
+            legend show
+            
+            thetaticks(0:45:315)
+            pax = gca;
+            pax.ThetaAxisUnits = 'radians';
+            pax.ThetaZeroLocation = 'left';
+            b = .3;
+            pax.RColor = [b b b];
+            pax.ThetaColor = [b b b];
             title(sprintf('rtest p%.04f', Rp))
             hold off
             axis tight
@@ -290,13 +336,13 @@ if plotfigs
             anPHMOD = [idata.phasemod];
             grps = [zeros(numel(anPHMODSh),1); ones(numel(anPHMOD),1)];
             violin({anPHMODSh, anPHMOD},...
-                'facecolor',[.5 .5 .5; .6 .6 1;],'edgecolor','none');
+                'facecolor',[k k k; .5 .5 .9;],'edgecolor','none');
             hold on
             b = boxplot([anPHMODSh anPHMOD]',grps, ...
-                'PlotStyle', 'compact', 'Symbol', '.','Color', 'k');
+                'PlotStyle', 'compact', 'Symbol', '.','Color', [.2 .2 .2]);
             set(gca,'XTickLabel',{' '})
             xticks([1 2])
-            xticklabels({'control', 'real'})
+            xticklabels({'shuffled', 'phasemod /Day'})
             set(gca, 'FontSize', 10)
             legend off
             hold on;
@@ -314,7 +360,7 @@ if plotfigs
                 pause;
             end
             if savefigs
-                save_figure([pconf.andef{4} '/' figname '/' animal], stit, 'savefigas', ...
+                save_figure([pconf.andef{4} '/' figname], stit, 'savefigas', ...
                     savefigas);
             end
         end

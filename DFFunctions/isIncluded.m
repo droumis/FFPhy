@@ -8,7 +8,7 @@ function out = isIncluded(times, intervals, varargin)
 % interval.
 % 1 signifies times that fall in between start and end times of intervals
 
-offset = .002; % seconds buffer
+offset = .00001; % seconds buffer
 if ~isempty(varargin)
     assign(varargin{:})
 end

@@ -135,6 +135,17 @@ case 'wXPSU-cdfPolar'
     SpHz = 0.05;
     SpVt = 0.15;
     MgLt = 0.05;
+    
+case 'wXPmodSWR'
+    position = [.1 .1 .5 .5];
+    SpHz = 0.1;
+    SpVt = 0.1;
+    
+case 'wXPmodSWR_daily'
+    position = [.1 .1 .5 .9];
+    SpHz = 0.1;
+    SpVt = 0.0125;
+    
 %% ========= 
     
 case 'SWRTrigHeatraster'
