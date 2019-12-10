@@ -16,7 +16,7 @@ end
 
 epochfilter = '';
 tetfilter = '';
-cellfilter = '';
+cellFilter = '';
 timefilter = {};
 options = {};
 sysDateTime = clock;
@@ -26,11 +26,11 @@ fprintf('* %s\n', s{1})
 switch s{1}
 %% ========= XP-SWR mod REACTIVATION =========
 case 'dfa_reactivationPSTH'
-    bin = 0.025; % seconds
+    bin = 0.1; % seconds
     win = [-2 2];
     perPC = 1;
     % cellfilter
-    cellfilter = '(isequal($area, ''ca1'')) && ($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))';
+    cellFilter = '(isequal($area, ''ca1'')) && ($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))';
     % ripple filter
 %     eventType = 'ca1rippleskons';
     consensus_numtets = 2;   % minimum # of tets for consensus event detection
@@ -53,7 +53,7 @@ case 'dfa_reactivationPSTH'
     iterator = 'singleDayAnal'; % city
     datatypes = {'cellinfo'};
     options = {'win', win, 'bin', bin, 'perPC', perPC, 'maxIntraBurstILI', maxIntraBurstILI, ...
-        'minBoutLicks', minBoutLicks, 'cellfilter', cellfilter, ...
+        'minBoutLicks', minBoutLicks, 'cellfilter', cellFilter, ...
         'rippleFilter', rippleFilter};
 
 %% ========= XP-SWR mod 'city.alien' =========
@@ -214,11 +214,11 @@ case 'valid_ntrodes'
 case 'same tet for eeg'
     eegfilter = {'geteegtet', 'theta','sametet', 1};
 case 'ca1SU'
-    cellfilter = '(isequal($area, ''ca1'')) && ($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))';
+    cellFilter = '(isequal($area, ''ca1'')) && ($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))';
 case 'nonMU_cells'
-    cellfilter = '($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))';
+    cellFilter = '($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))';
 case '>100spikes_cells'
-    cellfilter = '($numspikes > 100)';
+    cellFilter = '($numspikes > 100)';
 case '2s_win'
     window = [2 2];         % size of psth window (in sec)
     %make sure this matches the binsize in plot params
@@ -468,7 +468,7 @@ case 'thetaphasemod'
     datatypes = {'spikes','theta'};
 
 case 'dfa_occNormFiring'
-    cellfilter = ...
+    cellFilter = ...
         '($numspikes > 100) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))';
     timefilter{end+1} = {'get2dstate', '(abs($velocity) >= 4)'};
     iterator = 'singlecellanal';

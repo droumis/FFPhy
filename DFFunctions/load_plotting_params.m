@@ -34,8 +34,30 @@ case 'defaults'
     SupFontS = 12;
     tickSz = 8; % tick labels font size
     set(0,'defaultAxesFontSize',10)
+    
+%% ========= XPmod-SWR=========
+case 'wRxnFullAllAn'
+    position = [.1 .1 .5 .5];
+    winSE = [-.5 .5];
+    interpBy = 3;
+    numPCs = 4;
+    
+case 'wRxnFullperAn'
+    position = [.1 .1 .5 .5];
+    winSE = [-.5 .5];
+    interpBy = 3;
+    numPCs = 4;
 
-%% ========= SWR-XPmod =========
+case 'RxnPPCperAn'
+    position = [.1 .1 .5 .5];
+    winSE = [-.5 .5];
+    numPCs = 4;
+    
+case 'RxnPPCAllAn'
+    position = [.1 .1 .5 .5];
+    winSE = [-.5 .5];    
+    numPCs = 4;
+
 
 case 'dfa_lickswrcorr'
     position = [.1 .1 .5 .5];
@@ -135,6 +157,10 @@ case 'wXPSU-cdfPolar'
     SpHz = 0.05;
     SpVt = 0.15;
     MgLt = 0.05;
+case 'wXPmodSWRall'
+    position = [.1 .1 .5 .5];
+    SpHz = 0.1;
+    SpVt = 0.1;
     
 case 'wXPmodSWR'
     position = [.1 .1 .5 .5];
@@ -195,16 +221,6 @@ case 'lickTrigSUmod'
 case 'lickTrigSpikingPSTH'
     position = [.1 .1 .5 .5];
     psthSize = 5; 
-
-case 'RxnFull'
-    position = [.1 .1 .5 .5];
-    winSE = [-.5 .5];
-    interpBy = 10;
-
-case 'RxnPerPC'
-    position = [.1 .1 .5 .5];
-    winSE = [-.5 .5];
-
 
 
 case 'wetVDryILIphaseSWR'

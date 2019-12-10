@@ -1,7 +1,7 @@
 
 
 function out = dfa_lickswrcorr(idx, timeFilter, varargin)
-% out = dfa_lickswrcorr(idx, excludeIntervals, varargin)
+% out = dfa_lickswrcorr(idx, timeFilter, varargin)
 % gets swr x xp xcorr and phase clustering
 %
 %           Adroit Alien
