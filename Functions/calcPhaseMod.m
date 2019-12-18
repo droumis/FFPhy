@@ -26,9 +26,9 @@ function out = calcPhaseMod(F, dmat, varagin)
 Notes:
     - barn:rat:beer:saw
 
-FFPhy V0.1
 @DKR
 %}
+
 comuteShuf = 1;
 numShuf = 1000;
 pconf = paramconfig;

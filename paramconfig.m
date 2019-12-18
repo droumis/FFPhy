@@ -1,7 +1,17 @@
 
 
-function out = paramconfig(varargin)
+function out = paramconfig(user, varargin)
+% import globals per user
+
 user = 'Demetris';
-out.andef = animaldef(user);
+if ~isempty(varargin)
+   assign(varargin); 
+end
+    
+switch user
+    case 'Demetris'
+    out.andef = animaldef(user);
+    
+end
 
 end

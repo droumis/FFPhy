@@ -1,5 +1,5 @@
 
-function [out] = makeExpvarCatDesignMat(data, expvars, varargin)
+function [out] = makeExpvarCatDesignMat(F, expvars, varargin)
 % [out] = makeExpvarCatDesignMat(data, varargin)
 % evaluate expvars timefilter groups for data.animal, day, epoch, evStart
 % ** expvar groups refers to timefilter functions and their filter strings that exist in
@@ -44,18 +44,45 @@ end
 fprintf('defaults: %s\n', defaults{:})
 outpath = [pconf.andef{2},outdir,'/'];
 
-for ian = 1:length(data)
+% if data comes from the spiking pipeline, need to convert to F with dayep, evtimes
+if strcmp(F(1).iterator, 'singleDayCellAnal')
+    dF = [];
+    for a = 1:length(F)
+        dF(a).animal = F(a).animal;
+        % get dayeps idx of one cell per day
+        idx = cell2mat({F(a).output{1}.index}');
+        [~, dayUnqIdx] = unique(idx(:,1)); 
+        days = idx(dayUnqIdx,[1]);
+        eps = idx(dayUnqIdx,[4:5]);
+        % get num events per dayep. 
+        numEvPerDay = cell2mat({F(a).output{1}(dayUnqIdx).numEventsPerEp})';
+        % collect eventTimes across all days
+        dF(a).evStart = cell2mat({F(a).output{1}(dayUnqIdx).eventTimes}');
+        % label each the event time with day ep
+        dF(a).day = [];
+        dF(a).epoch = [];
+        for d = 1:size(eps,1)
+            for e = 1:size(eps,2)
+                dF(a).day = [dF(a).day; repmat(days(d), numEvPerDay(d,e), 1)];
+                dF(a).epoch = [dF(a).epoch; repmat(eps(d,e), numEvPerDay(d,e),1)];
+            end
+        end
+    end
+    F = dF;
+end
+
+for ian = 1:length(F)
     %         t = find(strcmp(lfpstack(ian).lfptypes, lfptype));
     try
-        animal = data(ian).animal{3};
+        animal = F(ian).animal{3};
     catch
-        animal = animaldef(data(ian).animal);
+        animal = animaldef(F(ian).animal);
     end
     out(ian).animal = animal;
     out(ian).dims = {'event', 'expvar'};
-    out(ian).evStart = data(ian).evStart;
+    out(ian).evStart = F(ian).evStart;
     %         out(ian).evEnd = lfpstack(ian).evEnd{t};
-    out(ian).dayeps = [data(ian).day data(ian).epoch];
+    out(ian).dayeps = [F(ian).day F(ian).epoch];
     out(ian).expvars = expvars;
     out(ian).dm = zeros(length(out(ian).evStart), length(expvars));
     Fp = struct;

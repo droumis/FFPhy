@@ -1,4 +1,4 @@
-function out = load_data(filtOutputDirectory, filename, animals, varargin)
+function out = load_data(source, filename, animals, varargin)
 % d = load_filter_output(Fp.paths.filtOutputDirectory, Fp.paths.filename, Fp.animals);
 % load filter framework results
 
@@ -19,12 +19,12 @@ fprintf('loading %s\n', animals{:})
 for an = 1:length(animals)
     animal = animals{an};
     andef = animaldef(animal);
-    if strcmp(filtOutputDirectory, 'filterframework')
+    if strcmp(source, 'filterframework')
         dirout = andef{2};
-    elseif strcmp(filtOutputDirectory, 'results')
+    elseif strcmp(source, 'results')
         dirout = [pconf.andef{3} '/' filename, '/'];
     else
-        dirout = filtOutputDirectory;
+        dirout = source;
     end
     switch filtfunction
         case 'behavestate'

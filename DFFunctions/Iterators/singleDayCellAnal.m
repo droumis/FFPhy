@@ -18,13 +18,12 @@ function f = singleDayCellAnal(f,varargin)
 % Each function call is for one cluster, across epochs in a day, and it is assumed that
 % the function's first input is the index to the cell ([day ntrode cell]).  
 % The second input is a list of exclusion periods [starttime endtime].
-% The next inputs are the load variables, and the final inputs are the options.
-% out = fname(index, excludeperiods, var1, var2, ..., option1, option2,...).
+% The data to load (elsewhere called to as 'load variables') is 
+% out = fname(index, excludeperiods, 'var1', var1, ..., 'option1', option1,...).
 %
-% The outputs are stored in f().output, grouped using the same groupings as
-% in the filter.
+% The output is stored as f(animal).output
 
-% $DR19
+% @DKR2019
 %}
 
 %iterate through all animals
@@ -48,7 +47,7 @@ for a = 1:length(f)
     end
     % iterate through the days within each data group
     g = 1; % this was intended for multiple epoch filter groups, but isn't currently used?
-    fprintf(':::::::: single Day Cell iterator (Blithesome Barn):::::::: \n');
+    fprintf(':::::::: single Day Cell iterator :::::::: \n');
     tmp = [];
     for d = 1:length(unqDays)
         day = unqDays(d);
@@ -80,7 +79,7 @@ for a = 1:length(f)
         numCells = size(unqNtCell,1);
         % evaluate function per cell
         fout = cell(numCells,1);
-        for c = 1:numCells % can use parfor (all cells within this day)
+        for c = 1:numCells % can use parfor (parallelizes cells within this day)
             nt = unqNtCell(c,1);
             clust = unqNtCell(c,2);
             eps = f(a).epochs{g}(deIdx,2)';

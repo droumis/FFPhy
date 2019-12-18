@@ -1,10 +1,28 @@
 
 
 function F = get_licks(animal, index, DIO, task, varargin)
-
 % create and save lick events;
-% example of script that calls this: 
-% lickXcorrSU_20190916.m
+% F = get_licks(animal, index, DIO, task, varargin)
+%
+%       Rebarbative Rose
+%              __
+%         _   /  |
+%        | \  \/_/
+%        \_\| / __              
+%           \/_/__\           .--='/~\
+%    ____,__/__,_____,______)/   /{~}}}
+%    -,-----,--\--,-----,---,\'-' {{~}}
+%            __/\_            '--=.\}/
+%           /_/ |\\
+%                \/
+% 
+% 
+%{
+Notes
+- example of script that calls this: 
+- lickXcorrSU_20190916.m
+@DKR19
+%}
 saveout = 1;
 if ~isempty(varargin)
     assign(varargin{:});

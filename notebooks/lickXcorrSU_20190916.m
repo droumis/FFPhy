@@ -1,4 +1,3 @@
-
 create_filter = 1;
 run_ff = 0;
 save_ffdata = 0;

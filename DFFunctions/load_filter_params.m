@@ -112,7 +112,7 @@ case 'wtrackSWRTrigSpiking'
 %             smbins = 10; % bins. smooth across x bins (wbin x smbins = range of influence)
     eventType = 'ca1rippleskons';
 
-case 'wtrackLickTrigSpiking'
+case 'wtrackLickTrigSpiking' % formerly wtrackLickTrigSpiking
     % for dfa_eventTrigSpiking
     win = [1.5 1.5];
     bin = .001;

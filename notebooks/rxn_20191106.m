@@ -3,7 +3,6 @@ continuation of exampleBursts_20191101.m
 
 need to redo the rxn stuff and incorporate it into the rest of the codebase
 
-
 %}
 
 pconf = paramconfig;

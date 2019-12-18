@@ -1,6 +1,6 @@
 
 %{
-continuation of eventrig_20191117.. that was more about swr and lick time
+continuation of eventtrig_20191117.. that was more about swr and lick time
 based mod... this is focused on phase based mod. (but they need to be
 combined?)
 

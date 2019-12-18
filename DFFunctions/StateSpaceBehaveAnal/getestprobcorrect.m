@@ -1,3 +1,6 @@
+
+
+function [pc, lt] = getestprobcorrect(bp, background_prob, startflag, doplot)
 % [probcorrect] = getestprobcorrect(behavperform, backgroundprob, initialcond, doplot)
 %       goes through the ones and zeros of behavperform and returns the
 %       estimate, with confidence bounds, of the probability of a correct
@@ -22,19 +25,6 @@
 %       The third column of probcorrect is the upper 5% confidence bound
 % DR04/30/17  Fourth col is certainty matrix
 %       NOTE: first row should be exluded
-
-function [pc, lt] = getestprobcorrect(bp, background_prob, startflag, doplot)
-
-%m.s. added 'plot' option 3/3/17 - set to 1 to plot curve for each day
-
-% for option = 1:2:length(varargin)-1
-%     switch varargin{option}
-%         case 'backest'
-%             backest = varargin{option+1}; 
-%         otherwise
-%             error(['Option ''', varargin{option}, ''' not defined']);
-%     end
-% end
 
 % set the total number that could be correct at each trial
 nposcorr = ones(size(bp));
