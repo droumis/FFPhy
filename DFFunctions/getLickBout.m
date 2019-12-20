@@ -29,7 +29,7 @@ should just pass an empty arg there..
 output_intervals = 0;
 maxILIthresh = .25; % max burst ili threshold in seconds
 minILIthresh = .06; % min burst ili threshold in seconds
-minBoutLicks = 10; %filter out bouts with less than boutNum licks
+minBoutLicks = 3; %filter out bouts with less than boutNum licks
 lick = [];
 if ~isempty(varargin)
     assign(varargin{:})

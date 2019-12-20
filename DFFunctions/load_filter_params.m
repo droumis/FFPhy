@@ -24,6 +24,12 @@ fprintf('----filter params----\n');
 for s = Fp.params
 fprintf('* %s\n', s{1})
 switch s{1}
+% common
+case 'valid_ntrodes'
+    %             ntAreas = {'ca1', 'mec', 'ref'}; %, 'por', 'v2l', 'sub'};
+    areas = {{'ca1', 'd'}, {'mec', 'deep'}, {'mec', 'supf'}};
+    tetfilter = '(isequal($valid,''yes'') && (isequal($area,''ca1'') || isequal($area,''mec'')))';
+    
 %% ========= XP-SWR mod REACTIVATION =========
 case 'dfa_reactivationPSTH'
     bin = 0.1; % seconds
@@ -119,6 +125,7 @@ case 'wtrackLickTrigSpiking' % formerly wtrackLickTrigSpiking
     wbin = .01; % seconds. wider psth
 %             smbins = 10; % bins. smooth across x bins (wbin x smbins = range of influence)
     eventType = 'lick';
+    expvars = {'all', 'wetLickBursts', 'dryLickBursts'};
 
 %% ========= 'dfa_eventTrigLFP'=========
 case 'dfa_eventTrigLFP'
@@ -207,10 +214,7 @@ case 'openfield'
     %             epochfilter = epochfilter(4:end); %trim first ||
 case 'ca1ntrodes'
     tetfilter = '(isequal($valid,''yes'') && isequal($area,''ca1''))';
-case 'valid_ntrodes'
-%             ntAreas = {'ca1', 'mec', 'ref'}; %, 'por', 'v2l', 'sub'};
-    tetfilter = '(isequal($valid,''yes'') && (isequal($area,''ca1'') || isequal($area,''mec'')))';
-%             tetfilter = tetfilter(4:end); %trim first ||
+
 case 'same tet for eeg'
     eegfilter = {'geteegtet', 'theta','sametet', 1};
 case 'ca1SU'

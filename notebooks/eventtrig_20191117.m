@@ -816,15 +816,15 @@ end
 %% all lickburst ILI. (all an, events) (per area, celltype)
 % pm = [F(a).output{1}.phasemod];
 % 
-
-[h, b] = histcounts(areaPhasemod{1,1}, 200, 'Normalization', 'cdf');
-plot(b(1:end-1) + diff(b(1:2)) / 2, h)
-xlabel('phasemod')
-ylabel('% units');
-ax = gca;
-ax.YDir = 'reverse';
-axis tight
-hold on
+% 
+% [h, b] = histcounts(areaPhasemod{1,1}, 200, 'Normalization', 'cdf');
+% plot(b(1:end-1) + diff(b(1:2)) / 2, h)
+% xlabel('phasemod')
+% ylabel('% units');
+% ax = gca;
+% ax.YDir = 'reverse';
+% axis tight
+% hold on
 
                 % get signal with uniform prior distribution.
                 % compute circular ranks of the phase distribution

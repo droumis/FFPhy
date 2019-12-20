@@ -121,6 +121,20 @@ case 'wtrackLickSU'
     spikeSz = 50; 
     spikeAlpha = .5;
     
+case 'PhaseModperClust'
+    position = [.1 .1 .6 .5];
+    numBins = 24;
+    
+case 'wXPphaseModSU_HeatRast_AllAn'
+    position = [.1 .1 .6 .5];
+    numBins = 40;
+    bin = .010; %sec
+    win = [.3 .3];
+    SpHz = 0.05;
+    MgRt = 0.04;
+    MgLt = 0.1; % margin left
+    MgBm = 0.1; % margin bottom
+    
 case 'suLickPhaseModHeatRastWtrack'
     position = [.1 .1 .6 .5];
     numBins = 40;

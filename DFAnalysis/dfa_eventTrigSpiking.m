@@ -143,8 +143,9 @@ end
 
 % TODO: bc i'm not applying the timefilter to the spikes, I can use a timefilter to filter events
 if strcmp(eventType, 'lick')
-    lickTimesLB = getLickBoutLicks(animal, [repmat(day,length(eps),1) eps'], varargin);
-    eventTimes = lickTimesLB(ismember(lickTimesLB, eventTimes));
+    [intraBoutXP, ~] = getLickBoutLicks(animal, [repmat(day,length(eps),1) eps'], varargin);
+    intraBoutXPvec = intraBoutXP{day}{eps};
+    eventTimes = intraBoutXPvec(ismember(intraBoutXPvec, eventTimes));
 end
 numEventsPerEp = [];
 for e = 1:length(eps)

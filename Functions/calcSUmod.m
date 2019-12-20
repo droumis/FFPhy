@@ -18,7 +18,7 @@ function out = calcSUmod(F, dmat, varargin)
 % - F: struct with F.animal and F.data
 %   - F.data: time, psth, instantFR
 % - dmat: struct (make with beer)
-%       - dayeps: [day ep;...] per ev 
+%       - dayeps: [day ep;...] per ev
 %       - dm: binary. (event x set)
 %       - expvars: dmat labels as cell array of strings
 % varargs:
@@ -28,8 +28,8 @@ function out = calcSUmod(F, dmat, varargin)
 Notes:
     - barn:rat:beer:wheelbarrow
 
-need to add just add this func to dfa_eventTrigSpiking.. 
-or add that to this and make this a dfa.. 
+need to add just add this func to dfa_eventTrigSpiking..
+or add that to this and make this a dfa..
 
 FFPhy V0.1
 @DKR
@@ -37,7 +37,7 @@ FFPhy V0.1
 
 pconf = paramconfig;
 % filtF filter to select animal, epochs, ntrode, clusers
-rwin = [0 .1]; % response period in s rel to swr on
+rwin = [0 .2]; % response period in s rel to swr on
 bwin = [-.7 -.2]; % baseline period in s rel to swr on
 % minNumEvents = 10;
 % minSpikesResp = 10;
@@ -45,7 +45,7 @@ bwin = [-.7 -.2]; % baseline period in s rel to swr on
 % minNumSwrSpikes = 10;
 minSpikes = 50;
 % runShuffle = 1;
-nshuffs = 100;
+nshuffs = 1000;
 shuffbyMax = .7; % s to rand shuff by
 saveResult = 1;
 filetail = '';
@@ -63,54 +63,47 @@ for a = 1:length(F)
     fprintf('=========== %s ===========\n', animal);
     out(a).output = {};
     out(a).dmatIdx = dmat(a).expvars;
-    ic = 0;
-    for c = 1:length(F(a).output{1}) % for each cluster
-        OP = init_out();
-        OP.animal = animal;
-        % collect event design mat for this cluster (per day)
-        idata = F(a).output{1}(c);
-        idx = idata.index;
-        day = idx(1);
-        nt = idx(2);
-        cl = idx(3);
-        eps = idx(4:end);
-        fprintf('%s %d %d %d\n', animal, day, nt, cl);
-        dayDM = ones(length(idata.eventTimes),1);
-        if ~isempty(dmat)
-            try
-                % get the dmat for this day's events
-                dayIdx = dmat(a).dayeps(:,1) == idx(1);
-                dayDM = logical(dmat(a).dm(dayIdx,:));
-            catch
-                error('dmat needs valid dayeps and dm')
+    for iv = 1:size(dmat(a).expvars,2)
+        out(a).output{iv} = [];
+        for c = 1:length(F(a).output{1}) % for each cluster
+            cF = init_out();
+            cF.animal = animal;
+            % collect event design mat for this cluster (per day)
+            idata = F(a).output{1}(c);
+            idx = idata.index;
+            day = idx(1);
+            nt = idx(2);
+            cl = idx(3);
+            eps = idx(4:end);
+            fprintf('%s %d %d %d\n', animal, day, nt, cl);
+            dayDM = ones(length(idata.eventTimes),1);
+            if ~isempty(dmat)
+                try
+                    % get the dmat for this day's events
+                    dayIdx = dmat(a).dayeps(:,1) == idx(1);
+                    dayDM = logical(dmat(a).dm(dayIdx,:));
+                catch
+                    error('dmat needs valid dayeps and dm')
+                end
             end
-        end
-        OP.index = idx;
-        use_psfr = 1;
-        if use_psfr
-            time = idata.wtime;
-            psfr = idata.psfr;
-        else
-            time = idata.time;
-            psfr = idata.psifr;
-        end
-        OP.time = time;
-        %% meanmod score for this cluster, per condition
-        % right now i'm just using the instantFR for computing mod, but num
-        % spikes for thresholding within win is from the psth
-        for iv = 1:size(dayDM,2)
-%             try
-            ivIdx = find(dayDM(:,iv));
-            evIFR = psfr(ivIdx,:);
-            OP.evMean{iv} = nanmean(evIFR,1); % full mean per DM.
-            OP.evMeanZ{iv} = zscore(OP.evMean{iv}); % full mean per DM.
-%                   evIFR = idata.psthW(dayDM(:,iv),:);
-%             catch
-%                 fprintf('no valid events\n')
-%                 continue
-%             end
+            cF.index = idx;
+            use_psfr = 1;
+            if use_psfr
+                time = idata.wtime;
+                psfr = idata.psfr;
+            else
+                time = idata.time;
+                psfr = idata.psifr;
+            end
+            cF.time = time;
+            %% meanmod score for this cluster, per condition
             
-            % response mean FR 
+            ivIdx = find(dayDM(:,iv));
+            evIFR = psfr(ivIdx,:);            
+            cF.evMean = nanmean(evIFR,1); % full mean per DM.
+            cF.evMeanZ = zscore(cF.evMean);
+            
+            % response mean FR
             rIdx = [knnsearch(time', rwin(1)) knnsearch(time', rwin(2))];
             evRespM = nanmean(evIFR(:,rIdx(1):rIdx(2)),2);
             
@@ -118,10 +111,10 @@ for a = 1:length(F)
             numRSpikes = sum(sum(idata.psth(ivIdx,psthRIdx(1):psthRIdx(2))));
             
             fprintf('spikes in response: %d \n', numRSpikes);
-%             if numRSpikes < minSpikesResp
-%                 fprintf('skipping\n')
-%                 continue
-%             end
+            %             if numRSpikes < minSpikesResp
+            %                 fprintf('skipping\n')
+            %                 continue
+            %             end
             % baseline mean FR
             bIdx = [knnsearch(time', bwin(1)) knnsearch(time', bwin(2))];
             evBaseM = nanmean(evIFR(:,bIdx(1):bIdx(2)),2);
@@ -131,10 +124,10 @@ for a = 1:length(F)
             numBSpikes = sum(sum(idata.psth(dayDM(:,iv), psthbIdx(1):psthbIdx(2))));
             
             fprintf('spikes in baseline period: %d \n', numBSpikes);
-            if (numBSpikes + numRSpikes) < minSpikes
-                fprintf('skipping\n')
-                continue
-            end
+            %             if (numBSpikes + numRSpikes) < minSpikes
+            %                 fprintf('skipping\n')
+            %                 continue
+            %             end
             
             % take the diff of base and resp period for each event
             % mean pct change from baseline
@@ -145,15 +138,16 @@ for a = 1:length(F)
             
             evIFRz = zscore(evIFR, [], 2);
             mZResp = nanmean(nanmean(evIFRz(:,rIdx(1):rIdx(2)),2));
-%             OP.numRSpikes{iv} = numRSpikes;
-%             OP.numBSpikes{iv} = numBSpikes;
+            %             OP.numRSpikes{iv} = numRSpikes;
+            %             OP.numBSpikes{iv} = numBSpikes;
             %% Shuffle
             numEv = size(evIFR,1);
-            binsize = diff(time(1:2));
+            %             binsize = diff(time(1:2));
             shuffbyMaxBins = knnsearch(time', shuffbyMax)-knnsearch(time', 0);
-            r = randi([-shuffbyMaxBins shuffbyMaxBins], numEv, nshuffs); 
+            r = randi([-shuffbyMaxBins shuffbyMaxBins], numEv, nshuffs);
             mPctChangeSh = nan(nshuffs,1);
-            for i = 1:nshuffs % can use parfor
+            mZChangeSh = nan(nshuffs,1);
+            parfor i = 1:nshuffs % can use parfor
                 % for each event, select a shuf rand period as r and b
                 % time-mean fr in response period
                 evRespMSh = nanmean(cell2mat(arrayfun(@(x,y) evIFR(x,rIdx(1)+y:rIdx(2)+y), ...
@@ -168,55 +162,54 @@ for a = 1:length(F)
                 useBs = ~(evBaseSTDSh == 0);
                 mZChangeSh(i) = nanmean((evRespMSh(useBs)-evBaseMSh(useBs))./evBaseSTDSh(useBs));
             end
-           %%
+            %%
             % real-mod shuff-pct
             modPctRank = 100*(1-(sum(mPctChangeSh > mPctChange)./nshuffs));
             modZRank = 100*(1-(sum(mZChangeSh > mZChange)./nshuffs));
             fprintf('iv%d Pctmod > %.02f pctShuffs.\n', iv, modPctRank)
             fprintf('iv%d Zmod > %.02f pctShuffs.\n', iv, modZRank)
             
-            OP.mPctChange{iv} = mPctChange;
-            OP.mPctChangeSh{iv} = mPctChangeSh;
-            OP.modPctRank{iv} = modPctRank;
+            cF.mPctChange = mPctChange;
+            cF.mPctChangeSh = mPctChangeSh;
+            cF.modPctRank = modPctRank;
+            cF.mZChangeSh = mZChangeSh;
+            cF.mZChange = mZChange;
+            cF.modZRank = modZRank;
+            cF.mZResp = mZResp;
+            cF.area = idata.area;
+            cF.subarea = idata.subarea;
+            cF.cellInfo = idata.cellInfo;
             
-            OP.mZChangeSh{iv} = mZChangeSh;
-            OP.mZChange{iv} = mZChange;
-            OP.modZRank{iv} = modZRank;
-            
-            OP.mZResp{iv} = mZResp;
-            
-            OP.area = idata.area;
-            OP.subarea = idata.subarea;
+            out(a).output{iv} = [out(a).output{iv}; cF];
         end
-        ic = ic +1;
-        out(a).output{1}(ic) = OP;
+        
     end
 end
 end
 
-function out = init_out()
-out.mZChange = [];
-out.animal = '';
-out.dmat = [];
-out.dmatIdx = [];
-out.index = [];
-out.time = [];
+function cF = init_out()
+cF.mZChange = [];
+cF.animal = '';
+cF.dmat = [];
+cF.dmatIdx = [];
+cF.index = [];
+cF.time = [];
 
-out.evMean = [];
-out.evMeanZ = [];
+cF.evMean = [];
+cF.evMeanZ = [];
 % out.numRSpikes = [];
 % out.numBSpikes = [];
-out.mPctChange = [];
-out.mPctChangeSh = [];
-out.modPctRank = [];
+cF.mPctChange = [];
+cF.mPctChangeSh = [];
+cF.modPctRank = [];
 
-out.mZChangeSh = [];
-out.mZChange = [];
-out.modZRank = [];
+cF.mZChangeSh = [];
+cF.mZChange = [];
+cF.modZRank = [];
 
-out.mZResp = [];
+cF.mZResp = [];
 
-out.area = '';
-out.subarea = '';
-
+cF.area = '';
+cF.subarea = '';
+cF.cellInfo = [];
 end
