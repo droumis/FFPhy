@@ -28,7 +28,7 @@ function out = calcSUmod(F, dmat, varargin)
 Notes:
     - barn:rat:beer:wheelbarrow
 
-need to add just add this func to dfa_eventTrigSpiking..
+need to add this func to dfa_eventTrigSpiking..
 or add that to this and make this a dfa..
 
 FFPhy V0.1

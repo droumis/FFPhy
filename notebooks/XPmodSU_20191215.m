@@ -13,19 +13,19 @@ results?
 pconf = paramconfig;
 eventTrigLFP = 0; % PIPE:forest.bear.cactus.mushroom.beer.leaf == eventSet mean Spect
 eventTrigSpiking = 1; % PIPE:barn.rat.beer.wheelbarrow == eventSet SU mod
-eventType = 'swr'; %lick swr
+eventType = 'lick'; %lick swr
 
 create_filter = 0;
 run_ff = 0;
-load_ffdata = 1;
+load_ffdata = 0;
 
 make_dmat = 0;
 load_dmat = 0;
 
 calcSUphaseMod = 0;
-loadSUphaseMod = 0;
+loadSUphaseMod = 1;
 
-plotPhaseMod_pClust = 0;
+plotPhaseMod_pClust = 1;
 plotPhaseMod_HeatRast_pAn = 0;
 plotPhaseMod_HeatRast_AllAn = 0;
 plotPhaseMod_stats = 0;
@@ -33,15 +33,15 @@ plotPhaseMod_stats = 0;
 calcSUtimeMod = 0;
 loadSUtimeMod = 0;
 
-plotTimeMod_pClust = 1;
+plotTimeMod_pClust = 0;
 plotTimeMod_HeatRast_pAn = 0;
 plotTimeMod_HeatRast_AllAn = 0;
 plotTimeMod_stats = 0;
 
 savefigs = 1;
-pausefigs = 0;
-showfigs = 0;
-savefigas = {'png', 'eps'};
+pausefigs = 1;
+showfigs = 1;
+savefigas = {'png', 'pdf'};
 
 % data filter params
 Fp.animals = {'JZ1'}; %, 'D12', 'D13', 'JZ1', 'JZ2', 'JZ3', 'JZ4'}; %, 'JZ2', 'JZ4'};
@@ -118,7 +118,7 @@ end
 if calcSUphaseMod % saw
     pmodF = calcPhaseMod(F, dmat);
     save_data(pmodF, 'results', [Fp.Label '_phasemod']);
-end
+end 
 if loadSUphaseMod
     pmodF = load_data('results', [Fp.Label '_phasemod'], Fp.animals);
 end

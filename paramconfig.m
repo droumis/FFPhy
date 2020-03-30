@@ -1,7 +1,8 @@
 
 
 function out = paramconfig(user, varargin)
-% import globals per user
+% import params per user
+% DKR 2020
 
 user = 'Demetris';
 if ~isempty(varargin)
@@ -11,7 +12,6 @@ end
 switch user
     case 'Demetris'
     out.andef = animaldef(user);
-    
 end
 
 end
