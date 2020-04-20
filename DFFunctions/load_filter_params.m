@@ -117,6 +117,14 @@ case 'wtrackSWRTrigSpiking'
     wbin = .01; % seconds. wider psth
 %             smbins = 10; % bins. smooth across x bins (wbin x smbins = range of influence)
     eventType = 'ca1rippleskons';
+    
+case 'PeventSpiking'% formely wtrackLickTrigSpiking
+    win = [1.5 1.5];
+    bin = .001;
+    wbin = .01; % seconds. wider psth
+%             smbins = 10; % bins. smooth across x bins (wbin x smbins = range of influence)
+    eventType = 'Pevent';
+    expvars = {'all'}; %, 'wetLickBursts', 'dryLickBursts'};
 
 case 'wtrackLickTrigSpiking' % formerly wtrackLickTrigSpiking
     % for dfa_eventTrigSpiking
@@ -125,7 +133,7 @@ case 'wtrackLickTrigSpiking' % formerly wtrackLickTrigSpiking
     wbin = .01; % seconds. wider psth
 %             smbins = 10; % bins. smooth across x bins (wbin x smbins = range of influence)
     eventType = 'lick';
-    expvars = {'all', 'wetLickBursts', 'dryLickBursts'};
+    expvars = {'all'}; %, 'wetLickBursts', 'dryLickBursts'};
 
 %% ========= 'dfa_eventTrigLFP'=========
 case 'dfa_eventTrigLFP'
@@ -158,6 +166,7 @@ case 'ripples'
         'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
         'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
         'minvelocity', minvelocity,'maxvelocity',maxvelocity};
+    
 case 'ripples>2'
     eventType = 'ca1rippleskons';
     consensus_numtets = 2;   % minimum # of tets for consensus event detection
@@ -182,23 +191,30 @@ case 'sleep'
     env = 'sleep';
     epochfilter = sprintf('(isequal($environment,''%s''))', ...
         env);
+    
 case 'wtrack'
     env = 'wtrack';
     epochfilter = sprintf('(isequal($environment,''%s''))', ...
         env);
+    
 case 'wtrackdays'
     env = 'wtrack';
     daytype = 'wtrack';
-    epochfilter = sprintf('(isequal($daytype,''%s'')) && (isequal($environment,''%s''))', ...
+    epochfilter = sprintf(...
+        '(isequal($daytype,''%s'')) && (isequal($environment,''%s''))', ...
         daytype, env);
+        
 case 'exemplar_wepochs'
     env = 'wtrack';
-    epochfilter = sprintf('(isequal($exemplar,1)) && (isequal($environment,''wtrack''))');
+    epochfilter = sprintf(...
+        '(isequal($exemplar,1)) && (isequal($environment,''wtrack''))');
+    
 case 'sleepwtrackdays'
     env = 'sleep';
     daytype = 'wtrack';
     epochfilter = sprintf('(isequal($daytype,''%s'')) && (isequal($environment,''%s''))', ...
         daytype, env);
+    
 case 'openfield'
     env = 'openfield';
     epochfilter = sprintf('(isequal($environment,''%s''))', ...

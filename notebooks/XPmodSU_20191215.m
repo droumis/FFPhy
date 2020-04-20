@@ -131,7 +131,6 @@ end
 if loadSUtimeMod
     modF = load_data('results', [Fp.Label '_timemod'], Fp.animals);
 end
-    
 
 %% PLOT=====================================================================
 

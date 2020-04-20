@@ -1,32 +1,21 @@
 
 function [out] = makeExpvarCatDesignMat(data, expvars, varargin)
-% [out] = makeExpvarCatDesignMat(data, varargin)
-% evaluate expvars timefilter groups for data.animal, day, epoch, evStart
-% ** expvar groups refers to timefilter functions and their filter strings that exist in
-%  load_filter_params.m **
-% This is merely a way to group and evaluate multiple timefilters
-% I use the returned design matrix to slice into data arrays per expvar\
-%
-%     Baleful Beer
-%         .~~~~.
-%         i====i_
-%         |cccc|_)
-%         |cccc|   
-%         `-==-'
+% [out] = makeExpvarCatDesignMat(data, expvars, varargin)
+% - evaluate expvars timefilter groups for data.animal, day, epoch, evStart
+%   where expvars label timefilt funcs and filtstrings from load_filter_params
+% - the output design matrix used to filter event-indexed data array
 %
 % args:
-% - data: struct:
-%         - animal, evStart, day, epoch
-%         - expvars: cell array of strings
+% - data: struct: animal, evStart, day, epoch
+% - expvars: cell array of strings
 % varargs:
-%
 %
 % output:
 % - out.dm: design matrix of eventSet (event, set)
-%
 
 %{
-FFPhy V0.1
+Beer
+FFPhy
 @DR
 %}
 

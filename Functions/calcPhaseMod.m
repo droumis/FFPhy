@@ -1,37 +1,24 @@
 
 function out = calcPhaseMod(F, dmat, varagin)
 % [out] = calcSUmod(F, varargin)
-% calculate event based phase modulation of SU spiking
-%
-%                   Sagacious Saw
-%                                                __
-%                                    _____....--' .'
-%                          ___...---'._ o      -`(
-%                ___...---'            \   .--.  `\
-%      ___...---'                      |   \   \ `|
-%     |                                |o o |  |  |
-%     |                                 \___'.-`.  '.
-%     |                                      |   `---'
-%     '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^'
+% calculate event based phase modulation of spiking
 %
 % args:
 % - F: struct with F.animal and F.data
 %   - F.data: time, psth, instantFR
-% - dmat: struct (make with beer)
+% - dmat: struct
 %       - dayeps: [day ep;...] per ev
 %       - dm: binary. (event x set)
 %       - expvars: dmat labels as cell array of strings
-
 %{
-Notes:
-    - barn:rat:beer:saw
-
+Saw
+- barn:rat:beer:saw
 @DKR
 %}
 
+pconf = paramconfig;
 comuteShuf = 1;
 numShuf = 1000;
-pconf = paramconfig;
 bin = .001;
 minILIthresh = .06; % seconds
 maxILIthresh = .250; % seconds

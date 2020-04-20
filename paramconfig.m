@@ -12,6 +12,10 @@ end
 switch user
     case 'Demetris'
     out.andef = animaldef(user);
+    out.savefigs = 1;
+    out.pausefigs = 1;
+    out.showfigs = 1;
+    out.savefigas = {'png', 'pdf'};
 end
 
 end

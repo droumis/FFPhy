@@ -1,17 +1,8 @@
 function [intraBoutXP, boutTimes] = getLickBoutLicks(an, eps, varargin)
 % [intraBoutXP, boutTimes] = getLickBoutLicks(an, eps, varargin)
-% get lick bout XP events
-%    Contumacious Clock
-%       _______
-%      /  12   \
-%     |    |    |
-%     |9   |   3|
-%     |     \   |
-%     |         |
-%      \___6___/
-%
-%
-%
+% get lick bout XP events.
+% calls getLickBout
+
 % args:
 %
 % varargs:
@@ -19,7 +10,8 @@ function [intraBoutXP, boutTimes] = getLickBoutLicks(an, eps, varargin)
 % output:
 %
 %{
-FFPhy V0.1
+Contumacious Clock
+FFPhy
 @DR
 %}
 maxILIthresh = .25; % max burst ili threshold in seconds

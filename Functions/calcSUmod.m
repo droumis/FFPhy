@@ -4,16 +4,6 @@ function out = calcSUmod(F, dmat, varargin)
 % [out] = calcSUmod(F, varargin)
 % calculate event-triggered modulation of SU spiking
 %
-%                         Wheedling Wheelbarrow
-%                                               _______
-%                  ___________________________.'.------`
-%                 '---------------------------.'
-%                   `.                      .'
-%                 .-//`.                  .'
-%              .' .//.'/`================'
-%             =[=:====:=]=           \\||
-%              '. `--' .'             \_|
-%                `-  -'
 % args:
 % - F: struct with F.animal and F.data
 %   - F.data: time, psth, instantFR
@@ -25,13 +15,13 @@ function out = calcSUmod(F, dmat, varargin)
 %
 %
 %{
-Notes:
+Wheelbarrow
     - barn:rat:beer:wheelbarrow
 
 need to add this func to dfa_eventTrigSpiking..
 or add that to this and make this a dfa..
 
-FFPhy V0.1
+FFPhy
 @DKR
 %}
 

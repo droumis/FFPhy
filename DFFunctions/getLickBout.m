@@ -16,9 +16,7 @@ function out = getLickBout(datadir, animal, epochs, varargin)
 
 %{
 Notes:
-% what scripts created the lick data structure? i need to save the timeseries 
-% dio times along with..
-/home/droumis/Src/Matlab/filterframework_dr/Functions/get_licks.m
+get_licks creates the lick data structure that this uses
 
 'datadir' arg1 currently needs to be there bc of the way setfiltertime
 calls the time funcs... but i don't use it so outside of setfiltertime i

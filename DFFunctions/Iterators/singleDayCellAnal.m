@@ -4,26 +4,19 @@ function f = singleDayCellAnal(f,varargin)
 % f().function.name, after loading the variables designated as strings in
 % f().function.loadvariables{:}.  Also the function call appends any
 % options in the f().function.options{} cell array.
-%
-%                     Blithesome Barn
-%                                x
-%                     .-. _______|
-%                     |=|/     /  \
-%                     | |_____|_""_|
-%                     |_|_[X]_|____|
 
 %{
-% Notes:
-%   - barn.rat.beer.saw/wheelbarrow
-% Each function call is for one cluster, across epochs in a day, and it is assumed that
-% the function's first input is the index to the cell ([day ntrode cell]).  
-% The second input is a list of exclusion periods [starttime endtime].
-% The data to load (elsewhere called to as 'load variables') is 
-% out = fname(index, excludeperiods, 'var1', var1, ..., 'option1', option1,...).
-%
-% The output is stored as f(animal).output
+Notes:
+Blithesome Barn
+   - barn.rat.beer.saw/wheelbarrow
+ Each function call is for one cluster, across epochs in a day, and it is assumed that
+ the function's first input is the index to the cell ([day ntrode cell]).  
+ The second input is a list of exclusion periods [starttime endtime].
+ The data to load (elsewhere called to as 'load variables') is 
+ out = fname(index, excludeperiods, 'var1', var1, ..., 'option1', option1,...).
 
-% @DKR2019
+ The output is stored as f(animal).output
+ @DKR
 %}
 
 %iterate through all animals

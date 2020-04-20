@@ -2,14 +2,7 @@
 function [out] = dfa_eventTrigSpiking(idx, timeFilter, varargin)
 % [out] = dfa_eventTrigSpiking(idx, timeFilter, varargin)
 % Gather Spikes around event times
-%               
-%                   Redolent Rat
-%           ,,==.
-%          //    `
-%         ||      ,--~~~~-._ _(\--,_
-%          \\._,-~   \      '    *  `o
-%           `---~\( _/,___( /_/`---~~
-%                 ``==-    `==-,
+%
 % Iterator:
 % - singleDayCellAnal
 % 
@@ -29,11 +22,10 @@ function [out] = dfa_eventTrigSpiking(idx, timeFilter, varargin)
 % - smbins: bins. smooth across bins
 %{
 Notes:
+- redolent rat
 - barn:rat:wheelbarrow
 - gathers spiking around event times (generalized from swr, lick- versions)
 - probably outdated example notebook: licktrigSUmod_20191106.m
-
-FFPhy V0.1
 @DKR
 %}
 
