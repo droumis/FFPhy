@@ -6,9 +6,9 @@ indivudal units across views
 %}
 
 % query
-create_filter = 0;
+create_filter = 1;
 run_ff = 0;
-load_ffdata = 1;
+load_ffdata = 0;
 
 % Analysis
 make_dmat = 0;
@@ -91,26 +91,26 @@ if loadSUtimeMod
     modF = load_data('results', [Fp.Label '_timemod'], Fp.animals);
 end
 
-%% Plot P and SWR mod per unit
-if plotSUmod_pClust
-    % SWR time mod
-    
-    
-    % P event time mod
-    
-    
-    % polar raster
-    spikeTimes =
-    boutIntv =
-    spikesinbouts = spikeTimes(logical(isExcluded(spikeTimes, boutIntv(1,:))));
-    [N,~,spbin] = histcounts(spikesinbouts, lickTimes);
-    relspiketime = spikesinbouts - lickTimes(spbin);
-    polar([zeros(size(sprads,1),1) sprads]',repmat([0 1],size(sprads,1),1)', 'k')
-    
-    % polar hist
-    
-
-end
+ %% Plot P and SWR mod per unit
+% if plotSUmod_pClust
+%     % SWR time mod
+%     
+%     
+%     % P event time mod
+%     
+%     
+%     % polar raster
+%     spikeTimes =
+%     boutIntv =
+%     spikesinbouts = spikeTimes(logical(isExcluded(spikeTimes, boutIntv(1,:))));
+%     [N,~,spbin] = histcounts(spikesinbouts, lickTimes);
+%     relspiketime = spikesinbouts - lickTimes(spbin);
+%     polar([zeros(size(sprads,1),1) sprads]',repmat([0 1],size(sprads,1),1)', 'k')
+%     
+%     % polar hist
+%     
+% 
+% end
 %% Plot Phase Mod PER CLUST ( + per dmc)
 if plotPhaseMod_pClust
     % plot the phase mod as a circular spiking probability of IEI elapsed
