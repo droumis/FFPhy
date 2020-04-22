@@ -17,7 +17,7 @@ pausefigs = 0;
 savefigs = 1;
 savefigas = {'png', 'eps'};
 
-plotSWRXPmod_perAn = 1;
+plotSWRXPmod_perAn_daily = 1;
 
 %% FF Data
 Fp = [];
@@ -51,7 +51,7 @@ end
 
 %% Plot. per days for each animal. then per animal. then all
 if plotfigs
-    if plotSWRXPmod_perAn
+    if plotSWRXPmod_perAn_daily
         figname = 'wXPmodSWR';
         Pp=load_plotting_params({'defaults','dfa_lickswrcorr', figname});
         for a = 1:length(F)

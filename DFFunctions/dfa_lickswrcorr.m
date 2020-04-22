@@ -3,28 +3,7 @@
 function out = dfa_lickswrcorr(idx, timeFilter, varargin)
 % out = dfa_lickswrcorr(idx, timeFilter, varargin)
 % gets swr x xp xcorr and phase clustering
-%
 %           Adroit Alien
-%          __.,,------.._
-%       ,'"   _      _   "`.
-%      /.__, ._  -=- _"`    Y
-%     (.____.-.`      ""`   j
-%      VvvvvvV`.Y,.    _.,-'       ,     ,     ,
-%         Y    ||,   '"\         ,/    ,/    ./
-%         |   ,'  ,     `-..,'_,'/___,'/   ,'/   ,
-%    ..  ,;,,',-'"\,'  ,  .     '     ' ""' '--,/    .. ..
-%  ,'. `.`---'     `, /  , Y -=-    ,'   ,   ,. .`-..||_|| ..
-% ff\\`. `._        /f ,'j j , ,' ,   , f ,  \=\ Y   || ||`||_..
-% l` \` `.`."`-..,-' j  /./ /, , / , / /l \   \=\l   || `' || ||...
-%  `  `   `-._ `-.,-/ ,' /`"/-/-/-/-"'''"`.`.  `'.\--`'--..`'_`' || ,
-%             "`-_,',  ,'  f    ,   /      `._    ``._     ,  `-.`'//         ,
-%           ,-"'' _.,-'    l_,-'_,,'          "`-._ . "`. /|     `.'\ ,       |
-%         ,',.,-'"          \=) ,`-.         ,    `-'._`.V |       \ // .. . /j
-%         |f\\               `._ )-."`.     /|         `.| |        `.`-||-\\/
-%         l` \`                 "`._   "`--' j          j' j          `-`---'
-%          `  `                     "`,-  ,'/       ,-'"  /
-%                                  ,'",__,-'       /,, ,-'
-%                                  Vvv'            VVv'
 %
 % Iterator:
 % - singleDayAnal (city)
@@ -52,9 +31,6 @@ log(R^2/n) where R is the normed mean resultant vector and n is num samples
 circ_r gets you the mean resultant vector, r
 - note, karalis and sirota don't use any point process with less than 200 points in
 the times of interest..
-
-FFPhy V0.1
-@DKR
 
 %}
 

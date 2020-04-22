@@ -52,7 +52,7 @@ load_ffdata = 0;
 % loadSUPhaseMod = 0;
 % % Gather across animals, per area, condition
 % gatherPhaseModResults = calcSUphasemod;
-gather_XP_mod_SWR = 01;
+gather_XP_mod_SWR = 0;
 %% plot
 plotfigs = 1;
 showfigs = 0;

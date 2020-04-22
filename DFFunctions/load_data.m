@@ -6,7 +6,7 @@ function out = load_data(source, filename, animals, varargin)
 if ~isa(animals, 'cell')
     animals = {animals};
 end
-% Author: Demetris Roumis June 2019
+
 pconf = paramconfig;
 filtfunction = ' ';
 filetail = '';

@@ -2,12 +2,15 @@
 %{
 Replicate phase mod.. include raw spiking in polar plots
 add time mod to the same plot as phase mod so it's easier to survey
+indivudal units across views
 %}
-% Dashboard
+
+% query
 create_filter = 0;
 run_ff = 0;
 load_ffdata = 1;
 
+% Analysis
 make_dmat = 0;
 load_dmat = 0;
 
@@ -16,14 +19,15 @@ loadSUphaseMod = 0;
 calcSUtimeMod = 0;
 loadSUtimeMod = 0;
 
-plotSUmod_pClust = 1;
+% Plot
+plotSUmod_pClust = 0;
 plotPhaseMod_pClust = 0;
 plotTimeMod_pClust = 0;
 
-savefigs = 1;
+savefigs = 0;
 pausefigs = 0;
 showfigs = 0;
-savefigas = {'pdf'};
+savefigas = {'png','pdf'};
 
 %% Define Filter Params
 pconf = paramconfig('Demetris'); % globals per user

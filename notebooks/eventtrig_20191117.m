@@ -31,7 +31,7 @@ eventTrigLFP::
         -> computeAnalyticSignal (mushroom:: ) ->
         -> makeEventSet (beer:: ) ->
         -> get_power (cactus:: eventSetPowerTrace) ->
-
+make_expvarCatMeanPwr
 % holy shit.. jz1 licktrigspiking is like 10 times the size on ram than it
 is on disk... i need to curate the licks to a subset
 
