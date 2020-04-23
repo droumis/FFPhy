@@ -36,7 +36,6 @@ outpath = [pconf.andef{2},outdir,'/'];
 % if data comes from the spiking pipeline, need to convert to F with dayep, evtimes
 if strcmp(data(1).iterator, 'singleDayCellAnal')
     for a = 1:length(data)
-        dF(a).animal = data(a).animal;
         % get dayeps idx of one cell per day
         idx = cell2mat({data(a).output{1}.index}');
         [~, dayUnqIdx] = unique(idx(:,1)); 
@@ -45,18 +44,17 @@ if strcmp(data(1).iterator, 'singleDayCellAnal')
         % get num events per dayep. 
         numEvPerDay = cell2mat({data(a).output{1}(dayUnqIdx).numEventsPerEp})';
         % collect eventTimes across all days
-        dF(a).evStart = cell2mat({data(a).output{1}(dayUnqIdx).eventTimes}');
+        data(a).evStart = cell2mat({data(a).output{1}(dayUnqIdx).eventTimes}');
         % label each the event time with day ep
-        dF(a).day = [];
-        dF(a).epoch = [];
+        data(a).day = [];
+        data(a).epoch = [];
         for d = 1:size(eps,1)
             for e = 1:size(eps,2)
-                dF(a).day = [dF(a).day; repmat(days(d), numEvPerDay(d,e), 1)];
-                dF(a).epoch = [dF(a).epoch; repmat(eps(d,e), numEvPerDay(d,e),1)];
+                data(a).day = [data(a).day; repmat(days(d), numEvPerDay(d,e), 1)];
+                data(a).epoch = [data(a).epoch; repmat(eps(d,e), numEvPerDay(d,e),1)];
             end
         end
     end
-    data = dF;
 end
 
 for ian = 1:length(data)
@@ -68,6 +66,7 @@ for ian = 1:length(data)
     end
     out(ian).animal = animal;
     out(ian).dims = {'event', 'expvar'};
+    out(ian).label = data(ian).datafilter_params.Label;
     out(ian).evStart = data(ian).evStart;
     %         out(ian).evEnd = lfpstack(ian).evEnd{t};
     out(ian).dayeps = [data(ian).day data(ian).epoch];
@@ -131,7 +130,7 @@ for ian = 1:length(data)
     end
 end
 if saveout
-    save_data(out, outpath, [outdir,'_',Fp.env,'_',eventType]);
+    save_data(out, outpath, [outdir,'_', out(ian).label]);
 end
 end
 

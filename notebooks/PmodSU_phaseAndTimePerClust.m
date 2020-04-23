@@ -6,7 +6,7 @@ indivudal units across views
 %}
 
 % query
-create_filter = 1;
+create_filter = 0;
 run_ff = 0;
 load_ffdata = 0;
 
@@ -20,7 +20,7 @@ calcSUtimeMod = 0;
 loadSUtimeMod = 0;
 
 % Plot
-plotSUmod_pClust = 0;
+plotSUmod_pClust = 1; % both time, phase mod
 plotPhaseMod_pClust = 0;
 plotTimeMod_pClust = 0;
 
@@ -56,6 +56,10 @@ if run_ff
     F = runfilter(F);
     save_data(F, Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, ...
         'filetail', ['_' Fp.Label]);
+    % save to dropbox location
+    dbPath = animaldef('Demetris');
+    dbPath = dbPath{end};
+    save_data(F, dbPath, Fp.paths.filenamesave, 'filetail', ['_' Fp.Label]);
 end
 if load_ffdata
     F = load_data(Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, ...
@@ -65,6 +69,8 @@ end
 %% Create Design Mat
 if make_dmat
     dmat = makeExpvarCatDesignMat(F, Fp.expvars, 'eventType', Fp.eventType);
+    % save to dropbox. (saving to stelmo is done within function)
+%     save_data(dmat, dbPath, Fp.paths.filenamesave, 'filetail', ['_' Fp.Label]);
 end
 
 if load_dmat
@@ -91,26 +97,35 @@ if loadSUtimeMod
     modF = load_data('results', [Fp.Label '_timemod'], Fp.animals);
 end
 
- %% Plot P and SWR mod per unit
-% if plotSUmod_pClust
-%     % SWR time mod
-%     
-%     
-%     % P event time mod
-%     
-%     
-%     % polar raster
-%     spikeTimes =
-%     boutIntv =
-%     spikesinbouts = spikeTimes(logical(isExcluded(spikeTimes, boutIntv(1,:))));
-%     [N,~,spbin] = histcounts(spikesinbouts, lickTimes);
-%     relspiketime = spikesinbouts - lickTimes(spbin);
-%     polar([zeros(size(sprads,1),1) sprads]',repmat([0 1],size(sprads,1),1)', 'k')
-%     
-%     % polar hist
-%     
-% 
-% end
+%% Plot P and SWR mod per unit
+if plotSUmod_pClust
+    figname = 'PhaseTimeModperClust';
+    Pp=load_plotting_params({'defaults', figname});
+    % for each animal 
+    % for each unit
+    ifig = init_plot(showfigs, Pp.position); % fig per clust
+    % SWR time mod
+    
+
+    % P event time mod
+
+
+    % polar raster
+    spikeTimes =
+    boutIntv =
+    spikesinbouts = spikeTimes(logical(isExcluded(spikeTimes, boutIntv(1,:))));
+    [N,~,spbin] = histcounts(spikesinbouts, lickTimes);
+    relspiketime = spikesinbouts - lickTimes(spbin);
+    polar([zeros(size(sprads,1),1) sprads]',repmat([0 1],size(sprads,1),1)', 'k')
+
+    % polar hist aka phasemod
+
+    % all cell heatrast with arrow to current cell
+
+    % text stats,scores of this cell
+
+end
+
 %% Plot Phase Mod PER CLUST ( + per dmc)
 if plotPhaseMod_pClust
     % plot the phase mod as a circular spiking probability of IEI elapsed
@@ -170,20 +185,24 @@ if plotPhaseMod_pClust
             pos = get(sf, 'position');
             dim = pos.*[1 1 0.5 0.5];
             annotation('textbox', dim, 'String', {['p = ' num2str(cD.pval)],...
-                ['% rank = ', num2str(cD.modPctRank)],['phmod = ', num2str(cD.phasemod)],...
+                ['% rank = ', num2str(cD.modPctRank)],...
+                ['phmod = ', num2str(cD.phasemod)],...
                 ['nSpk = ', num2str(length(cD.spikeIEIPhase))],...
                 ['nIEI = ', num2str(length(cD.ILI))]},...
-                'FontSize', 14, 'FontName','Arial', 'LineStyle','none', 'vert', 'bottom', 'FitBoxToText','on');
+                'FontSize', 14, 'FontName','Arial', 'LineStyle','none', ...
+                'vert', 'bottom', 'FitBoxToText','on');
             hold off
         end
-        stit = sprintf('%s %d %d %d %s %s %s', cD.animal, cD.index(1), cD.index(2), cD.index(3),...
+        stit = sprintf('%s %d %d %d %s %s %s', cD.animal, cD.index(1), ...
+            cD.index(2), cD.index(3),...
             clarea, clsubarea, figname);
         setSuperAxTitle(stit);
         if pausefigs
             pause
         end
         if savefigs
-            strsave = save_figure([pconf.andef{4} '/' figname '/' cD.animal], stit, 'savefigas', savefigas);
+            strsave = save_figure([pconf.andef{4} '/' figname '/' cD.animal],...
+                stit, 'savefigas', savefigas);
         end
     end
 end
@@ -215,7 +234,7 @@ if plotTimeMod_pClust
             csubarea = F(a).output{1}(c).subarea;
             fprintf('%s %d %d %d\n', animal, day, nt, clust);
             
-            %% spike raster
+            % spike raster
             sf = subaxis(3, 1, [1 2], Pp.posparams{:});
             sf.Tag = 'raster';
             [xx,yy] = find(F(a).output{1}(c).psth(:,sT:eT)');
@@ -228,7 +247,7 @@ if plotTimeMod_pClust
             ylabel('Event #');
             line([0 0], ylim, 'linestyle', '-', 'color', [.5 .5 1 .5], 'linewidth', 2)
             
-            %% PSTH
+            % PSTH
             sf = subaxis(3,1,3,Pp.posparams{:});
             sf.Tag = 'psth';
             [xx,yy] = find(F(a).output{1}(c).psth');
@@ -241,7 +260,7 @@ if plotTimeMod_pClust
             ylabel('count')
             line([0 0], ylim, 'linestyle', '-', 'color', [.5 .5 1 .5], 'linewidth', 2)
             
-            %%
+            %
             allAxesInFigure = findall(gcf,'type','axes');
             linkaxes(allAxesInFigure, 'x');
             stit = sprintf('%s %s %d %d %d %s %s', figname, animal, day, ...

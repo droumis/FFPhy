@@ -2,6 +2,7 @@
 
 function out = calcSUmod(F, dmat, varargin)
 % [out] = calcSUmod(F, varargin)
+% TODO: rename func to calcTimeModSU
 % calculate event-triggered modulation of SU spiking
 %
 % args:
@@ -12,39 +13,28 @@ function out = calcSUmod(F, dmat, varargin)
 %       - dm: binary. (event x set)
 %       - expvars: dmat labels as cell array of strings
 % varargs:
-%
-%
 %{
-Wheelbarrow
-    - barn:rat:beer:wheelbarrow
-
+Notes;
 need to add this func to dfa_eventTrigSpiking..
 or add that to this and make this a dfa..
-
-FFPhy
-@DKR
 %}
 
 pconf = paramconfig;
-% filtF filter to select animal, epochs, ntrode, clusers
 rwin = [0 .2]; % response period in s rel to swr on
 bwin = [-.7 -.2]; % baseline period in s rel to swr on
 % minNumEvents = 10;
 % minSpikesResp = 10;
 % minSpikesBase = 10;
 % minNumSwrSpikes = 10;
-minSpikes = 50;
-% runShuffle = 1;
+minSpikes = 50; % TODO.. need to implement
+computeShuf = 0;
 nshuffs = 1000;
 shuffbyMax = .7; % s to rand shuff by
 saveResult = 1;
 filetail = '';
-% dmat = [];
-% dmatIdx = {'all'};
+use_psfr = 1; % use firing rate. otherwise uses instantaneous firing rate (see rat)
 
-if ~isempty(varargin)
-    assign(varargin{:})
-end
+try assign(varargin{:}); catch; end
 
 out = struct;
 for a = 1:length(F)
@@ -55,7 +45,7 @@ for a = 1:length(F)
     out(a).dmatIdx = dmat(a).expvars;
     for iv = 1:size(dmat(a).expvars,2)
         out(a).output{iv} = [];
-        for c = 1:length(F(a).output{1}) % for each cluster
+        for c = 1:length(F(a).output{1}) % could parfor this for each cluster
             cF = init_out();
             cF.animal = animal;
             % collect event design mat for this cluster (per day)
@@ -77,7 +67,6 @@ for a = 1:length(F)
                 end
             end
             cF.index = idx;
-            use_psfr = 1;
             if use_psfr
                 time = idata.wtime;
                 psfr = idata.psfr;
@@ -87,9 +76,8 @@ for a = 1:length(F)
             end
             cF.time = time;
             %% meanmod score for this cluster, per condition
-            
             ivIdx = find(dayDM(:,iv));
-            evIFR = psfr(ivIdx,:);            
+            evIFR = psfr(ivIdx,:);
             cF.evMean = nanmean(evIFR,1); % full mean per DM.
             cF.evMeanZ = zscore(cF.evMean);
             
@@ -114,10 +102,10 @@ for a = 1:length(F)
             numBSpikes = sum(sum(idata.psth(dayDM(:,iv), psthbIdx(1):psthbIdx(2))));
             
             fprintf('spikes in baseline period: %d \n', numBSpikes);
-            %             if (numBSpikes + numRSpikes) < minSpikes
-            %                 fprintf('skipping\n')
-            %                 continue
-            %             end
+            if (numBSpikes + numRSpikes) < minSpikes
+                fprintf('skipping\n')
+                continue
+            end
             
             % take the diff of base and resp period for each event
             % mean pct change from baseline
@@ -128,37 +116,37 @@ for a = 1:length(F)
             
             evIFRz = zscore(evIFR, [], 2);
             mZResp = nanmean(nanmean(evIFRz(:,rIdx(1):rIdx(2)),2));
-            %             OP.numRSpikes{iv} = numRSpikes;
-            %             OP.numBSpikes{iv} = numBSpikes;
+
             %% Shuffle
-            numEv = size(evIFR,1);
-            %             binsize = diff(time(1:2));
-            shuffbyMaxBins = knnsearch(time', shuffbyMax)-knnsearch(time', 0);
-            r = randi([-shuffbyMaxBins shuffbyMaxBins], numEv, nshuffs);
-            mPctChangeSh = nan(nshuffs,1);
-            mZChangeSh = nan(nshuffs,1);
-            parfor i = 1:nshuffs % can use parfor
-                % for each event, select a shuf rand period as r and b
-                % time-mean fr in response period
-                evRespMSh = nanmean(cell2mat(arrayfun(@(x,y) evIFR(x,rIdx(1)+y:rIdx(2)+y), ...
-                    1:size(r,1), r(:,i)', 'uni',0)'),2);
-                evBaseMSh = nanmean(cell2mat(arrayfun(@(x,y) ...
-                    evIFR(x,bIdx(1)+y:bIdx(2)+y), 1:size(r,1), r(:,i)', 'uni',0)'),2);
-                evBaseSTDSh = nanstd(cell2mat(arrayfun(@(x,y) ...
-                    evIFR(x,bIdx(1)+y:bIdx(2)+y), 1:size(r,1), r(:,i)', 'uni',0)'),[],2);
-                % mean pct change from baseline
-                useB = ~(evBaseMSh == 0);
-                mPctChangeSh(i) = nanmean((evRespMSh(useB)-evBaseMSh(useB))./evBaseMSh(useB))*100;
-                useBs = ~(evBaseSTDSh == 0);
-                mZChangeSh(i) = nanmean((evRespMSh(useBs)-evBaseMSh(useBs))./evBaseSTDSh(useBs));
+            if computeShuf
+                numEv = size(evIFR,1);
+                shuffbyMaxBins = knnsearch(time', shuffbyMax)-knnsearch(time', 0);
+                r = randi([-shuffbyMaxBins shuffbyMaxBins], numEv, nshuffs);
+                mPctChangeSh = nan(nshuffs,1);
+                mZChangeSh = nan(nshuffs,1);
+                % use parfor at unit level above to reduce worker data copies
+                for i = 1:nshuffs % can use parfor. 
+                    % for each event, select a shuf rand period as r and b
+                    % time-mean fr in response period
+                    evRespMSh = nanmean(cell2mat(arrayfun(@(x,y) evIFR(x,rIdx(1)+y:rIdx(2)+y), ...
+                        1:size(r,1), r(:,i)', 'uni',0)'),2);
+                    evBaseMSh = nanmean(cell2mat(arrayfun(@(x,y) ...
+                        evIFR(x,bIdx(1)+y:bIdx(2)+y), 1:size(r,1), r(:,i)', 'uni',0)'),2);
+                    evBaseSTDSh = nanstd(cell2mat(arrayfun(@(x,y) ...
+                        evIFR(x,bIdx(1)+y:bIdx(2)+y), 1:size(r,1), r(:,i)', 'uni',0)'),[],2);
+                    % mean pct change from baseline
+                    useB = ~(evBaseMSh == 0);
+                    mPctChangeSh(i) = nanmean((evRespMSh(useB)-evBaseMSh(useB))./evBaseMSh(useB))*100;
+                    useBs = ~(evBaseSTDSh == 0);
+                    mZChangeSh(i) = nanmean((evRespMSh(useBs)-evBaseMSh(useBs))./evBaseSTDSh(useBs));
+                end
+                % real-mod shuff-pct
+                modPctRank = 100*(1-(sum(mPctChangeSh > mPctChange)./nshuffs));
+                modZRank = 100*(1-(sum(mZChangeSh > mZChange)./nshuffs));
+                fprintf('iv%d Pctmod > %.02f pctShuffs.\n', iv, modPctRank)
+                fprintf('iv%d Zmod > %.02f pctShuffs.\n', iv, modZRank)
             end
-            %%
-            % real-mod shuff-pct
-            modPctRank = 100*(1-(sum(mPctChangeSh > mPctChange)./nshuffs));
-            modZRank = 100*(1-(sum(mZChangeSh > mZChange)./nshuffs));
-            fprintf('iv%d Pctmod > %.02f pctShuffs.\n', iv, modPctRank)
-            fprintf('iv%d Zmod > %.02f pctShuffs.\n', iv, modZRank)
-            
+            %% unit output
             cF.mPctChange = mPctChange;
             cF.mPctChangeSh = mPctChangeSh;
             cF.modPctRank = modPctRank;
@@ -169,15 +157,14 @@ for a = 1:length(F)
             cF.area = idata.area;
             cF.subarea = idata.subarea;
             cF.cellInfo = idata.cellInfo;
-            
-            out(a).output{iv} = [out(a).output{iv}; cF];
         end
-        
+        out(a).output{iv} = [out(a).output{iv}; cF];
     end
 end
 end
 
 function cF = init_out()
+% are empty lists the right init for all these? phasmod uses mostly nan
 cF.mZChange = [];
 cF.animal = '';
 cF.dmat = [];
