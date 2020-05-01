@@ -2,6 +2,9 @@
 
 
 function out = dfa_lickBoutSpikeCorr(index, excludeperiods, varargin)
+% 
+
+
 fprintf('%d %d %d %d\n',index)
 reqData = {'spikes'};
 for s = 1:length(reqData)

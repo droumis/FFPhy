@@ -34,7 +34,10 @@ case 'defaults'
     SupFontS = 12;
     tickSz = 8; % tick labels font size
     set(0,'defaultAxesFontSize',10)
-    
+%% ========= phaseXcorr =========
+case 'phaseXcorr'
+    position = [.1 .1 .5 .5];    
+
 %% ========= XPmod-SWR=========
 case 'wRxnFullAllAn'
     position = [.1 .1 .5 .5];

@@ -56,10 +56,6 @@ if run_ff
     F = runfilter(F);
     save_data(F, Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, ...
         'filetail', ['_' Fp.Label]);
-    % save to dropbox location
-    dbPath = animaldef('Demetris');
-    dbPath = dbPath{end};
-    save_data(F, dbPath, Fp.paths.filenamesave, 'filetail', ['_' Fp.Label]);
 end
 if load_ffdata
     F = load_data(Fp.paths.filtOutputDirectory, Fp.paths.filenamesave, ...

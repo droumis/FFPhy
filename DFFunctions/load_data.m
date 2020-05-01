@@ -1,6 +1,8 @@
 function out = load_data(source, filename, animals, varargin)
-% d = load_filter_output(Fp.paths.filtOutputDirectory, Fp.paths.filename, Fp.animals);
 % load filter framework results
+% source can be full path OR one of a special set: 'filterframework'
+% >> d = load_filter_output(Fp.paths.filtOutputDirectory, Fp.paths.filename, Fp.animals);
+% 
 
 % specify additional filename string with varargin 'filetail'
 if ~isa(animals, 'cell')
@@ -21,8 +23,8 @@ for an = 1:length(animals)
     andef = animaldef(animal);
     if strcmp(source, 'filterframework')
         dirout = andef{2};
-    elseif strcmp(source, 'results')
-        dirout = [pconf.andef{3} '/' filename, '/'];
+%     elseif strcmp(source, 'results') % now in Fp.paths.resultsDirectory
+%         dirout = [pconf.andef{3} '/' filename, '/'];
     else
         dirout = source;
     end

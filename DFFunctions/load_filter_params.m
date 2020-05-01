@@ -4,10 +4,6 @@ function Fp = load_filter_params(Fp, varargin)
 % Fp.params : cell array of strings
 % each string matches a param set
 % succesors take priority if vars clash
-%{
-FFPhy V0.1
-@DR
-%}
 
 add_paths = 1;
 if ~isempty(varargin)
@@ -29,6 +25,8 @@ case 'valid_ntrodes'
     %             ntAreas = {'ca1', 'mec', 'ref'}; %, 'por', 'v2l', 'sub'};
     areas = {{'ca1', 'd'}, {'mec', 'deep'}, {'mec', 'supf'}};
     tetfilter = '(isequal($valid,''yes'') && (isequal($area,''ca1'') || isequal($area,''mec'')))';
+%% ========= XP pairwise phase corr =========    
+case 'dfa_phaseXcorr'
     
 %% ========= XP-SWR mod REACTIVATION =========
 case 'dfa_reactivationPSTH'
