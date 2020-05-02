@@ -41,10 +41,18 @@ for an = 1:length(animals)
                 tmp = load(sprintf('%s/%s%s%s.mat', dirout, animal, filename, filetail));
                 fprintf('loaded: %s/%s%s%s.mat \n',animal, dirout , filename, filetail)
             end
-            F = tmp.F;
+            try
+                F = tmp.F; % filter output struct
+            catch
+                F = tmp; % anything else
+            end
     end
-    out(an) = F(1);
-    out(an).animal = andef;
+    try
+        out(an) = F(1);
+        out(an).animal = andef;
+    catch
+        out = tmp; % assumes loading one animal
+    end
 end
 % data = [data{:}]'; % merge the cell array of structs to match filter output form
 fprintf('took %.02f sec\n',toc);

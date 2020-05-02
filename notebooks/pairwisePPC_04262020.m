@@ -93,13 +93,20 @@ end
 % the current workspace?
 % the data tables that i need are listed in F.function.loadvariables
 
-spikes = load_data('filterframework', 'spikes', Fp.animals);
-
+% animpos = 0 is to make file start with animal name as in standard FF data .mat
+% i also need the "01" in spikes01 because .mat were per day
+ind = [1 2 18 12 24 7]; % day epoch nt1 cl1 nt2 cl2
+bin = .001;
+tmax = .500;
+data = load_data('filterframework', 'spikes01', Fp.animals, 'animpos', 0);
+spikes = data.spikes;
 % get pair spiketrains
 t1 = spikes{ind(1)}{ind(2)}{ind(3)}{ind(4)}.data;
 t2 = spikes{ind(1)}{ind(2)}{ind(5)}{ind(6)}.data;
-
-% excludetime
+size(t1)
+size(t2)
+%% excludetime
+excludetimes = [];
 t1inc = t1(find(~isExcluded(t1(:,1), excludetimes)),1);
 t2inc = t2(find(~isExcluded(t2(:,1), excludetimes)),1);
 
