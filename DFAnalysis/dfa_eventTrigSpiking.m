@@ -38,9 +38,7 @@ wbin = .01; % seconds. wider psth (.01)
 % smbins = 10; % bins. smooth across x bins (wbin x smbins = range of influence)
 byDay = 1;
 
-if ~isempty(varargin)
-    assign(varargin{:})
-end
+try assign(varargin{:}); catch; end
 
 fprintf('eventType %s\n', eventType)
 % check for required data in varargin
