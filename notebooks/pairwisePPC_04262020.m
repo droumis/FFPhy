@@ -30,7 +30,7 @@ what about 'dfa_perripspikingcorr'?
 
 pconf = paramconfig;
 create_filter = 1;
-run_ff = 0;
+run_ff = 1;
 load_ffdata = 0;
 
 savefigs = 0;
@@ -59,7 +59,7 @@ Fp = load_filter_params(Fp);
 if create_filter
     F = createfilter('animal', Fp.animals, 'epochs', Fp.epochfilter, ...
         'eegtetrodes', Fp.tetfilter, 'excludetime', Fp.timefilter, ...
-        'iterator', Fp.iterator, 'cells', Fp.cellFilter);
+        'iterator', Fp.iterator, 'cellpairs', Fp.cellpairfilter);
     F = setfilterfunction(F, Fp.filtfunction, Fp.datatypes, Fp.options{:});
 end
 if run_ff

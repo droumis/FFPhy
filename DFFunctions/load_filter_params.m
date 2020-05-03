@@ -27,7 +27,16 @@ case 'valid_ntrodes'
     tetfilter = '(isequal($valid,''yes'') && (isequal($area,''ca1'') || isequal($area,''mec'')))';
 %% ========= XP pairwise phase corr =========    
 case 'dfa_phaseXcorr'
-    
+    iterator = 'iter_multiEpoch_multiCluster';
+    filtfunction = 'dfa_phaseXcorr';
+
+    cellpairfilter = {'allcomb', ...
+        '($numspikes > 100) && (isequal($area, ''ca1'')) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))', ...
+        '($numspikes > 100) && (isequal($area, ''ca1'')) && (all(cellfun(''isempty'',(arrayfun(@(x) strfind(x,''mua''), $tags, ''un'', 0)))))'};
+
+    eventType = 'lick';
+    datatypes = {'spikes', 'lick'};
+    options = {'eventName',eventType};
 %% ========= XP-SWR mod REACTIVATION =========
 case 'dfa_reactivationPSTH'
     bin = 0.1; % seconds
