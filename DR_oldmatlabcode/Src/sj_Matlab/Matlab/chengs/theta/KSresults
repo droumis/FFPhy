@@ -1,3 +1,0 @@
-grep "KS test" out.* > KSresults.out
-diff KSresults.out KSresults.out.old
-mv -f KSresults.out KSresults.out.old

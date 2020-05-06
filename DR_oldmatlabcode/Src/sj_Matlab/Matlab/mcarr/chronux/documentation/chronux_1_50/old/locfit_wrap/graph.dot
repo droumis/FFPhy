@@ -1,6 +1,0 @@
-/* Created by mdot for Matlab */
-digraph m2html {
-
-  locfitraw [URL="locfitraw.html"];
-  rscb [URL="rscb.html"];
-}

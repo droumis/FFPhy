@@ -1,8 +1,0 @@
-rm -f out.bli2
-
-LD_PRELOAD=/home/chengs/lib/libstdc++.so.6.0.9:/home/chengs/lib/libgcc_s.so.1 nohup nice -n 18 \
-    /usr/local/matlab2007b/bin/matlab -nosplash -nojvm -r  "\
-        runall('nonripple_xp', 'pf9-novel', .1, 300); quit" \
-    </dev/null >> out.bli2 2>&1  &
-
-tail -f out.bli2

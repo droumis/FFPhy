@@ -29,8 +29,8 @@ what about 'dfa_perripspikingcorr'?
 %}
 
 pconf = paramconfig;
-create_filter = 1;
-run_ff = 1;
+create_filter = 0;
+run_ff = 0;
 load_ffdata = 0;
 
 savefigs = 0;
@@ -38,7 +38,7 @@ pausefigs = 1;
 showfigs = 1;
 savefigas = {'png','pdf'};
 
-plot_phaseXcorr = 0;
+plot_phaseXcorr = 1;
 
 %% Define Filter Params
 pconf = paramconfig('Demetris'); % globals per user
@@ -95,40 +95,40 @@ end
 
 % animpos = 0 is to make file start with animal name as in standard FF data .mat
 % i also need the "01" in spikes01 because .mat were per day
-ind = [1 2 18 12 24 7]; % day epoch nt1 cl1 nt2 cl2
-bin = .001;
-tmax = .500;
-data = load_data('filterframework', 'spikes01', Fp.animals, 'animpos', 0);
-spikes = data.spikes;
-% get pair spiketrains
-t1 = spikes{ind(1)}{ind(2)}{ind(3)}{ind(4)}.data;
-t2 = spikes{ind(1)}{ind(2)}{ind(5)}{ind(6)}.data;
-size(t1)
-size(t2)
-%% excludetime
-excludetimes = [];
-t1inc = t1(find(~isExcluded(t1(:,1), excludetimes)),1);
-t2inc = t2(find(~isExcluded(t2(:,1), excludetimes)),1);
-
-%% transform time series into phase series
-
-
-% compute xc, excorr
-xc = spikexcorr(t1inc, t2inc, bin, tmax);
-
-% compute the excess correlation at 0 lag
-out.ec = excesscorr(xc.time, xc.c1vsc2, xc.nspikes1, xc.nspikes2, sw1, sw2);
-out.rms = xcorrrms(xc.time, xc.c1vsc2, rmstmax, rmsmincounts);
-
-% get the probability that both were coactive in the included intervals
-n1 = nInInterval(t1inc, excludetimes, 0);
-n2 = nInInterval(t2inc, excludetimes, 0);
-out.probcoa = mean(logical(n1) & logical(n2));
-
-% get the zscore for this probabliity of coactivity
-out.coactivez = coactivezscore(n1, n2);
-out.coactivez_numsp = coactivezscore(n1, n2, 'anyspikes', 0);
-
+if 0
+    ind = [1 2 18 12 24 7]; % day epoch nt1 cl1 nt2 cl2
+    bin = .001;
+    tmax = .500;
+    data = load_data('filterframework', 'spikes01', Fp.animals, 'animpos', 0);
+    spikes = data.spikes;
+    % get pair spiketrains
+    t1 = spikes{ind(1)}{ind(2)}{ind(3)}{ind(4)}.data;
+    t2 = spikes{ind(1)}{ind(2)}{ind(5)}{ind(6)}.data;
+    size(t1)
+    size(t2)
+    %% excludetime
+    excludetimes = [];
+    t1inc = t1(find(~isExcluded(t1(:,1), excludetimes)),1);
+    t2inc = t2(find(~isExcluded(t2(:,1), excludetimes)),1);
+    
+    %% transform time series into phase series
+    
+    % compute xc, excorr
+    xc = spikexcorr(t1inc, t2inc, bin, tmax);
+    
+    % compute the excess correlation at 0 lag
+    out.ec = excesscorr(xc.time, xc.c1vsc2, xc.nspikes1, xc.nspikes2, sw1, sw2);
+    out.rms = xcorrrms(xc.time, xc.c1vsc2, rmstmax, rmsmincounts);
+    
+    % get the probability that both were coactive in the included intervals
+    n1 = nInInterval(t1inc, excludetimes, 0);
+    n2 = nInInterval(t2inc, excludetimes, 0);
+    out.probcoa = mean(logical(n1) & logical(n2));
+    
+    % get the zscore for this probabliity of coactivity
+    out.coactivez = coactivezscore(n1, n2);
+    out.coactivez_numsp = coactivezscore(n1, n2, 'anyspikes', 0);
+end
 %% Notes for x-corr 
 
 %{
@@ -177,25 +177,28 @@ smoothed cross-correlation z-score in a 20 ms bin around 0 (±10 ms) to get an a
 if plot_phaseXcorr
     figname = 'phaseXcorr';
     Pp = load_plotting_params({'defaults', figname}); % load params
-    for a = 1:length(F) % per animal
-%         animal = F(a).animal{3};
-%         pairs = F.pairs;
-        for i = 1:size(pairs,1) % per pairwise phase xcorr
+    for an = 1:length(F) % per animal
+        for ip = 1:size(F(an), 1) % per pairwise phase xcorr
+            
             ifig = init_plot(showfigs, Pp.position); % init fig
             sf = subaxis(1,1,1,Pp.posparams{:});
             sf.Tag = 'xcorr';
             % plot bar and errorbar binned time smoothed zscored xcorr 
             % Z-score 0 reflects mean of shuffles. Error bars indicate s.e.m.
             
-            % superfig
+            % superfigs
             stit = sprintf('%s %s %s %s', figname, animal, Fp.env, ....
-                strjoin(Fp.areas{:,i}));
+                strjoin(Fp.areas{:,ip}));
             setSuperAxTitle(stit);
             if pausefigs
                 pause
             end
             if savefigs
-                strsave = save_figure([pconf.andef{4} '/' figname '/' animal], ...
+                % save figures to stelmo
+                save_figure([pconf.andef{4} '/' figname '/' animal], ...
+                    stit, 'savefigas');
+                % also save figures to dropbox
+                save_figure(['/media/droumis/data_derecho/Dropbox/figures/' '/' figname '/' animal], ...
                     stit, 'savefigas');
             end
         end

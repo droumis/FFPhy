@@ -1,1 +1,0 @@
-t3=find(Data{1,26}{1,5}.Events.Wellevents(:,3)==3);

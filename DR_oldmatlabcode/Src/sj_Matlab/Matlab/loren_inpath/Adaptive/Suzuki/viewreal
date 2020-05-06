@@ -1,1 +1,0 @@
-~/Src/Matlab/Adaptive/Suzuki/GL/viewadaptsuzuki -trial trialinfo.dat -time time.dat -spike spiketimes.dat -esttheta thetahate.dat 

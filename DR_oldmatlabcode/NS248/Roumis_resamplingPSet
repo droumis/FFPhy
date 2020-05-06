@@ -1,6 +1,0 @@
-
-
-
-[X,Y] = GetSample(10);
-
-Xboot = X(ceil);
