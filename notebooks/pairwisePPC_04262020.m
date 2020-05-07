@@ -29,7 +29,7 @@ what about 'dfa_perripspikingcorr'?
 %}
 
 pconf = paramconfig;
-create_filter = 0;
+create_filter = 1;
 run_ff = 0;
 load_ffdata = 0;
 
@@ -38,7 +38,7 @@ pausefigs = 1;
 showfigs = 1;
 savefigas = {'png','pdf'};
 
-plot_phaseXcorr = 1;
+plot_phaseXcorr = 0;
 
 %% Define Filter Params
 pconf = paramconfig('Demetris'); % globals per user
