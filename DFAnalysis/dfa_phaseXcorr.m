@@ -151,6 +151,8 @@ out.smthxc = smthxc;
 % out.xcShfLag0 = xcShfLag0;
 out.excesscorr = nanmean(exc); % nanmean in case there are two bins equally near lag zero
 out.xcrms = xcrms;
+
+% get Zcrosscov_sm 
 end
 
 function out = init_out()
