@@ -72,8 +72,8 @@ eventTimes = intraBoutXPvec(ismember(intraBoutXPvec, licks));
 
 numEventsPerEp = [];
 for iep = 1:length(eps)
-    epStartTime = spikes{day}{eps(iep)}{nt}{clust}.timerange(1);
-    epEndTime = spikes{day}{eps(iep)}{nt}{clust}.timerange(2);
+    epStartTime = spikes{day}{eps(iep)}{ntA}{clustA}.timerange(1);
+    epEndTime = spikes{day}{eps(iep)}{ntA}{clustA}.timerange(2);
     numEventsPerEp = [numEventsPerEp; sum(logical(isExcluded(eventTimes, ...
         [epStartTime epEndTime])))];
 end
@@ -121,16 +121,16 @@ exc = excesscorr(xc.time, xc.c1vsc2, xc.nspikes1, xc.nspikes2, sw1, sw2);
 % compute RMS
 xcrms = xcorrrms(xc.time, xc.c1vsc2, rmstmax, rmsmincounts);
 
-% if we want to include edge spikes, we need to add in the correlation of the
-% excluded t1 spikes with the included t2spikes
-if ((edgespikes) & (~isempty(xc.time)))
-    t1ex = t1(find(isExcluded(t1, excludetimes)));
-    if (~isempty(t1ex))
-        tmpxc = spikexcorr(t1ex, t2inc, bin, tmax);
-        % add these values to the original histogram
-        xc.c1vsc2 = xc.c1vsc2 + tmpxc.c1vsc2;
-    end
-end
+% % if we want to include edge spikes, we need to add in the correlation of the
+% % excluded t1 spikes with the included t2spikes
+% if ((edgespikes) & (~isempty(xc.time)))
+%     t1ex = t1(find(isExcluded(t1, excludetimes)));
+%     if (~isempty(t1ex))
+%         tmpxc = spikexcorr(t1ex, t2inc, bin, tmax);
+%         % add these values to the original histogram
+%         xc.c1vsc2 = xc.c1vsc2 + tmpxc.c1vsc2;
+%     end
+% end
 
 % Expected probability
 p1 = xc.nspikes1/T; p2 = xc.nspikes2/T; % Fir rate in Hz
@@ -156,44 +156,45 @@ catch
     return
 end
 
-corr_sm = smoothvect(xc.c1vsc2, g1);
-normxc_sm = smoothvect(normxc, g1);
-Zcrosscov_sm = smoothvect(Zcrosscov, g1);
-crosscov_sm = smoothvect(crosscov, g1);
 
 % output
+out.normxc = normxc;
+
+out.crosscov = crosscov;
+out.Zcrosscov = Zcrosscov;
+
+out.corr_sm = smoothvect(xc.c1vsc2, g1);
+out.normxc_sm = smoothvect(normxc, g1);
+out.Zcrosscov_sm = smoothvect(Zcrosscov, g1);
+out.crosscov_sm = smoothvect(crosscov, g1);
+
+out.T = T;
 out.bin = bin;
 out.tmax = tmax;
-out.T = T;
 out.xc = xc;
 out.normxc = normxc;
-out.normxc_sm = normxc_sm;
-out.expProb = expProb;
+% out.expProb = expProb;
 % out.xcShfmean = xcShfmean;
 % out.xcShfLag0 = xcShfLag0;
 out.excesscorr = nanmean(exc); % nanmean in case there are two bins equally near lag zero
 out.xcrms = xcrms;
 
-% get Zcrosscov_sm 
 end
 
 function out = init_out()
-out.T = NaN;
-out.p1p2 = NaN;
-out.corr = NaN;
-out.rawcorr = NaN;
+out.corr_sm = NaN;
+
 out.Zcrosscov = NaN;
 out.crosscov = NaN;
-out.rawcorr_sm = NaN;
-out.Zcrosscov_sm = NaN;
 out.crosscov_sm = NaN;
-out.Neventscorr = 0;
-
+out.Zcrosscov_sm = NaN;
+out.T = NaN;
 out.tmax = nan;
 out.bin = nan;
 out.xc = nan;
 out.normxc = nan;
 out.normxc_sm = nan;
+% out.expProb = expProb;
 out.excesscorr = nan;
 out.xcrms = nan;
 end

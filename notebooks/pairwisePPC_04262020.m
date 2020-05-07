@@ -29,16 +29,16 @@ what about 'dfa_perripspikingcorr'?
 %}
 
 pconf = paramconfig;
-create_filter = 1;
+create_filter = 0;
 run_ff = 0;
-load_ffdata = 0;
+load_ffdata = 1;
 
-savefigs = 0;
-pausefigs = 1;
-showfigs = 1;
+savefigs = 1;
+pausefigs = 0;
+showfigs = 0;
 savefigas = {'png','pdf'};
 
-plot_phaseXcorr = 0;
+plot_phaseXcorr = 1;
 
 %% Define Filter Params
 pconf = paramconfig('Demetris'); % globals per user
@@ -177,29 +177,38 @@ smoothed cross-correlation z-score in a 20 ms bin around 0 (±10 ms) to get an a
 if plot_phaseXcorr
     figname = 'phaseXcorr';
     Pp = load_plotting_params({'defaults', figname}); % load params
-    for an = 1:length(F) % per animal
-        for ip = 1:size(F(an), 1) % per pairwise phase xcorr
-            
+    for ian = 1:length(F) % per animal
+        an = F(ian).animal{3};
+        for ip = 1:size(F(ian).output{1},2) % per pairwise phase xcorr
+            idata = F(ian).output{1}(ip);
+            if isnan(idata.tmax)
+                continue
+            end
             ifig = init_plot(showfigs, Pp.position); % init fig
             sf = subaxis(1,1,1,Pp.posparams{:});
             sf.Tag = 'xcorr';
-            % plot bar and errorbar binned time smoothed zscored xcorr 
-            % Z-score 0 reflects mean of shuffles. Error bars indicate s.e.m.
+            
+            plot(linspace(-pi, pi, 101), idata.normxc_sm(50:150))
+            xlabel('radians')
+            ylabel('standardized cross-corr')
+            yl = ylim;
+            line([0, 0], ylim, 'color', 'k', 'linestyle', '--')
+            ylim(yl)
             
             % superfigs
-            stit = sprintf('%s %s %s %s', figname, animal, Fp.env, ....
-                strjoin(Fp.areas{:,ip}));
+            stit = sprintf('%s %s %s day%d %d-%d %d-%d', figname, an, Fp.env, ...
+                idata.index(1:5));
             setSuperAxTitle(stit);
             if pausefigs
                 pause
             end
             if savefigs
                 % save figures to stelmo
-                save_figure([pconf.andef{4} '/' figname '/' animal], ...
-                    stit, 'savefigas');
-                % also save figures to dropbox
-                save_figure(['/media/droumis/data_derecho/Dropbox/figures/' '/' figname '/' animal], ...
-                    stit, 'savefigas');
+                save_figure([pconf.andef{4} '/' figname '/' an], ...
+                    stit, 'savefigas', savefigas);
+%                 % also save figures to dropbox
+%                 save_figure(['/media/droumis/data_derecho/Dropbox/figures/' '/' figname '/' animal], ...
+%                     stit, 'savefigas');
             end
         end
     end
