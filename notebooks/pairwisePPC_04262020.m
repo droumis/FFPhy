@@ -29,7 +29,7 @@ what about 'dfa_perripspikingcorr'?
 %}
 
 pconf = paramconfig;
-create_filter = 0;
+create_filter = 1;
 run_ff = 0;
 load_ffdata = 1;
 
