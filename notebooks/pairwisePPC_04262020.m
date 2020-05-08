@@ -2,22 +2,27 @@
 
 %{
 pairwise phase/time/order consistency during lick bouts
-ok.. so he approach is going to turn time into phase series and do an xcorr
+turn time into phase series and do an xcorr
 
 how do i load like a couple cells and lick periods to just tinker before
 turning things into a more formal filter function?
 where is load individual epoch code blocks or eample sripts?
 
 where is the code i've used for xcorr?
+- dfa_lickXCorrSpikes
+
+SJ xcorr
+- DFSsj_HPexpt_ThetacorrAndRipresp_ver4
+
+Mari's:
+
 
 Durkewitz? book chapter 7 includes good xcorr stuff but no code..
 Lauback has a xcorr code snip
 
-how make this FF compatible, I need to make multicelldayanal
-which would feed in pairs of cell data for the whole day to the dfa function
-
 im realizing that my 'notebooks' kinda were what DFS were, except more
 journal like.. so kinda like final or demo notebooks that can be archived
+
 
 What is dfa_lickXCorrSpikes?
 when did i use the param set lickspikexc
@@ -30,19 +35,20 @@ what about 'dfa_perripspikingcorr'?
 
 pconf = paramconfig;
 create_filter = 1;
-run_ff = 0;
-load_ffdata = 1;
+run_ff = 1;
+load_ffdata = 0;
 
-savefigs = 1;
-pausefigs = 0;
-showfigs = 0;
+savefigs = 0;
+pausefigs = 1;
+showfigs = 1;
 savefigas = {'png','pdf'};
 
-plot_phaseXcorr = 1;
-
+plot_phaseXcorr = 0;
+plot_maris = 0;
+run_test_epoch = 0;
 %% Define Filter Params
 pconf = paramconfig('Demetris'); % globals per user
-Fp.animals = {'JZ4'};
+Fp.animals = {'D10'};
 eventType = 'lick';
 Fp.filtfunction = 'dfa_phaseXcorr';
 Fp.Label = 'wtrackLickTrigSpiking'; % used for filename/plots
@@ -73,29 +79,30 @@ if load_ffdata
         Fp.animals, 'filetail', ['_' Fp.Label]);
 end
 
-%% step 0: run createfilter to get set of data labels as var 'Fp'
-% use load_filter_params to use past param sets or get ideas
-% load_filter_params also sets the paths of user from animaldef into Fp.paths
+if run_test_epoch
+    % step 0: run createfilter to get set of data labels as var 'Fp'
+    % use load_filter_params to use past param sets or get ideas
+    % load_filter_params also sets the paths of user from animaldef into Fp.paths
+    
+    % spikes, lick bout p-events:: load epoch of data
+    % use load_data with 'filterframework' as source
+    % i need spikes and XP
+    % I SHOULD have been able to feed in a filter key set that createfilter SHOULD have made, like in pyphy
+    % instead, i have to get animals from Fp.animals, days and epochs from
+    % F.epochs{1} ... and ntrodes and cells from F.data{1}{1}.. but i still
+    % have to load all of whatever type of data before doing the filtering.
+    % essentially what i want to do is what the iterators fo for a given dfa
+    % function.. so in essence i'm stepping into one specific dfa function call
+    % so maybe i instead should use an existing iterator? right now it looks
+    % like from the load_filter_params that singlecellanal was used for
+    % pairwise cell iteration.. which is stupid but is what it is for now
+    % so how do i take advantage of the iterator in this way to return selected data to
+    % the current workspace?
+    % the data tables that i need are listed in F.function.loadvariables
+    
+    % animpos = 0 is to make file start with animal name as in standard FF data .mat
+    % i also need the "01" in spikes01 because .mat were per day
 
-%% spikes, lick bout p-events:: load epoch of data
-% use load_data with 'filterframework' as source
-% i need spikes and XP
-% I SHOULD have been able to feed in a filter key set that createfilter SHOULD have made, like in pyphy
-% instead, i have to get animals from Fp.animals, days and epochs from
-% F.epochs{1} ... and ntrodes and cells from F.data{1}{1}.. but i still
-% have to load all of whatever type of data before doing the filtering. 
-% essentially what i want to do is what the iterators fo for a given dfa
-% function.. so in essence i'm stepping into one specific dfa function call
-% so maybe i instead should use an existing iterator? right now it looks
-% like from the load_filter_params that singlecellanal was used for
-% pairwise cell iteration.. which is stupid but is what it is for now
-% so how do i take advantage of the iterator in this way to return selected data to
-% the current workspace?
-% the data tables that i need are listed in F.function.loadvariables
-
-% animpos = 0 is to make file start with animal name as in standard FF data .mat
-% i also need the "01" in spikes01 because .mat were per day
-if 0
     ind = [1 2 18 12 24 7]; % day epoch nt1 cl1 nt2 cl2
     bin = .001;
     tmax = .500;
@@ -213,8 +220,105 @@ if plot_phaseXcorr
         end
     end
 end
+%% plot xcorr matrix of all pairs
 %% plot cumulative peak xcorr for pairs vs shuff
 % mari's uses one-tailed Wilcoxon rank-sum test
+
+if plot_maris
+% Histogram correlation Zscores at 0
+corr_bins = [-10:1:25];
+bar_corr_bins = corr_bins + (corr_bins(2)-corr_bins(1))/2;
+
+% pdf of DD vs DV
+figure; hold on
+stairs(corr_bins+0.05,histc(DDzerocorr,corr_bins)./sum(histc(DDzerocorr,corr_bins)),'r','LineWidth',2)
+bar(bar_corr_bins+0.05,histc(DDzerocorr(DDzerocorr(:,1)<-2 | DDzerocorr(:,1)>2),corr_bins)./sum(histc(DDzerocorr,corr_bins)),1,'FaceColor','r','EdgeColor','none','FaceAlpha',0.6)
+stairs(corr_bins,histc(DVzerocorr,corr_bins)./sum(histc(DVzerocorr,corr_bins)),'k','LineWidth',2)
+bar(bar_corr_bins,histc(DVzerocorr(DVzerocorr(:,1)<-2 | DVzerocorr(:,1)>2),corr_bins)./sum(histc(DVzerocorr,corr_bins)),1,'FaceColor','k','EdgeColor','none','FaceAlpha',0.6)
+
+% cdf of DD vs DV
+figure; hold on
+plot(bar_corr_bins,cumsum(histc(DDzerocorr,corr_bins)./sum(histc(DDzerocorr,corr_bins))),'r','linewidth',1.5)
+plot(bar_corr_bins,cumsum(histc(DVzerocorr,corr_bins)./sum(histc(DVzerocorr,corr_bins))),'k','linewidth',1.5)
+plot([2 2],[0 1],'--','Color',[0.5 0.5 0.5])
+plot([-2 -2],[0 1],'--','Color',[0.5 0.5 0.5])
+ylim([0 1])
+xlim([-10 25])
+[kh,kp,kstat]=kstest2(DDzerocorr,DVzerocorr)
+rs_p = ranksum(DDzerocorr,DVzerocorr)
+title(['p=' num2str(rs_p) ' DDn=' num2str(length(DDzerocorr)) ' DVn=' num2str(length(DVzerocorr))])
+
+% test differences between max corr
+rs_p = ranksum(DDmaxcorr,DVmaxcorr)
+rs_p = ranksum(VVmaxcorr,DVmaxcorr)
+
+
+
+% pdf of VV vs DV
+figure; hold on
+stairs(corr_bins+0.05,histc(VVzerocorr,corr_bins)./sum(histc(VVzerocorr,corr_bins)),'b','LineWidth',2)
+bar(bar_corr_bins+0.05,histc(VVzerocorr(VVzerocorr(:,1)<-2 | VVzerocorr(:,1)>2),corr_bins)./sum(histc(VVzerocorr,corr_bins)),1,'FaceColor','b','EdgeColor','none','FaceAlpha',0.6)
+stairs(corr_bins,histc(DVzerocorr,corr_bins)./sum(histc(DVzerocorr,corr_bins)),'k','LineWidth',2)
+bar(bar_corr_bins,histc(DVzerocorr(DVzerocorr(:,1)<-2 | DVzerocorr(:,1)>2),corr_bins)./sum(histc(DVzerocorr,corr_bins)),1,'FaceColor','k','EdgeColor','none','FaceAlpha',0.6)
+
+
+% cdf of VV vs DV
+figure; hold on
+plot(bar_corr_bins,cumsum(histc(VVzerocorr,corr_bins)./sum(histc(VVzerocorr,corr_bins))),'b','linewidth',1.5)
+plot(bar_corr_bins,cumsum(histc(DVzerocorr,corr_bins)./sum(histc(DVzerocorr,corr_bins))),'k','linewidth',1.5)
+plot([2 2],[0 1],'--','Color',[0.5 0.5 0.5])
+plot([-2 -2],[0 1],'--','Color',[0.5 0.5 0.5])
+ylim([0 1])
+xlim([-10 25])
+[kh,kp,kstat]=kstest2(VVzerocorr,DVzerocorr)
+rs_p = ranksum(DVzerocorr,VVzerocorr)
+
+% alternative cdf plot
+figure; hold on
+cdfplot(DDzerocorr)
+cdfplot(VVzerocorr)
+
+% bar plot of DD vs DV
+group = [repmat({'Dp vs Dp'},length(DDzerocorr),1); ...
+    repmat({'Dp vs Vp'},length(DVzerocorr),1)];
+
+figure; hold on
+boxplot([DDzerocorr;DVzerocorr],group,'notch','on','Colors',[1 0 0; 0 0 0])
+
 %% plot fraction of pairs sig xcorr
 % mari's uses a z-test for proportions
-%% plot xcorr matrix of all pairs
+
+% fractions of pairs with correlation at zero lag >=2 zscores, in each category
+figure; hold on
+bar(0.5,sum(DVzerocorr(:,1)<=-2)/size(DVzerocorr,1),1,'FaceColor',[1 1 1],'EdgeColor','k','LineWidth',2)
+bar(1.5,sum(DVzerocorr(:,1)>=2)/size(DVzerocorr,1),1,'FaceColor','k','EdgeColor','k','LineWidth',2)
+bar(3.5,sum(DDzerocorr(:,1)<=-2)/size(DDzerocorr,1),1,'FaceColor',[1 1 1],'EdgeColor','r','LineWidth',2);
+bar(4.5,sum(DDzerocorr(:,1)>=2)/size(DDzerocorr,1),1,'FaceColor','r','EdgeColor','r','LineWidth',2)
+bar(6.5,sum(VVzerocorr(:,1)<=-2)/size(VVzerocorr,1),1,'FaceColor',[1 1 1],'EdgeColor','b','LineWidth',2);
+bar(7.5,sum(VVzerocorr(:,1)>=2)/size(VVzerocorr,1),1,'FaceColor','b','EdgeColor','b','LineWidth',2)
+set(gca,'xtick',[1 4 7])
+set(gca,'xticklabels',{'DV';'DD';'VV'})
+% ylim([0 0.35])
+
+% fraction xcorr less than zero
+figure; hold on
+bar(0.5,sum(DVzerocorr(:,1)<0)/size(DVzerocorr,1),1,'FaceColor',[1 1 1],'EdgeColor','k','LineWidth',2)
+bar(3.5,sum(DDzerocorr(:,1)<0)/size(DDzerocorr,1),1,'FaceColor',[1 1 1],'EdgeColor','r','LineWidth',2);
+bar(6.5,sum(VVzerocorr(:,1)<0)/size(VVzerocorr,1),1,'FaceColor',[1 1 1],'EdgeColor','b','LineWidth',2);
+set(gca,'xtick',[1 4 7])
+set(gca,'xticklabels',{'DV';'DD';'VV'})
+
+
+% stats on fractions
+Z_DV_vs_DD = ztestprop2([sum(DVzerocorr(:,1)>=2) size(DVzerocorr,1)],[sum(DDzerocorr(:,1)>=2) size(DDzerocorr,1)])
+Z_DD_vs_VV = ztestprop2([sum(DDzerocorr(:,1)>=2) size(DDzerocorr,1)],[sum(VVzerocorr(:,1)>=2) size(VVzerocorr,1)])
+Z_DV_vs_VV = ztestprop2([sum(DVzerocorr(:,1)>=2) size(DVzerocorr,1)],[sum(VVzerocorr(:,1)>=2) size(VVzerocorr,1)])
+
+Zn_DV_vs_DD = ztestprop2([sum(DVzerocorr(:,1)<0) size(DVzerocorr,1)],[sum(DDzerocorr(:,1)<0) size(DDzerocorr,1)])
+Zn_DD_vs_VV = ztestprop2([sum(DDzerocorr(:,1)<0) size(DDzerocorr,1)],[sum(VVzerocorr(:,1)<0) size(VVzerocorr,1)])
+Zn_DV_vs_VV = ztestprop2([sum(DVzerocorr(:,1)<0) size(DVzerocorr,1)],[sum(VVzerocorr(:,1)<0) size(VVzerocorr,1)])
+
+Zn2_DV_vs_DD = ztestprop2([sum(DVzerocorr(:,1)<=-2) size(DVzerocorr,1)],[sum(DDzerocorr(:,1)<=-2) size(DDzerocorr,1)])
+Zn2_DD_vs_VV = ztestprop2([sum(DDzerocorr(:,1)<=-2) size(DDzerocorr,1)],[sum(VVzerocorr(:,1)<=-2) size(VVzerocorr,1)])
+Zn2_DV_vs_VV = ztestprop2([sum(DVzerocorr(:,1)<=-2) size(DVzerocorr,1)],[sum(VVzerocorr(:,1)<=-2) size(VVzerocorr,1)])
+end
