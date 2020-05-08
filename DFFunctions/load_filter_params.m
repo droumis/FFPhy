@@ -28,10 +28,6 @@ case 'valid_ntrodes'
 %% ========= XP pairwise phase corr =========    
 case 'dfa_phaseXcorr'
     bin = 0.01; % fraction of full rotations
-    sw1 = bin*3;
-    sw2 = 0.250;
-    rmstmax = 0.1;
-    rmsmincounts = 50;
     tmax = 2; % full rotations
     
     iterator = 'iter_multiEpoch_multiCluster';
@@ -43,7 +39,7 @@ case 'dfa_phaseXcorr'
 
     eventType = 'lick';
     datatypes = {'spikes', 'lick'};
-    options = {'eventName',eventType};
+    options = {'eventName',eventType, 'bin', bin, 'tmax', tmax};
 %% ========= XP-SWR mod REACTIVATION =========
 case 'dfa_reactivationPSTH'
     bin = 0.1; % seconds

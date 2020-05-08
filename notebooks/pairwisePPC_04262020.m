@@ -38,9 +38,9 @@ create_filter = 0;
 run_ff = 0;
 load_ffdata = 0;
 
-savefigs = 1;
-pausefigs = 0;
-showfigs = 0;
+savefigs = 0;
+pausefigs = 1;
+showfigs = 1;
 savefigas = {'png','pdf'};
 
 plot_phaseXcorr = 1;
@@ -197,7 +197,7 @@ if plot_phaseXcorr
             
             plot(idata.xrad, idata.normxc_sm) %(50:150)
             % make xaxis into pi/2 ticks
-            xticks([-2*pi -pi 0 pi 2*pi])
+            xticks([-4*pi -pi 0 pi 2*pi])
             xticklabels({'-2\pi','-\pi','0','\pi','2\pi'})
             
             xlabel('radians')
