@@ -27,6 +27,13 @@ case 'valid_ntrodes'
     tetfilter = '(isequal($valid,''yes'') && (isequal($area,''ca1'') || isequal($area,''mec'')))';
 %% ========= XP pairwise phase corr =========    
 case 'dfa_phaseXcorr'
+    bin = 0.01; % fraction of full rotations
+    sw1 = bin*3;
+    sw2 = 0.250;
+    rmstmax = 0.1;
+    rmsmincounts = 50;
+    tmax = 2; % full rotations
+    
     iterator = 'iter_multiEpoch_multiCluster';
     filtfunction = 'dfa_phaseXcorr';
 

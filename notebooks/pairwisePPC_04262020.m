@@ -38,17 +38,17 @@ create_filter = 1;
 run_ff = 1;
 load_ffdata = 0;
 
-savefigs = 0;
-pausefigs = 1;
-showfigs = 1;
+savefigs = 1;
+pausefigs = 0;
+showfigs = 0;
 savefigas = {'png','pdf'};
 
-plot_phaseXcorr = 0;
+plot_phaseXcorr = 1;
 plot_maris = 0;
 run_test_epoch = 0;
 %% Define Filter Params
 pconf = paramconfig('Demetris'); % globals per user
-Fp.animals = {'D10'};
+Fp.animals = {'D10', 'JZ1', 'JZ4'};
 eventType = 'lick';
 Fp.filtfunction = 'dfa_phaseXcorr';
 Fp.Label = 'wtrackLickTrigSpiking'; % used for filename/plots
@@ -195,7 +195,13 @@ if plot_phaseXcorr
             sf = subaxis(1,1,1,Pp.posparams{:});
             sf.Tag = 'xcorr';
             
-            plot(linspace(-pi, pi, 101), idata.normxc_sm(50:150))
+            brad = bin*2*pi;
+            xrad = -2*pi*tmax+brad/2:brad:2*pi*tmax-brad/2;
+            plot(xrad, idata.normxc_sm) %(50:150)
+            % make xaxis into pi/2 ticks
+            xticks([-2*pi -pi 0 pi 2*pi])
+            xticklabels({'-2\pi','-\pi','0','\pi','2\pi'})
+            
             xlabel('radians')
             ylabel('standardized cross-corr')
             yl = ylim;
@@ -213,9 +219,6 @@ if plot_phaseXcorr
                 % save figures to stelmo
                 save_figure([pconf.andef{4} '/' figname '/' an], ...
                     stit, 'savefigas', savefigas);
-%                 % also save figures to dropbox
-%                 save_figure(['/media/droumis/data_derecho/Dropbox/figures/' '/' figname '/' animal], ...
-%                     stit, 'savefigas');
             end
         end
     end

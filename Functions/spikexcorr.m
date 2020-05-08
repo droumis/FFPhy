@@ -1,7 +1,7 @@
 % xcorrstruct = spikexcorr(spiketimes1, spiketimes2, bin, tmax)
 %    Computes the unnormalized cross correlation histogram of the spike
 %    trains given by spiketimes1 and 2
-%   Note that bin and tmax are given in seconds 
+%   Note that bin and tmax are given in seconds. tmax each side of center
 %Returns a cross correlation structure with the following fields:
 % time 	 	- the time correponding to the center of each bin  
 % c1vsc2 	- the unnormalized cross-correlation histogram.

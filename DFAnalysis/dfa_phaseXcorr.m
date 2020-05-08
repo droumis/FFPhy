@@ -178,6 +178,16 @@ out.normxc = normxc;
 % out.xcShfLag0 = xcShfLag0;
 out.excesscorr = nanmean(exc); % nanmean in case there are two bins equally near lag zero
 out.xcrms = xcrms;
+% so now 1 period (lick to lick duration) of the cycle is length 1 rot == 2pi
+% so tmax 1 is actually 1 rot on either side of center ~ 2*2pi total
+% the range is then -2pi : 2pi
+% since bin of .01 sec will be .01 * 2pi rad, x axis will be
+% -2pi:.01*2pi:2pi, which is 200 total bins
+% so return out.xrad = -2pi*tmax:bin*2pi:2pi*tmax
+% why is this 201 bins?? 
+% i fixed it.. it was using edges instead of bin centers
+brad = bin*2*pi;
+out.xrad = -2*pi*tmax+brad/2:brad:2*pi*tmax-brad/2;
 
 end
 
@@ -197,4 +207,5 @@ out.normxc_sm = nan;
 % out.expProb = expProb;
 out.excesscorr = nan;
 out.xcrms = nan;
+out.xrad = nan;
 end
