@@ -34,8 +34,8 @@ what about 'dfa_perripspikingcorr'?
 %}
 
 pconf = paramconfig;
-create_filter = 1;
-run_ff = 1;
+create_filter = 0;
+run_ff = 0;
 load_ffdata = 0;
 
 savefigs = 1;
@@ -195,9 +195,7 @@ if plot_phaseXcorr
             sf = subaxis(1,1,1,Pp.posparams{:});
             sf.Tag = 'xcorr';
             
-            brad = bin*2*pi;
-            xrad = -2*pi*tmax+brad/2:brad:2*pi*tmax-brad/2;
-            plot(xrad, idata.normxc_sm) %(50:150)
+            plot(idata.xrad, idata.normxc_sm) %(50:150)
             % make xaxis into pi/2 ticks
             xticks([-2*pi -pi 0 pi 2*pi])
             xticklabels({'-2\pi','-\pi','0','\pi','2\pi'})
