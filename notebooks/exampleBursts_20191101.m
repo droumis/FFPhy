@@ -3,7 +3,6 @@
 
 %{
 plot example of a swr
-
 plot example of lick burst with swr's
 
 also today:
@@ -19,8 +18,8 @@ traces
 %}
 
 pconf = paramconfig;
-create_filter = 1;
-run_ff = 1;
+create_filter = 0;
+run_ff = 0;
 load_ffdata = 0;
 createSummaryData = 1;
 
@@ -29,18 +28,18 @@ plotETAFull = 1;
 plotETAPerPC = 0;
 plotTrace = 0;
 plotPCdemo = 0;
-pausefigs = 0;
-savefigs = 1;
+pausefigs = 1;
+savefigs = 0;
 
 %% FF
-Fp.animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ2', 'JZ4'};
+Fp.animals = {'JZ1'}; %'D10', 'D12', 'D13', 
 Fp.filtfunction = 'dfa_reactivationPSTH';
 Fp.params = {'ripples', 'ca1SU', 'wtrackdays', 'excludePriorFirstWell', Fp.filtfunction};
 Fp = load_filter_params(Fp);
 %%
 if create_filter
     F = createfilter('animal', Fp.animals, 'epochs', Fp.epochfilter,  ...
-        'excludetime', Fp.timefilter,'cells', Fp.cellfilter, 'iterator',Fp.iterator);
+        'excludetime', Fp.timefilter,'cells', Fp.cellFilter, 'iterator',Fp.iterator);
     F = setfilterfunction(F, Fp.filtfunction, Fp.datatypes, Fp.options{:});
 end
 if run_ff
@@ -59,7 +58,14 @@ if createSummaryData
     for i = 1:length(F)
         f = [F(i).output{:}];
         D(i).animal = F(i).animal;
-        D(i).etTime = F(i).output{end}.etaTime;
+        try
+            D(i).etTime = F(i).output{end}.etaTime;
+        catch
+            win = F(i).datafilter_params.win;
+            bin = F(i).datafilter_params.bin;
+            idxWin = win(1)/bin:win(2)/bin;
+            D(i).etTime = idxWin*bin;
+        end
         D(i).swrReactETAfull = cell2mat(cellfun(@(x) x', {f.swrReactETAfull}', 'un', 0)')';
         D(i).swrReactETAfullMean = nanmean(D(i).swrReactETAfull);
 %         D(i).swrReactETAfullShufs = cell2mat(cellfun(@(x) x', {f.swrReactETAfullShufs}', 'un', 0)')';

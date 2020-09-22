@@ -19,7 +19,7 @@ eventTrigSpiking::
         -> makeExpvarCatDesignMat (beer::dmat.dayeps, dm) ->
         -> calcSUMod (wheelbarrow::modF.output{1}(perSU)::time, evMean, mPctChange, modPctRank) ->
                 - MOD SCORE: per su, eSet: mean % PSFR resp (0:200) from baseline(-300:-100)
-                    - SH: per event, shuf time (700ms)
+                    - SH: per event, shuf time (70get_power (cactus:: eventSe0ms)
         -> MAKE plotHeatRaster, plotCDFsig
             -  su plotting past: suSWRvsLick_20191112
     
@@ -39,8 +39,8 @@ also need to filter licks and ILI to those within lickburst range
 %}
 
 pconf = paramconfig;
-eventTrigLFP = 0; % PIPE:forest.bear.cactus.mushroom.beer.leaf == eventSet mean Spect
-eventTrigSpiking = 1; % PIPE:barn.rat.beer.wheelbarrow == eventSet SU mod
+eventTrigLFP = 1; % PIPE:forest.bear.cactus.mushroom.beer.leaf == eventSet mean Spect
+eventTrigSpiking = 0; % PIPE:barn.rat.beer.wheelbarrow == eventSet SU mod
 eventType = 'lick'; %lick swr
 
 % run FF
@@ -51,9 +51,9 @@ load_ffdata = 0;
 %% LFP to Analytic Signal Stack
 % stack data
 stack_LFP = 0; % Comely cactus
-load_LFPstack = 0;
+load_LFPstack = 1;
 % get power, phase of all
-make_rawpwr = 0; % Mendacious Mushroom
+make_rawpwr = 1; % Mendacious Mushroom
 load_rawpwr = 0;
 
 %% DESIGN MAT MAKER.. WORKS WITH SPIKE AND LFP
@@ -77,7 +77,7 @@ calcSUphasemod = 0;
 loadSUPhaseMod = 0;
 %Gather across animals, per area, condition
 gatherTimeModResults = 0;
-gatherPhaseModResults = 1;
+gatherPhaseModResults = 0;
 
 %% SWR x Event Phasic Modulation
 
@@ -85,7 +85,7 @@ gatherPhaseModResults = 1;
 plotfigs = 0;
 showfigs = 1;
 pausefigs = 1;
-savefigs = 1;
+savefigs = 0;
 
 % LFP
 plotLFPPerAreaAllAn = 0;
@@ -99,7 +99,7 @@ plotEventModCDF = 0;     % requires gatherResults// per eventSet, per area, per 
 plotSpikePhaseModHeatRast = 0;
 %%
 Fp = [];
-Fp.animals = {'D10', 'JZ1', 'JZ4'};
+Fp.animals = {'JZ4'};
 Fp.areas = {{'ca1', 'd'}, {'mec', 'deep'}, {'mec', 'supf'}};
 
 if eventTrigLFP

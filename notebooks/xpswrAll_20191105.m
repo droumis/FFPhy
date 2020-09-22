@@ -2,11 +2,11 @@
 
 
 pconf = paramconfig;
-eventTrigSWR = 1; % NOW.. PIPE:space.city == per condition SWR mod (still need to somehow do per condition)
+% eventTrigSWR = 1; % NOW.. PIPE:space.city == per condition SWR mod (still need to somehow do per condition)
 
 eventType = 'lick'; %lick swr
 % run FF
-create_filter = 0;
+create_filter = 1;
 run_ff = 1;
 load_ffdata = 0;
 
@@ -14,18 +14,18 @@ load_ffdata = 0;
 plotfigs = 1;
 showfigs = 1;
 pausefigs = 0;
-savefigs = 1;
-savefigas = {'png', 'eps'};
+savefigs = 0;
+savefigas = {'pdf'};
 
 plotSWRXPmod_perAn_daily = 1;
 
 %% FF Data
 Fp = [];
-Fp.animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ3', 'JZ4'};
+Fp.animals = {'JZ1'}; %'D10', 'D12', 'D13', 'JZ1', 'JZ3', 'JZ4'
 Fp.areas = {{'ca1', 'd'}, {'mec', 'deep'}, {'mec', 'supf'}};
 
 Fp.filtfunction = 'dfa_lickswrcorr'; % city.alien % not using space anymore
-expvars = {'all', 'wetLickBursts', 'dryLickBursts'};
+% expvars = {'all', 'wetLickBursts', 'dryLickBursts'};
 Fp.Label = 'wXPTrigSWR';
 Fp.params = {'wtrackdays', 'excludePriorFirstWell', 'excludeAfterLastWell', ...
     'ripples>2', Fp.Label, Fp.filtfunction};

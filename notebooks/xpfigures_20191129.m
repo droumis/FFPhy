@@ -41,7 +41,7 @@ eventType = 'lick'; %lick swr
 % run FF
 create_filter = 0;
 run_ff = 0;
-load_ffdata = 0;
+load_ffdata = 1;
 
 %% DESIGN MAT MAKER.. WORKS WITH SPIKE AND LFP
 % make_expvarCat = 0; % beer
@@ -52,13 +52,13 @@ load_ffdata = 0;
 % loadSUPhaseMod = 0;
 % % Gather across animals, per area, condition
 % gatherPhaseModResults = calcSUphasemod;
-gather_XP_mod_SWR = 0;
+gather_XP_mod_SWR = 1;
 %% plot
 plotfigs = 1;
-showfigs = 0;
+showfigs = 1;
 pausefigs = 0;
 savefigs = 1;
-savefigas = {'png', 'eps'};
+savefigas = {'pdf'};
 
 % XP phmod SWR
 plot_XP_mod_SWR_perAn = 1;
@@ -71,10 +71,10 @@ plot_XP_mod_SWR_AllAn = 1;
 
 %% FF Data
 Fp = [];
-Fp.animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ3', 'JZ4'};
+Fp.animals = {'JZ4'}; %'D10', 'D12', 'D13', 'JZ1', 'JZ3', 'JZ4'};
 Fp.areas = {{'ca1', 'd'}, {'mec', 'deep'}, {'mec', 'supf'}};
 
-if eventTrigLFP
+% if eventTrigLFP
 %     Fp.filtfunction = 'dfa_eventTrigLFP'; % Bear
 %     if strcmp(eventType, 'lick')
 %         expvars = {'all', 'wetLickBursts', 'dryLickBursts'};
@@ -103,7 +103,7 @@ if eventTrigLFP
 %             'excludeAfterLastWell', 'nonMU_cells', 'ripples', ...
 %             Fp.Label, Fp.filtfunction}; % 'excludeNoise',
 %     end
-elseif eventTrigSWR
+if eventTrigSWR
     Fp.filtfunction = 'dfa_lickswrcorr'; % city.alien
     if strcmp(eventType, 'lick')
 %         expvars = {'all', 'wetLickBursts', 'dryLickBursts'};
@@ -115,19 +115,19 @@ elseif eventTrigSWR
     end
 end
 Fp = load_filter_params(Fp);
-if eventTrigLFP
-    wp = getWaveParams(Fp.waveSet);
-end
+% if eventTrigLFP
+%     wp = getWaveParams(Fp.waveSet);
+% end
 %%
 if create_filter
-    if eventTrigLFP
-        F = createfilter('animal', Fp.animals, 'epochs', Fp.epochfilter, 'eegtetrodes', ...
-            Fp.tetfilter, 'excludetime', Fp.timefilter, 'iterator', Fp.iterator);
-    elseif eventTrigSpiking
-        F = createfilter('animal', Fp.animals, 'epochs', Fp.epochfilter, 'eegtetrodes',...
-            Fp.tetfilter, 'excludetime', Fp.timefilter, 'iterator', Fp.iterator, 'cells',...
-            Fp.cellfilter);
-    elseif eventTrigSWR
+%     if eventTrigLFP
+%         F = createfilter('animal', Fp.animals, 'epochs', Fp.epochfilter, 'eegtetrodes', ...
+%             Fp.tetfilter, 'excludetime', Fp.timefilter, 'iterator', Fp.iterator);
+%     elseif eventTrigSpiking
+%         F = createfilter('animal', Fp.animals, 'epochs', Fp.epochfilter, 'eegtetrodes',...
+%             Fp.tetfilter, 'excludetime', Fp.timefilter, 'iterator', Fp.iterator, 'cells',...
+%             Fp.cellfilter);
+    if eventTrigSWR
         F = createfilter('animal', Fp.animals, 'epochs', Fp.epochfilter, 'excludetime', ...
             Fp.timefilter, 'iterator', Fp.iterator);
     end

@@ -8,7 +8,7 @@ function out = loaddatastruct(animaldir, animalprefix, datatype, days)
 % is omitted, all files are loaded.  Otherwise, only the files for the
 % specified days will be included.
 
-% instead of this function, use loadeegstruct to load eeg structures 
+% instead of this function, use loadeegstruct to load eeg structures
 
 if (nargin < 4)
     days = [];
@@ -18,12 +18,12 @@ datafiles = dir([animaldir, animalprefix, datatype,'*']);
 for i = 1:length(datafiles)
     if isempty(days)
         load([animaldir,datafiles(i).name]);
-%         try
-            eval(['out = datavaradd(out,',datatype,');']);
-%         catch
-%             eval([datatype '= ' datatype 'info;']);
-%             eval(['out = datavaradd(out,',datatype,');']);
-%         end
+        %         try
+        eval(['out = datavaradd(out,',datatype,');']);
+        %         catch
+        %             eval([datatype '= ' datatype 'info;']);
+        %             eval(['out = datavaradd(out,',datatype,');']);
+        %         end
     else
         s = datafiles(i).name;
         fileday = str2num(s(strfind(s,datatype)+length(datatype):strfind(s,'.')-1));  %get the experiment day from the filename
@@ -39,9 +39,18 @@ end
 function out = datavaradd(origvar, addcell)
 
 out = origvar;
-for i = 1:length(addcell)
-    if (~isempty(addcell{i}))
-        out{i} = addcell{i};
+try
+    for i = 1:length(addcell)
+        
+        if (~isempty(addcell{i}))
+            out{i} = addcell{i};
+        end
+    end
+catch
+    for i = 1:length(addcell.data)
+        if (~isempty(addcell.data{i}))
+            out{i} = addcell.data{i};
+        end
     end
 end
-        
+
