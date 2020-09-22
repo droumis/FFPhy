@@ -5,7 +5,7 @@ function out = dfa_reactivationPSTH(idx, timeFilter, varargin)
 % required vargs : {'cellinfo', 'templateFilter', 'rippleFilter', 'burstFilter', 'cellfilter'};
 % match times are currently hardcoded
 %
-%                 Salubrious Squirrel
+%
 %                                              ,.-'''     '-.
 %                                           ,'     _        '-
 %                                         ,'     -'           \
@@ -156,12 +156,29 @@ end
 boutTimes = cell2mat({boutTimes{day}{eps}}');
 intraBoutXP = cell2mat({intraBoutXP{day}{eps}}');
 intraBoutXP = intraBoutXP(:,1);
-fprintf('%d XP within %d bursts \n', numel(intraBoutXP), size(boutTimes,1))
+
 
 d = bsxfun(@minus, swrTimes', intraBoutXP);
 d(d < 0) = inf;
 minDistFromXPtoNextSWR = min(d, [], 2);
 XPnotNearSWRidx = minDistFromXPtoNextSWR > .5;
+
+fprintf('%d XP within %d bouts and not near swr\n', sum(XPnotNearSWRidx), size(boutTimes,1))
+
+% deal with the much larger # of xp than swrs in later days
+% otherwise can't compute bc array too large
+if sum(XPnotNearSWRidx) > sum(incSWRs)
+    % of the xp indices, choose as many as there are swrs, randomly
+    xpi = find(XPnotNearSWRidx);
+    keepxp = sort(datasample(xpi,sum(incSWRs),'Replace',false));
+    dropxp = xpi(~ismember(xpi, keepxp));
+    XPnotNearSWRidx(dropxp) = 0;
+    fprintf('***TOO MANY XP! using %d XP\n', sum(XPnotNearSWRidx))
+
+end
+% subsample to match # of swrs
+% XPnotNearSWRidx
+    
 intraBoutXPnotSWR = intraBoutXP(XPnotNearSWRidx);
 
 %% swr intra burst and extra burst idx
@@ -191,7 +208,7 @@ tF = setfiltertime(swrRXN, templateFilter);
 templateExcludeTimes = cell2mat(tF.excludetime{1}');
 
 templMask = ~isIncluded(timeBinEdges, templateExcludeTimes);
-fprintf('run template pct eptime %.02f (%.03f s)\n',sum(templMask)/length(templMask)*100, ...
+fprintf('run template pct eptime %.02f (%.03fpct s)\n',sum(templMask)/length(templMask)*100, ...
     sum(templMask)*bin)
 
 idxWin = win(1)/bin:win(2)/bin;
@@ -203,7 +220,7 @@ XPmatchBinStackedTimes = bsxfun(@plus, intraBoutXPnotSWR, Win);
 
 XPmatchSpikesZ = [];
 SWRmatchSpikesZ = [];
-for s = 1:length(su(:,1))
+for s = 1:length(su(:,1)) % for each su, 
     iSpks = spikes{day}{ep}{su(s,3)}{su(s,4)}.data;
     if length(iSpks) < numSpikesThresh
         continue
@@ -228,14 +245,15 @@ for s = 1:length(su(:,1))
 end
 templateBinMask = ~isIncluded(timeBinEdges, templateExcludeTimes);
 tmpSpkZBin = ZspikesFRBin(:, templateBinMask);
+allMatchSpkZBin = ZspikesFRBin(:, ~templateBinMask); % use for zscoring match results
 % stack horizontally
-SWRmatchSpikesZ2D = SWRmatchSpikesZ(:,:);
+SWRmatchSpikesZ2D = SWRmatchSpikesZ(:,:); % cell x time x event -> cell x time concat
 XPmatchSpikesZ2D = XPmatchSpikesZ(:,:);
 
 % g = timeBinEdges(templMask);
 % spikesTemplateTime = g(1:end-1)+bin/2;
 su = su(suKept,:);
-% out.binSpikes = binSpikes;
+% out.binSpikes = binSpikes;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
 % out.spikes = cell2mat(outSpikes);
 fprintf('%d cells \n', length(suKept));
 % get spike bin times. Each time in reactTime will match a reactivation
@@ -317,6 +335,7 @@ if fullModel
     swrRXN2D = diag(SWRmatchSpikesZ2D' * zCCtemplateNoDiag * SWRmatchSpikesZ2D)';
     swrRXN = reshape(swrRXN2D, [size(SWRmatchSpikesZ,2) size(SWRmatchSpikesZ,3)])';
     
+        
     % SWR-intraBurst rxn psth
     swrIntraBurstRXN = swrRXN(swrIntraBurstIdx,:);
     swrIntraBurstRXN_mean = nanmean(swrIntraBurstRXN);
@@ -327,11 +346,34 @@ if fullModel
     swrExtraBurstRXN_mean = nanmean(swrExtraBurstRXN);
     swrExtraBurstRXN_sem = sem(swrExtraBurstRXN,1);
     
+    
+    % Zscore the swr RXN based on MEAN, STD RXN of ALL NON-TEMPLATE TIMES
+    RXNallMatchSpkZBin = diag(allMatchSpkZBin' * zCCtemplateNoDiag * allMatchSpkZBin);
+    meanRXNallMatchSpkZBin = nanmean(RXNallMatchSpkZBin);
+    stdRXNallMatchSpkZBin = nanstd(RXNallMatchSpkZBin);
+    swrRXNZ = (swrRXN - meanRXNallMatchSpkZBin) / stdRXNallMatchSpkZBin;
+
+        
+    % SWR-intraBurst rxn psth
+    swrIntraBurstRXNZ = swrRXNZ(swrIntraBurstIdx,:);
+    swrIntraBurstRXNZ_mean = nanmean(swrIntraBurstRXNZ);
+    swrIntraBurstRXNZ_sem = sem(swrIntraBurstRXNZ,1);
+    
+    % SWR-extraBurst rxn psth
+    swrExtraBurstRXNZ = swrRXNZ(swrExtraBurstIdx, :);
+    swrExtraBurstRXNZ_mean = nanmean(swrExtraBurstRXNZ);
+    swrExtraBurstRXNZ_sem = sem(swrExtraBurstRXNZ,1);
+    
     %% lick rxn psth, no SWR
     xpRXN2D=diag(XPmatchSpikesZ2D' * zCCtemplateNoDiag * XPmatchSpikesZ2D)';
     XPnoswrRXN = reshape(xpRXN2D, [size(XPmatchSpikesZ,2) size(XPmatchSpikesZ,3)])';
     XPnoswrRXN_mean = nanmean(XPnoswrRXN);
     XPnoswrRXN_sem = sem(XPnoswrRXN,1);
+    
+    % Zscore the XP RXN based on MEAN, STD RXN of ALL NON-TEMPLATE TIMES
+    XPnoswrRXNZ =  (XPnoswrRXN - meanRXNallMatchSpkZBin) / stdRXNallMatchSpkZBin;
+    XPnoswrRXNZ_mean = nanmean(XPnoswrRXNZ);
+    XPnoswrRXNZ_sem = sem(XPnoswrRXNZ,1);
 end
 
 % plot([swrIntraBurstRXN_mean' swrExtraBurstRXN_mean' XPnoswrRXN_mean'])
@@ -413,19 +455,32 @@ if perPC
     out.su = su;
     out.eigVecSortSig = eigVecSortSig;
     out.eigValSortSig = eigValSortSig;
+    out.etaTime = etaTime;
     
     % full
     out.swrIntraBurstRXN = swrIntraBurstRXN;
     out.swrIntraBurstRXN_mean = swrIntraBurstRXN_mean;
     out.swrIntraBurstRXN_sem = swrIntraBurstRXN_sem;    
     
+    out.swrIntraBurstRXNZ = swrIntraBurstRXNZ;
+    out.swrIntraBurstRXNZ_mean = swrIntraBurstRXNZ_mean;
+    out.swrIntraBurstRXNZ_sem = swrIntraBurstRXNZ_sem;    
+    
     out.swrExtraBurstRXN = swrExtraBurstRXN;
     out.swrExtraBurstRXN_mean = swrExtraBurstRXN_mean;
     out.swrExtraBurstRXN_sem = swrExtraBurstRXN_sem;
     
+    out.swrExtraBurstRXNZ = swrExtraBurstRXNZ;
+    out.swrExtraBurstRXNZ_mean = swrExtraBurstRXNZ_mean;
+    out.swrExtraBurstRXNZ_sem = swrExtraBurstRXNZ_sem;
+    
     out.XPnoswrRXN = XPnoswrRXN;
     out.XPnoswrRXN_mean = XPnoswrRXN_mean;
     out.XPnoswrRXN_sem = XPnoswrRXN_sem;
+    
+    out.XPnoswrRXNZ = XPnoswrRXNZ;
+    out.XPnoswrRXNZ_mean = XPnoswrRXNZ_mean;
+    out.XPnoswrRXNZ_sem = XPnoswrRXNZ_sem;
     
     % per pc
     out.swrIntraBurstRXNperPC_mean = swrIntraBurstRXNperPC_mean ;
@@ -450,19 +505,31 @@ out.swrEnd = [];
 out.su = [];
 out.eigVecSortSig = [];
 out.eigValSortSig = [];
+out.etaTime = [];
 
-% full
 out.swrIntraBurstRXN = [];
 out.swrIntraBurstRXN_mean = [];
-out.swrIntraBurstRXN_sem = [];
+out.swrIntraBurstRXN_sem = [];    
+
+out.swrIntraBurstRXNZ = [];
+out.swrIntraBurstRXNZ_mean = [];
+out.swrIntraBurstRXNZ_sem = [];    
 
 out.swrExtraBurstRXN = [];
 out.swrExtraBurstRXN_mean = [];
 out.swrExtraBurstRXN_sem = [];
 
+out.swrExtraBurstRXNZ = [];
+out.swrExtraBurstRXNZ_mean = [];
+out.swrExtraBurstRXNZ_sem = [];
+
 out.XPnoswrRXN = [];
 out.XPnoswrRXN_mean = [];
 out.XPnoswrRXN_sem = [];
+
+out.XPnoswrRXNZ = [];
+out.XPnoswrRXNZ_mean = [];
+out.XPnoswrRXNZ_sem = [];
 
 % per pc
 out.swrIntraBurstRXNperPC_mean = [];
