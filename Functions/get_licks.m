@@ -6,7 +6,8 @@ function F = get_licks(animal, index, DIO, task, varargin)
 %{
 Notes
 Rebarbative Rose
-- example of script that calls this: 
+- script: make_licks.m
+- example of old analysis script that calls this directly:
 - lickXcorrSU_20190916.m
 @DKR19
 %}

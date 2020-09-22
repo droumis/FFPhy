@@ -50,7 +50,7 @@ for ian = 1:length(lfpstack)
     fprintf('waveSet: %s\n', waveSet);
     wp = getWaveParams(waveSet);
 %     t = find(strcmp(lfpstack(ian).lfptypes, lfptype));
-    
+    % downsample
     dsampdata = lfpstack(ian).data(:,1:wp.dsamp:end,:);
     nNtrodes = size(dsampdata,1);
     nevents = size(dsampdata,3);
@@ -83,6 +83,7 @@ for ian = 1:length(lfpstack)
         astmp = reshape(astmp(hws+1:end-(hws+zpad2pow),:), nsamps, nNtrodes, nevents, 1);
         as(:,:,:,fi) = permute(astmp, [2 1 3 4]);
     end
+    
     % Phase
     fprintf('getting phase \n');
     phaseout(ian).ph =  single(angle(as)); % convert to single to save diskspace
