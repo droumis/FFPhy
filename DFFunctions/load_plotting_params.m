@@ -17,6 +17,12 @@ if ~isa(param_set,'cell')
 end
 for s = param_set
 switch s{1}
+case 'rewTrigSWRXP'    
+    position = [.1 .1 .3 .4];
+    spikeSz = 10;
+    spikeAlpha = .5;
+    win = [-4 10];
+    Pp.bin = .2;
 case 'defaults'
     position = [.1 .1 .4 .4];
     pwin = [1 1];
@@ -38,7 +44,45 @@ case 'defaults'
 case 'phaseXcorr'
     position = [.1 .1 .5 .5];    
 
+    
+%% ========= SWR iLB vs eLB =========
+case 'pctILB-pAn-pDay'
+    position = [.1 .1 .4 .4];
+case 'pctILB'
+    position = [.1 .1 .2 .4];
+    
+    
 %% ========= XPmod-SWR=========
+case 'XPprepostSWR-pAn-pDay'
+    position = [.1 .1 .2 .8];
+    hbins = 50;
+    preClr = [0.4660 0.6740 0.1880];
+    postClr = [0.4940 0.1840 0.5560];
+case 'XPprepostSWR-pAn'
+    position = [.1 .1 .4 .3];
+    hbins = 50;
+    preClr = [0.4660 0.6740 0.1880];
+    postClr = [0.4940 0.1840 0.5560];
+case 'XPprepostSWR'
+    position = [.1 .1 .4 .3];
+    hbins = 50;
+    preClr = [0.4660 0.6740 0.1880];
+    postClr = [0.4940 0.1840 0.5560];
+    
+case 'XPtrigAvgRip-pAn-pDay'
+    position = [.1 .1 .3 .8];
+    win = [-2 2];
+case 'XPtrigAvgRip-pAn'
+    position = [.1 .1 .4 .3];
+    win = [-2 2];
+case 'XPtrigAvgRip'
+    position = [.1 .1 .4 .3];
+    win = [-2 2];
+
+case 'ripPos'
+    position = [.1 .1 .3 .4];
+    size = 80;
+    
 case 'wRxnFullAllAn'
     position = [.1 .1 .5 .5];
     winSE = [-.5 .5];

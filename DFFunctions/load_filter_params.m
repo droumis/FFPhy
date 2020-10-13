@@ -20,7 +20,20 @@ fprintf('----filter params----\n');
 for s = Fp.params
 fprintf('* %s\n', s{1})
 switch s{1}
-% common
+    
+%% ========= rewTrigSWRXP =========
+case 'rewTrigSWRXP'
+    win = [-4 10];
+    bin = .001;
+    eventType = 'ca1rippleskons';
+    
+case 'dfa_rewTrigSWRXP'
+    iterator = 'singleDayAnal'; %'singleepochanal';
+    filtfunction = 'dfa_rewTrigSWRXP';
+    datatypes = {'ca1rippleskons', 'lick', 'DIO', 'task'};
+    options = {'win', win, 'bin', bin, 'eventType', eventType};     
+    
+%% ========= common =========    
 case 'valid_ntrodes'
     %             ntAreas = {'ca1', 'mec', 'ref'}; %, 'por', 'v2l', 'sub'};
     areas = {{'ca1', 'd'}, {'mec', 'deep'}, {'mec', 'supf'}};
@@ -72,7 +85,34 @@ case 'dfa_reactivationPSTH'
         'minBoutLicks', minBoutLicks, 'cellfilter', cellFilter, ...
         'rippleFilter', rippleFilter};
 
-%% ========= XP-SWR mod 'city.alien' =========
+%% ========= SWR iLB vs eLB =========
+case 'pctILB'
+    eventType = 'ca1rippleskons';
+        % lick burst filter
+    maxILIthresh = 1; % max burst ili threshold in seconds
+    minBoutLicks = 2; % filter out bouts with less than boutNum licks
+    minILIthresh = .06; 
+    stdthresh = [2 3 4];
+    
+case 'dfa_pctILB'   
+    iterator = 'singleDayAnal'; %'singleepochanal';
+    filtfunction = 'dfa_pctILB';
+    datatypes = {'ca1rippleskons','task', 'lick', 'DIO'};
+    options = {'eventType', eventType, 'maxILIthresh', maxILIthresh,...
+        'minBoutLicks', minBoutLicks, 'stdthresh', stdthresh, 'minILIthresh', minILIthresh};
+        
+%% ========= XP-SWR mod =========
+case 'XPtrigAvgRip'
+    win = [-4 4];
+    eventType = 'ca1rippleskons';
+    
+case 'dfa_XPtrigAvgRip'
+    iterator = 'singleDayAnal'; %'singleepochanal';
+    filtfunction = 'dfa_XPtrigAvgRip';
+    datatypes = {'ca1rippleskons','task', 'lick', 'DIO'};
+    options = {'win', win, 'eventType', eventType};     
+    
+
 case 'wXPTrigSWR'
     %     maxTimeSinceRew = 5;
     bin = .01;
@@ -90,7 +130,8 @@ case 'wXPTrigSWR'
     compute_shuffle = 1;
     numshuffs = 1000;
     maxShift = tmax/2; %ms integer. timemod shift
-    
+
+
 case 'dfa_lickswrcorr'
     % make sure to include a 'ripples' timefilter in the paramset
     % func
@@ -102,8 +143,40 @@ case 'dfa_lickswrcorr'
         'minILIthresh', minILIthresh, 'maxILIthresh', maxILIthresh, ...
         'rmsmincounts', rmsmincounts, 'rmstmax', rmstmax, 'compute_shuffle', ...
         compute_shuffle, 'numshuffs', numshuffs, 'shuffOffset', maxShift, ...
+        'minBoutLicks', minBoutLicks};         
+    
+case 'XPprepostSWR'    
+        %     maxTimeSinceRew = 5;
+    bin = .01;
+    tmax = .5;
+    eventType = 'ca1rippleskons';
+    minILIthresh = .06; % seconds
+    maxILIthresh = 1; % seconds
+    minBoutLicks = 2;
+    % xcorr / excorr
+    excShortBin = bin; 
+    excLongBin = .500;
+    rmsmincounts = 1; % min bin count within rmstamax. otherwise nan
+    rmstmax = .25; % seconds
+    % shuf
+    compute_shuffle = 1;
+    numshuffs = 1000;
+    maxShift = tmax/2; %ms integer. timemod shift
+    
+case 'dfa_XPprepostSWR'
+    % make sure to include a 'ripples' timefilter in the paramset
+    % func
+    iterator = 'singleDayAnal'; %'singleepochanal';
+    filtfunction = 'dfa_XPprepostSWR';
+    datatypes = {'ca1rippleskons','task', 'lick', 'DIO'};
+    options = {'bin', bin, 'tmax', tmax, 'eventType', eventType, ...
+        'excShortBin', excShortBin, 'excLongBin', excLongBin, ...
+        'minILIthresh', minILIthresh, 'maxILIthresh', maxILIthresh, ...
+        'rmsmincounts', rmsmincounts, 'rmstmax', rmstmax, 'compute_shuffle', ...
+        compute_shuffle, 'numshuffs', numshuffs, 'shuffOffset', maxShift, ...
         'minBoutLicks', minBoutLicks};     
     
+  
 %% ========= 'dfa_eventTrigSpiking'=========
 case 'lickboutlicks'
 %     minILIthresh = .06; % seconds
@@ -164,6 +237,17 @@ case 'wtrackLickTrigLFP'
     win = [1.5 1.5];
     LFPtypes = {'eeg'};
 
+%% ========= ripPos    
+case 'ripPos'    
+    eventType = 'ca1rippleskons';
+    
+case 'dfa_ripPos'
+    iterator = 'singleDayAnal'; %'singleepochanal';
+    filtfunction = 'dfa_ripPos';
+    datatypes = {'ca1rippleskons','pos', 'lick'};
+    options = {'eventType', eventType};     
+    
+    
 %% ========= EPOCH TETRODE CELL RIPPLE filters
 case 'ripples'
     eventType = 'ca1rippleskons';
@@ -177,11 +261,24 @@ case 'ripples'
         'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
         'minvelocity', minvelocity,'maxvelocity',maxvelocity};
     
+case 'ripples>5'
+    eventType = 'ca1rippleskons';
+    consensus_numtets = 2;   % minimum # of tets for consensus event detection
+    minstdthresh = 5;        % STD. how big your ripples are
+    exclusion_dur = .5;  % seconds within which consecutive events are eliminated / ignored
+    minvelocity = 0;
+    maxvelocity = 4;
+    timefilter{end+1} = {'getconstimes', '($cons == 1)', ...
+        'ca1rippleskons', 1,'consensus_numtets',consensus_numtets, ...
+        'minstdthresh', minstdthresh,'exclusion_dur',exclusion_dur, ...
+        'minvelocity', minvelocity,'maxvelocity',maxvelocity};    
+
+    
 case 'ripples>2'
     eventType = 'ca1rippleskons';
     consensus_numtets = 2;   % minimum # of tets for consensus event detection
     minstdthresh = 2;        % STD. how big your ripples are
-    exclusion_dur = .5;  % seconds within which consecutive events are eliminated / ignored
+    exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
     minvelocity = 0;
     maxvelocity = 4;
     timefilter{end+1} = {'getconstimes', '($cons == 1)', ...

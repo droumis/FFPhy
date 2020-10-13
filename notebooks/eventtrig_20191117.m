@@ -1,4 +1,6 @@
 %{
+statsfig_20190812: notebook with original spect quantifications
+
 NB 20191117
 finalize swr-trig and lick trig results all animals combined
 .. continuation of suresplickvsswr_20191116

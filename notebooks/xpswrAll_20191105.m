@@ -6,7 +6,7 @@ pconf = paramconfig;
 
 eventType = 'lick'; %lick swr
 % run FF
-create_filter = 1;
+create_filter = 1;k
 run_ff = 1;
 load_ffdata = 0;
 
@@ -59,7 +59,7 @@ if plotfigs
             ifig = init_plot(showfigs, Pp.position);
             days = cell2mat([{F(a).output{1}.index}']);
             ndays = size(days,1);
-            nc = 3;
+            ncols = 3;
             dNormxcZ = {};
             for d = 1:ndays
                 day = days(d,1);
@@ -71,7 +71,7 @@ if plotfigs
                     nSWRsN = 0;
                 end
                 g = [nSWRsN nSWRsN nSWRsN];
-                sf1 = subaxis(ndays+1, nc, (d-1)*(nc)+1, Pp.posparams{:});
+                sf1 = subaxis(ndays+1, ncols, (d-1)*(ncols)+1, Pp.posparams{:});
                 bar(idata.time, idata.normxc, 'FaceColor', g)
                 xticks([])
 %                 yticks([])
@@ -79,7 +79,7 @@ if plotfigs
                 title(sprintf('%d Bouts %d XP. %d swr', size(idata.boutTimes, 1), length(idata.licks), nSWRs));
                 ylabel(sprintf('%d', day));
               %% z-scored
-                sf1 = subaxis(ndays+1, nc, (d-1)*(nc)+2, Pp.posparams{:});
+                sf1 = subaxis(ndays+1, ncols, (d-1)*(ncols)+2, Pp.posparams{:});
                 dNormxc = idata.smthxc;
                 dNormxcSh = idata.smthxcSh;
                 dNormxcZ{d} = (dNormxc - nanmean(dNormxcSh,1)) ./ nanstd(dNormxcSh,[],1);
@@ -89,7 +89,7 @@ if plotfigs
                 ylim([-10 10])
                 title(sprintf('%d Bouts %d XP. %d swr', size(idata.boutTimes, 1), length(idata.licks), length(idata.swrLickPhase)));
               %% phase
-                sf2 = subaxis(ndays+1, nc, (d-1)*(nc)+3, Pp.posparams{:});
+                sf2 = subaxis(ndays+1, ncols, (d-1)*(ncols)+3, Pp.posparams{:});
                 polarhistogram(idata.swrLickPhase, 20, 'Normalization', 'pdf', 'facecolor', g)
 %                 rticks([])
                 thetaticks([])
@@ -100,7 +100,7 @@ if plotfigs
                 
             end
             %% all days normx
-            subaxis(ndays+1, nc, (nc*(d-1))+4, Pp.posparams{:});
+            subaxis(ndays+1, ncols, (ncols*(d-1))+4, Pp.posparams{:});
             swrXPxc = nanmean(cell2mat({F(a).output{1}.smthxc}'));
             bar(idata.time, swrXPxc, 'facecolor', 'b')
             ylabel('all');
@@ -110,14 +110,14 @@ if plotfigs
             NormxcZsem = sem(NormxcZ,1);
             NormxcZmean = mean(NormxcZ,1);
             
-            subaxis(ndays+1, nc, (nc*(d-1))+5, Pp.posparams{:});
+            subaxis(ndays+1, ncols, (ncols*(d-1))+5, Pp.posparams{:});
             plot(idata.time, NormxcZmean, 'b')
             hold on
             fill([idata.time'; flipud(idata.time')],[NormxcZmean'-NormxcZsem';flipud(NormxcZmean'+NormxcZsem')],'k',...
                 'linestyle','none', 'facealpha', .2);
             ylim([-10 10])
              %% all days polar
-            subaxis(ndays+1, nc, (nc*(d-1))+6, Pp.posparams{:});
+            subaxis(ndays+1, ncols, (ncols*(d-1))+6, Pp.posparams{:});
             swrXPph = cell2mat({idata.swrLickPhase}');
             polarhistogram(swrXPph, 20, 'Normalization', 'pdf', 'facecolor', 'b')
             rlim([0 .8])
