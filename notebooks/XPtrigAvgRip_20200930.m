@@ -9,23 +9,23 @@ copy how i got z rip pwr from lickswrExamples_20190926
 
 
 pconf = paramconfig;
-create_filter = 1;
-run_ff = 1;
-load_ffdata = 0;
+create_filter = 0;
+run_ff = 0;
+load_ffdata = 1;
 
 %% plot
-plotfigs = 0;
-showfigs = 1;
+plotfigs = 1;
+showfigs = 0;
 pausefigs = 0;
 savefigs = 1;
 savefigas = {'pdf', 'png'};
 
 plot_XPtrigAvgRip_pAn_pDay = 1;
 plot_XPtrigAvgRip_pAn = 1;
-plot_XPtrigAvgRip = 1;
+plot_XPtrigAvgRip = 0;
 %% FF Data
 Fp = [];
-Fp.animals = {'D10', 'D12', 'D13','JZ4'};
+Fp.animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ4'};
 Fp.filtfunction = 'dfa_XPtrigAvgRip'; % city.alien % not using space anymore
 % expvars = {'all', 'wetLickBursts', 'dryLickBursts'};
 Fp.Label = 'XPtrigAvgRip';
@@ -78,16 +78,18 @@ if plotfigs
                 m = m(st:en);
                 s = s(st:en);
                 
-                plot(t, m, 'color', [0 0 0 1], 'linewidth', 1);
-                hold on;
                 fill([t'; flipud(t')],[m'-s';flipud(m'+s')], 'k',...
-                    'linestyle', 'none', 'facealpha', .2);
+                    'linestyle', 'none', 'facealpha', .4);
+                hold on
+                plot(t, m, 'color', [0 0 0 1], 'linewidth', 1);
                 title(sprintf('day %d', d));
                 ylabel('rippwr')
                 xticks(Pp.win(1):.5:Pp.win(2))
                 xlabel('time from XP');
                 axis tight
-
+                line(xlim, repmat(idata.meanbaseline,1,2), 'linestyle', '-', ...
+                    'color', [.5 .5 1 .5], 'linewidth', 2)
+                
             end
             % super
             stit = sprintf('%s %s', figname, animal);
@@ -123,11 +125,16 @@ if plotfigs
             plot(t, m, 'color', [0 0 0 1], 'linewidth', 1);
             hold on;
             fill([t'; flipud(t')],[m'-s';flipud(m'+s')], 'k',...
-                'linestyle', 'none', 'facealpha', .2);
+                'linestyle', 'none', 'facealpha', .2);            
+            
             ylabel('rippwr')
             xticks(Pp.win(1):.5:Pp.win(2))
             xlabel('time from XP');
             axis tight;
+            
+            meanbaseline = nanmean(vertcat(F(a).output{1}.meanbaseline));
+            line(xlim, repmat(meanbaseline,1,2), 'linestyle', '-', ...
+                'color', [.5 .5 1 .5], 'linewidth', 2)
             % super
             stit = sprintf('%s %s', figname, animal);
             setSuperAxTitle(stit);

@@ -31,7 +31,7 @@ Fp.animals = {'D10', 'D12', 'D13', 'JZ1', 'JZ4'};
 Fp.Label = 'pctILB';
 Fp.filtfunction = 'dfa_pctILB';
 Fp.params = {'wtrackdays', 'excludePriorFirstWell', 'excludeAfterLastWell', ...
-    'ripples>2', 'wetLickBursts', 'proximalWell', Fp.Label, Fp.filtfunction};
+    'ripples>2', 'proximalWell', Fp.Label, Fp.filtfunction};
 
 Fp = load_filter_params(Fp);
 

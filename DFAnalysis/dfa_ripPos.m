@@ -85,6 +85,10 @@ boutTimes = cell2mat({boutTimes{day}{eps}}');
 %% get swr events within lick-burst intervals
 SWRTimes_iLB = isIncluded(SWRTimes, boutTimes);
 
+% swr_posidx = knnsearch(posdata(:,1), SWRTimes(SWRTimes_iLB));
+% SWRTimes_xpos = posdata(swr_posidx,xcol);
+% SWRTimes_ypos = posdata(swr_posidx,ycol);
+
 %% output
 out.txy = posdata(:,[1 xcol ycol]);
 out.SWR_time = SWRTimes;

@@ -61,12 +61,6 @@ if isempty(swrTimes)
     return
 end
 
-%% Get licks in lick-burst intervals
-% [intraBoutXP, boutTimes] = getLickBoutLicks(animal, [repmat(day,length(eps),1) eps'], ...
-%     varargin{:});
-% boutTimes = cell2mat({boutTimes{day}{eps}}');
-% intraBoutXP = cell2mat({intraBoutXP{day}{eps}}');
-% intraBoutXP = intraBoutXP(:,1);
 % fprintf('%d XP within %d bursts \n', numel(intraBoutXP), size(boutTimes,1))
 xp = [];
 for e = 1:length(eps)
@@ -83,19 +77,40 @@ time = -abs(win(1))-(bin/2) : bin : win(2)+(bin/2);
 swr_prth = cell2mat(arrayfun(@(r) histc(swrTimes, r + time), dioOut(:,5), 'un', 0)')';
 xp_prth = cell2mat(arrayfun(@(r) histc(xp, r + time), dioOut(:,5), 'un', 0)')';
 
+%% Get iLB XP psth
+[intraBoutXP, boutTimes] = getLickBoutLicks(animal, [repmat(day,length(eps),1) eps'], ...
+    varargin{:});
+boutTimes = cell2mat({boutTimes{day}{eps}}');
+intraBoutXP = cell2mat({intraBoutXP{day}{eps}}');
+intraBoutXP = intraBoutXP(:,1);
+
+xp_prth_iLB = cell2mat(arrayfun(@(r) histc(intraBoutXP, r + time), dioOut(:,5), 'un', 0)')';
+
+%% Get intra bout swr psth
+burstSWRTimes = swrTimes(isIncluded(swrTimes, boutTimes));
+burstSWRTimes = sort(burstSWRTimes(~isnan(burstSWRTimes)));
+
+swr_prth_iLB = cell2mat(arrayfun(@(r) histc(burstSWRTimes, r + time), dioOut(:,5), 'un', 0)')';
+
 %% output
+out.time = time;
 out.rewTrigSWR = swr_prth;
 out.rewTrigXP = xp_prth;
-out.time = time;
+out.rewTrigSWR_iLB = swr_prth_iLB;
+out.rewTrigXP_iLB = xp_prth_iLB;
 
 end
 
 function out = init_out()
+% default values
+% useful when working across struct arrays
 out.index = [];
 out.animal = [];
 
+out.time = [];
 out.rewTrigSWR = [];
 out.rewTrigXP = [];
-out.time = [];
+out.rewTrigSWR_iLB = [];
+out.rewTrigXP_iLB = [];
 end
 

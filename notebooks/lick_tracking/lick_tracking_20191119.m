@@ -20,7 +20,7 @@ DLC_tracking = csvread([file.folder '/' file.name],3);
 preprocdaydir =  sprintf('%s%s/',andef{5},date);
 ptp_adjust_timestamps(preprocdaydir)
 
-%%
+%% ptp time
 timefile=dir([preprocdaydir '*.time/*continuoustime.dat']);
 ptp_ctime_filename = [timefile.folder '/' timefile.name];
 ptp_ctime=readTrodesExtractedDataFile(ptp_ctime_filename);

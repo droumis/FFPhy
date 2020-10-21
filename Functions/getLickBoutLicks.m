@@ -1,3 +1,4 @@
+
 function [intraBoutXP, boutTimes] = getLickBoutLicks(an, eps, varargin)
 % [intraBoutXP, boutTimes] = getLickBoutLicks(an, eps, varargin)
 % get lick bout XP events.
@@ -15,7 +16,7 @@ FFPhy
 @DR
 %}
 maxILIthresh = 1; % max burst ili threshold in seconds
-minILIthresh = .06; % min burst ili threshold in seconds
+minILIthresh = .02; % min burst ili threshold in seconds
 minBoutLicks = 2; %filter out bouts with less than boutNum licks
 lick = [];
 if ~isempty(varargin)

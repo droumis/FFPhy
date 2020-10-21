@@ -18,10 +18,10 @@ end
 for s = param_set
 switch s{1}
 case 'rewTrigSWRXP'    
-    position = [.1 .1 .3 .4];
-    spikeSz = 10;
-    spikeAlpha = .5;
-    win = [-4 10];
+    position = [.1 .1 .25 .6];
+    spikeSz = 20;
+    spikeAlpha = .8;
+    win = [-1 20];
     Pp.bin = .2;
 case 'defaults'
     position = [.1 .1 .4 .4];
@@ -71,13 +71,13 @@ case 'XPprepostSWR'
     
 case 'XPtrigAvgRip-pAn-pDay'
     position = [.1 .1 .3 .8];
-    win = [-2 2];
+    win = [-4 4];
 case 'XPtrigAvgRip-pAn'
     position = [.1 .1 .4 .3];
-    win = [-2 2];
+    win = [-4 4];
 case 'XPtrigAvgRip'
     position = [.1 .1 .4 .3];
-    win = [-2 2];
+    win = [-4 4];
 
 case 'ripPos'
     position = [.1 .1 .3 .4];

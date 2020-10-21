@@ -73,9 +73,9 @@ if plotfigs
                 xlimx = xlim;
                 ylimy = ylim;
                 colormap('jet')
-                s=scatter(idata.SWR_xpos(idata.SWR_iLB), idata.SWR_ypos(idata.SWR_iLB), Pp.size, ...
-                    idata.SWR_maxThresh(idata.SWR_iLB), 'filled', 'MarkerFaceAlpha', .2);
-                colorbar
+                s=scatter(idata.SWR_xpos, idata.SWR_ypos, Pp.size, ...
+                    idata.SWR_iLB, 'filled', 'MarkerFaceAlpha', .2);
+%                 colorbar
                 s.MarkerEdgeColor = 'none';
                 xlim(xlimx)
                 ylim(ylimy)

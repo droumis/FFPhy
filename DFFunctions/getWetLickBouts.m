@@ -25,7 +25,7 @@ loaddays = unique(eps(:,1));
 task = loaddatastruct(andef{2}, an, 'task', loaddays);
 DIO = loaddatastruct(andef{2}, an, 'DIO', loaddays);
 
-LburstVec = getLickBout(andir, an, eps, varargin);
+LburstVec = getLickBout(andir, an, eps, varargin{:});
 
 for e = 1:size(eps,1)
    day = eps(e,1);

@@ -26,7 +26,7 @@ should just pass an empty arg there..
 %}
 output_intervals = 0;
 maxILIthresh = 1; % max burst ili threshold in seconds
-minILIthresh = .06; % min burst ili threshold in seconds
+minILIthresh = .02; % min burst ili threshold in seconds
 minBoutLicks = 2; %filter out bouts with less than boutNum licks
 lick = [];
 if ~isempty(varargin)

@@ -23,15 +23,17 @@ switch s{1}
     
 %% ========= rewTrigSWRXP =========
 case 'rewTrigSWRXP'
-    win = [-4 10];
+    win = [-2 20];
     bin = .001;
     eventType = 'ca1rippleskons';
+    minILIthresh = .01;
     
 case 'dfa_rewTrigSWRXP'
     iterator = 'singleDayAnal'; %'singleepochanal';
     filtfunction = 'dfa_rewTrigSWRXP';
     datatypes = {'ca1rippleskons', 'lick', 'DIO', 'task'};
-    options = {'win', win, 'bin', bin, 'eventType', eventType};     
+    options = {'win', win, 'bin', bin, 'eventType', eventType, ...
+        'minILIthresh', minILIthresh};     
     
 %% ========= common =========    
 case 'valid_ntrodes'
@@ -109,7 +111,7 @@ case 'XPtrigAvgRip'
 case 'dfa_XPtrigAvgRip'
     iterator = 'singleDayAnal'; %'singleepochanal';
     filtfunction = 'dfa_XPtrigAvgRip';
-    datatypes = {'ca1rippleskons','task', 'lick', 'DIO'};
+    datatypes = {'ca1rippleskons', 'lick', 'pos'};
     options = {'win', win, 'eventType', eventType};     
     
 
@@ -140,9 +142,9 @@ case 'dfa_lickswrcorr'
     datatypes = {'ca1rippleskons','task', 'lick', 'DIO'};
     options = {'bin', bin, 'tmax', tmax, 'eventType', eventType, ...
         'excShortBin', excShortBin, 'excLongBin', excLongBin, ...
-        'minILIthresh', minILIthresh, 'maxILIthresh', maxILIthresh, ...
         'rmsmincounts', rmsmincounts, 'rmstmax', rmstmax, 'compute_shuffle', ...
         compute_shuffle, 'numshuffs', numshuffs, 'shuffOffset', maxShift, ...
+        'minILIthresh', minILIthresh, 'maxILIthresh', maxILIthresh, ...
         'minBoutLicks', minBoutLicks};         
     
 case 'XPprepostSWR'    
@@ -249,7 +251,7 @@ case 'dfa_ripPos'
     
     
 %% ========= EPOCH TETRODE CELL RIPPLE filters
-case 'ripples'
+case 'ripples>3'
     eventType = 'ca1rippleskons';
     consensus_numtets = 2;   % minimum # of tets for consensus event detection
     minstdthresh = 3;        % STD. how big your ripples are
@@ -265,7 +267,7 @@ case 'ripples>5'
     eventType = 'ca1rippleskons';
     consensus_numtets = 2;   % minimum # of tets for consensus event detection
     minstdthresh = 5;        % STD. how big your ripples are
-    exclusion_dur = .5;  % seconds within which consecutive events are eliminated / ignored
+    exclusion_dur = 0;  % seconds within which consecutive events are eliminated / ignored
     minvelocity = 0;
     maxvelocity = 4;
     timefilter{end+1} = {'getconstimes', '($cons == 1)', ...
@@ -288,7 +290,8 @@ case 'ripples>2'
 
 case 'wetLickBursts'
     timefilter{end+1} = {'getWetLickBouts', ...
-        '($wetLB == 1)'};
+        '($wetLB == 1)', 'minILIthresh', .01, 'maxILIthresh', 1, ...
+        'minBoutLicks', 2};
     
 case 'dryLickBursts'
     timefilter{end+1} = {'getWetLickBouts', ...
@@ -372,10 +375,10 @@ case 'inbound'
     timefilter{end+1} = {'getWtracktrialstate','($inbound==1)'};
 
 case 'proximalWell'
-    timefilter{end+1} = {'getnearwells','($nearwell == 0)'};
+    timefilter{end+1} = {'getnearwells','($nearwell == 1)'};
 
 case 'distalWell'
-    timefilter{end+1} = {'getnearwells','($nearwell == 1)'};            
+    timefilter{end+1} = {'getnearwells','($nearwell == 0)'};            
 
 case 'excludeNoise'
     timefilter{end+1} = {'excludenoiseevents', '($noise == 0)', 'ca1noisekons', ...

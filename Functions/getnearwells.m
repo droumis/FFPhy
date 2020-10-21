@@ -25,6 +25,11 @@ for i = 1:size(epochs,1)
     
     % mark times near any well
     lindist = linpos{day}{epoch}.statematrix.lindist;
+    
+%     wellCoords = linpos{day}{epoch}.wellSegmentInfo.wellCoord;
+%     for x = 1:size(wellCoords,1)
+%         abs(lindist - wellCoords(x)) 
+        
     nearcwell = lindist < cmfromwell;
     nearouterwell = lindist > (max(lindist)-cmfromwell);
     nearwell = any([nearcwell nearouterwell],2);

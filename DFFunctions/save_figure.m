@@ -15,7 +15,14 @@ savefigas = {'png'};
 if ~isempty(varargin)
     assign(varargin{:});
 end
-
+if isempty(strfind(figdirectory,'/'))
+    % if figdirectory isn't a path, it's probably a name
+    andef = animaldef(figdirectory);
+    fig_idx = find(cell2mat(cellfun(@(x) contains(x,'figures'), ...
+        andef, 'un', 0)));
+    figdirectory = andef{fig_idx};
+    fprintf('figdir: %s\n', figdirectory)
+end
 if ~isempty(subdir)
     figdir = sprintf('%s/%s/',figdirectory, subdir);
 else
