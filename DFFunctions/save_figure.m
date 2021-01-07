@@ -51,7 +51,7 @@ end
                 print(sprintf('%s/%s',figdir, strsave),'-dsvg')
                 fprintf('saved %s/%s.svg\n', figdir, strsave)
             case 'pdf'
-                print(sprintf('%s/%s',figdir, strsave),'-dpdf', '-bestfit')
+                print(sprintf('%s/%s',figdir, strsave),'-dpdf', '-bestfit') %'-bestfit'
                 fprintf('saved %s/%s.pdf\n', figdir, strsave)
         end
     end

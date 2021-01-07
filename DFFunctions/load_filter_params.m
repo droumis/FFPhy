@@ -20,6 +20,45 @@ fprintf('----filter params----\n');
 for s = Fp.params
 fprintf('* %s\n', s{1})
 switch s{1}
+%% ========= XCnormAC ========= 
+case 'rmsXCnormAC'
+
+case 'dfa_rmsXCnormAC'
+    iterator = 'singleDayAnal';
+    filtfunction = 'dfa_rmsXCnormAC';
+    datatypes = {'ca1rippleskons', 'lick', 'DIO', 'task', 'pos'};
+    options = {};
+    
+case 'ccPvRXCfromRew'
+
+case 'dfa_ccPvRXCfromRew'    
+    iterator = 'singleDayAnal';
+    filtfunction = 'dfa_ccPvRXCfromRew';
+    datatypes = {'ca1rippleskons', 'lick', 'DIO', 'task'};
+    options = {};
+    
+case 'XCfromRew'    
+    win = [-1 1];
+    bin = .01;
+    
+case 'dfa_XCfromRew'
+    iterator = 'singleDayAnal';
+    filtfunction = 'dfa_XCfromRew';
+    datatypes = {'ca1rippleskons', 'lick', 'DIO', 'task'};
+    options = {};
+    
+
+%% ========= XPtrigSWR =========    
+case 'XPtrigSWR'
+    win = [-1 1];
+    bin = .001;
+    eventType = 'ca1rippleskons';    
+    
+case 'dfa_XPtrigSWR'    
+    iterator = 'singleDayAnal'; 
+    filtfunction = 'dfa_XPtrigSWR';
+    datatypes = {'ca1rippleskons', 'lick'};
+    options = {'win', win, 'bin', bin, 'eventType', eventType}; 
     
 %% ========= rewTrigSWRXP =========
 case 'rewTrigSWRXP'
@@ -29,7 +68,7 @@ case 'rewTrigSWRXP'
     minILIthresh = .01;
     
 case 'dfa_rewTrigSWRXP'
-    iterator = 'singleDayAnal'; %'singleepochanal';
+    iterator = 'singleDayAnal';
     filtfunction = 'dfa_rewTrigSWRXP';
     datatypes = {'ca1rippleskons', 'lick', 'DIO', 'task'};
     options = {'win', win, 'bin', bin, 'eventType', eventType, ...
@@ -105,14 +144,19 @@ case 'dfa_pctILB'
         
 %% ========= XP-SWR mod =========
 case 'XPtrigAvgRip'
-    win = [-4 4];
+    win = [-2 2];
     eventType = 'ca1rippleskons';
+    swin = 1500;
+    stp = 375;
+    wienerFiltDiv = 10000;
+    circperms = 25;
     
 case 'dfa_XPtrigAvgRip'
     iterator = 'singleDayAnal'; %'singleepochanal';
     filtfunction = 'dfa_XPtrigAvgRip';
     datatypes = {'ca1rippleskons', 'lick', 'pos'};
-    options = {'win', win, 'eventType', eventType};     
+    options = {'win', win, 'eventType', eventType, 'swin', swin, 'stp', stp, ...
+        'wienerFiltDiv', wienerFiltDiv, 'circperms', circperms};     
     
 
 case 'wXPTrigSWR'
@@ -250,7 +294,10 @@ case 'dfa_ripPos'
     options = {'eventType', eventType};     
     
     
-%% ========= EPOCH TETRODE CELL RIPPLE filters
+%% ========= DAY EPOCH TETRODE CELL RIPPLE filters
+case 'day1'
+    days = 1;
+    
 case 'ripples>3'
     eventType = 'ca1rippleskons';
     consensus_numtets = 2;   % minimum # of tets for consensus event detection
@@ -384,6 +431,10 @@ case 'excludeNoise'
     timefilter{end+1} = {'excludenoiseevents', '($noise == 0)', 'ca1noisekons', ...
         'exclpad', .5, 'stdthresh', 1, 'excludeman', 1}; %15
 
+case 'firstToLastWellVisit'
+    timefilter{end+1} = {'getpriortofirstwell', '($prefirst == 0)'};
+    timefilter{end+1} = {'getpostlastwell', '($postlast == 0)'};
+    
 case 'excludePriorFirstWell'
     timefilter{end+1} = {'getpriortofirstwell', '($prefirst == 0)'};
 

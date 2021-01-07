@@ -1,7 +1,8 @@
 function out = load_data(source, filename, animals, varargin)
 % load filter framework results
 % source can be full path OR one of a special set: 'filterframework'
-% >> d = load_filter_output(Fp.paths.filtOutputDirectory, Fp.paths.filename, Fp.animals);
+% >> d = (Fp.paths.filtOutputDirectory, Fp.paths.filename, Fp.animals);
+% >> dio = (Fp.paths.filtOutputDirectory, Fp.paths.filename, Fp.animals);
 % 
 
 % specify additional filename string with varargin 'filetail'

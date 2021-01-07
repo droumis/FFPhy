@@ -1,4 +1,10 @@
 function f = createfilter(varargin)
+% set subject: animal
+% set time: days, epochs, excludetime, excludetimefilter,  excludetimeslist
+% set source: cells, cellpairs, tetrodes, tetrodepairs, eegtetrodes, eegtetrodepairs
+% set function: filterfunction
+% set iterator: iterator
+
 
 f.animal = [];
 f.days= [];

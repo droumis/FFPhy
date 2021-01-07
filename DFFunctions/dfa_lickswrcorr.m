@@ -3,7 +3,6 @@
 function out = dfa_lickswrcorr(idx, timeFilter, varargin)
 % out = dfa_lickswrcorr(idx, timeFilter, varargin)
 % gets swr x xp xcorr and phase clustering
-%           Adroit Alien
 %
 % Iterator:
 % - singleDayAnal (city)
@@ -23,7 +22,6 @@ function out = dfa_lickswrcorr(idx, timeFilter, varargin)
 %{
 
 Notes:
-- city:alien
 - example script: swrlickxcorr_20191031.m
 - phase modulation score as used in karalis sirota 2018/19
 - uses the circ stats toolbox's circ_rtest to get the pval and z which is (R^2/n)..

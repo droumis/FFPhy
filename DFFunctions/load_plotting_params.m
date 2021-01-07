@@ -17,12 +17,58 @@ if ~isa(param_set,'cell')
 end
 for s = param_set
 switch s{1}
+case 'XPtrigSWR-1SWR-pAn'    
+    position = [.1 .1 .3 .5];   
+    win = [-.1 .1];
+    ptSz = 10;
+    ptAlpha = .7;
+    bin = .01;
+    hbins = linspace(-.1, .1, 40);    
+case 'XPtrigSWR-pAn'
+    position = [.1 .1 .3 .5];   
+    win = [-.5 .5];
+    ptSz = 10;
+    ptAlpha = .7;
+    bin = .01;
+    hbins = 200;
+
+case 'headPhaseXP-pAn-pctXPbobs'
+    position = [.1 .1 .95 .25];
+    
+case 'headPhaseXP'
+    position = [.1 .1 .25 .25];
+    bins = 36;
+    eyeClr = [.1, .9, 1];
+    earClr = [.9, .1, 1];
+    noseClr = [1, .0, .1];
+    ShClr = [.7 .7 .7];
+    SpVt = .1;
+    SpHz = 0.06;
+    MgTp = .12;
+    rl = .85;
+    MRVsz = 15;
+    
+    
+case 'headPhaseXP-pAn'
+    position = [.1 .1 .25 .25];
+    bins = 36;
+    eyeClr = [.1, .9, 1];
+    earClr = [.9, .1, 1];
+    noseClr = [1, .0, .1];
+    ShClr = [.7 .7 .7];
+    SpVt = .08;
+    SpHz = 0.06;
+    rl = 1;
+    MgTp = .12;
+    MRVsz = 15;
+    
 case 'rewTrigSWRXP'    
     position = [.1 .1 .25 .6];
     spikeSz = 20;
     spikeAlpha = .8;
     win = [-1 20];
-    Pp.bin = .2;
+    bin = .2;
+    
 case 'defaults'
     position = [.1 .1 .4 .4];
     pwin = [1 1];
@@ -68,16 +114,24 @@ case 'XPprepostSWR'
     hbins = 50;
     preClr = [0.4660 0.6740 0.1880];
     postClr = [0.4940 0.1840 0.5560];
+
+case 'xcNormAC-pAn-pDay'
+    position = [.1 .1 .3 .8];
+    win = [-1 1];
+    
     
 case 'XPtrigAvgRip-pAn-pDay'
     position = [.1 .1 .3 .8];
-    win = [-4 4];
+    win = [-1 1];
+    
 case 'XPtrigAvgRip-pAn'
     position = [.1 .1 .4 .3];
-    win = [-4 4];
+    win = [-1 1];
+    SpHz = .08;
+    
 case 'XPtrigAvgRip'
     position = [.1 .1 .4 .3];
-    win = [-4 4];
+    win = [-1 1];
 
 case 'ripPos'
     position = [.1 .1 .3 .4];

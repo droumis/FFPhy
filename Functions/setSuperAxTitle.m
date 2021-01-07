@@ -12,7 +12,7 @@ varg-titleVargs: cellarray: varargs input to set title text object
 
 function setSuperAxTitle(titlestring, varargin)
 
-vertPos = .98;
+vertPos = .99;
 horzPos = .5;
 titleVargs = {'FontWeight','bold','FontName','Arial','horizontalAlignment', 'center', ...
     'FontSize',14};
