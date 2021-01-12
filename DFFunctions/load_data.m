@@ -3,7 +3,7 @@ function out = load_data(source, filename, animals, varargin)
 % source can be full path OR one of a special set: 'filterframework'
 % >> d = (Fp.paths.filtOutputDirectory, Fp.paths.filename, Fp.animals);
 % >> dio = (Fp.paths.filtOutputDirectory, Fp.paths.filename, Fp.animals);
-% 
+% pos = load_data('filterframework', 'pos01', animal, 'animpos', 0);
 
 % specify additional filename string with varargin 'filetail'
 if ~isa(animals, 'cell')
@@ -13,7 +13,8 @@ end
 pconf = paramconfig;
 filtfunction = ' ';
 filetail = '';
-animpos = 1; % animal name position. 0 at beginning without underscore. 1 for end with it
+% animal name position. 0~beginning no underscore. 1~end with underscore
+animpos = 1; 
 if ~isempty(varargin)
     assign(varargin{:})
 end
@@ -40,7 +41,7 @@ for an = 1:length(animals)
                 fprintf('loaded: %s/%s%s_%s.mat \n',dirout , filename, filetail, animal)
             else
                 tmp = load(sprintf('%s/%s%s%s.mat', dirout, animal, filename, filetail));
-                fprintf('loaded: %s/%s%s%s.mat \n',animal, dirout , filename, filetail)
+                fprintf('loaded: %s/%s%s%s.mat \n',dirout , animal, filename, filetail)
             end
             try
                 F = tmp.F; % filter output struct

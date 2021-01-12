@@ -17,6 +17,9 @@ if ~isa(param_set,'cell')
 end
 for s = param_set
 switch s{1}
+case 'ingestionIntervals-pDay'
+    position = [.1 .1 .9 .5];   
+    
 case 'XPtrigSWR-1SWR-pAn'    
     position = [.1 .1 .3 .5];   
     win = [-.1 .1];

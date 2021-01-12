@@ -2,7 +2,6 @@
 
 % load JZ4 day 1
 
-
 % compute XCnormAC, measure RMS
 % do permutation, measure RMS
 
@@ -25,7 +24,7 @@ save_fig_as = {'pdf', 'png'};
 
 % specify data filters, iterators, functions into Fp struct
 Fp.Label = 'rmsXCnormAC'; % analysis label (for results, plots)
-Fp.animals = {'D10', 'D12', 'D13', 'JZ4'};
+Fp.animals = {'JZ4', 'JZ1'};
 Fp.filtfunction = 'dfa_rmsXCnormAC';
 Fp.params = {'firstToLastWellVisit', 'day1', 'wtrack', Fp.Label, ...
     Fp.filtfunction};
